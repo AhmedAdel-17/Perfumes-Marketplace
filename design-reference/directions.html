@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ثلاث اتجاهات تصميم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=Almarai:wght@300;400;700&family=Cairo:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#8E8C86;padding:26px 14px 60px;display:flex;flex-direction:column;align-items:center;gap:34px;font-family:'IBM Plex Sans Arabic',sans-serif}
+.row{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start}
+.col{width:360px;max-width:100%}
+.tag{color:#fff;margin-bottom:11px}
+.tag b{display:block;font-size:17px;font-weight:500;margin-bottom:3px}
+.tag span{font-size:12px;opacity:.75;line-height:1.5;display:block}
+.frame{border-radius:24px;overflow:hidden}
+.strip{display:flex;border-radius:5px;overflow:hidden;margin-top:9px}
+.strip div{flex:1;height:26px}
+
+/* ============ A — حبر وراتنج ============ */
+.A{background:#EFE8DC;color:#17120E;font-family:'IBM Plex Sans Arabic',sans-serif}
+.A .bar{display:flex;justify-content:space-between;align-items:center;padding:16px 15px 11px}
+.A .mark{font-family:'Reem Kufi';font-size:25px;font-weight:500;line-height:1}
+.A .mark s{display:block;text-decoration:none;font-family:'IBM Plex Sans Arabic';font-size:8px;letter-spacing:2.4px;color:#6E6153;margin-top:3px}
+.A .ic{width:34px;height:34px;border-radius:50%;background:rgba(23,18,14,.06);display:inline-flex;align-items:center;justify-content:center;margin-inline-start:5px}
+.A .ic svg{width:17px;height:17px;stroke:#17120E;fill:none;stroke-width:1.6}
+.A .sb{margin:0 15px 18px;background:#FAF6EF;border:1px solid #DFD5C6;border-radius:10px;padding:12px 13px;font-size:13px;color:#6E6153}
+.A .fams{display:flex;gap:7px;overflow:hidden;padding:0 15px 18px}
+.A .fam{flex:none;display:flex;align-items:center;gap:6px;background:#FAF6EF;border:1px solid #DFD5C6;border-radius:100px;padding:8px 13px;font-size:12.5px}
+.A .fam.on{background:#17120E;border-color:#17120E;color:#FAF6EF}
+.A .fam i{width:8px;height:8px;border-radius:50%;display:block}
+.A .hero{margin:0 15px 20px;background:#17120E;border-radius:16px;padding:20px 18px}
+.A .eb{font-size:9.5px;letter-spacing:2.2px;color:#A8681F;margin-bottom:10px}
+.A .hero h3{font-family:'Reem Kufi';font-size:21px;font-weight:500;color:#FAF6EF;line-height:1.4;margin-bottom:7px}
+.A .hero p{font-size:12.5px;color:#B8AA98;line-height:1.7;margin-bottom:15px}
+.A .btn{display:inline-block;background:#A8681F;color:#fff;font-size:12.5px;font-weight:500;padding:10px 19px;border-radius:6px}
+.A .g{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 15px}
+.A .c{background:#FAF6EF;border:1px solid #DFD5C6;border-radius:10px;overflow:hidden}
+.A .th{height:118px;background:#E4DACA;display:flex;align-items:flex-end;justify-content:center}
+.A .bt{width:36px;height:66px;border-radius:4px;margin-bottom:13px;position:relative}
+.A .bt::before{content:'';position:absolute;top:-10px;right:50%;transform:translateX(50%);width:14px;height:11px;background:#2C231C;border-radius:2px}
+.A .cb{padding:11px}
+.A .br{font-size:10px;color:#6E6153;margin-bottom:2px}
+.A .nm{font-size:13.5px;font-weight:500;margin-bottom:8px}
+.A .sig{display:flex;align-items:center;gap:5px;margin-bottom:9px}
+.A .sig em{display:flex;gap:3px}
+.A .sig em i{width:6.5px;height:6.5px;border-radius:50%;display:block}
+.A .sig span{font-size:9.5px;color:#6E6153;font-style:normal}
+.A .mt{display:flex;gap:2px;margin-inline-start:auto}
+.A .mt i{width:3.5px;height:10px;background:#DFD5C6;border-radius:1px;display:block}
+.A .mt i.f{background:#2C231C}
+.A .pr{border-top:1px solid #DFD5C6;padding-top:9px;font-size:14px;font-weight:600}
+.A .pr small{font-size:10px;color:#6E6153;font-weight:400}
+.A .tb{display:flex;background:#FAF6EF;border-top:1px solid #DFD5C6;padding:10px 0 18px;margin-top:20px}
+.A .tb div{flex:1;text-align:center;font-size:9.5px;color:#6E6153}
+.A .tb div.on{color:#17120E}
+.A .tb svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;display:block;margin:0 auto 4px}
+
+/* ============ B — صيدلية ============ */
+.B{background:#FCFCFA;color:#1C1C1A;font-family:'Almarai',sans-serif}
+.B .bar{display:flex;justify-content:space-between;align-items:center;padding:20px 18px 14px;border-bottom:1px solid #EAEAE5}
+.B .mark{font-size:15px;font-weight:700;letter-spacing:5px}
+.B .ic{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;margin-inline-start:8px}
+.B .ic svg{width:17px;height:17px;stroke:#1C1C1A;fill:none;stroke-width:1.4}
+.B .sb{margin:16px 18px;border-bottom:1px solid #EAEAE5;padding-bottom:10px;font-size:12.5px;color:#8A8A82;font-weight:300}
+.B .fams{display:flex;gap:16px;overflow:hidden;padding:6px 18px 20px;font-size:12px;font-weight:300}
+.B .fam{flex:none;color:#8A8A82;padding-bottom:5px}
+.B .fam.on{color:#1C1C1A;border-bottom:1.5px solid #667056;font-weight:400}
+.B .hero{margin:0 18px 26px;border:1px solid #EAEAE5;padding:22px 18px}
+.B .eb{font-size:9px;letter-spacing:2.6px;color:#667056;margin-bottom:13px;font-weight:700}
+.B .hero h3{font-size:18px;font-weight:700;line-height:1.55;margin-bottom:9px}
+.B .hero p{font-size:12px;color:#8A8A82;line-height:1.85;font-weight:300;margin-bottom:17px}
+.B .btn{display:inline-block;border:1px solid #1C1C1A;color:#1C1C1A;font-size:11.5px;padding:10px 20px;font-weight:400}
+.B .lbl{font-size:9px;letter-spacing:2.4px;color:#8A8A82;padding:0 18px;margin-bottom:12px;font-weight:700}
+.B .list{padding:0 18px}
+.B .it{display:flex;gap:14px;padding:15px 0;border-top:1px solid #EAEAE5;align-items:center}
+.B .th{width:64px;height:78px;background:#F3F3EF;flex:none;display:flex;align-items:flex-end;justify-content:center}
+.B .bt{width:28px;height:50px;margin-bottom:9px;position:relative}
+.B .bt::before{content:'';position:absolute;top:-8px;right:50%;transform:translateX(50%);width:11px;height:9px;background:#1C1C1A}
+.B .txt{flex:1}
+.B .br{font-size:9.5px;color:#8A8A82;letter-spacing:1.2px;margin-bottom:4px;font-weight:300}
+.B .nm{font-size:14px;font-weight:700;margin-bottom:7px}
+.B .no{font-size:10.5px;color:#8A8A82;font-weight:300;line-height:1.6;margin-bottom:8px}
+.B .row2{display:flex;align-items:center;justify-content:space-between}
+.B .mt{display:flex;gap:2px}
+.B .mt i{width:14px;height:2px;background:#EAEAE5;display:block}
+.B .mt i.f{background:#667056}
+.B .pr{font-size:13px;font-weight:700}
+.B .tb{display:flex;border-top:1px solid #EAEAE5;padding:13px 0 20px;margin-top:22px}
+.B .tb div{flex:1;text-align:center;font-size:9px;color:#8A8A82;letter-spacing:.8px;font-weight:300}
+.B .tb div.on{color:#1C1C1A;font-weight:400}
+.B .tb svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.3;display:block;margin:0 auto 5px}
+
+/* ============ C — ليل ============ */
+.C{background:#0F1211;color:#F0EAD8;font-family:'Cairo',sans-serif}
+.C .bar{display:flex;justify-content:space-between;align-items:center;padding:18px 16px 13px}
+.C .mark{font-size:23px;font-weight:900;letter-spacing:-.5px;line-height:1}
+.C .ic{width:35px;height:35px;border-radius:50%;background:#1E2422;display:inline-flex;align-items:center;justify-content:center;margin-inline-start:6px}
+.C .ic svg{width:17px;height:17px;stroke:#F0EAD8;fill:none;stroke-width:1.7}
+.C .sb{margin:0 16px 20px;background:#191E1C;border-radius:100px;padding:13px 17px;font-size:13px;color:#6F7A75}
+.C .fams{display:flex;gap:8px;overflow:hidden;padding:0 16px 22px}
+.C .fam{flex:none;border-radius:100px;padding:9px 15px;font-size:12.5px;font-weight:600;color:#0F1211}
+.C .hero{margin:0 16px 22px}
+.C .hero h3{font-size:27px;font-weight:900;line-height:1.3;margin-bottom:9px;letter-spacing:-.6px}
+.C .hero p{font-size:12.5px;color:#7C8781;line-height:1.75;margin-bottom:16px;font-weight:400}
+.C .btn{display:inline-block;background:#F0EAD8;color:#0F1211;font-size:13px;font-weight:600;padding:12px 24px;border-radius:100px}
+.C .lbl{font-size:15px;font-weight:600;padding:0 16px;margin-bottom:13px}
+.C .g{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 16px}
+.C .c{background:#191E1C;border-radius:14px;overflow:hidden}
+.C .th{height:120px;display:flex;align-items:flex-end;justify-content:center}
+.C .bt{width:36px;height:66px;border-radius:4px;margin-bottom:14px;position:relative}
+.C .bt::before{content:'';position:absolute;top:-10px;right:50%;transform:translateX(50%);width:14px;height:11px;background:#0F1211;border-radius:2px}
+.C .cb{padding:12px 12px 14px}
+.C .br{font-size:10px;color:#6F7A75;margin-bottom:2px}
+.C .nm{font-size:13.5px;font-weight:600;margin-bottom:9px}
+.C .sig{display:flex;gap:4px;margin-bottom:10px}
+.C .sig i{height:4px;border-radius:2px;display:block}
+.C .pr{font-size:14px;font-weight:600}
+.C .pr small{font-size:10px;color:#6F7A75;font-weight:400}
+.C .tb{display:flex;background:#191E1C;padding:12px 0 20px;margin-top:22px}
+.C .tb div{flex:1;text-align:center;font-size:9.5px;color:#6F7A75}
+.C .tb div.on{color:#F0EAD8}
+.C .tb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;display:block;margin:0 auto 4px}
+</style>
+</head>
+<body>
+
+<div class="row">
+
+<!-- ================= A ================= -->
+<div class="col">
+  <div class="tag"><b>أ — حبر وراتنج</b><span>دافئ، تحريري. لون واحد بارز. Reem Kufi + IBM Plex Arabic</span></div>
+  <div class="frame A">
+    <div class="bar">
+      <div class="mark">أثر<s>ATHAR</s></div>
+      <div>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span>
+      </div>
+    </div>
+    <div class="sb">ابحث عن عطر، براند، أو نوتة</div>
+    <div class="fams">
+      <div class="fam on"><i style="background:#EFE8DC"></i>الكل</div>
+      <div class="fam"><i style="background:#4A3328"></i>عود</div>
+      <div class="fam"><i style="background:#A8681F"></i>عنبر</div>
+      <div class="fam"><i style="background:#C07A90"></i>زهري</div>
+    </div>
+    <div class="hero">
+      <div class="eb">علبة الاكتشاف</div>
+      <h3>جرّب ٨ عطور<br>قبل ما تشتري زجاجة</h3>
+      <p>عيّنات من ٨ دور عطور مصرية، توصل لحد باب البيت.</p>
+      <span class="btn">اطلب العلبة — ٣٢٥ ج.م</span>
+    </div>
+    <div class="g">
+      <div class="c">
+        <div class="th"><div class="bt" style="background:#6B4A2C"></div></div>
+        <div class="cb">
+          <div class="br">بيت العنبر</div><div class="nm">ليل القاهرة</div>
+          <div class="sig"><em><i style="background:#4A3328"></i><i style="background:#A8681F"></i><i style="background:#7A5C3E"></i></em><span>عود · عنبر</span>
+            <div class="mt"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div></div>
+          <div class="pr">480 <small>ج.م</small></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="th"><div class="bt" style="background:#C9B896"></div></div>
+        <div class="cb">
+          <div class="br">دار نفح</div><div class="nm">صندل أبيض</div>
+          <div class="sig"><em><i style="background:#7A5C3E"></i><i style="background:#8E8578"></i><i style="background:#5A8C7C"></i></em><span>خشبي · مسك</span>
+            <div class="mt"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div></div>
+          <div class="pr">390 <small>ج.م</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="tb">
+      <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8z"/></svg>الرئيسية</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>اكتشف</div>
+      <div><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>السلة</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>حسابي</div>
+    </div>
+  </div>
+  <div class="strip">
+    <div style="background:#17120E"></div><div style="background:#6E6153"></div><div style="background:#DFD5C6"></div><div style="background:#EFE8DC"></div><div style="background:#FAF6EF"></div><div style="background:#A8681F"></div>
+  </div>
+</div>
+
+<!-- ================= B ================= -->
+<div class="col">
+  <div class="tag"><b>ب — صيدلية</b><span>هادئ، دقيق، مساحة بيضاء. المنتج هو البطل. Almarai</span></div>
+  <div class="frame B">
+    <div class="bar">
+      <div class="mark">أثر</div>
+      <div>
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span>
+      </div>
+    </div>
+    <div class="sb">ابحث عن عطر أو نوتة</div>
+    <div class="fams">
+      <div class="fam on">الكل</div><div class="fam">عود</div><div class="fam">عنبر</div><div class="fam">زهري</div><div class="fam">منعش</div>
+    </div>
+    <div class="hero">
+      <div class="eb">علبة الاكتشاف</div>
+      <h3>ثمانية عطور مصرية<br>في علبة واحدة</h3>
+      <p>عيّنة ٢ مل من كل دار. جرّب قبل ما تلتزم بزجاجة كاملة.</p>
+      <span class="btn">اطلب العلبة — ٣٢٥ ج.م</span>
+    </div>
+    <div class="lbl">مختارات</div>
+    <div class="list">
+      <div class="it">
+        <div class="th"><div class="bt" style="background:#6B4A2C"></div></div>
+        <div class="txt">
+          <div class="br">بيت العنبر</div>
+          <div class="nm">ليل القاهرة</div>
+          <div class="no">عود · عنبر · خشب الصندل</div>
+          <div class="row2">
+            <div class="mt"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div>
+            <div class="pr">٤٨٠ ج.م</div>
+          </div>
+        </div>
+      </div>
+      <div class="it">
+        <div class="th"><div class="bt" style="background:#C9B896"></div></div>
+        <div class="txt">
+          <div class="br">دار نفح</div>
+          <div class="nm">صندل أبيض</div>
+          <div class="no">صندل · مسك · حمضيات</div>
+          <div class="row2">
+            <div class="mt"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div>
+            <div class="pr">٣٩٠ ج.م</div>
+          </div>
+        </div>
+      </div>
+      <div class="it">
+        <div class="th"><div class="bt" style="background:#A8455E"></div></div>
+        <div class="txt">
+          <div class="br">نُون للعطور</div>
+          <div class="nm">ورد بلدي</div>
+          <div class="no">ورد · فانيليا · مسك أبيض</div>
+          <div class="row2">
+            <div class="mt"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div>
+            <div class="pr">٣٥٠ ج.م</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tb">
+      <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8z"/></svg>الرئيسية</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>اكتشف</div>
+      <div><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>السلة</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>حسابي</div>
+    </div>
+  </div>
+  <div class="strip">
+    <div style="background:#1C1C1A"></div><div style="background:#8A8A82"></div><div style="background:#EAEAE5"></div><div style="background:#F3F3EF"></div><div style="background:#FCFCFA"></div><div style="background:#667056"></div>
+  </div>
+</div>
+
+<!-- ================= C ================= -->
+<div class="col">
+  <div class="tag"><b>ج — ليل</b><span>داكن، جريء. اللون الوحيد في الواجهة جاي من الروائح نفسها. Cairo</span></div>
+  <div class="frame C">
+    <div class="bar">
+      <div class="mark">أثر</div>
+      <div>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span>
+      </div>
+    </div>
+    <div class="sb">ابحث عن عطر، براند، أو نوتة</div>
+    <div class="fams">
+      <div class="fam" style="background:#4A3328;color:#F0EAD8">عود</div>
+      <div class="fam" style="background:#A8681F">عنبر</div>
+      <div class="fam" style="background:#C07A90">زهري</div>
+      <div class="fam" style="background:#5A8C7C">منعش</div>
+    </div>
+    <div class="hero">
+      <h3>جرّب ٨ عطور<br>قبل الزجاجة</h3>
+      <p>عيّنات من ٨ دور عطور مصرية. اكتشف اللي يناسبك.</p>
+      <span class="btn">اطلب العلبة · ٣٢٥ ج.م</span>
+    </div>
+    <div class="lbl">مختارات</div>
+    <div class="g">
+      <div class="c">
+        <div class="th" style="background:#241C16"><div class="bt" style="background:#8A5A32"></div></div>
+        <div class="cb">
+          <div class="br">بيت العنبر</div><div class="nm">ليل القاهرة</div>
+          <div class="sig"><i style="background:#4A3328;width:40%"></i><i style="background:#A8681F;width:32%"></i><i style="background:#7A5C3E;width:22%"></i></div>
+          <div class="pr">480 <small>ج.م</small></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="th" style="background:#22241E"><div class="bt" style="background:#C9B896"></div></div>
+        <div class="cb">
+          <div class="br">دار نفح</div><div class="nm">صندل أبيض</div>
+          <div class="sig"><i style="background:#7A5C3E;width:44%"></i><i style="background:#8E8578;width:30%"></i><i style="background:#5A8C7C;width:20%"></i></div>
+          <div class="pr">390 <small>ج.م</small></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="th" style="background:#2A1E22"><div class="bt" style="background:#A8455E"></div></div>
+        <div class="cb">
+          <div class="br">نُون للعطور</div><div class="nm">ورد بلدي</div>
+          <div class="sig"><i style="background:#C07A90;width:46%"></i><i style="background:#9A6B4A;width:28%"></i><i style="background:#8E8578;width:20%"></i></div>
+          <div class="pr">350 <small>ج.م</small></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="th" style="background:#1B2422"><div class="bt" style="background:#4E7A6C"></div></div>
+        <div class="cb">
+          <div class="br">صنعة</div><div class="nm">نسيم الساحل</div>
+          <div class="sig"><i style="background:#5A8C7C;width:50%"></i><i style="background:#C07A90;width:26%"></i><i style="background:#8E8578;width:18%"></i></div>
+          <div class="pr">295 <small>ج.م</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="tb">
+      <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8z"/></svg>الرئيسية</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>اكتشف</div>
+      <div><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>السلة</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>حسابي</div>
+    </div>
+  </div>
+  <div class="strip">
+    <div style="background:#0F1211"></div><div style="background:#191E1C"></div><div style="background:#6F7A75"></div><div style="background:#7C8781"></div><div style="background:#F0EAD8"></div><div style="background:#4A3328"></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

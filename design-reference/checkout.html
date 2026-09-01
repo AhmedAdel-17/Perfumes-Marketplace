@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — الحقيبة والدفع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;
+  justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6;direction:ltr;text-align:left}
+.tag b{display:block;font-size:15px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;--hair:#2A2724;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--fresh:#5A8C7C;--heart:#B5697E;
+ background:var(--noir);color:var(--bone);overflow:hidden;direction:rtl;min-height:720px;
+ display:flex;flex-direction:column;font-size:13px;line-height:1.6}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+.lat{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+
+/* chrome */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+  border-block-end:1px solid var(--hair);flex-shrink:0}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.ic svg{width:18px;height:18px}
+.bar .ttl{font-family:'Amiri',serif;font-size:19px}
+.bar .cnt{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);
+  width:44px;text-align:center}
+
+/* steps */
+.steps{display:flex;border-block-end:1px solid var(--hair);flex-shrink:0}
+.st{flex:1;padding:11px 4px;text-align:center;font-size:9.5px;color:var(--faint);position:relative;
+  font-family:'Bodoni Moda',serif;letter-spacing:1.4px}
+.st.on{color:var(--brass)}
+.st.on::after{content:'';position:absolute;inset-inline:14%;bottom:-1px;height:1px;background:var(--brass)}
+.st.done{color:var(--dim)}
+
+.scroll{flex:1;overflow:hidden}
+
+/* house group */
+.house{border-block-end:1px solid var(--hair)}
+.hh{display:flex;align-items:center;gap:9px;padding:15px 16px 11px}
+.hh .dv{width:16px;height:16px;color:var(--brass);flex-shrink:0}
+.hh .nm{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2.4px;color:var(--brass);flex:1}
+.hh .vf{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--fresh);
+  border:1px solid rgba(90,140,124,.42);padding:3px 7px}
+
+.item{display:flex;gap:12px;padding:0 16px 15px}
+.item .th{width:64px;height:80px;flex-shrink:0;position:relative;overflow:hidden;
+  background:radial-gradient(120% 100% at 50% 30%,#3A2F26,#1A1512 62%,#0D0B0A)}
+.item .th .b{position:absolute;top:50%;right:50%;transform:translate(50%,-50%);width:24px;height:46px;
+  border-radius:1px 1px 2px 2px;background:linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)}
+.item .in{flex:1;min-width:0}
+.item .bd{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2px;color:var(--faint);margin-block-end:4px}
+.item .nm{font-family:'Amiri',serif;font-size:17px;line-height:1.3;margin-block-end:4px}
+.item .mt{color:var(--faint);font-size:10.5px;margin-block-end:9px}
+.item .rw{display:flex;align-items:center;justify-content:space-between}
+.item .pr{font-size:14px;font-weight:600}
+.item .pr .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--dim);margin-inline-start:6px}
+.qty{display:flex;align-items:center;border:1px solid var(--hair)}
+.qty button{width:34px;height:32px;background:none;border:0;color:var(--dim);font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;position:relative}
+/* Visual 34x32, hit area 44x44 — the control may LOOK smaller, the target may not be. */
+.qty button::after{content:'';position:absolute;inset:-6px -5px}
+.qty .v{width:26px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}
+
+.hf{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;
+  background:var(--l1);border-block-start:1px solid var(--hair)}
+.hf .l{color:var(--dim);font-size:10.5px}
+.hf .l b{color:var(--bone);font-weight:400}
+.hf .r{font-size:12px;font-variant-numeric:tabular-nums}
+.hf .r .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);margin-inline-start:6px}
+
+/* honesty note */
+.hon{display:flex;gap:10px;padding:15px 16px;background:var(--l1);border-block-end:1px solid var(--hair)}
+.hon svg{width:15px;height:15px;color:var(--brass);flex-shrink:0;margin-top:2px}
+.hon p{color:var(--dim);font-size:10.5px;line-height:1.75}
+.hon b{color:var(--bone);font-weight:500}
+
+/* summary */
+.sum{padding:16px}
+.sl{display:flex;justify-content:space-between;align-items:center;padding-block:8px;font-size:12px}
+.sl .k{color:var(--dim)}
+.sl .v{font-variant-numeric:tabular-nums}
+.sl .v .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);margin-inline-start:6px}
+.sl.exp .k{display:flex;align-items:center;gap:6px;cursor:pointer}
+.sl.exp svg{width:11px;height:11px;color:var(--faint)}
+.sub{padding-inline-start:14px;border-inline-start:1px solid var(--hair);margin-block:2px 8px}
+.sub .sl{padding-block:5px;font-size:10.5px}
+.sub .sl .k{color:var(--faint)}
+.tot{display:flex;justify-content:space-between;align-items:baseline;padding-block:14px 4px;
+  border-block-start:1px solid var(--hair);margin-block-start:8px}
+.tot .k{font-family:'Amiri',serif;font-size:19px}
+.tot .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.tot .v .c{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.8px;color:var(--dim);margin-inline-start:5px}
+
+/* cta */
+.foot{padding:14px 16px 18px;border-block-start:1px solid var(--hair);flex-shrink:0;background:var(--noir)}
+.btn{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:9px;
+  background:var(--brass);color:var(--noir);border:0;border-radius:2px;cursor:pointer;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--hair);min-height:44px;
+  font-size:13px;font-weight:500;margin-block-start:9px}
+.foot .fine{text-align:center;color:var(--faint);font-size:9.5px;margin-block-start:11px;line-height:1.6}
+
+/* fields */
+.fld{padding:0 16px 15px}
+.fl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);
+  display:block;margin-block-end:8px}
+.fi{width:100%;min-height:52px;background:var(--l2);border:1px solid transparent;color:var(--bone);
+  padding-inline:14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;border-radius:2px}
+.fi::placeholder{color:var(--faint)}
+.fi:focus{outline:0;border-color:var(--brass)}
+.fh{color:var(--faint);font-size:10.5px;margin-block-start:7px;line-height:1.6}
+.sel{position:relative}
+.sel svg{position:absolute;inset-inline-start:14px;top:20px;width:12px;height:12px;color:var(--faint);pointer-events:none}
+.two{display:flex;gap:10px}.two>*{flex:1}
+
+/* option rows */
+.opt{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--hair);
+  margin:0 16px 10px;cursor:pointer;border-radius:2px;min-height:52px}
+.opt.on{border-color:var(--brass);background:var(--l1)}
+.opt .rd{width:16px;height:16px;border:1px solid var(--faint);border-radius:50%;flex-shrink:0;position:relative}
+.opt.on .rd{border-color:var(--brass)}
+.opt.on .rd::after{content:'';position:absolute;inset:3px;background:var(--brass);border-radius:50%}
+.opt .tx{flex:1}
+.opt .t1{font-size:13px;margin-block-end:3px}
+.opt .t2{color:var(--faint);font-size:10.5px;line-height:1.6}
+.opt .rt{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* shipment card */
+.ship{border:1px solid var(--hair);margin:0 16px 10px}
+.ship .sh{display:flex;align-items:center;gap:9px;padding:12px 14px;border-block-end:1px solid var(--hair)}
+.ship .sh .n{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass);flex:1}
+.ship .sh .x{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)}
+.ship .sb{padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.ship .sb .e{color:var(--dim);font-size:11px}
+.ship .sb .f{font-size:12px;font-variant-numeric:tabular-nums}
+
+/* empty */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 34px;text-align:center}
+.empty svg{width:32px;height:32px;color:var(--brass);opacity:.75;margin-block-end:20px}
+.empty h4{font-family:'Amiri',serif;font-size:22px;margin-block-end:9px}
+.empty p{color:var(--faint);font-size:11.5px;line-height:1.85;margin-block-end:24px}
+
+/* confirmation */
+.conf{padding:40px 16px 20px;text-align:center;border-block-end:1px solid var(--hair)}
+.conf .ring{width:52px;height:52px;border:1px solid var(--brass);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--brass);margin:0 auto 20px}
+.conf .ring svg{width:20px;height:20px}
+.conf h3{font-family:'Amiri',serif;font-size:24px;margin-block-end:7px}
+.conf .on{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2.4px;color:var(--faint)}
+.conf p{color:var(--dim);font-size:11.5px;line-height:1.85;margin-block-start:14px}
+
+.sechd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);
+  padding:16px 16px 10px}
+.rev{padding:0 16px 14px;border-block-end:1px solid var(--hair);margin-block-end:4px}
+.rev .k{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2px;color:var(--faint);margin-block-end:5px}
+.rev .v{font-size:12px;line-height:1.75;color:var(--bone)}
+.rev .ed{color:var(--brass);font-size:10.5px;margin-block-start:6px;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. CART ============ -->
+<div class="col">
+  <div class="tag"><b>Cart — multi-seller</b>Grouped by house. Every shipping fee itemised before payment — acceptance gate 2. Three houses, three shipments, stated as fact.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الحقيبة</div>
+      <div class="cnt num">5</div>
+    </div>
+
+    <div class="scroll">
+      <!-- house 1 -->
+      <div class="house">
+        <div class="hh">
+          <svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="nm">MAISON NOUR</span>
+          <span class="vf">VERIFIED</span>
+        </div>
+        <div class="item">
+          <div class="th"><div class="b"></div></div>
+          <div class="in">
+            <div class="bd">MAISON NOUR</div>
+            <div class="nm">ليل القاهرة</div>
+            <div class="mt"><span class="num">50</span> مل · أو دو بارفان</div>
+            <div class="rw">
+              <div class="pr num">450<span class="c">EGP</span></div>
+              <div class="qty"><button>−</button><span class="v num">2</span><button>+</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="th"><div class="b" style="background:linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)"></div></div>
+          <div class="in">
+            <div class="bd">MAISON NOUR</div>
+            <div class="nm">صحراء</div>
+            <div class="mt"><span class="num">100</span> مل · أو دو بارفان</div>
+            <div class="rw">
+              <div class="pr num">620<span class="c">EGP</span></div>
+              <div class="qty"><button>−</button><span class="v num">1</span><button>+</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="hf">
+          <span class="l">شحن هذه الدار · <b>يصل خلال <span class="num">2–3</span> أيام</b></span>
+          <span class="r num">45<span class="c">EGP</span></span>
+        </div>
+      </div>
+
+      <!-- house 2 -->
+      <div class="house">
+        <div class="hh">
+          <svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="nm">DAR AL WARD</span>
+          <span class="vf">VERIFIED</span>
+        </div>
+        <div class="item">
+          <div class="th"><div class="b" style="background:linear-gradient(100deg,#5A2E38,#A8536B 40%,#C07A90 54%,#4A2530)"></div></div>
+          <div class="in">
+            <div class="bd">DAR AL WARD</div>
+            <div class="nm">ورد الطائف</div>
+            <div class="mt"><span class="num">30</span> مل · أو دو بارفان</div>
+            <div class="rw">
+              <div class="pr num">380<span class="c">EGP</span></div>
+              <div class="qty"><button>−</button><span class="v num">1</span><button>+</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="hf">
+          <span class="l">شحن هذه الدار · <b>يصل خلال <span class="num">3–4</span> أيام</b></span>
+          <span class="r num">50<span class="c">EGP</span></span>
+        </div>
+      </div>
+
+      <!-- house 3 -->
+      <div class="house">
+        <div class="hh">
+          <svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="nm">ATELIER SIWA</span>
+          <span class="vf">VERIFIED</span>
+        </div>
+        <div class="item">
+          <div class="th"><div class="b" style="background:linear-gradient(100deg,#26332E,#4A6B5E 40%,#5A8C7C 54%,#1E2A25)"></div></div>
+          <div class="in">
+            <div class="bd">ATELIER SIWA</div>
+            <div class="nm">نخيل</div>
+            <div class="mt"><span class="num">50</span> مل · أو دو تواليت</div>
+            <div class="rw">
+              <div class="pr num">290<span class="c">EGP</span></div>
+              <div class="qty"><button>−</button><span class="v num">1</span><button>+</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="hf">
+          <span class="l">شحن هذه الدار · <b>يصل خلال <span class="num">4–6</span> أيام</b></span>
+          <span class="r num">40<span class="c">EGP</span></span>
+        </div>
+      </div>
+
+      <div class="hon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p><b>كل دار تشحن طلبها بنفسها.</b> لذلك ترى ثلاث شحنات وثلاثة مواعيد وصول — ولا ندمج التكلفة أو نخفيها.</p>
+      </div>
+
+      <div class="sum">
+        <div class="sl"><span class="k">المنتجات · <span class="num">5</span> قطع</span><span class="v num">2,190<span class="c">EGP</span></span></div>
+        <div class="sl exp">
+          <span class="k">الشحن · <span class="num">3</span> شحنات
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+          <span class="v num">135<span class="c">EGP</span></span>
+        </div>
+        <div class="sub">
+          <div class="sl"><span class="k lat">MAISON NOUR</span><span class="v num">45</span></div>
+          <div class="sl"><span class="k lat">DAR AL WARD</span><span class="v num">50</span></div>
+          <div class="sl"><span class="k lat">ATELIER SIWA</span><span class="v num">40</span></div>
+        </div>
+        <div class="tot"><span class="k">الإجمالي</span><span class="v num">2,325<span class="c">EGP</span></span></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn">متابعة الشراء</button>
+      <div class="fine">لا توجد رسوم إضافية عند الدفع</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. EMPTY ============ -->
+<div class="col">
+  <div class="tag"><b>Empty cart</b>A designed brand moment, never a blank screen. No exclamation marks, no urgency.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الحقيبة</div>
+      <div class="cnt"></div>
+    </div>
+    <div class="empty">
+      <svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg>
+      <h4>حقيبتك فارغة</h4>
+      <p>اختر من بين <span class="num">42</span> دار عطور مصرية،<br>وستجد ما اخترته هنا.</p>
+      <button class="btn" style="width:auto;padding-inline:34px">تصفّح الدور</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. CONTACT ============ -->
+<div class="col">
+  <div class="tag"><b>Checkout — contact</b>Phone is the primary identifier, not email. Guest checkout implemented, kept configurable (D-2).</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الدفع</div>
+      <div class="cnt num">2,325</div>
+    </div>
+    <div class="steps">
+      <div class="st on">CONTACT</div><div class="st">ADDRESS</div><div class="st">DELIVERY</div><div class="st">PAY</div>
+    </div>
+    <div class="scroll">
+      <div style="padding:20px 16px 8px"><div style="font-family:Amiri,serif;font-size:22px">بيانات التواصل</div></div>
+      <div class="fld">
+        <span class="fl">Mobile number</span>
+        <input class="fi num" value="0100 123 4567" dir="ltr" style="text-align:right">
+        <div class="fh">سنرسل رمز تأكيد، ونستخدم الرقم نفسه للتتبّع والتواصل مع الدور.</div>
+      </div>
+      <div class="fld">
+        <span class="fl">Full name</span>
+        <input class="fi" value="أحمد عادل">
+      </div>
+      <div class="fld">
+        <span class="fl">Email — optional</span>
+        <input class="fi" placeholder="لإرسال الفاتورة فقط" dir="ltr" style="text-align:right">
+      </div>
+      <div class="hon" style="margin-top:6px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p>تُكمل الطلب كضيف. <b>يمكنك إنشاء حساب بعد التأكيد</b> لتتبّع طلباتك ومراجعة عطورك.</p>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">متابعة إلى العنوان</button></div>
+  </div>
+</div>
+
+<!-- ============ 4. ADDRESS ============ -->
+<div class="col">
+  <div class="tag"><b>Checkout — address</b>Governorate → city → area → street. No postal code. Landmark field, because that is how Egyptian addresses actually work.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الدفع</div>
+      <div class="cnt num">2,325</div>
+    </div>
+    <div class="steps">
+      <div class="st done">CONTACT</div><div class="st on">ADDRESS</div><div class="st">DELIVERY</div><div class="st">PAY</div>
+    </div>
+    <div class="scroll">
+      <div style="padding:20px 16px 8px"><div style="font-family:Amiri,serif;font-size:22px">عنوان التوصيل</div></div>
+      <div class="fld two">
+        <div><span class="fl">Governorate</span>
+          <div class="sel"><input class="fi" value="القاهرة"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div><span class="fl">City</span>
+          <div class="sel"><input class="fi" value="مدينة نصر"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      </div>
+      <div class="fld"><span class="fl">Area / district</span><input class="fi" value="الحي السابع"></div>
+      <div class="fld"><span class="fl">Street</span><input class="fi" value="شارع عباس العقاد"></div>
+      <div class="fld two">
+        <div><span class="fl">Building</span><input class="fi num" value="14" dir="ltr" style="text-align:right"></div>
+        <div><span class="fl">Floor</span><input class="fi num" value="3" dir="ltr" style="text-align:right"></div>
+        <div><span class="fl">Apt</span><input class="fi num" value="7" dir="ltr" style="text-align:right"></div>
+      </div>
+      <div class="fld">
+        <span class="fl">Landmark</span>
+        <input class="fi" placeholder="أقرب علامة مميزة">
+        <div class="fh">يساعد المندوب على الوصول دون اتصال — ويقلّل محاولات التسليم الفاشلة.</div>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">متابعة إلى الشحنات</button></div>
+  </div>
+</div>
+
+<!-- ============ 5. DELIVERY ============ -->
+<div class="col">
+  <div class="tag"><b>Checkout — delivery</b>Three shipments shown as three shipments. Doc 06 §6: shipment count, fees and estimates all visible before payment.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الدفع</div>
+      <div class="cnt num">2,325</div>
+    </div>
+    <div class="steps">
+      <div class="st done">CONTACT</div><div class="st done">ADDRESS</div><div class="st on">DELIVERY</div><div class="st">PAY</div>
+    </div>
+    <div class="scroll">
+      <div style="padding:20px 16px 14px"><div style="font-family:Amiri,serif;font-size:22px">ثلاث شحنات</div>
+        <div style="color:var(--dim);font-size:11.5px;margin-top:6px;line-height:1.75">كل دار تُجهّز وتشحن طلبها. تصل الشحنات في مواعيد مختلفة.</div></div>
+
+      <div class="ship">
+        <div class="sh"><span class="n">MAISON NOUR</span><span class="x"><span class="num">3</span> ITEMS</span></div>
+        <div class="sb"><span class="e">يصل <span class="num">4–5</span> سبتمبر</span><span class="f num">45 <span style="font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)">EGP</span></span></div>
+      </div>
+      <div class="ship">
+        <div class="sh"><span class="n">DAR AL WARD</span><span class="x"><span class="num">1</span> ITEM</span></div>
+        <div class="sb"><span class="e">يصل <span class="num">5–6</span> سبتمبر</span><span class="f num">50 <span style="font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)">EGP</span></span></div>
+      </div>
+      <div class="ship">
+        <div class="sh"><span class="n">ATELIER SIWA</span><span class="x"><span class="num">1</span> ITEM</span></div>
+        <div class="sb"><span class="e">يصل <span class="num">6–8</span> سبتمبر</span><span class="f num">40 <span style="font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)">EGP</span></span></div>
+      </div>
+
+      <div class="hon" style="margin-top:6px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p><b>لا ندمج الشحنات ولا ندعم تكلفتها.</b> السعر الذي تراه هو تكلفة الشحن الفعلية من كل دار.</p>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">متابعة إلى الدفع</button></div>
+  </div>
+</div>
+
+<!-- ============ 6. PAYMENT ============ -->
+<div class="col">
+  <div class="tag"><b>Checkout — payment</b>COD listed first, as a first-class method rather than an afterthought. Any COD fee stated on the row, never revealed later.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الدفع</div>
+      <div class="cnt num">2,325</div>
+    </div>
+    <div class="steps">
+      <div class="st done">CONTACT</div><div class="st done">ADDRESS</div><div class="st done">DELIVERY</div><div class="st on">PAY</div>
+    </div>
+    <div class="scroll">
+      <div style="padding:20px 16px 14px"><div style="font-family:Amiri,serif;font-size:22px">طريقة الدفع</div></div>
+
+      <div class="opt on">
+        <span class="rd"></span>
+        <span class="tx"><div class="t1">الدفع عند الاستلام</div><div class="t2">تدفع نقدًا للمندوب عند تسليم كل شحنة</div></span>
+        <span class="rt">بدون رسوم</span>
+      </div>
+      <div class="opt">
+        <span class="rd"></span>
+        <span class="tx"><div class="t1">بطاقة بنكية</div><div class="t2">فيزا · ماستركارد · ميزة</div></span>
+      </div>
+      <div class="opt">
+        <span class="rd"></span>
+        <span class="tx"><div class="t1">محفظة إلكترونية</div><div class="t2">فودافون كاش · اتصالات · أورنج</div></span>
+      </div>
+
+      <div class="hon" style="margin-top:10px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p>مع الدفع عند الاستلام <b>تدفع لكل شحنة على حدة</b> عند وصولها — لا يُدفع المبلغ كاملًا مرة واحدة.</p>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">مراجعة الطلب</button></div>
+  </div>
+</div>
+
+<!-- ============ 7. REVIEW ============ -->
+<div class="col">
+  <div class="tag"><b>Checkout — review</b>Everything restated before the irreversible action. The final number equals every number already shown — acceptance gate 2.</div>
+  <div class="app">
+    <div class="bar">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">المراجعة</div>
+      <div class="cnt"></div>
+    </div>
+    <div class="scroll">
+      <div class="sechd">DELIVER TO</div>
+      <div class="rev">
+        <div class="v">أحمد عادل · <span class="num">0100 123 4567</span><br>
+          <span style="color:var(--dim)"><span class="num">14</span> شارع عباس العقاد، الحي السابع<br>مدينة نصر، القاهرة · الدور <span class="num">3</span>، شقة <span class="num">7</span></span></div>
+        <span class="ed">تعديل</span>
+      </div>
+
+      <div class="sechd">SHIPMENTS</div>
+      <div class="rev">
+        <div class="v" style="color:var(--dim);line-height:2">
+          <span class="lat" style="font-size:10px;letter-spacing:1.8px;color:var(--brass)">MAISON NOUR</span> · <span class="num">3</span> قطع · <span class="num">4–5</span> سبتمبر<br>
+          <span class="lat" style="font-size:10px;letter-spacing:1.8px;color:var(--brass)">DAR AL WARD</span> · <span class="num">1</span> قطعة · <span class="num">5–6</span> سبتمبر<br>
+          <span class="lat" style="font-size:10px;letter-spacing:1.8px;color:var(--brass)">ATELIER SIWA</span> · <span class="num">1</span> قطعة · <span class="num">6–8</span> سبتمبر
+        </div>
+      </div>
+
+      <div class="sechd">PAYMENT</div>
+      <div class="rev"><div class="v">الدفع عند الاستلام — لكل شحنة على حدة</div><span class="ed">تعديل</span></div>
+
+      <div class="sum">
+        <div class="sl"><span class="k">المنتجات · <span class="num">5</span> قطع</span><span class="v num">2,190<span class="c">EGP</span></span></div>
+        <div class="sl"><span class="k">الشحن · <span class="num">3</span> شحنات</span><span class="v num">135<span class="c">EGP</span></span></div>
+        <div class="sl"><span class="k">رسوم إضافية</span><span class="v num">0<span class="c">EGP</span></span></div>
+        <div class="tot"><span class="k">الإجمالي</span><span class="v num">2,325<span class="c">EGP</span></span></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn">تأكيد الطلب</button>
+      <div class="fine">بتأكيد الطلب توافق على شروط الاستخدام وسياسة الإرجاع</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 8. CONFIRMATION ============ -->
+<div class="col">
+  <div class="tag"><b>Confirmation</b>One order, three sub-orders, each independently trackable. The customer sees one relationship; the houses see only their own.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"></div><div class="ttl"></div><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+    <div class="scroll">
+      <div class="conf">
+        <div class="ring"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <h3>تم تأكيد طلبك</h3>
+        <div class="on">ORDER <span class="num">DY-24817</span></div>
+        <p>أرسلنا رسالة على <span class="num">0100 123 4567</span>.<br>ستؤكّد كل دار طلبها خلال <span class="num">24</span> ساعة.</p>
+      </div>
+
+      <div class="sechd">YOUR SHIPMENTS</div>
+      <div class="ship">
+        <div class="sh"><span class="n">MAISON NOUR</span><span class="x">DY-24817-A</span></div>
+        <div class="sb"><span class="e">في انتظار تأكيد الدار</span><span class="f" style="color:var(--brass);font-size:10.5px">تتبّع</span></div>
+      </div>
+      <div class="ship">
+        <div class="sh"><span class="n">DAR AL WARD</span><span class="x">DY-24817-B</span></div>
+        <div class="sb"><span class="e">في انتظار تأكيد الدار</span><span class="f" style="color:var(--brass);font-size:10.5px">تتبّع</span></div>
+      </div>
+      <div class="ship">
+        <div class="sh"><span class="n">ATELIER SIWA</span><span class="x">DY-24817-C</span></div>
+        <div class="sb"><span class="e">في انتظار تأكيد الدار</span><span class="f" style="color:var(--brass);font-size:10.5px">تتبّع</span></div>
+      </div>
+
+      <div class="hon" style="margin-top:6px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p>إن تأخّرت أي دار عن التأكيد، <b>نتواصل معك ونتولّى الأمر.</b> طلبك مسؤوليتنا، لا مسؤولية الدار وحدها.</p>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn">تتبّع الطلب</button>
+      <button class="btn ghost">أنشئ حسابًا لحفظ طلباتك</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

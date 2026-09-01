@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الأساس — Foundation & Primitives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0B0A09; --l1:#131211; --l2:#1C1A18; --l3:#242120; --hair:#2A2724;
+  --bone:#EDE8DF; --dim:#9A928A; --faint:#8B837A; --brass:#B08D57;
+  --note-top:#C2A85C; --note-heart:#B5697E; --note-base:#8A6838;
+  --fam-oud:#4A3328; --fam-amber:#A8681F; --fam-woody:#7A5C3E; --fam-floral:#C07A90;
+  --fam-fresh:#5A8C7C; --fam-gourmand:#9A6B4A; --fam-musk:#8E8578;
+
+  --m-instant:120ms; --m-quick:240ms; --m-base:420ms; --m-slow:640ms;
+  --e-out:cubic-bezier(.16,1,.3,1); --e-inout:cubic-bezier(.65,0,.35,1);
+  --o-veil:.44; --o-scrim:.72; --o-disabled:.38; --o-press:.62;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{direction:rtl}
+body{
+  background:var(--noir); color:var(--bone);
+  font-family:'IBM Plex Sans Arabic',sans-serif; font-size:13px; line-height:1.6;
+  -webkit-font-smoothing:antialiased; padding-bottom:80px;
+}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.latin{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.wrap{max-width:1080px;margin:0 auto;padding-inline:26px}
+
+/* ---------- masthead ---------- */
+.mast{padding:64px 0 48px;border-block-end:1px solid var(--hair);margin-block-end:48px}
+.device{width:52px;height:52px;color:var(--brass);margin-block-end:26px}
+.mast h1{font-family:'Amiri',serif;font-size:33px;line-height:1.3;font-weight:400;margin-block-end:8px}
+.mast .sub{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2.4px;color:var(--brass);text-transform:uppercase}
+.mast p{color:var(--dim);max-width:62ch;margin-block-start:16px;line-height:1.85}
+.slot{margin-block-start:26px;border:1px dashed var(--hair);padding:16px 22px;display:inline-flex;align-items:center;gap:14px}
+.slot .lbl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint)}
+.slot .box{width:150px;height:22px;background:var(--l2)}
+
+/* ---------- section ---------- */
+section{margin-block-end:72px}
+.shd{display:flex;align-items:baseline;gap:14px;margin-block-end:8px}
+.shd .no{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2.4px;color:var(--brass)}
+.shd h2{font-family:'Amiri',serif;font-size:24px;font-weight:400}
+.sdesc{color:var(--dim);max-width:66ch;margin-block-end:34px;line-height:1.85}
+.rule{height:1px;background:var(--hair);margin-block:34px}
+
+.lbl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);display:block;margin-block-end:12px}
+
+/* ---------- grids ---------- */
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ---------- swatches ---------- */
+.sw{background:var(--l1);border:1px solid var(--hair)}
+.sw .patch{height:78px}
+.sw .meta{padding:12px 14px}
+.sw .nm{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:1.8px;margin-block-end:5px}
+.sw .hex{color:var(--faint);font-size:10.5px}
+.sw .cr{color:var(--brass);font-size:10.5px;margin-block-start:4px}
+
+/* ---------- type specimens ---------- */
+.spec{border-block-end:1px solid var(--hair);padding-block:20px;display:flex;align-items:baseline;gap:22px}
+.spec .tag{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);width:120px;flex-shrink:0}
+.t-h1{font-family:'Amiri',serif;font-size:33px;line-height:1.3}
+.t-h2{font-family:'Amiri',serif;font-size:24px;line-height:1.3}
+.t-h3{font-family:'Amiri',serif;font-size:22px;line-height:1.3}
+.t-h4{font-size:19px;line-height:1.3;font-weight:500}
+.t-bodyLg{font-size:14px;line-height:1.85}
+.t-body{font-size:13px;line-height:1.6}
+.t-small{font-size:11.5px;line-height:1.6}
+.t-caption{font-size:10.5px;color:var(--dim)}
+.t-micro{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint)}
+
+/* ---------- numerals ---------- */
+.numrow{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--hair)}
+@media(max-width:640px){.numrow{grid-template-columns:1fr}}
+.numcell{padding:26px}
+.numcell + .numcell{border-inline-start:1px solid var(--hair)}
+@media(max-width:640px){.numcell + .numcell{border-inline-start:0;border-block-start:1px solid var(--hair)}}
+.numcell .hd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass);margin-block-end:16px}
+.numcell .demo{font-family:'Amiri',serif;font-size:24px;margin-block-end:6px}
+.numcell .demo.data{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:19px;font-weight:500}
+.numcell ul{list-style:none;margin-block-start:18px}
+.numcell li{color:var(--dim);font-size:11.5px;padding-block:4px;padding-inline-start:14px;position:relative}
+.numcell li::before{content:'';position:absolute;inset-inline-start:0;top:11px;width:5px;height:1px;background:var(--brass)}
+.judge{display:flex;gap:10px;align-items:flex-start;padding:14px 0}
+.judge .mk{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:1.4px;width:38px;flex-shrink:0}
+.ok .mk{color:var(--fam-fresh)} .no .mk{color:var(--note-heart)}
+.judge .ex{font-size:14px}
+.judge .why{color:var(--faint);font-size:10.5px;margin-block-start:3px}
+
+/* ---------- motion ---------- */
+.mo{background:var(--l1);border:1px solid var(--hair);padding:20px;cursor:pointer}
+.mo .nm{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);margin-block-end:14px}
+.mo .track{height:2px;background:var(--hair);position:relative;margin-block-end:12px}
+.mo .dot{position:absolute;top:-3px;inset-inline-start:0;width:8px;height:8px;background:var(--brass);border-radius:50%}
+.mo.run .dot{inset-inline-start:calc(100% - 8px)}
+.mo .ms{color:var(--dim);font-size:10.5px}
+.mo:nth-child(1) .dot{transition:inset-inline-start var(--m-instant) var(--e-out)}
+.mo:nth-child(2) .dot{transition:inset-inline-start var(--m-quick) var(--e-out)}
+.mo:nth-child(3) .dot{transition:inset-inline-start var(--m-base) var(--e-out)}
+.mo:nth-child(4) .dot{transition:inset-inline-start var(--m-slow) var(--e-out)}
+
+/* ---------- space ---------- */
+.spc{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.spc div{text-align:center}
+.spc .bar{background:var(--brass);width:26px}
+.spc .v{color:var(--faint);font-size:9.5px;margin-block-start:6px;font-variant-numeric:tabular-nums}
+
+/* ---------- primitives ---------- */
+.pblock{margin-block-end:44px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+.btn{min-height:44px;padding-inline:26px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:500;border:0;cursor:pointer;
+  border-radius:2px;transition:opacity var(--m-instant) var(--e-out),background var(--m-quick) var(--e-out)}
+.btn-primary{background:var(--brass);color:var(--noir)}
+.btn-primary:active{opacity:var(--o-press)}
+.btn-secondary{background:transparent;color:var(--bone);border:1px solid var(--hair)}
+.btn-secondary:active{background:var(--l2)}
+.btn-ghost{background:transparent;color:var(--dim);padding-inline:12px}
+.btn-ghost:active{color:var(--bone)}
+.btn:disabled{opacity:var(--o-disabled);cursor:not-allowed}
+.btn .sp{width:14px;height:14px;border:1.3px solid currentColor;border-block-start-color:transparent;border-radius:50%;animation:rot 900ms linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+.field{display:block;margin-block-end:16px}
+.field .fl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);display:block;margin-block-end:8px}
+.field .fi{width:100%;min-height:52px;background:var(--l2);border:1px solid transparent;color:var(--bone);
+  padding-inline:14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;border-radius:2px;
+  transition:border-color var(--m-quick) var(--e-out)}
+.field .fi::placeholder{color:var(--faint)}
+.field .fi:focus{outline:0;border-color:var(--brass)}
+.field.err .fi{border-color:var(--note-heart)}
+.field .fe{color:var(--note-heart);font-size:10.5px;margin-block-start:7px}
+.field .fh{color:var(--faint);font-size:10.5px;margin-block-start:7px}
+
+.chip{min-height:44px;padding-inline:18px;display:inline-flex;align-items:center;gap:8px;background:var(--l2);
+  color:var(--dim);font-size:11.5px;border:1px solid transparent;cursor:pointer;border-radius:2px;
+  transition:all var(--m-quick) var(--e-out)}
+.chip.on{background:transparent;border-color:var(--brass);color:var(--brass)}
+.chip .dt{width:6px;height:6px;border-radius:50%}
+
+.card{background:var(--l1);border:1px solid var(--hair)}
+.card .img{aspect-ratio:4/5;position:relative;overflow:hidden;background:
+  radial-gradient(120% 90% at 50% 30%,#3A2F26 0%,#221C17 46%,#0F0D0C 82%)}
+.card .img .veil{position:absolute;inset:0;background:linear-gradient(to top,rgba(11,10,9,.78) 0%,rgba(11,10,9,0) 52%)}
+.card .img .btl{position:absolute;top:50%;right:50%;transform:translate(50%,-50%);width:54px;height:104px;
+  border-radius:2px 2px 4px 4px;background:linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)}
+.card .body{padding:14px}
+.card .brand{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass);margin-block-end:6px}
+.card .nm{font-family:'Amiri',serif;font-size:19px;margin-block-end:4px}
+.card .meta{color:var(--faint);font-size:10.5px;margin-block-end:10px}
+.card .pr{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.card .pr .cur{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.8px;color:var(--dim);margin-inline-start:5px}
+
+.meter{margin-block-end:16px}
+.meter .mh{display:flex;justify-content:space-between;align-items:baseline;margin-block-end:8px}
+.meter .mn{font-size:11.5px;color:var(--dim)}
+.meter .mv{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass)}
+.meter .mt{height:2px;background:var(--hair);position:relative}
+.meter .mf{position:absolute;inset-block:0;inset-inline-start:0;background:var(--brass)}
+.meter .src{color:var(--faint);font-size:9.5px;margin-block-start:6px}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;font-family:'Bodoni Moda',serif;
+  font-size:9.5px;letter-spacing:1.8px;border:1px solid var(--hair);color:var(--dim)}
+.badge.verif{border-color:rgba(90,140,124,.5);color:var(--fam-fresh)}
+.badge.spon{border-color:var(--hair);color:var(--faint)}
+.badge.low{border-color:rgba(181,105,126,.5);color:var(--note-heart)}
+
+.skel{background:var(--l2);position:relative;overflow:hidden}
+.skel::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(237,232,223,.045),transparent);animation:sh 1600ms ease-in-out infinite}
+@keyframes sh{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+.empty{border:1px solid var(--hair);padding:56px 26px;text-align:center;background:var(--l1)}
+.empty .ic{width:34px;height:34px;color:var(--brass);opacity:.7;margin:0 auto 18px}
+.empty h4{font-family:'Amiri',serif;font-size:22px;margin-block-end:8px}
+.empty p{color:var(--faint);font-size:11.5px;max-width:34ch;margin:0 auto 22px;line-height:1.85}
+
+.tabs{display:flex;border-block-end:1px solid var(--hair)}
+.tab{min-height:44px;padding-inline:20px;display:flex;align-items:center;font-size:11.5px;color:var(--faint);
+  cursor:pointer;position:relative;transition:color var(--m-quick) var(--e-out)}
+.tab.on{color:var(--bone)}
+.tab.on::after{content:'';position:absolute;inset-inline:0;bottom:-1px;height:1px;background:var(--brass)}
+
+.media{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:640px){.media{grid-template-columns:1fr}}
+.mcell{border:1px solid var(--hair);background:var(--l1)}
+.mcell .ph{aspect-ratio:4/5;position:relative;overflow:hidden}
+.mcell .cap{padding:12px 14px;color:var(--faint);font-size:10.5px;line-height:1.6}
+.mcell .cap b{display:block;font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass);margin-block-end:5px}
+.raw{background:linear-gradient(150deg,#8E8578,#C9C0B4 40%,#6E655C)}
+.norm{background:radial-gradient(120% 90% at 50% 32%,#3A2F26 0%,#221C17 48%,#0F0D0C 84%)}
+.norm::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(11,10,9,.55),rgba(11,10,9,0) 55%)}
+.mcell .bt{position:absolute;top:50%;right:50%;transform:translate(50%,-50%);width:48px;height:92px;border-radius:2px;
+  background:linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)}
+
+.note{border-inline-start:1px solid var(--brass);padding-inline-start:18px;color:var(--dim);
+  max-width:66ch;line-height:1.85;margin-block-start:26px}
+.note b{color:var(--bone);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="mast">
+    <svg class="device" viewBox="0 0 48 48" aria-label="Brand device">
+      <circle cx="24" cy="24" r="22" stroke-width="1"/>
+      <path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/>
+      <rect x="13" y="13" width="22" height="22" transform="rotate(45 24 24)" stroke-width=".8" opacity=".55"/>
+    </svg>
+    <div class="sub">Foundation &amp; Primitives</div>
+    <h1>الأساس</h1>
+    <p>نظام التصميم الكامل — الألوان، الحروف، الحركة، والمكوّنات الأوّلية.
+       كل سطح في المنصّة يُبنى من هذه الصفحة. الاتساق هو ما يصنع الإحساس بالفخامة، لا الزخرفة.</p>
+    <div class="slot">
+      <span class="lbl">Wordmark — pending D-1</span>
+      <span class="box"></span>
+    </div>
+  </header>
+
+  <!-- ============ 01 NUMERALS ============ -->
+  <section>
+    <div class="shd"><span class="no">01</span><h2>الأرقام</h2></div>
+    <p class="sdesc">
+      قرار مختلط، بقاعدة قاطعة. الأرقام العربية‑الهندية <b>تحريرية</b>؛ الأرقام الغربية <b>بيانات</b>.
+      التصنيف يكون بحسب نوع الرقم لا بحسب المكان، ويُطبَّق عبر دالّة واحدة حتى لا ينحرف أبدًا.
+    </p>
+
+    <div class="numrow">
+      <div class="numcell">
+        <div class="hd">Editorial — ٠١٢٣٤٥٦٧٨٩</div>
+        <div class="demo">٤٢ دار عطور مصرية</div>
+        <div class="demo">منذ ١٩٩٨</div>
+        <ul>
+          <li>العناوين التحريرية وأعداد الأقسام</li>
+          <li>قصص الدور وسنوات التأسيس داخل السرد</li>
+          <li>نصوص الحملات والمحتوى التعريفي</li>
+          <li>أي رقم داخل عنوان بخط Amiri</li>
+        </ul>
+      </div>
+      <div class="numcell">
+        <div class="hd">Data — 0123456789</div>
+        <div class="demo data"><span class="num">450</span> <span class="latin" style="font-size:10.5px;letter-spacing:1.8px;color:var(--dim)">EGP</span></div>
+        <div class="demo data"><span class="num">50</span> <span class="latin" style="font-size:10.5px;letter-spacing:1.8px;color:var(--dim)">ML</span> · <span class="num">4.6</span> ★</div>
+        <ul>
+          <li><b style="color:var(--bone)">كل الأسعار، دائمًا، بلا استثناء</b></li>
+          <li>الأحجام، التقييمات، عدد المراجعات</li>
+          <li>أرقام الطلبات والتتبّع والتواريخ والهواتف</li>
+          <li>كل ما يُكتب داخل حقل إدخال</li>
+          <li>كل شاشات البائع والإدارة — بالكامل</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+    <span class="lbl">Boundary rules — enforced, not advisory</span>
+
+    <div class="judge ok">
+      <span class="mk">DO</span>
+      <div><div class="ex">٤٢ دار عطور — يبدأ السعر من <span class="num">380</span> جنيه</div>
+      <div class="why">Editorial count in Amiri; price breaks out to Western even mid-sentence. Price comparability outranks tone.</div></div>
+    </div>
+    <div class="judge no">
+      <span class="mk">DON'T</span>
+      <div><div class="ex">السعر ٤٥٠ جنيه</div>
+      <div class="why">A price in Arabic-Indic. Prices are always Western — no exception, no context.</div></div>
+    </div>
+    <div class="judge no">
+      <span class="mk">DON'T</span>
+      <div><div class="ex">٤٢ دار · 380 منتج</div>
+      <div class="why">Two numeral styles in one component. Never mix inside a single sentence or element.</div></div>
+    </div>
+
+    <p class="note">
+      <b>Implementation:</b> one formatter decides — <span class="latin">formatNumber(value, { context: 'editorial' | 'data' })</span>.
+      No component ever chooses for itself. Western numerals always use tabular figures so prices align in a column.
+      Seller portal, admin, CMS and BI are <b>100% Western</b> — editorial numerals are a customer-facing brand device only.
+    </p>
+  </section>
+
+  <!-- ============ 02 COLOUR ============ -->
+  <section>
+    <div class="shd"><span class="no">02</span><h2>اللون</h2></div>
+    <p class="sdesc">
+      نوار، عظمي، ونحاسي. النحاسي للحظات فقط — سعر، خط فاصل، حالة نشطة واحدة.
+      في اللحظة التي يظهر فيها لون ثانٍ بارز، ينهار الانطباع بالكامل.
+    </p>
+
+    <span class="lbl">Surfaces</span>
+    <div class="grid g4" style="margin-block-end:34px">
+      <div class="sw"><div class="patch" style="background:#0B0A09;border-block-end:1px solid var(--hair)"></div><div class="meta"><div class="nm">NOIR</div><div class="hex">#0B0A09</div></div></div>
+      <div class="sw"><div class="patch" style="background:#131211"></div><div class="meta"><div class="nm">L1</div><div class="hex">#131211</div></div></div>
+      <div class="sw"><div class="patch" style="background:#1C1A18"></div><div class="meta"><div class="nm">L2</div><div class="hex">#1C1A18</div></div></div>
+      <div class="sw"><div class="patch" style="background:#242120"></div><div class="meta"><div class="nm">L3</div><div class="hex">#242120</div></div></div>
+    </div>
+
+    <span class="lbl">Ink — contrast measured against noir</span>
+    <div class="grid g4" style="margin-block-end:34px">
+      <div class="sw"><div class="patch" style="background:#EDE8DF"></div><div class="meta"><div class="nm">BONE</div><div class="hex">#EDE8DF</div><div class="cr">16.2:1</div></div></div>
+      <div class="sw"><div class="patch" style="background:#9A928A"></div><div class="meta"><div class="nm">DIM</div><div class="hex">#9A928A</div><div class="cr">6.45:1</div></div></div>
+      <div class="sw"><div class="patch" style="background:#8B837A"></div><div class="meta"><div class="nm">FAINT</div><div class="hex">#8B837A</div><div class="cr">5.3:1 — floor</div></div></div>
+      <div class="sw"><div class="patch" style="background:#B08D57"></div><div class="meta"><div class="nm">BRASS</div><div class="hex">#B08D57</div><div class="cr">6.4:1</div></div></div>
+    </div>
+
+    <span class="lbl">Note tiers — data visualisation only</span>
+    <div class="grid g3" style="margin-block-end:34px">
+      <div class="sw"><div class="patch" style="background:#C2A85C"></div><div class="meta"><div class="nm">TOP</div><div class="hex">#C2A85C</div></div></div>
+      <div class="sw"><div class="patch" style="background:#B5697E"></div><div class="meta"><div class="nm">HEART</div><div class="hex">#B5697E</div></div></div>
+      <div class="sw"><div class="patch" style="background:#8A6838"></div><div class="meta"><div class="nm">BASE</div><div class="hex">#8A6838</div></div></div>
+    </div>
+
+    <span class="lbl">Scent families — categorical, never chrome</span>
+    <div class="grid g4">
+      <div class="sw"><div class="patch" style="background:#4A3328"></div><div class="meta"><div class="nm">OUD</div><div class="hex">عود</div></div></div>
+      <div class="sw"><div class="patch" style="background:#A8681F"></div><div class="meta"><div class="nm">AMBER</div><div class="hex">عنبر</div></div></div>
+      <div class="sw"><div class="patch" style="background:#7A5C3E"></div><div class="meta"><div class="nm">WOODY</div><div class="hex">خشبي</div></div></div>
+      <div class="sw"><div class="patch" style="background:#C07A90"></div><div class="meta"><div class="nm">FLORAL</div><div class="hex">زهري</div></div></div>
+      <div class="sw"><div class="patch" style="background:#5A8C7C"></div><div class="meta"><div class="nm">FRESH</div><div class="hex">منعش</div></div></div>
+      <div class="sw"><div class="patch" style="background:#9A6B4A"></div><div class="meta"><div class="nm">GOURMAND</div><div class="hex">حلواني</div></div></div>
+      <div class="sw"><div class="patch" style="background:#8E8578"></div><div class="meta"><div class="nm">MUSK</div><div class="hex">مسك</div></div></div>
+    </div>
+
+    <p class="note">
+      <b>No elevation scale exists, deliberately.</b> Depth comes from value (<span class="latin">l1 → l2 → l3</span>)
+      and 1px hairlines — never from a shadow. A drop shadow requires written justification.
+      Never introduce a grey lighter than <span class="latin">#8B837A</span> on noir.
+    </p>
+  </section>
+
+  <!-- ============ 03 TYPOGRAPHY ============ -->
+  <section>
+    <div class="shd"><span class="no">03</span><h2>الحروف</h2></div>
+    <p class="sdesc">
+      المقياس مضبوط للعربية أولًا — العربية تحتاج ارتفاع سطر أكبر من اللاتينية،
+      وكل تطبيق يضبط اللاتينية أولًا يُنتج عربية مضغوطة وهاوية.
+    </p>
+
+    <div class="spec"><span class="tag">Amiri · 33 / 1.3</span><div class="t-h1">ليل القاهرة</div></div>
+    <div class="spec"><span class="tag">Amiri · 24 / 1.3</span><div class="t-h2">هرم النوتات</div></div>
+    <div class="spec"><span class="tag">Amiri · 22 / 1.3</span><div class="t-h3">دور مختارة</div></div>
+    <div class="spec"><span class="tag">Plex · 19 / 1.3</span><div class="t-h4">وصل حديثًا إلى المنصّة</div></div>
+    <div class="spec"><span class="tag">Plex · 14 / 1.85</span><div class="t-bodyLg">عطر شرقي دافئ يفتح بالبرغموت ويستقرّ على العنبر والعود.</div></div>
+    <div class="spec"><span class="tag">Plex · 13 / 1.6</span><div class="t-body">نصّ الجسم الأساسي. يُستخدم في الوصف والتفاصيل والمحتوى الطويل.</div></div>
+    <div class="spec"><span class="tag">Plex · 11.5</span><div class="t-small">نصّ ثانوي — الحدّ الأدنى للقراءة على الجوال.</div></div>
+    <div class="spec"><span class="tag">Plex · 10.5</span><div class="t-caption">تعليق رقمي وبيانات مساعدة.</div></div>
+    <div class="spec"><span class="tag">Bodoni · 9.5 / 2.4</span><div class="t-micro">EAU DE PARFUM · 50 ML</div></div>
+
+    <div class="rule"></div>
+    <span class="lbl">Mixed-content test — every screen must pass this</span>
+    <div style="font-size:19px;line-height:1.85;margin-block-end:10px">عطر <span class="latin">Cozy</span> بسعر <span class="num">450</span> جنيه</div>
+    <div style="font-size:14px;line-height:1.85;color:var(--dim)">من دار <span class="latin">Maison Nour</span> — حجم <span class="num">50</span> مل · وصل خلال <span class="num">3</span> أيام</div>
+
+    <p class="note">
+      <b>Amiri</b> for Arabic headings only. <b>Bodoni Moda</b> for Latin small-caps labels only, always
+      letterspaced. <b>IBM Plex Sans Arabic</b> for everything else. Latin runs inside Arabic are isolated
+      with <span class="latin">unicode-bidi: isolate</span> so bidi never scrambles a product name.
+      No forced uppercase on Arabic — it does not exist.
+    </p>
+  </section>
+
+  <!-- ============ 04 MOTION ============ -->
+  <section>
+    <div class="shd"><span class="no">04</span><h2>الحركة</h2></div>
+    <p class="sdesc">
+      الحركة لها ثِقَل. الأشياء تستقرّ، ولا تقفز أبدًا. اضغط على أي بطاقة لتجربة المدّة.
+    </p>
+    <div class="grid g4">
+      <div class="mo" onclick="this.classList.toggle('run')"><div class="nm">INSTANT</div><div class="track"><div class="dot"></div></div><div class="ms num">120ms · press feedback</div></div>
+      <div class="mo" onclick="this.classList.toggle('run')"><div class="nm">QUICK</div><div class="track"><div class="dot"></div></div><div class="ms num">240ms · small reveals</div></div>
+      <div class="mo" onclick="this.classList.toggle('run')"><div class="nm">BASE</div><div class="track"><div class="dot"></div></div><div class="ms num">420ms · default</div></div>
+      <div class="mo" onclick="this.classList.toggle('run')"><div class="nm">SLOW</div><div class="track"><div class="dot"></div></div><div class="ms num">640ms · screen transitions</div></div>
+    </div>
+    <p class="note">
+      Easing is <span class="latin">cubic-bezier(.16, 1, .3, 1)</span> by default — decisive, then settles.
+      <b>Forbidden: spring, overshoot, ease-in-back.</b> A bouncing element reads as a consumer app instantly.
+      Nothing under 120ms; below that a transition reads as a glitch rather than a move.
+      <span class="latin">prefers-reduced-motion</span> collapses every duration to 0.01ms.
+    </p>
+  </section>
+
+  <!-- ============ 05 SPACE ============ -->
+  <section>
+    <div class="shd"><span class="no">05</span><h2>المسافة والزوايا</h2></div>
+    <p class="sdesc">
+      المساحة الفارغة هي المادة الخام. الكثافة المنخفضة تقول «مدروس»؛ الشبكة المزدحمة تقول «تخفيضات».
+    </p>
+    <div class="spc">
+      <div><div class="bar" style="height:4px"></div><div class="v">4</div></div>
+      <div><div class="bar" style="height:8px"></div><div class="v">8</div></div>
+      <div><div class="bar" style="height:12px"></div><div class="v">12</div></div>
+      <div><div class="bar" style="height:16px"></div><div class="v">16</div></div>
+      <div><div class="bar" style="height:22px"></div><div class="v">22</div></div>
+      <div><div class="bar" style="height:26px"></div><div class="v">26</div></div>
+      <div><div class="bar" style="height:34px"></div><div class="v">34</div></div>
+      <div><div class="bar" style="height:48px"></div><div class="v">48</div></div>
+    </div>
+    <div class="rule"></div>
+    <span class="lbl">Radius — sharp, never soft</span>
+    <div class="row">
+      <div style="width:78px;height:52px;background:var(--l2);border-radius:0"></div>
+      <div style="width:78px;height:52px;background:var(--l2);border-radius:2px"></div>
+      <div style="width:78px;height:52px;background:var(--l2);border-radius:3px"></div>
+      <div style="width:52px;height:52px;background:var(--l2);border-radius:100px"></div>
+      <span class="t-caption num" style="margin-inline-start:8px">0 · 2 · 3 · pill (avatars and dots only)</span>
+    </div>
+    <p class="note">
+      Rounded corners read as approachable and mass-market; hairlines and right angles read as precise
+      and expensive. <b>Hit area is 44pt minimum</b> — the visual element may be smaller, the tap target may not.
+    </p>
+  </section>
+
+  <!-- ============ 06 PRIMITIVES ============ -->
+  <section>
+    <div class="shd"><span class="no">06</span><h2>المكوّنات الأوّلية</h2></div>
+    <p class="sdesc">
+      كل سطح في المنصّة يُبنى من هذه المكوّنات. لا يُستخدم أي مكوّن افتراضي من النظام —
+      نافذة تنبيه واحدة من <span class="latin">iOS</span> تكسر الانطباع فورًا.
+    </p>
+
+    <div class="pblock">
+      <span class="lbl">Buttons — five states each</span>
+      <div class="row">
+        <button class="btn btn-primary">أضف إلى الحقيبة</button>
+        <button class="btn btn-secondary">تفاصيل العطر</button>
+        <button class="btn btn-ghost">إلغاء</button>
+        <button class="btn btn-primary" disabled>غير متاح</button>
+        <button class="btn btn-primary"><span class="sp"></span>جارٍ التأكيد</button>
+      </div>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Fields</span>
+      <div style="max-width:420px">
+        <label class="field">
+          <span class="fl">Phone — primary identifier</span>
+          <input class="fi num" value="0100 123 4567" dir="ltr" style="text-align:right">
+          <span class="fh">نستخدم رقم الهاتف للتأكيد والتتبّع</span>
+        </label>
+        <label class="field err">
+          <span class="fl">Governorate</span>
+          <input class="fi" placeholder="اختر المحافظة">
+          <span class="fe">لا بدّ من اختيار المحافظة لحساب الشحن</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Chips — filters</span>
+      <div class="row">
+        <span class="chip on"><span class="dt" style="background:var(--fam-oud)"></span>عود</span>
+        <span class="chip"><span class="dt" style="background:var(--fam-amber)"></span>عنبر</span>
+        <span class="chip"><span class="dt" style="background:var(--fam-floral)"></span>زهري</span>
+        <span class="chip"><span class="dt" style="background:var(--fam-fresh)"></span>منعش</span>
+        <span class="chip">مسائي</span>
+        <span class="chip">أقل من <span class="num">500</span></span>
+      </div>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Badges — quiet, never shouting</span>
+      <div class="row">
+        <span class="badge verif">VERIFIED SELLER</span>
+        <span class="badge spon">SPONSORED</span>
+        <span class="badge low">LAST <span class="num">2</span></span>
+        <span class="badge">EAU DE PARFUM</span>
+      </div>
+      <p class="note" style="margin-block-start:18px">
+        <b>Sponsored is always labelled</b> and always visually separated from organic quality signals.
+        <span class="latin">LAST 2</span> states stock as fact — never as urgency. No countdown timers,
+        no red banners, no exclamation marks.
+      </p>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Product card</span>
+      <div class="grid g4">
+        <div class="card">
+          <div class="img"><div class="btl"></div><div class="veil"></div></div>
+          <div class="body">
+            <div class="brand">MAISON NOUR</div>
+            <div class="nm">ليل القاهرة</div>
+            <div class="meta"><span class="num">50</span> مل · شرقي دافئ</div>
+            <div class="pr"><span class="num">450</span><span class="cur">EGP</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="img"><div class="btl" style="background:linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)"></div><div class="veil"></div></div>
+          <div class="body">
+            <div class="brand">DAR AL ATHAR</div>
+            <div class="nm">صحراء</div>
+            <div class="meta"><span class="num">100</span> مل · خشبي</div>
+            <div class="pr"><span class="num">620</span><span class="cur">EGP</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="img skel" style="aspect-ratio:4/5"></div>
+          <div class="body">
+            <div class="skel" style="height:9px;width:52%;margin-block-end:9px"></div>
+            <div class="skel" style="height:15px;width:74%;margin-block-end:9px"></div>
+            <div class="skel" style="height:10px;width:44%;margin-block-end:12px"></div>
+            <div class="skel" style="height:13px;width:36%"></div>
+          </div>
+        </div>
+      </div>
+      <p class="note" style="margin-block-start:18px">
+        The skeleton matches the final layout <b>dimension for dimension</b> — zero layout shift when content
+        arrives. <b>No spinners anywhere</b> in content loading.
+      </p>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Performance meters — fill from the right</span>
+      <div style="max-width:420px">
+        <div class="meter">
+          <div class="mh"><span class="mn">الثبات</span><span class="mv">LONG · <span class="num">6–8</span>H</span></div>
+          <div class="mt"><div class="mf" style="width:72%"></div></div>
+          <div class="src">المصدر: تقييمات المشترين — <span class="num">38</span> مراجعة</div>
+        </div>
+        <div class="meter">
+          <div class="mh"><span class="mn">الانتشار</span><span class="mv">MODERATE</span></div>
+          <div class="mt"><div class="mf" style="width:48%"></div></div>
+          <div class="src">المصدر: بيانات البائع</div>
+        </div>
+      </div>
+      <p class="note" style="margin-block-start:18px">
+        Bands are defined vocabularies, never free text, and <b>every band discloses its source</b> —
+        seller-provided, platform test, or review aggregate. A seller claim is never presented as platform fact.
+      </p>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Tabs</span>
+      <div class="tabs">
+        <span class="tab on">الوصف</span>
+        <span class="tab">النوتات</span>
+        <span class="tab">المراجعات · <span class="num">38</span></span>
+        <span class="tab">الشحن والإرجاع</span>
+      </div>
+    </div>
+
+    <div class="pblock">
+      <span class="lbl">Empty state — a brand moment, never a blank screen</span>
+      <div class="empty">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg>
+        <h4>لم تحفظ عطرًا بعد</h4>
+        <p>احفظ ما يلفتك أثناء التصفّح، وستجده هنا في انتظارك.</p>
+        <button class="btn btn-secondary">تصفّح الدور</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 MEDIA ============ -->
+  <section>
+    <div class="shd"><span class="no">07</span><h2>معالجة الصور</h2></div>
+    <p class="sdesc">
+      البائعون سيرسلون صورًا من إنستغرام بجودة متفاوتة. النظام يفرض معالجة موحّدة
+      حتى تبدو المصادر المختلفة متجانسة ومقصودة.
+    </p>
+    <div class="media">
+      <div class="mcell">
+        <div class="ph raw"><div class="bt"></div></div>
+        <div class="cap"><b>SOURCE</b>صورة بائع نموذجية — خلفية فاتحة، إضاءة غير محكومة، نسبة عشوائية.</div>
+      </div>
+      <div class="mcell">
+        <div class="ph norm"><div class="bt"></div></div>
+        <div class="cap"><b>NORMALISED</b>خلفية نوار مُركّبة، تدرّج سفلي، نسبة <span class="num">4:5</span> ثابتة، حدّ أدنى للدقّة.</div>
+      </div>
+      <div class="mcell">
+        <div class="ph skel"></div>
+        <div class="cap"><b>PLACEHOLDER</b>تدرّج بلون العلامة — لا مربّعات رمادية، ولا مؤشّر تحميل دوّار.</div>
+      </div>
+    </div>
+    <p class="note">
+      <b>Art direction spec:</b> fixed <span class="num latin">4:5</span> ratio for cards,
+      <span class="num latin">3:4</span> for product hero, <span class="num latin">16:9</span> for storefront banners.
+      Minimum <span class="num latin">1400px</span> on the long edge — <b>never upscale</b>. Composited noir ground,
+      bottom gradient veil at <span class="num latin">0.44</span> opacity, blur-up placeholders in brand tones.
+      Two-tier treatment: hero products shot properly, long tail normalised — so the difference reads as
+      editorial hierarchy, not inconsistency.
+    </p>
+  </section>
+
+  <div class="rule"></div>
+  <p style="color:var(--faint);font-size:10.5px;line-height:1.85;max-width:66ch">
+    Governed by <span class="latin">docs/DESIGN_DOCTRINE.md</span>. Tokens are the single source of truth in
+    <span class="latin">src/tokens.json</span> — never hardcode a value that lives there.
+    Wordmark, app icon and splash are blocked on <b>D-1</b>; the device above is name-independent and final.
+  </p>
+
+</div>
+</body>
+</html>

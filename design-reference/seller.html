@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — بوّابة الدار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;
+  justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.col.wide{width:820px}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6;direction:ltr;text-align:left}
+.tag b{display:block;font-size:15px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;--hair:#2A2724;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--fresh:#5A8C7C;--heart:#B5697E;
+ background:var(--noir);color:var(--bone);overflow:hidden;direction:rtl;min-height:700px;
+ display:flex;flex-direction:column;font-size:13px;line-height:1.6}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+.lat{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+.en{direction:ltr;text-align:left}
+
+.bar{display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+  border-block-end:1px solid var(--hair);flex-shrink:0}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.ic svg{width:18px;height:18px}
+.bar .ttl{font-family:'Amiri',serif;font-size:19px}
+.bar .cd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2px;color:var(--faint);min-width:44px;text-align:center}
+.scroll{flex:1;overflow:hidden}
+.sechd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);padding:16px 16px 9px}
+
+/* fields */
+.fld{padding:0 16px 14px}
+.fl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);display:block;margin-block-end:8px}
+.fi{width:100%;min-height:52px;background:var(--l2);border:1px solid transparent;color:var(--bone);
+  padding-inline:14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;border-radius:2px}
+.fi::placeholder{color:var(--faint)}
+.fi.area{min-height:88px;padding-block:13px}
+.fh{color:var(--faint);font-size:10.5px;margin-block-start:7px;line-height:1.6}
+.two{display:flex;gap:10px}.two>*{flex:1}
+
+/* verification checklist */
+.vrow{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-block-end:1px solid var(--hair)}
+.vrow .mk{width:18px;height:18px;flex-shrink:0;border-radius:50%;border:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:center;margin-top:2px}
+.vrow .mk svg{width:10px;height:10px}
+.vrow.ok .mk{border-color:var(--fresh);color:var(--fresh)}
+.vrow.now .mk{border-color:var(--brass);color:var(--brass);box-shadow:0 0 0 3px rgba(176,141,87,.14)}
+.vrow .bd{flex:1}
+.vrow .t1{font-size:12.5px;margin-block-end:2px}
+.vrow .t2{color:var(--faint);font-size:10.5px;line-height:1.65}
+.vrow .st{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);flex-shrink:0;margin-top:3px}
+.vrow.ok .st{color:var(--fresh)}
+.vrow.now .st{color:var(--brass)}
+
+.pbar{height:2px;background:var(--hair);position:relative}
+.pbar i{position:absolute;inset-block:0;inset-inline-start:0;background:var(--brass);display:block}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);
+  border-block:1px solid var(--hair)}
+.tile{background:var(--noir);padding:16px}
+.tile .k{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2px;color:var(--faint);margin-block-end:7px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .v .c{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:1.6px;color:var(--dim);margin-inline-start:5px}
+.tile .d{color:var(--faint);font-size:10px;margin-block-start:4px}
+.tile .v.warn{color:var(--brass)}
+
+/* order queue */
+.q{padding:14px 16px;border-block-end:1px solid var(--hair);cursor:pointer}
+.q .top{display:flex;justify-content:space-between;align-items:baseline;margin-block-end:7px}
+.q .on{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2px;color:var(--faint)}
+.q .clk{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.4px;color:var(--brass)}
+.q .clk.tight{color:var(--heart)}
+.q .nm{font-size:13px;margin-block-end:3px}
+.q .mt{color:var(--faint);font-size:10.5px;margin-block-end:10px}
+.q .src{display:inline-flex;align-items:center;gap:5px;font-family:'Bodoni Moda',serif;font-size:8px;
+  letter-spacing:1.4px;border:1px solid var(--hair);padding:3px 7px;color:var(--dim)}
+.q .src.own{border-color:rgba(90,140,124,.42);color:var(--fresh)}
+.q .bot{display:flex;justify-content:space-between;align-items:center;margin-block-start:10px}
+.q .amt{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.q .amt .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--dim);margin-inline-start:6px}
+
+/* buttons */
+.act{display:flex;gap:9px;padding:14px 16px}
+.abtn{flex:1;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--hair);background:transparent;color:var(--bone);border-radius:2px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;cursor:pointer}
+.abtn.pri{background:var(--brass);color:var(--noir);border-color:var(--brass);font-weight:600}
+.abtn.dis{color:var(--heart);border-color:rgba(181,105,126,.4)}
+.foot{padding:14px 16px 18px;border-block-start:1px solid var(--hair);flex-shrink:0;background:var(--noir)}
+.btn{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;
+  background:var(--brass);color:var(--noir);border:0;border-radius:2px;cursor:pointer;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--hair);min-height:44px;font-size:13px;font-weight:500;margin-block-start:9px}
+.foot .fine{text-align:center;color:var(--faint);font-size:9.5px;margin-block-start:11px;line-height:1.6}
+
+/* note */
+.note{display:flex;gap:10px;padding:12px 16px;margin:0 16px 14px;background:var(--l1);
+  border-inline-start:1px solid var(--brass)}
+.note.alert{border-inline-start-color:var(--heart)}
+.note svg{width:15px;height:15px;color:var(--brass);flex-shrink:0;margin-top:2px}
+.note.alert svg{color:var(--heart)}
+.note p{color:var(--dim);font-size:10.5px;line-height:1.75}
+.note b{color:var(--bone);font-weight:500}
+
+/* reason options */
+.ropt{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--hair);
+  margin:0 16px 9px;border-radius:2px;min-height:52px;cursor:pointer}
+.ropt.on{border-color:var(--brass);background:var(--l1)}
+.ropt .rd{width:15px;height:15px;border:1px solid var(--faint);border-radius:50%;flex-shrink:0;position:relative}
+.ropt.on .rd{border-color:var(--brass)}
+.ropt.on .rd::after{content:'';position:absolute;inset:3px;background:var(--brass);border-radius:50%}
+.ropt .tx{flex:1;font-size:12.5px}
+.ropt .tx i{display:block;font-style:normal;color:var(--faint);font-size:10px;margin-top:2px}
+
+/* ---- statement ---- */
+.stmt{padding:18px 16px;border-block-end:1px solid var(--hair)}
+.stmt .per{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2px;color:var(--faint);margin-block-end:9px}
+.stmt .big{font-size:33px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.stmt .big .c{font-family:'Bodoni Moda',serif;font-size:11px;letter-spacing:2px;color:var(--dim);margin-inline-start:7px}
+.stmt .sub{color:var(--dim);font-size:11.5px;margin-block-start:8px}
+.sl{display:flex;justify-content:space-between;padding-block:8px;font-size:12px}
+.sl .k{color:var(--dim)}
+.sl .v{font-variant-numeric:tabular-nums}
+.sl .v.neg{color:var(--heart)}
+.tot2{display:flex;justify-content:space-between;align-items:baseline;padding-block:13px 2px;
+  border-block-start:1px solid var(--hair);margin-block-start:7px}
+.tot2 .k{font-family:'Amiri',serif;font-size:17px}
+.tot2 .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.oline{display:flex;align-items:center;gap:11px;padding:12px 16px;border-block-end:1px solid var(--hair)}
+.oline .l{flex:1;min-width:0}
+.oline .o1{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:1.6px;color:var(--faint);margin-block-end:4px}
+.oline .o2{display:flex;align-items:center;gap:6px}
+.oline .rate{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:1.2px;padding:2px 6px;border:1px solid var(--hair);color:var(--dim)}
+.oline .rate.low{border-color:rgba(90,140,124,.42);color:var(--fresh)}
+.oline .sname{color:var(--faint);font-size:10px}
+.oline .r{text-align:start;flex-shrink:0}
+.oline .gross{font-size:12.5px;font-variant-numeric:tabular-nums}
+.oline .fee{color:var(--heart);font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px}
+.oline.void .gross{color:var(--faint);text-decoration:line-through}
+.oline.void .fee{color:var(--fresh)}
+
+/* ---- desktop product editor ---- */
+.dt{display:flex;min-height:640px}
+.dt .side{width:220px;border-inline-end:1px solid var(--hair);flex-shrink:0;padding-block:12px}
+.dt .side .grp{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;font-size:12px;color:var(--dim);min-height:44px}
+.dt .side .grp.on{color:var(--bone);background:var(--l1);border-inline-start:1px solid var(--brass)}
+.dt .side .grp .dot{width:6px;height:6px;border-radius:50%;background:var(--heart);flex-shrink:0}
+.dt .side .grp .dot.ok{background:var(--fresh)}
+.dt .main{flex:1;padding:20px 22px;overflow:hidden}
+.dt h3{font-family:'Amiri',serif;font-size:22px;margin-block-end:4px}
+.dt .hint{color:var(--faint);font-size:11px;margin-block-end:20px}
+.frow{display:flex;gap:14px;margin-block-end:16px}
+.frow>*{flex:1}
+.frow label{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chp{min-height:44px;padding-inline:14px;display:inline-flex;align-items:center;gap:7px;background:var(--l2);
+  color:var(--dim);font-size:11.5px;border:1px solid transparent;border-radius:2px;cursor:pointer}
+.chp.on{background:transparent;border-color:var(--brass);color:var(--brass)}
+.chp .d{width:6px;height:6px;border-radius:50%}
+.gate{border:1px solid var(--hair);background:var(--l1);padding:16px;margin-block-start:22px}
+.gate .gh{display:flex;align-items:center;gap:9px;margin-block-end:12px}
+.gate .gh svg{width:15px;height:15px;color:var(--heart)}
+.gate .gh b{font-size:12.5px}
+.gate ul{list-style:none}
+.gate li{color:var(--dim);font-size:11px;padding-block:4px;padding-inline-start:15px;position:relative}
+.gate li::before{content:'';position:absolute;inset-inline-start:0;top:10px;width:5px;height:1px;background:var(--heart)}
+.gate li.ok{color:var(--faint)}
+.gate li.ok::before{background:var(--fresh)}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. APPLICATION ============ -->
+<div class="col">
+  <div class="tag"><b>Seller application</b>There is no self-signup. This is an application, and the copy says so — trust before scale (doc 01 §6).</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">انضمّ كدار</div><div class="cd"></div></div>
+    <div class="scroll">
+      <div style="padding:20px 16px 6px">
+        <div style="font-family:Amiri,serif;font-size:24px;margin-bottom:8px">قدّم دارك</div>
+        <div style="color:var(--dim);font-size:11.5px;line-height:1.85">نراجع كل طلب يدويًا. نختار عددًا محدودًا من الدور،
+          لأن تجربة سيّئة واحدة تضرّ السوق كلّه.</div>
+      </div>
+      <div class="sechd">THE HOUSE</div>
+      <div class="fld"><span class="fl">Trading name</span><input class="fi" placeholder="اسم الدار كما يعرفه عملاؤك"></div>
+      <div class="fld"><span class="fl">Owner name</span><input class="fi" placeholder="الاسم الكامل"></div>
+      <div class="fld"><span class="fl">Mobile</span><input class="fi num" placeholder="01xx xxx xxxx" dir="ltr" style="text-align:right"></div>
+      <div class="fld two">
+        <div><span class="fl">Governorate</span><input class="fi" placeholder="القاهرة"></div>
+        <div><span class="fl">Products</span><input class="fi num" placeholder="عدد العطور" dir="ltr" style="text-align:right"></div>
+      </div>
+      <div class="sechd">WHERE YOU SELL TODAY</div>
+      <div class="fld"><span class="fl">Instagram / site</span><input class="fi" placeholder="@" dir="ltr" style="text-align:right">
+        <div class="fh">نطّلع على صفحتك لفهم منتجاتك وطريقة عملك.</div></div>
+      <div class="fld"><span class="fl">Monthly orders — roughly</span><input class="fi num" placeholder="كم طلبًا في الشهر؟" dir="ltr" style="text-align:right"></div>
+    </div>
+    <div class="foot">
+      <button class="btn">أرسل الطلب</button>
+      <div class="fine">نردّ خلال <span class="num">3</span> أيام عمل</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. VERIFICATION ============ -->
+<div class="col">
+  <div class="tag"><b>Verification status</b>The eight controls from doc 06 §3, each tracked separately with its evidence. A house cannot go live with an incomplete checklist — there is no override.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">التوثيق</div><div class="cd num">5/8</div></div>
+    <div class="scroll">
+      <div style="padding:20px 16px 14px">
+        <div style="font-family:Amiri,serif;font-size:22px;margin-bottom:6px">خمس خطوات من ثمانٍ</div>
+        <div style="color:var(--dim);font-size:11.5px;line-height:1.8">تفتح دارك للبيع حين تكتمل كل الخطوات.</div>
+        <div class="pbar" style="margin-top:14px"><i style="width:62.5%"></i></div>
+      </div>
+
+      <div class="vrow ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <div class="bd"><div class="t1">هويّة المالك والنشاط</div><div class="t2">بطاقة الرقم القومي · السجل التجاري</div></div><span class="st">DONE</span></div>
+      <div class="vrow ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <div class="bd"><div class="t1">حساب التحويل</div><div class="t2">تأكيد ملكية الحساب البنكي</div></div><span class="st">DONE</span></div>
+      <div class="vrow ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <div class="bd"><div class="t1">مسؤوليّة المنتج</div><div class="t2">جهة التصنيع ومستندات المنتج</div></div><span class="st">DONE</span></div>
+      <div class="vrow ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <div class="bd"><div class="t1">الملصقات والتغليف</div><div class="t2">صور العبوة والبيانات المطلوبة</div></div><span class="st">DONE</span></div>
+      <div class="vrow ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <div class="bd"><div class="t1">مسؤول البيانات والخصوصيّة</div><div class="t2">اسم وبيانات تواصل</div></div><span class="st">DONE</span></div>
+
+      <div class="vrow now"><span class="mk"><svg viewBox="0 0 24 24"><path d="M12 7.5V12l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <div class="bd"><div class="t1">إثبات الادّعاءات</div>
+          <div class="t2">راجعنا <span class="num">3</span> أوصاف تحتاج تعديلًا — لا يُسمح بنِسَب تشابه غير مُثبتة</div></div><span class="st">REVIEW</span></div>
+
+      <div class="vrow"><span class="mk"></span>
+        <div class="bd"><div class="t1">مسار الإرجاع والعيوب</div><div class="t2">عنوان الاستلام وخطوات المعالجة</div></div><span class="st">TODO</span></div>
+      <div class="vrow"><span class="mk"></span>
+        <div class="bd"><div class="t1">طلب تجريبي</div><div class="t2">طلب كامل من التغليف حتى التسليم</div></div><span class="st">TODO</span></div>
+
+      <div class="note alert" style="margin-top:14px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+        <p><b>ثلاثة أوصاف تحتاج تعديلًا.</b> عبارات مثل «مطابق ٩٥٪» غير مسموحة —
+           راجع الأوصاف قبل المتابعة.</p>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">راجع الأوصاف</button></div>
+  </div>
+</div>
+
+<!-- ============ 3. SELLER HOME ============ -->
+<div class="col">
+  <div class="tag"><b>House dashboard</b>Operating tool, not a brand surface: higher density, Western numerals throughout, state signalled clearly. Same tokens, same restraint.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/></svg></div>
+      <div class="ttl">دار الورد</div><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg></div></div>
+    <div class="scroll">
+      <div class="note alert" style="margin:14px 16px">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+        <p><b>طلبان ينتظران تأكيدك.</b> أقربهما يتبقّى له <span class="num">2</span> ساعة و<span class="num">40</span> دقيقة.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="k">AWAITING YOU</div><div class="v warn num">2</div><div class="d">طلبات غير مؤكّدة</div></div>
+        <div class="tile"><div class="k">IN FULFILMENT</div><div class="v num">7</div><div class="d">قيد التجهيز والشحن</div></div>
+        <div class="tile"><div class="k">SALES · 30D</div><div class="v num">18,420<span class="c">EGP</span></div><div class="d"><span class="num">31</span> طلبًا مكتملًا</div></div>
+        <div class="tile"><div class="k">AVG COMMISSION</div><div class="v num">6.4<span class="c">%</span></div><div class="d">معظم طلباتك من متجرك</div></div>
+        <div class="tile"><div class="k">CONFIRM TIME</div><div class="v num">3.2<span class="c">H</span></div><div class="d">المستهدف <span class="num">24</span> ساعة</div></div>
+        <div class="tile"><div class="k">REFUSAL RATE</div><div class="v num">4.8<span class="c">%</span></div><div class="d">متوسط المنصّة <span class="num">7.1</span>٪</div></div>
+      </div>
+
+      <div class="sechd">NEXT PAYOUT</div>
+      <div style="padding:0 16px 16px">
+        <div class="sl"><span class="k">الصافي المستحق</span><span class="v num">3,779 EGP</span></div>
+        <div class="sl"><span class="k">تاريخ التحويل</span><span class="v"><span class="num">8</span> سبتمبر</span></div>
+        <div class="sl"><span class="k">قيد فترة الإرجاع</span><span class="v num">1,140 EGP</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. ORDER QUEUE ============ -->
+<div class="col">
+  <div class="tag"><b>Order queue — the SLA screen</b>The most time-critical surface in the product. Each order shows its attribution source, because that is what sets the commission the house will pay.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الطلبات</div><div class="cd num">9</div></div>
+    <div class="scroll">
+      <div class="q">
+        <div class="top"><span class="on">DY-24817-B</span><span class="clk tight">2H 40M LEFT</span></div>
+        <div class="nm">ورد الطائف · <span class="num">30</span> مل</div>
+        <div class="mt">مدينة نصر، القاهرة · الدفع عند الاستلام</div>
+        <span class="src own">YOUR STOREFRONT · 5%</span>
+        <div class="bot"><span class="amt num">380<span class="c">EGP</span></span>
+          <span style="color:var(--brass);font-size:10.5px">أكّد الآن</span></div>
+      </div>
+
+      <div class="q">
+        <div class="top"><span class="on">DY-24902-A</span><span class="clk">18H LEFT</span></div>
+        <div class="nm">عنبر ليلي · <span class="num">50</span> مل × <span class="num">2</span></div>
+        <div class="mt">المعادي، القاهرة · مدفوع بالبطاقة</div>
+        <span class="src">MARKETPLACE SEARCH · 15%</span>
+        <div class="bot"><span class="amt num">1,240<span class="c">EGP</span></span>
+          <span style="color:var(--brass);font-size:10.5px">أكّد الآن</span></div>
+      </div>
+
+      <div class="sechd">IN FULFILMENT</div>
+
+      <div class="q">
+        <div class="top"><span class="on">DY-24790-A</span><span class="clk" style="color:var(--faint)">DISPATCH BY 6PM</span></div>
+        <div class="nm">ورد الطائف · <span class="num">30</span> مل</div>
+        <div class="mt">مؤكّد · جهّز الشحنة</div>
+        <span class="src own">YOUR STOREFRONT · 5%</span>
+        <div class="bot"><span class="amt num">380<span class="c">EGP</span></span>
+          <span style="color:var(--brass);font-size:10.5px">احجز الشحن</span></div>
+      </div>
+
+      <div class="q">
+        <div class="top"><span class="on">DY-24755-C</span><span class="clk" style="color:var(--fresh)">IN TRANSIT</span></div>
+        <div class="nm">مسك أبيض · <span class="num">100</span> مل</div>
+        <div class="mt">مع المندوب · بوسطة <span class="num">7742019</span></div>
+        <span class="src">PAID CAMPAIGN · 15%</span>
+        <div class="bot"><span class="amt num">640<span class="c">EGP</span></span>
+          <span style="color:var(--faint);font-size:10.5px">تتبّع</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. CONFIRM / REJECT ============ -->
+<div class="col">
+  <div class="tag"><b>Confirm or decline</b>Declining requires a coded reason — doc 06 §7 forbids generic reasons, because refusal cost has to be allocated to a documented party. The consequence is stated before the house commits.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الطلب</div><div class="cd">DY-24817-B</div></div>
+    <div class="scroll">
+      <div style="padding:18px 16px 6px">
+        <div style="font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.4px;color:var(--heart);margin-bottom:8px">2H 40M LEFT TO CONFIRM</div>
+        <div style="font-family:Amiri,serif;font-size:22px">ورد الطائف</div>
+        <div style="color:var(--faint);font-size:11px;margin-top:4px"><span class="num">30</span> مل · أو دو بارفان · SKU <span class="num">WRD-30</span></div>
+      </div>
+
+      <div class="sechd">STOCK</div>
+      <div style="padding:0 16px 14px">
+        <div class="sl"><span class="k">المتاح لديك</span><span class="v num">4 قطع</span></div>
+        <div class="sl"><span class="k">المطلوب</span><span class="v num">1 قطعة</span></div>
+      </div>
+
+      <div class="sechd">COMMISSION ON THIS ORDER</div>
+      <div style="padding:0 16px 14px">
+        <div class="sl"><span class="k">المصدر</span><span class="v" style="color:var(--fresh)">متجرك — رابط حسابك</span></div>
+        <div class="sl"><span class="k">النسبة</span><span class="v num" style="color:var(--fresh)">5%</span></div>
+        <div class="sl"><span class="k">قيمة المنتجات</span><span class="v num">380 EGP</span></div>
+        <div class="sl"><span class="k">عمولة المنصّة</span><span class="v num neg">−19 EGP</span></div>
+        <div class="tot2"><span class="k">صافيك</span><span class="v num">361 EGP</span></div>
+      </div>
+
+      <div class="note">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p>هذا الطلب جاء من <b>رابط متجرك</b>، لذلك العمولة <span class="num">5</span>٪ لا <span class="num">15</span>٪.
+           لا نحاسبك على طلب لم نصنع طلبه.</p>
+      </div>
+
+      <div class="act">
+        <button class="abtn pri">أكّد الطلب</button>
+        <button class="abtn dis">اعتذر</button>
+      </div>
+
+      <div class="sechd">IF YOU DECLINE — REASON REQUIRED</div>
+      <div class="ropt on"><span class="rd"></span><span class="tx">نفد المخزون<i>يُحدَّث المخزون تلقائيًا إلى صفر</i></span></div>
+      <div class="ropt"><span class="rd"></span><span class="tx">خطأ في السعر أو الوصف</span></div>
+      <div class="ropt"><span class="rd"></span><span class="tx">لا نخدم هذه المنطقة</span></div>
+      <div class="ropt"><span class="rd"></span><span class="tx">اشتباه في طلب غير جادّ</span></div>
+
+      <div class="note alert">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+        <p>الاعتذار يُسجَّل في تقييم أداء دارك، ويظهر للعميل باسم المنصّة لا باسمك.
+           <b>لا نُحمّل العميل مسؤوليّة الاعتذار.</b></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6. PAYOUT STATEMENT ============ -->
+<div class="col">
+  <div class="tag"><b>Payout statement — the trust screen</b>Every line shows its attribution source and the rate that produced it. This is what makes 15% acceptable: the house can see it only applied where the platform created the demand.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">كشف الحساب</div><div class="cd">AUG</div></div>
+    <div class="scroll">
+      <div class="stmt">
+        <div class="per">18 – 31 AUGUST 2026</div>
+        <div class="big num">3,779<span class="c">EGP</span></div>
+        <div class="sub">يُحوَّل في <span class="num">8</span> سبتمبر · الاعتراض حتى <span class="num">15</span> سبتمبر</div>
+      </div>
+
+      <div style="padding:14px 16px">
+        <div class="sl"><span class="k">مبيعات مكتملة · <span class="num">4</span> طلبات</span><span class="v num">4,280</span></div>
+        <div class="sl"><span class="k">عمولة المنصّة</span><span class="v num neg">−276</span></div>
+        <div class="sl"><span class="k">الشحن المحصّل للشركة</span><span class="v num neg">−225</span></div>
+        <div class="sl"><span class="k">مرتجعات</span><span class="v num">0</span></div>
+        <div class="sl"><span class="k">تسويات</span><span class="v num">0</span></div>
+        <div class="tot2"><span class="k">الصافي</span><span class="v num">3,779 EGP</span></div>
+        <div style="color:var(--faint);font-size:10.5px;margin-top:10px">متوسط العمولة الفعلي <span class="num">6.4</span>٪ — لأن <span class="num">3</span> من <span class="num">4</span> طلبات جاءت من متجرك.</div>
+      </div>
+
+      <div class="sechd">ORDER BY ORDER</div>
+      <div class="oline">
+        <div class="l"><div class="o1">DY-24817-A · 1 SEP</div>
+          <div class="o2"><span class="rate low">5%</span><span class="sname">متجرك</span></div></div>
+        <div class="r"><div class="gross num">1,520</div><div class="fee num">−76</div></div>
+      </div>
+      <div class="oline">
+        <div class="l"><div class="o1">DY-24390-B · 24 AUG</div>
+          <div class="o2"><span class="rate">15%</span><span class="sname">بحث المنصّة</span></div></div>
+        <div class="r"><div class="gross num">620</div><div class="fee num">−93</div></div>
+      </div>
+      <div class="oline">
+        <div class="l"><div class="o1">DY-24455-A · 26 AUG</div>
+          <div class="o2"><span class="rate low">5%</span><span class="sname">متجرك</span></div></div>
+        <div class="r"><div class="gross num">900</div><div class="fee num">−45</div></div>
+      </div>
+      <div class="oline">
+        <div class="l"><div class="o1">DY-24602-A · 29 AUG</div>
+          <div class="o2"><span class="rate low">5%</span><span class="sname">متجرك</span></div></div>
+        <div class="r"><div class="gross num">1,240</div><div class="fee num">−62</div></div>
+      </div>
+      <div class="oline void">
+        <div class="l"><div class="o1">DY-24501-C · 27 AUG</div>
+          <div class="o2"><span class="rate">15%</span><span class="sname">مُرتجع — العمولة أُلغيت</span></div></div>
+        <div class="r"><div class="gross num">440</div><div class="fee num">+66</div></div>
+      </div>
+
+      <div class="note">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p><b>العمولة تُحتسب على الطلبات المكتملة فقط.</b> الطلب المُرتجع أُعيدت عمولته بالكامل.</p>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" style="margin:0">حمّل الكشف <span class="lat">PDF</span></button>
+      <button class="btn ghost">اعترض على بند</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 7. PRODUCT EDITOR (DESKTOP) ============ -->
+<div class="col wide">
+  <div class="tag"><b>Product editor — the publish gate (desktop)</b>Catalogue work is a desktop job; the order queue is a phone job. The Specification pattern made visible: a listing cannot publish until every required group is complete, enforced in the database and not only here.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">ورد الطائف</div>
+      <div style="display:flex;align-items:center;gap:10px;padding-inline-end:10px">
+        <span style="font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--brass);border:1px solid rgba(176,141,87,.42);padding:4px 9px">DRAFT</span>
+      </div>
+    </div>
+    <div class="dt">
+      <div class="side">
+        <div class="grp on"><span class="dot ok"></span>الهويّة</div>
+        <div class="grp"><span class="dot ok"></span>السعر والمخزون</div>
+        <div class="grp"><span class="dot ok"></span>خصائص العطر</div>
+        <div class="grp"><span class="dot"></span>الاستخدام</div>
+        <div class="grp"><span class="dot"></span>الامتثال</div>
+        <div class="grp"><span class="dot"></span>الصور</div>
+        <div class="grp"><span class="dot ok"></span>سياسة الإرجاع</div>
+      </div>
+      <div class="main">
+        <h3>خصائص العطر</h3>
+        <div class="hint">مفردات محدّدة فقط — لا نصّ حرّ حيث توجد قائمة. جودة البيانات هي أهم أصل في المنصّة.</div>
+
+        <div class="frow">
+          <label><span class="fl">Concentration</span><input class="fi" value="أو دو بارفان"></label>
+          <label><span class="fl">Volume</span><input class="fi num" value="30" dir="ltr" style="text-align:right"></label>
+          <label><span class="fl">Form</span><input class="fi" value="بخّاخ"></label>
+        </div>
+
+        <div style="margin-block-end:16px"><span class="fl">Scent family</span>
+          <div class="chips">
+            <span class="chp on"><span class="d" style="background:var(--fam-floral,#C07A90)"></span>زهري</span>
+            <span class="chp"><span class="d" style="background:#4A3328"></span>عود</span>
+            <span class="chp"><span class="d" style="background:#A8681F"></span>عنبر</span>
+            <span class="chp"><span class="d" style="background:#7A5C3E"></span>خشبي</span>
+            <span class="chp"><span class="d" style="background:#5A8C7C"></span>منعش</span>
+            <span class="chp"><span class="d" style="background:#9A6B4A"></span>حلواني</span>
+            <span class="chp"><span class="d" style="background:#8E8578"></span>مسك</span>
+          </div>
+        </div>
+
+        <div class="frow">
+          <label><span class="fl">Top notes</span><input class="fi" value="برغموت · ليمون"></label>
+          <label><span class="fl">Heart notes</span><input class="fi" value="ورد طائفي · ياسمين"></label>
+          <label><span class="fl">Base notes</span><input class="fi" value="مسك · عنبر"></label>
+        </div>
+
+        <div class="gate">
+          <div class="gh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+            <b>لا يمكن النشر بعد — <span class="num">4</span> حقول ناقصة</b></div>
+          <ul>
+            <li>الموسم والمناسبة لم تُحدَّد</li>
+            <li>نطاق الثبات والانتشار لم يُحدَّد — ومصدره مطلوب</li>
+            <li>إقرار ملكيّة الصور غير موقّع</li>
+            <li>النصّ يحتوي «مطابق ٩٥٪» — ادّعاء غير مسموح</li>
+            <li class="ok">الهويّة والسعر والمخزون مكتملة</li>
+            <li class="ok">النوتات الثلاث مكتملة</li>
+          </ul>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-block-start:20px">
+          <button class="abtn" style="flex:0 0 160px">احفظ كمسوّدة</button>
+          <button class="abtn pri" style="flex:0 0 200px;opacity:.38;cursor:not-allowed">أرسل للمراجعة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

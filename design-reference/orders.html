@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — الطلبات والتتبّع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;
+  justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6;direction:ltr;text-align:left}
+.tag b{display:block;font-size:15px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;--hair:#2A2724;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--fresh:#5A8C7C;--heart:#B5697E;
+ background:var(--noir);color:var(--bone);overflow:hidden;direction:rtl;min-height:720px;
+ display:flex;flex-direction:column;font-size:13px;line-height:1.6}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+.lat{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+
+.bar{display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+  border-block-end:1px solid var(--hair);flex-shrink:0}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.ic svg{width:18px;height:18px}
+.bar .ttl{font-family:'Amiri',serif;font-size:19px}
+.bar .cd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2px;color:var(--faint);
+  min-width:44px;text-align:center}
+.scroll{flex:1;overflow:hidden}
+
+/* ---- order row (list) ---- */
+.orow{padding:16px;border-block-end:1px solid var(--hair);cursor:pointer}
+.orow .top{display:flex;justify-content:space-between;align-items:baseline;margin-block-end:9px}
+.orow .on{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2px;color:var(--faint)}
+.orow .dt{color:var(--faint);font-size:10.5px}
+.orow .stat{font-family:'Amiri',serif;font-size:19px;margin-block-end:5px}
+.orow .prog{color:var(--dim);font-size:10.5px;margin-block-end:11px}
+.orow .prog b{color:var(--bone);font-weight:500}
+.thumbs{display:flex;gap:7px;margin-block-end:12px}
+.tb{width:44px;height:54px;position:relative;overflow:hidden;flex-shrink:0;
+  background:radial-gradient(120% 100% at 50% 30%,#3A2F26,#1A1512 62%,#0D0B0A)}
+.tb .b{position:absolute;top:50%;right:50%;transform:translate(50%,-50%);width:17px;height:32px;
+  border-radius:1px;background:linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)}
+.tb.more{display:flex;align-items:center;justify-content:center;background:var(--l2);
+  font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.orow .bot{display:flex;justify-content:space-between;align-items:center}
+.orow .tot{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.orow .tot .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--dim);margin-inline-start:6px}
+.orow .go{color:var(--brass);font-size:10.5px}
+
+/* ---- progress hairline (fills from the RIGHT) ---- */
+.pbar{height:2px;background:var(--hair);position:relative;margin-block:10px 0}
+.pbar i{position:absolute;inset-block:0;inset-inline-start:0;background:var(--brass);display:block}
+
+/* ---- order header ---- */
+.ohd{padding:22px 16px 18px;border-block-end:1px solid var(--hair)}
+.ohd .st{font-family:'Amiri',serif;font-size:24px;margin-block-end:6px}
+.ohd .sub{color:var(--dim);font-size:11.5px}
+.ohd .sub b{color:var(--bone);font-weight:500}
+.ohd .meta{color:var(--faint);font-size:10.5px;margin-block-start:12px}
+
+/* ---- shipment card ---- */
+.ship{border-block-end:1px solid var(--hair)}
+.sh{display:flex;align-items:center;gap:9px;padding:15px 16px 12px}
+.sh .dv{width:15px;height:15px;color:var(--brass);flex-shrink:0}
+.sh .n{font-family:'Bodoni Moda',serif;font-size:10px;letter-spacing:2.2px;color:var(--brass);flex:1}
+.sh .cd{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)}
+
+.state{display:flex;align-items:center;gap:9px;padding:0 16px 12px}
+.state .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.state .tx{flex:1;font-size:12.5px}
+.state .tm{color:var(--faint);font-size:10px}
+.d-live{background:var(--brass);box-shadow:0 0 0 4px rgba(176,141,87,.16)}
+.d-done{background:var(--fresh)}
+.d-wait{background:var(--faint)}
+.d-stop{background:var(--heart)}
+
+/* ---- timeline spine ---- */
+.tl{padding:4px 16px 14px;position:relative}
+.tl .line{position:absolute;inset-inline-end:auto;inset-inline-start:19.5px;top:10px;bottom:24px;
+  width:1px;background:var(--hair)}
+.ev{display:flex;gap:13px;padding-block:7px;position:relative;z-index:1}
+.ev .nd{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px;
+  background:var(--noir);border:1px solid var(--hair)}
+.ev.done .nd{background:var(--brass);border-color:var(--brass)}
+.ev.now .nd{background:var(--noir);border-color:var(--brass);box-shadow:0 0 0 3px rgba(176,141,87,.18)}
+.ev.stop .nd{background:var(--heart);border-color:var(--heart)}
+.ev .bd{flex:1;padding-inline-start:2px}
+.ev .t1{font-size:12px;color:var(--faint)}
+.ev.done .t1,.ev.now .t1,.ev.stop .t1{color:var(--bone)}
+.ev.now .t1{color:var(--brass)}
+.ev .t2{color:var(--faint);font-size:10px;margin-top:2px}
+
+.act{display:flex;gap:9px;padding:0 16px 15px}
+.abtn{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--hair);background:transparent;color:var(--bone);border-radius:2px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer}
+.abtn.pri{background:var(--brass);color:var(--noir);border-color:var(--brass);font-weight:600}
+.abtn svg{width:14px;height:14px}
+
+/* ---- SLA / platform intervention ---- */
+.sla{display:flex;gap:10px;padding:12px 16px;margin:0 16px 14px;background:var(--l1);
+  border-inline-start:1px solid var(--brass)}
+.sla.alert{border-inline-start-color:var(--heart)}
+.sla svg{width:15px;height:15px;color:var(--brass);flex-shrink:0;margin-top:2px}
+.sla.alert svg{color:var(--heart)}
+.sla p{color:var(--dim);font-size:10.5px;line-height:1.75}
+.sla b{color:var(--bone);font-weight:500}
+
+/* ---- pay line ---- */
+.pay{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;
+  background:var(--l1);border-block-start:1px solid var(--hair)}
+.pay .l{color:var(--dim);font-size:10.5px}
+.pay .r{font-size:12px;font-variant-numeric:tabular-nums}
+.pay .r .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);margin-inline-start:6px}
+.pay .r.done{color:var(--fresh)}
+
+/* ---- summary ---- */
+.sechd{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);padding:16px 16px 9px}
+.sum{padding:0 16px 16px}
+.sl{display:flex;justify-content:space-between;padding-block:7px;font-size:12px}
+.sl .k{color:var(--dim)}
+.sl .v{font-variant-numeric:tabular-nums}
+.sl .v .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);margin-inline-start:6px}
+.tot2{display:flex;justify-content:space-between;align-items:baseline;padding-block:13px 2px;
+  border-block-start:1px solid var(--hair);margin-block-start:7px}
+.tot2 .k{font-family:'Amiri',serif;font-size:17px}
+.tot2 .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.tot2 .v .c{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:1.8px;color:var(--dim);margin-inline-start:6px}
+
+.help{display:flex;align-items:center;gap:11px;padding:15px 16px;border-block-start:1px solid var(--hair);cursor:pointer}
+.help svg{width:17px;height:17px;color:var(--brass)}
+.help .tx{flex:1}
+.help .t1{font-size:12.5px}
+.help .t2{color:var(--faint);font-size:10px;margin-top:2px}
+
+/* ---- courier detail ---- */
+.cour{padding:18px 16px;border-block-end:1px solid var(--hair)}
+.cour .big{font-family:'Amiri',serif;font-size:22px;margin-block-end:5px}
+.cour .sm{color:var(--dim);font-size:11.5px}
+.cour .code{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2px;color:var(--faint);margin-block-start:12px}
+
+/* ---- review prompt ---- */
+.rev{padding:16px;border-block-end:1px solid var(--hair)}
+.rev .q{font-family:'Amiri',serif;font-size:19px;margin-block-end:4px}
+.rev .s{color:var(--faint);font-size:10.5px;margin-block-end:13px;line-height:1.7}
+.stars{display:flex;gap:5px;margin-block-end:14px}
+.stars span{width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  color:var(--hair);cursor:pointer}
+.stars span svg{width:19px;height:19px;stroke-width:1.1}
+.stars span.on{color:var(--brass)}
+.dims{display:flex;flex-wrap:wrap;gap:7px}
+.dim{padding:9px 13px;min-height:44px;display:inline-flex;align-items:center;border:1px solid var(--hair);
+  color:var(--dim);font-size:11px;border-radius:2px}
+
+/* ---- return ---- */
+.ret{padding:0 16px 14px}
+.ropt{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--hair);
+  margin-block-end:9px;border-radius:2px;min-height:52px;cursor:pointer}
+.ropt.on{border-color:var(--brass);background:var(--l1)}
+.ropt .rd{width:15px;height:15px;border:1px solid var(--faint);border-radius:50%;flex-shrink:0;position:relative}
+.ropt.on .rd{border-color:var(--brass)}
+.ropt.on .rd::after{content:'';position:absolute;inset:3px;background:var(--brass);border-radius:50%}
+.ropt .tx{flex:1;font-size:12.5px}
+.ropt .tx i{display:block;font-style:normal;color:var(--faint);font-size:10px;margin-top:2px}
+
+.foot{padding:14px 16px 18px;border-block-start:1px solid var(--hair);flex-shrink:0;background:var(--noir)}
+.btn{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;
+  background:var(--brass);color:var(--noir);border:0;border-radius:2px;cursor:pointer;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--hair);min-height:44px;
+  font-size:13px;font-weight:500;margin-block-start:9px}
+.foot .fine{text-align:center;color:var(--faint);font-size:9.5px;margin-block-start:11px;line-height:1.6}
+
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 34px;text-align:center}
+.empty svg{width:30px;height:30px;color:var(--brass);opacity:.75;margin-block-end:20px}
+.empty h4{font-family:'Amiri',serif;font-size:22px;margin-block-end:9px}
+.empty p{color:var(--faint);font-size:11.5px;line-height:1.85;margin-block-end:24px}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. ORDERS LIST ============ -->
+<div class="col">
+  <div class="tag"><b>Orders</b>Aggregate status never lies. "2 of 3 arrived" is stated instead of collapsing three state machines into one misleading label.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">طلباتي</div><div class="cd"></div></div>
+    <div class="scroll">
+
+      <div class="orow">
+        <div class="top"><span class="on">DY-24817</span><span class="dt"><span class="num">1</span> سبتمبر</span></div>
+        <div class="stat">قيد التنفيذ</div>
+        <div class="prog"><b><span class="num">1</span> من <span class="num">3</span></b> شحنات وصلت</div>
+        <div class="thumbs">
+          <div class="tb"><div class="b"></div></div>
+          <div class="tb"><div class="b" style="background:linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)"></div></div>
+          <div class="tb"><div class="b" style="background:linear-gradient(100deg,#5A2E38,#A8536B 40%,#C07A90 54%,#4A2530)"></div></div>
+          <div class="tb more"><span class="num">+2</span></div>
+        </div>
+        <div class="pbar"><i style="width:33%"></i></div>
+        <div class="bot" style="margin-top:12px">
+          <span class="tot num">2,325<span class="c">EGP</span></span>
+          <span class="go">التفاصيل</span>
+        </div>
+      </div>
+
+      <div class="orow">
+        <div class="top"><span class="on">DY-24390</span><span class="dt"><span class="num">18</span> أغسطس</span></div>
+        <div class="stat">اكتمل</div>
+        <div class="prog"><b><span class="num">2</span> من <span class="num">2</span></b> شحنات وصلت · بانتظار تقييمك</div>
+        <div class="thumbs">
+          <div class="tb"><div class="b" style="background:linear-gradient(100deg,#26332E,#4A6B5E 40%,#5A8C7C 54%,#1E2A25)"></div></div>
+          <div class="tb"><div class="b"></div></div>
+        </div>
+        <div class="pbar"><i style="width:100%"></i></div>
+        <div class="bot" style="margin-top:12px">
+          <span class="tot num">910<span class="c">EGP</span></span>
+          <span class="go">قيّم عطورك</span>
+        </div>
+      </div>
+
+      <div class="orow">
+        <div class="top"><span class="on">DY-23945</span><span class="dt"><span class="num">2</span> أغسطس</span></div>
+        <div class="stat">اكتمل جزئيًا</div>
+        <div class="prog"><b><span class="num">1</span> من <span class="num">2</span></b> وصلت · <span style="color:var(--heart)">شحنة معادة</span></div>
+        <div class="thumbs">
+          <div class="tb"><div class="b" style="background:linear-gradient(100deg,#4A3328,#6B4A38 40%,#8A6838 54%,#3A2820)"></div></div>
+          <div class="tb"><div class="b" style="background:linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)"></div></div>
+        </div>
+        <div class="pbar"><i style="width:50%"></i></div>
+        <div class="bot" style="margin-top:12px">
+          <span class="tot num">640<span class="c">EGP</span></span>
+          <span class="go">التفاصيل</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. ORDER DETAIL ============ -->
+<div class="col">
+  <div class="tag"><b>Order detail — three state machines, one relationship</b>Each house runs its own sub-order and SLA. The customer sees one timeline; each house sees only its own.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الطلب</div><div class="cd">DY-24817</div></div>
+    <div class="scroll">
+
+      <div class="ohd">
+        <div class="st">قيد التنفيذ</div>
+        <div class="sub"><b><span class="num">1</span> من <span class="num">3</span></b> شحنات وصلت · الباقي في الطريق</div>
+        <div class="pbar"><i style="width:33%"></i></div>
+        <div class="meta">طُلب في <span class="num">1</span> سبتمبر <span class="num">2026</span> · الدفع عند الاستلام</div>
+      </div>
+
+      <!-- shipment A — delivered -->
+      <div class="ship">
+        <div class="sh"><svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="n">MAISON NOUR</span><span class="cd">DY-24817-A</span></div>
+        <div class="state"><span class="dot d-done"></span><span class="tx">تم التسليم</span><span class="tm"><span class="num">4</span> سبتمبر</span></div>
+        <div class="act">
+          <button class="abtn pri">قيّم العطور</button>
+          <button class="abtn">طلب إرجاع · <span class="num">6</span> أيام</button>
+        </div>
+        <div class="pay"><span class="l">دُفع عند الاستلام</span><span class="r done num">1,565<span class="c">EGP</span></span></div>
+      </div>
+
+      <!-- shipment B — dispatched, expanded timeline -->
+      <div class="ship">
+        <div class="sh"><svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="n">DAR AL WARD</span><span class="cd">DY-24817-B</span></div>
+        <div class="state"><span class="dot d-live"></span><span class="tx">في الطريق إليك</span><span class="tm">يصل غدًا</span></div>
+        <div class="tl">
+          <div class="line"></div>
+          <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">تم الطلب</div><div class="t2"><span class="num">1</span> سبتمبر · <span class="num">9:42</span> م</div></div></div>
+          <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">أكّدت الدار الطلب</div><div class="t2"><span class="num">2</span> سبتمبر · <span class="num">11:10</span> ص</div></div></div>
+          <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">خرجت الشحنة</div><div class="t2"><span class="num">3</span> سبتمبر · <span class="num">4:20</span> م</div></div></div>
+          <div class="ev now"><span class="nd"></span><div class="bd"><div class="t1">في مركز التوزيع — مدينة نصر</div><div class="t2">اليوم · <span class="num">8:05</span> ص</div></div></div>
+          <div class="ev"><span class="nd"></span><div class="bd"><div class="t1">التسليم</div><div class="t2">متوقّع غدًا</div></div></div>
+        </div>
+        <div class="act"><button class="abtn">تتبّع الشحنة</button></div>
+        <div class="pay"><span class="l">تدفع عند الاستلام</span><span class="r num">430<span class="c">EGP</span></span></div>
+      </div>
+
+      <!-- shipment C — awaiting seller, SLA running -->
+      <div class="ship">
+        <div class="sh"><svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="n">ATELIER SIWA</span><span class="cd">DY-24817-C</span></div>
+        <div class="state"><span class="dot d-wait"></span><span class="tx">في انتظار تأكيد الدار</span><span class="tm">متبقّ <span class="num">9</span> ساعات</span></div>
+        <div class="sla">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+          <p>على كل دار أن تؤكّد خلال <b><span class="num">24</span> ساعة</b>. إن لم تؤكّد، نتواصل معها نيابة عنك ونُبلغك بالنتيجة.</p>
+        </div>
+        <div class="pay"><span class="l">تدفع عند الاستلام</span><span class="r num">330<span class="c">EGP</span></span></div>
+      </div>
+
+      <div class="sechd">SUMMARY</div>
+      <div class="sum">
+        <div class="sl"><span class="k">المنتجات · <span class="num">5</span> قطع</span><span class="v num">2,190<span class="c">EGP</span></span></div>
+        <div class="sl"><span class="k">الشحن · <span class="num">3</span> شحنات</span><span class="v num">135<span class="c">EGP</span></span></div>
+        <div class="tot2"><span class="k">الإجمالي</span><span class="v num">2,325<span class="c">EGP</span></span></div>
+      </div>
+
+      <div class="help">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-9 8.4L3 21l1.1-8.9A8.4 8.4 0 1121 11.5z"/></svg>
+        <span class="tx"><div class="t1">تحتاج مساعدة في هذا الطلب؟</div><div class="t2">نردّ خلال ساعة عمل واحدة</div></span>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--faint)"><path d="M15 6l-6 6 6 6"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. SHIPMENT TRACKING ============ -->
+<div class="col">
+  <div class="tag"><b>Shipment tracking</b>Courier events for one sub-order. The spine echoes the notes-pyramid spine on the product page — same visual language across surfaces.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">تتبّع</div><div class="cd">DY-24817-B</div></div>
+    <div class="scroll">
+      <div class="cour">
+        <div class="big">يصل غدًا</div>
+        <div class="sm">بين <span class="num">10</span> ص و<span class="num">6</span> م · مدينة نصر، القاهرة</div>
+        <div class="code">DAR AL WARD · BOSTA <span class="num">7742019</span></div>
+      </div>
+
+      <div class="tl" style="padding-top:14px">
+        <div class="line"></div>
+        <div class="ev now"><span class="nd"></span><div class="bd"><div class="t1">في مركز التوزيع — مدينة نصر</div><div class="t2">اليوم · <span class="num">8:05</span> ص</div></div></div>
+        <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">غادرت مركز الفرز — العبور</div><div class="t2">اليوم · <span class="num">5:40</span> ص</div></div></div>
+        <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">استلمها المندوب من الدار</div><div class="t2"><span class="num">3</span> سبتمبر · <span class="num">4:20</span> م</div></div></div>
+        <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">جهّزت الدار الشحنة</div><div class="t2"><span class="num">3</span> سبتمبر · <span class="num">1:15</span> م</div></div></div>
+        <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">أكّدت الدار الطلب</div><div class="t2"><span class="num">2</span> سبتمبر · <span class="num">11:10</span> ص</div></div></div>
+        <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">تم الطلب</div><div class="t2"><span class="num">1</span> سبتمبر · <span class="num">9:42</span> م</div></div></div>
+      </div>
+
+      <div class="pay"><span class="l">تدفع للمندوب عند الاستلام</span><span class="r num">430<span class="c">EGP</span></span></div>
+
+      <div class="help">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-9 8.4L3 21l1.1-8.9A8.4 8.4 0 1121 11.5z"/></svg>
+        <span class="tx"><div class="t1">مشكلة في هذه الشحنة؟</div><div class="t2">تأخير، ضرر، أو منتج خاطئ</div></span>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--faint)"><path d="M15 6l-6 6 6 6"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. EXCEPTION ============ -->
+<div class="col">
+  <div class="tag"><b>Exception — house declined</b>The screen most designs never draw. Doc 06: "the seller made the mistake" is an internal cause, not a customer answer. The platform absorbs it and offers a route forward.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">الطلب</div><div class="cd">DY-24817</div></div>
+    <div class="scroll">
+
+      <div class="ohd">
+        <div class="st">اكتمل جزئيًا</div>
+        <div class="sub"><b><span class="num">2</span> من <span class="num">3</span></b> شحنات وصلت · شحنة واحدة تعذّرت</div>
+        <div class="pbar"><i style="width:66%"></i></div>
+        <div class="meta">طُلب في <span class="num">1</span> سبتمبر <span class="num">2026</span></div>
+      </div>
+
+      <div class="ship">
+        <div class="sh"><svg class="dv" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+          <span class="n">ATELIER SIWA</span><span class="cd">DY-24817-C</span></div>
+        <div class="state"><span class="dot d-stop"></span><span class="tx">اعتذرت الدار — نفد المخزون</span><span class="tm"><span class="num">2</span> سبتمبر</span></div>
+
+        <div class="sla alert">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+          <p><b>لن تدفع شيئًا عن هذه الشحنة.</b> باقي شحناتك لم تتأثّر وتسير كما هو مخطّط.
+             سجّلنا الحادثة على الدار، وهي تدخل في تقييم أدائها.</p>
+        </div>
+
+        <div class="tl" style="padding-top:0">
+          <div class="line"></div>
+          <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">تم الطلب</div><div class="t2"><span class="num">1</span> سبتمبر · <span class="num">9:42</span> م</div></div></div>
+          <div class="ev stop"><span class="nd"></span><div class="bd"><div class="t1">اعتذرت الدار عن التنفيذ</div><div class="t2"><span class="num">2</span> سبتمبر · <span class="num">3:30</span> م · نفد المخزون</div></div></div>
+          <div class="ev done"><span class="nd"></span><div class="bd"><div class="t1">أُلغيت الشحنة دون رسوم</div><div class="t2"><span class="num">2</span> سبتمبر · <span class="num">3:31</span> م</div></div></div>
+        </div>
+
+        <div class="act">
+          <button class="abtn pri">عطور مشابهة</button>
+          <button class="abtn">تحدّث إلينا</button>
+        </div>
+      </div>
+
+      <div class="sechd">ADJUSTED TOTAL</div>
+      <div class="sum">
+        <div class="sl"><span class="k">الإجمالي الأصلي</span><span class="v num">2,325<span class="c">EGP</span></span></div>
+        <div class="sl"><span class="k">شحنة ملغاة</span><span class="v num" style="color:var(--heart)">−330<span class="c">EGP</span></span></div>
+        <div class="tot2"><span class="k">المدفوع</span><span class="v num">1,995<span class="c">EGP</span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. REVIEW ============ -->
+<div class="col">
+  <div class="tag"><b>Review — gated on delivery</b>Only a delivered sub-order can produce a review (acceptance gate 5), enforced in the database. Six structured dimensions, including description accuracy.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">التقييم</div><div class="cd"></div></div>
+    <div class="scroll">
+      <div class="rev">
+        <div style="display:flex;gap:12px;margin-block-end:16px">
+          <div class="tb" style="width:52px;height:64px"><div class="b" style="width:20px;height:38px"></div></div>
+          <div>
+            <div style="font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2px;color:var(--faint);margin-bottom:4px">MAISON NOUR</div>
+            <div style="font-family:Amiri,serif;font-size:19px">ليل القاهرة</div>
+            <div style="color:var(--faint);font-size:10.5px;margin-top:3px">وصل <span class="num">4</span> سبتمبر</div>
+          </div>
+        </div>
+        <div class="q">كيف كانت التجربة؟</div>
+        <div class="s">تقييمك موثّق بالشراء — يظهر للمشترين وللدار، ولا تستطيع الدار حذفه.</div>
+        <div class="stars">
+          <span class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 6.2 6.3.6-4.8 4.2 1.4 6.2L12 17l-5.6 3.2 1.4-6.2L3 9.8l6.3-.6z"/></svg></span>
+          <span class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 6.2 6.3.6-4.8 4.2 1.4 6.2L12 17l-5.6 3.2 1.4-6.2L3 9.8l6.3-.6z"/></svg></span>
+          <span class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 6.2 6.3.6-4.8 4.2 1.4 6.2L12 17l-5.6 3.2 1.4-6.2L3 9.8l6.3-.6z"/></svg></span>
+          <span class="on"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 6.2 6.3.6-4.8 4.2 1.4 6.2L12 17l-5.6 3.2 1.4-6.2L3 9.8l6.3-.6z"/></svg></span>
+          <span><svg viewBox="0 0 24 24"><path d="M12 3l2.7 6.2 6.3.6-4.8 4.2 1.4 6.2L12 17l-5.6 3.2 1.4-6.2L3 9.8l6.3-.6z"/></svg></span>
+        </div>
+      </div>
+      <div class="sechd">RATE EACH</div>
+      <div style="padding:0 16px 16px">
+        <div class="dims">
+          <span class="dim">الرائحة</span><span class="dim">الثبات</span><span class="dim">الانتشار</span>
+          <span class="dim">القيمة مقابل السعر</span><span class="dim">التغليف</span>
+          <span class="dim" style="border-color:var(--brass);color:var(--brass)">مطابقة الوصف</span>
+        </div>
+      </div>
+      <div class="sechd">YOUR WORDS — OPTIONAL</div>
+      <div style="padding:0 16px 16px">
+        <div style="min-height:96px;background:var(--l2);border-radius:2px;padding:14px;color:var(--faint);font-size:12px">
+          ما الذي يجب أن يعرفه المشتري التالي؟
+        </div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn">أرسل التقييم</button>
+      <div class="fine">يُنشر باسمك الأول فقط</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6. RETURN ============ -->
+<div class="col">
+  <div class="tag"><b>Return request</b>Window counted from delivery. Reason codes are a controlled vocabulary — doc 06 §7 forbids generic reasons, because refusal cost has to be allocated to a documented party.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">طلب إرجاع</div><div class="cd">DY-24817-A</div></div>
+    <div class="scroll">
+      <div class="cour">
+        <div class="big">متبقّ <span class="num">6</span> أيام</div>
+        <div class="sm">نافذة الإرجاع تبدأ من تاريخ التسليم — <span class="num">4</span> سبتمبر</div>
+      </div>
+      <div class="sechd">WHICH ITEM</div>
+      <div class="ret">
+        <div class="ropt on"><span class="rd"></span><span class="tx">ليل القاهرة · <span class="num">50</span> مل<i>مغلق، لم يُفتح</i></span></div>
+        <div class="ropt"><span class="rd"></span><span class="tx">صحراء · <span class="num">100</span> مل<i>مفتوح — تنطبق شروط مختلفة</i></span></div>
+      </div>
+      <div class="sechd">REASON</div>
+      <div class="ret">
+        <div class="ropt on"><span class="rd"></span><span class="tx">وصل تالفًا أو مسرّبًا</span></div>
+        <div class="ropt"><span class="rd"></span><span class="tx">منتج مختلف عمّا طلبت</span></div>
+        <div class="ropt"><span class="rd"></span><span class="tx">لا يطابق الوصف المنشور</span></div>
+        <div class="ropt"><span class="rd"></span><span class="tx">غيّرت رأيي<i>يخضع لسياسة المنتجات المغلقة</i></span></div>
+      </div>
+      <div class="sla">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <p>أضف صورة للمنتج والتغليف — <b>تُسرّع القرار</b> وتساعدنا في تحديد المسؤولية بين الدار وشركة الشحن.</p>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn">أرسل الطلب</button>
+      <div class="fine">نردّ خلال يوم عمل واحد</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 7. EMPTY ============ -->
+<div class="col">
+  <div class="tag"><b>No orders yet</b>Designed, not defaulted.</div>
+  <div class="app">
+    <div class="bar"><div class="ic"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="ttl">طلباتي</div><div class="cd"></div></div>
+    <div class="empty">
+      <svg viewBox="0 0 24 24"><path d="M4 7.5l8-4 8 4v9l-8 4-8-4z"/><path d="M4 7.5l8 4 8-4M12 11.5v9"/></svg>
+      <h4>لا طلبات بعد</h4>
+      <p>حين تطلب أول عطر، ستتابع كل شحنة من هنا —<br>خطوة بخطوة حتى باب بيتك.</p>
+      <button class="btn" style="width:auto;padding-inline:34px">تصفّح الدور</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

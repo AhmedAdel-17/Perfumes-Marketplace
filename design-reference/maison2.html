@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATHAR — Maison v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6}
+.tag b{display:block;font-size:16px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--hair:#2A2724;
+ background:var(--noir);color:var(--bone);overflow:hidden}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- chrome ---------- */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:12px 6px 10px 12px;position:relative;z-index:4}
+.wm{font-family:'Bodoni Moda',serif;font-size:19px;letter-spacing:8px;padding-inline-start:12px}
+.acts{display:flex;align-items:center}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;position:relative;color:var(--bone)}
+.ic svg{width:18px;height:18px}
+.cnt{position:absolute;top:7px;left:6px;min-width:16px;height:16px;border-radius:8px;background:var(--brass);
+ color:#0B0A09;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+/* ---------- search + filter row ---------- */
+.tools{display:flex;gap:8px;padding:2px 14px 16px;position:relative;z-index:4}
+.sfield{flex:1;height:44px;background:var(--l2);display:flex;align-items:center;gap:9px;padding:0 13px;color:var(--dim)}
+.sfield svg{width:17px;height:17px}
+.sfield span{font-size:13px}
+.tbtn{width:44px;height:44px;background:var(--l2);display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.tbtn svg{width:17px;height:17px}
+
+/* ---------- hero ---------- */
+.hero{position:relative;height:520px;overflow:hidden}
+.field{position:absolute;inset:0;background:radial-gradient(118% 84% at 50% 26%,#413429 0%,#241D18 44%,#0B0A09 80%)}
+.patt{position:absolute;inset:0;opacity:.14;background-size:74px 74px;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='74' height='74' viewBox='0 0 74 74'><g fill='none' stroke='%23C7A26A' stroke-width='.9'><path d='M37 4l9 24 24 9-24 9-9 24-9-24-24-9 24-9z'/><rect x='16' y='16' width='42' height='42' transform='rotate(45 37 37)'/></g></svg>")}
+.glow{position:absolute;top:4%;right:50%;transform:translateX(50%);width:250px;height:250px;border-radius:50%;
+ background:radial-gradient(circle,rgba(199,162,106,.22) 0%,rgba(199,162,106,0) 68%)}
+.veil{position:absolute;inset:0;background:linear-gradient(to top,#0B0A09 28%,rgba(11,10,9,.9) 44%,rgba(11,10,9,0) 70%)}
+.vessel{position:absolute;top:38px;right:50%;transform:translateX(50%);width:104px;z-index:1}
+.vessel .cp{width:36px;height:30px;margin:0 auto;background:linear-gradient(100deg,#2A241D,#4A3F31 46%,#241F19);border-radius:2px}
+.vessel .nk{width:28px;height:14px;margin:0 auto;background:linear-gradient(100deg,#6B5334,#9A7A4A 44%,#5E4830)}
+.vessel .bd{height:148px;border-radius:3px 3px 5px 5px;position:relative;overflow:hidden;
+ background:linear-gradient(100deg,#4A3720 0%,#8A6838 36%,#A37F4C 50%,#6E5228 68%,#3A2B18 100%)}
+.vessel .sh{position:absolute;top:8%;right:13%;width:13%;height:64%;border-radius:8px;background:linear-gradient(to bottom,rgba(255,255,255,.4),rgba(255,255,255,.05))}
+.vessel .lb{position:absolute;bottom:22px;right:50%;transform:translateX(50%);width:60%;height:32px;background:rgba(15,12,9,.44);
+ border-block:1px solid rgba(237,232,223,.2);display:flex;align-items:center;justify-content:center;
+ font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2.4px;color:rgba(237,232,223,.85)}
+.vessel .fl{position:absolute;bottom:-14px;right:50%;transform:translateX(50%);width:90px;height:13px;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(0,0,0,.6),rgba(0,0,0,0) 72%)}
+.hcap{position:absolute;bottom:0;right:0;left:0;padding:0 22px 24px;z-index:2}
+.crest{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.crest .ring{width:34px;height:34px;border:1px solid rgba(176,141,87,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--brass)}
+.crest .ring svg{width:15px;height:15px}
+.crest .lbl{font-size:9.5px;letter-spacing:3px;color:var(--brass);font-family:'Bodoni Moda',serif}
+.hcap h1{font-family:'Amiri',serif;font-size:35px;line-height:1.3;margin-bottom:9px}
+.stars{display:flex;align-items:center;gap:6px;margin-bottom:11px}
+.stars .s{display:flex;gap:2px;color:var(--brass)}
+.stars .s svg{width:12px;height:12px;fill:currentColor;stroke:none}
+.stars .s svg.o{fill:none;stroke:currentColor;stroke-width:1.2;opacity:.5}
+.stars em{font-size:11px;color:var(--faint);font-style:normal}
+.hcap p{font-size:13px;color:var(--dim);line-height:1.85;max-width:272px;margin-bottom:18px}
+.go{display:inline-flex;align-items:center;gap:9px;height:46px;padding:0 24px;border:1px solid rgba(237,232,223,.34);font-size:12.5px;letter-spacing:.8px;color:var(--bone)}
+.go svg{width:14px;height:14px}
+
+/* ---------- trust bar ---------- */
+.trust{display:flex;background:var(--l1);border-block:1px solid var(--hair)}
+.trust div{flex:1;padding:16px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.trust div+div{border-inline-start:1px solid var(--hair)}
+.trust .i{color:var(--brass)}
+.trust .i svg{width:19px;height:19px}
+.trust span{font-size:10.5px;color:var(--dim);line-height:1.45}
+
+/* ---------- section head ---------- */
+.sec{display:flex;align-items:flex-end;justify-content:space-between;padding:34px 22px 16px}
+.sec small{font-size:9.5px;letter-spacing:2.6px;color:var(--faint);display:block;margin-bottom:8px;font-family:'Bodoni Moda',serif}
+.sec h2{font-family:'Amiri',serif;font-size:22px;line-height:1}
+.sec a{font-size:12px;color:var(--dim);text-decoration:none;height:44px;display:flex;align-items:center;gap:5px;padding-inline-start:12px}
+.sec a svg{width:13px;height:13px}
+
+/* ---------- category tiles ---------- */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border-block:1px solid var(--hair)}
+.cat{background:var(--noir);height:104px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 18px;gap:8px}
+.cat .bgf{position:absolute;inset:0;opacity:.6}
+.cat .ci{position:relative;z-index:2;color:var(--brass)}
+.cat .ci svg{width:22px;height:22px}
+.cat .cn{position:relative;z-index:2;font-family:'Amiri',serif;font-size:17px}
+.cat .cc{position:relative;z-index:2;font-size:10px;color:var(--faint);letter-spacing:1.2px}
+
+/* ---------- maisons ---------- */
+.maisons{display:flex;gap:12px;overflow-x:auto;padding:0 22px 4px;scrollbar-width:none}
+.maisons::-webkit-scrollbar{display:none}
+.mz{flex:none;width:152px}
+.mz .pane{height:184px;position:relative;overflow:hidden;margin-bottom:11px}
+.mz .bgf{position:absolute;inset:0}
+.mz .sc{position:absolute;inset:0;background:linear-gradient(to top,rgba(11,10,9,.9) 0%,rgba(11,10,9,.04) 60%)}
+.mz .vf{position:absolute;top:8px;left:8px;width:26px;height:26px;border-radius:50%;background:rgba(11,10,9,.66);
+ display:flex;align-items:center;justify-content:center;color:var(--brass);z-index:3}
+.mz .vf svg{width:12px;height:12px}
+.mz .nm{position:absolute;bottom:30px;right:14px;left:14px;font-family:'Amiri',serif;font-size:18px;z-index:2}
+.mz .ct{position:absolute;bottom:12px;right:14px;font-size:10px;color:var(--dim);z-index:2;letter-spacing:1px}
+.mz .meta{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--faint)}
+.mz .meta svg{width:12px;height:12px;color:var(--brass)}
+
+/* ---------- product cards ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border-top:1px solid var(--hair)}
+.p{background:var(--noir);padding-bottom:15px;position:relative}
+.p .im{height:196px;position:relative;overflow:hidden}
+.p .bgf{position:absolute;inset:0}
+.p .bdg{position:absolute;top:10px;right:10px;z-index:3;background:var(--brass);color:#0B0A09;
+ font-size:9px;font-weight:600;letter-spacing:1.2px;padding:4px 8px}
+.p .bdg.alt{background:transparent;border:1px solid rgba(237,232,223,.4);color:var(--bone)}
+.p .fav{position:absolute;top:2px;left:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone);z-index:3}
+.p .fav svg{width:16px;height:16px}
+.p .add{position:absolute;bottom:2px;left:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone);z-index:3}
+.p .add em{width:36px;height:36px;background:rgba(11,10,9,.72);border:1px solid rgba(237,232,223,.22);display:flex;align-items:center;justify-content:center}
+.p .add svg{width:15px;height:15px}
+.p .bot{position:absolute;bottom:26px;right:50%;transform:translateX(50%);width:44px}
+.p .bot .c2{width:15px;height:13px;margin:0 auto;border-radius:1px}
+.p .bot .n2{width:12px;height:6px;margin:0 auto}
+.p .bot .b2{height:70px;border-radius:2px;position:relative;overflow:hidden}
+.p .bot .s2{position:absolute;top:9%;right:14%;width:14%;height:60%;border-radius:4px;background:rgba(255,255,255,.32)}
+.p .bot .f2{position:absolute;bottom:-8px;right:50%;transform:translateX(50%);width:40px;height:8px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.62),rgba(0,0,0,0) 72%)}
+.p .tx{padding:13px 14px 0}
+.p .hs{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.p .hs svg{width:11px;height:11px;color:var(--brass)}
+.p .hs span{font-size:9.5px;letter-spacing:1.8px;color:var(--brass);font-family:'Bodoni Moda',serif}
+.p .nm2{font-family:'Amiri',serif;font-size:18px;margin-bottom:6px;line-height:1.3}
+.p .rt{display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.p .rt .s{display:flex;gap:1.5px;color:var(--brass)}
+.p .rt svg{width:10px;height:10px;fill:currentColor;stroke:none}
+.p .rt svg.o{fill:none;stroke:currentColor;stroke-width:1.3;opacity:.45}
+.p .rt em{font-size:10px;color:var(--faint);font-style:normal}
+.p .no{font-size:11px;color:var(--faint);margin-bottom:10px;line-height:1.6}
+.p .ft{display:flex;align-items:baseline;justify-content:space-between}
+.p .pc{font-size:14px}
+.p .sz{font-size:10px;color:var(--faint)}
+
+.rule{height:1px;background:var(--hair);margin:32px 22px 0}
+.tb{display:flex;padding:8px 0 22px;margin-top:12px}
+.tb div{flex:1;height:49px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:10.5px;color:var(--faint);position:relative}
+.tb div.on{color:var(--bone)}
+.tb svg{width:19px;height:19px}
+.tb .nb{position:absolute;top:5px;left:calc(50% - 20px);min-width:15px;height:15px;border-radius:8px;background:var(--brass);
+ color:#0B0A09;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+</style>
+</head>
+<body>
+<div class="col">
+<div class="tag"><b>و — Maison ٢</b>نظام أيقونات كامل، شارات، تقييمات، تصنيفات بصرية، ونقش هندسي خفيف</div>
+<div class="app">
+
+  <div class="bar">
+    <div class="wm">ATHAR</div>
+    <div class="acts">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 016 6c0 4-6 12-6 12S6 13 6 9a6 6 0 016-6z"/><circle cx="12" cy="9" r="2.2"/></svg></span>
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg></span>
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg><span class="cnt">٢</span></span>
+    </div>
+  </div>
+
+  <div class="tools">
+    <div class="sfield"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><span>ابحث عن عطر، دار، أو نوتة</span></div>
+    <div class="tbtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+    <div class="tbtn"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M17 20V4M17 4l3 3"/></svg></div>
+  </div>
+
+  <div class="hero">
+    <div class="field"></div><div class="patt"></div><div class="glow"></div>
+    <div class="vessel">
+      <div class="cp"></div><div class="nk"></div>
+      <div class="bd"><span class="sh"></span><span class="lb">BAYT AL·ANBAR</span></div>
+      <div class="fl"></div>
+    </div>
+    <div class="veil"></div>
+    <div class="hcap">
+      <div class="crest">
+        <span class="ring"><svg viewBox="0 0 24 24"><path d="M12 2l2.6 6.9L21.5 11l-6.9 2.1L12 20l-2.6-6.9L2.5 11l6.9-2.1z"/></svg></span>
+        <span class="lbl">MAISON DU MOIS</span>
+      </div>
+      <h1>بيت العنبر</h1>
+      <div class="stars">
+        <span class="s">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg class="o" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        </span>
+        <em>٤٫٦ · ٢١٨ تقييم</em>
+      </div>
+      <p>من قلب خان الخليلي — دار بتشتغل بالعود والعنبر الطبيعي من سنة ١٩٧٨.</p>
+      <span class="go">اكتشف الدار
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="trust">
+    <div><span class="i"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></span><span>أصلي<br>١٠٠٪</span></div>
+    <div><span class="i"><svg viewBox="0 0 24 24"><path d="M2.5 7.5h11v9h-11z"/><path d="M13.5 10.5h4l4 3v3h-8z"/><circle cx="6.5" cy="17.5" r="1.9"/><circle cx="17" cy="17.5" r="1.9"/></svg></span><span>توصيل<br>لكل مصر</span></div>
+    <div><span class="i"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg></span><span>استرجاع<br>٧ أيام</span></div>
+    <div><span class="i"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M3 10h18M7 14.5h3"/></svg></span><span>دفع<br>آمن</span></div>
+  </div>
+
+  <div class="sec"><div><small>CATÉGORIES</small><h2>تصفّح</h2></div></div>
+  <div class="cats">
+    <div class="cat">
+      <div class="bgf" style="background:radial-gradient(90% 120% at 80% 40%,#3A2A1C,#0B0A09 72%)"></div>
+      <span class="ci"><svg viewBox="0 0 24 24"><path d="M12 21c-3.9 0-6.5-2.4-6.5-5.6 0-3.9 3.4-5.6 3.4-9.4C8.9 4.3 10.2 3 12 3s3.1 1.3 3.1 3c0 3.8 3.4 5.5 3.4 9.4C18.5 18.6 15.9 21 12 21z"/></svg></span>
+      <span class="cn">عود وبخور</span><span class="cc">٦٤ منتج</span>
+    </div>
+    <div class="cat">
+      <div class="bgf" style="background:radial-gradient(90% 120% at 80% 40%,#3A2434,#0B0A09 72%)"></div>
+      <span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><path d="M12 9.4C12 6.4 10 4 12 4s0 2.4 0 5.4M14.6 12c3 0 5.4-2 5.4 0s-2.4 0-5.4 0M12 14.6c0 3 2 5.4 0 5.4s0-2.4 0-5.4M9.4 12c-3 0-5.4 2-5.4 0s2.4 0 5.4 0"/></svg></span>
+      <span class="cn">زهري</span><span class="cc">٤١ منتج</span>
+    </div>
+    <div class="cat">
+      <div class="bgf" style="background:radial-gradient(90% 120% at 80% 40%,#23342E,#0B0A09 72%)"></div>
+      <span class="ci"><svg viewBox="0 0 24 24"><path d="M12 20V9"/><path d="M12 12.5c-3.2 0-5.5-2.4-5.5-5.5C9.7 7 12 9.4 12 12.5z"/><path d="M12 15c3.2 0 5.5-2.4 5.5-5.5C14.3 9.5 12 11.9 12 15z"/></svg></span>
+      <span class="cn">منعش</span><span class="cc">٣٣ منتج</span>
+    </div>
+    <div class="cat">
+      <div class="bgf" style="background:radial-gradient(90% 120% at 80% 40%,#332B1E,#0B0A09 72%)"></div>
+      <span class="ci"><svg viewBox="0 0 24 24"><path d="M9 3h6v3.5l2.5 3.2c.6.8.9 1.7.9 2.6V19a2 2 0 01-2 2H7.6a2 2 0 01-2-2v-6.7c0-.9.3-1.8.9-2.6L9 6.5z"/><path d="M9 3h6"/></svg></span>
+      <span class="cn">زيوت عطرية</span><span class="cc">٢٨ منتج</span>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div><small>LES MAISONS</small><h2>دور مختارة</h2></div>
+    <a href="#">الكل ٤٢ <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
+  </div>
+  <div class="maisons">
+    <div class="mz">
+      <div class="pane">
+        <div class="bgf" style="background:radial-gradient(120% 80% at 50% 30%,#4A3A2A,#1A1512 62%,#0E0C0A)"></div>
+        <div class="sc"></div>
+        <span class="vf"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></span>
+        <div class="nm">دار نفح</div><div class="ct">القاهرة · ٢٠١٩</div>
+      </div>
+      <div class="meta"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z" fill="currentColor" stroke="none"/></svg> ٤٫٨ · ٨ عطور</div>
+    </div>
+    <div class="mz">
+      <div class="pane">
+        <div class="bgf" style="background:radial-gradient(120% 80% at 50% 30%,#2E3A38,#151A19 62%,#0B0E0D)"></div>
+        <div class="sc"></div>
+        <span class="vf"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></span>
+        <div class="nm">صنعة</div><div class="ct">الإسكندرية · ٢٠٢١</div>
+      </div>
+      <div class="meta"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z" fill="currentColor" stroke="none"/></svg> ٤٫٥ · ٦ عطور</div>
+    </div>
+    <div class="mz">
+      <div class="pane">
+        <div class="bgf" style="background:radial-gradient(120% 80% at 50% 30%,#42303A,#1C151A 62%,#0D0A0C)"></div>
+        <div class="sc"></div>
+        <span class="vf"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></span>
+        <div class="nm">نُون</div><div class="ct">الجيزة · ٢٠٢٢</div>
+      </div>
+      <div class="meta"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z" fill="currentColor" stroke="none"/></svg> ٤٫٧ · ١٤ عطر</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div><small>NOUVEAUTÉS</small><h2>وصل حديثًا</h2></div>
+    <a href="#">الكل <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
+  </div>
+  <div class="grid">
+
+    <div class="p">
+      <div class="im">
+        <div class="bgf" style="background:radial-gradient(110% 82% at 50% 34%,#3E3226,#1B1613 66%,#100E0C)"></div>
+        <span class="bdg">جديد</span>
+        <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg></span>
+        <div class="bot">
+          <div class="c2" style="background:#221D17"></div><div class="n2" style="background:#8A6B3E"></div>
+          <div class="b2" style="background:linear-gradient(100deg,#4E3A20,#A57C46 42%,#6B4E2C)"><span class="s2"></span></div>
+          <div class="f2"></div>
+        </div>
+        <span class="add"><em><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></em></span>
+      </div>
+      <div class="tx">
+        <div class="hs"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/></svg><span>BAYT AL·ANBAR</span></div>
+        <div class="nm2">ليل القاهرة</div>
+        <div class="rt"><span class="s">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg class="o" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        </span><em>٤٫٦ (٨٤)</em></div>
+        <div class="no">عود · عنبر · صندل</div>
+        <div class="ft"><span class="pc">٤٨٠ ج.م</span><span class="sz">٥٠ مل</span></div>
+      </div>
+    </div>
+
+    <div class="p">
+      <div class="im">
+        <div class="bgf" style="background:radial-gradient(110% 82% at 50% 34%,#3A3630,#1A1815 66%,#0F0E0C)"></div>
+        <span class="bdg alt">الأكثر مبيعًا</span>
+        <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg></span>
+        <div class="bot">
+          <div class="c2" style="background:#8E8472"></div><div class="n2" style="background:#C6BCA6"></div>
+          <div class="b2" style="background:linear-gradient(100deg,#B4A98F,#E4DBC6 42%,#A79C82)"><span class="s2"></span></div>
+          <div class="f2"></div>
+        </div>
+        <span class="add"><em><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></em></span>
+      </div>
+      <div class="tx">
+        <div class="hs"><svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/></svg><span>DAR NAFH</span></div>
+        <div class="nm2">صندل أبيض</div>
+        <div class="rt"><span class="s">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        </span><em>٤٫٩ (١٥٢)</em></div>
+        <div class="no">صندل · مسك · حمضيات</div>
+        <div class="ft"><span class="pc">٣٩٠ ج.م</span><span class="sz">٥٠ مل</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rule"></div>
+  <div class="tb">
+    <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6.2 8 6.2v8.2a1.3 1.3 0 01-1.3 1.3H5.3A1.3 1.3 0 014 19.2z"/></svg>الرئيسية</div>
+    <div><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/></svg>الدور</div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg>المفضلة</div>
+    <div><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg><span class="nb">٢</span>السلة</div>
+    <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.4"/><path d="M5 20.3c0-3.5 3.1-5.9 7-5.9s7 2.4 7 5.9"/></svg>حسابي</div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

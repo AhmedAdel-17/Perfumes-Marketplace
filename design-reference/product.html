@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATHAR — صفحة المنتج</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6}
+.tag b{display:block;font-size:16px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--hair:#2A2724;
+ --top:#C2A85C;--heart:#B5697E;--base:#8A6838;
+ background:var(--noir);color:var(--bone);overflow:hidden}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+
+.bar{display:flex;align-items:center;justify-content:space-between;padding:10px 6px;position:relative;z-index:5}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.ic svg{width:18px;height:18px}
+
+/* ---------- product hero ---------- */
+.ph{position:relative;height:400px;overflow:hidden}
+.ph .fld{position:absolute;inset:0;background:radial-gradient(112% 80% at 50% 32%,#3E3226 0%,#221B15 46%,#0B0A09 82%)}
+.ph .pt{position:absolute;inset:0;opacity:.1;background-size:70px 70px;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'><g fill='none' stroke='%23C7A26A' stroke-width='.8'><path d='M35 4l8.5 22.5L66 35l-22.5 8.5L35 66l-8.5-22.5L4 35l22.5-8.5z'/></g></svg>")}
+.ph .gl{position:absolute;top:8%;right:50%;transform:translateX(50%);width:230px;height:230px;border-radius:50%;
+ background:radial-gradient(circle,rgba(199,162,106,.2),rgba(199,162,106,0) 68%)}
+.ves{position:absolute;top:64px;right:50%;transform:translateX(50%);width:112px}
+.ves .cp{width:38px;height:32px;margin:0 auto;background:linear-gradient(100deg,#2A241D,#4A3F31 46%,#241F19);border-radius:2px}
+.ves .nk{width:30px;height:15px;margin:0 auto;background:linear-gradient(100deg,#6B5334,#9A7A4A 44%,#5E4830)}
+.ves .bd{height:164px;border-radius:3px 3px 5px 5px;position:relative;overflow:hidden;
+ background:linear-gradient(100deg,#4A3720 0%,#8A6838 36%,#A37F4C 50%,#6E5228 68%,#3A2B18 100%)}
+.ves .sh{position:absolute;top:8%;right:13%;width:13%;height:64%;border-radius:8px;background:linear-gradient(to bottom,rgba(255,255,255,.42),rgba(255,255,255,.05))}
+.ves .lb{position:absolute;bottom:24px;right:50%;transform:translateX(50%);width:60%;height:34px;background:rgba(15,12,9,.44);
+ border-block:1px solid rgba(237,232,223,.2);display:flex;align-items:center;justify-content:center;
+ font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2.4px;color:rgba(237,232,223,.85)}
+.ves .fl{position:absolute;bottom:-15px;right:50%;transform:translateX(50%);width:96px;height:14px;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(0,0,0,.62),rgba(0,0,0,0) 72%)}
+.dots{position:absolute;bottom:16px;right:50%;transform:translateX(50%);display:flex;gap:6px;z-index:3}
+.dots i{width:5px;height:5px;border-radius:50%;background:rgba(237,232,223,.28);display:block}
+.dots i.on{background:var(--brass);width:16px;border-radius:3px}
+
+/* ---------- title block ---------- */
+.head{padding:26px 22px 0}
+.hs{display:flex;align-items:center;gap:6px;margin-bottom:9px;color:var(--brass)}
+.hs svg{width:12px;height:12px}
+.hs span{font-size:9.5px;letter-spacing:2.4px;font-family:'Bodoni Moda',serif}
+.head h1{font-family:'Amiri',serif;font-size:33px;line-height:1.25;margin-bottom:11px}
+.meta{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+.st{display:flex;gap:2px;color:var(--brass)}
+.st svg{width:12px;height:12px;fill:currentColor;stroke:none}
+.st svg.o{fill:none;stroke:currentColor;stroke-width:1.2;opacity:.45}
+.meta em{font-size:11px;color:var(--faint);font-style:normal}
+.meta .sep{width:1px;height:11px;background:var(--hair)}
+.pricerow{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid var(--hair)}
+.pricerow .pv{font-size:23px;font-family:'Bodoni Moda',serif}
+.pricerow .cn{font-size:11px;color:var(--faint);letter-spacing:1.4px}
+
+/* ================= NOTES VISUALIZATION ================= */
+.nsec{padding:34px 0 0}
+.nhead{padding:0 22px 22px}
+.nhead small{font-size:9.5px;letter-spacing:2.6px;color:var(--faint);display:block;margin-bottom:8px;font-family:'Bodoni Moda',serif}
+.nhead h2{font-family:'Amiri',serif;font-size:24px;line-height:1;margin-bottom:9px}
+.nhead p{font-size:12px;color:var(--faint);line-height:1.8}
+
+.pyr{position:relative;padding:0 22px}
+/* the vertical spine */
+.spine{position:absolute;top:8px;bottom:34px;right:calc(22px + 47px);width:2px;
+ background:linear-gradient(to bottom,var(--top) 0%,var(--top) 18%,var(--heart) 44%,var(--heart) 58%,var(--base) 84%,var(--base) 100%);
+ opacity:.55}
+
+.tier{display:flex;gap:0;position:relative;padding-bottom:30px}
+.tier:last-child{padding-bottom:8px}
+.tcol{width:96px;flex:none;position:relative;padding-top:2px}
+.orb{width:96px;height:96px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
+.orb .aura{position:absolute;inset:0;border-radius:50%}
+.orb .ring{position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(237,232,223,.13)}
+.orb .gi{position:relative;z-index:2}
+.orb .gi svg{width:32px;height:32px;stroke-width:1.05}
+.tcol .tm{text-align:center;font-size:10px;color:var(--faint);margin-top:9px;letter-spacing:.6px}
+
+.tbody{flex:1;padding-inline-start:20px;padding-top:12px}
+.tlab{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.tlab .dot{width:6px;height:6px;border-radius:50%;display:block}
+.tlab .en{font-size:9px;letter-spacing:2.4px;font-family:'Bodoni Moda',serif}
+.tbody h3{font-family:'Amiri',serif;font-size:19px;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:1px solid var(--hair);
+ background:var(--l1);font-size:11.5px;color:var(--bone);position:relative}
+.chip::after{content:"";position:absolute;inset:-5px -0px;}
+.chip svg{width:14px;height:14px;stroke-width:1.15}
+
+/* ---------- evolution curve ---------- */
+.evo{margin:32px 22px 0;background:var(--l1);border:1px solid var(--hair);padding:20px 16px 16px}
+.evo .eh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+.evo .eh h4{font-size:12.5px;font-weight:500}
+.evo .eh span{font-size:10px;color:var(--faint);letter-spacing:1.2px}
+.evo .sub{font-size:10.5px;color:var(--faint);margin-bottom:14px;line-height:1.6}
+.evo .lg{display:flex;gap:16px;margin-top:12px;padding-top:13px;border-top:1px solid var(--hair)}
+.evo .lg div{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim)}
+.evo .lg i{width:14px;height:3px;display:block;border-radius:2px}
+
+/* ---------- performance ---------- */
+.perf{margin:26px 22px 0;display:flex;gap:1px;background:var(--hair);border:1px solid var(--hair)}
+.perf div{flex:1;background:var(--noir);padding:15px 12px;text-align:center}
+.perf .pl{font-size:10px;color:var(--faint);letter-spacing:1.4px;margin-bottom:9px}
+.perf .pn{font-size:14px;margin-bottom:9px}
+.perf .bars{display:flex;flex-direction:row-reverse;gap:3px;justify-content:center}
+.perf .bars i{width:5px;height:14px;background:var(--hair);display:block}
+.perf .bars i.f{background:var(--brass)}
+.perf .seas{display:flex;gap:12px;justify-content:center}
+.perf .seas svg{width:15px;height:15px;stroke-width:1.2}
+.perf .seas svg:last-child{opacity:.28}
+
+/* ---------- cta ---------- */
+.sizes{display:flex;gap:8px;padding:26px 22px 0}
+.sz{flex:1;height:52px;border:1px solid var(--hair);background:var(--l1);display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:2px}
+.sz.on{border-color:var(--brass);background:var(--l2)}
+.sz b{font-size:12.5px;font-weight:500}
+.sz span{font-size:10px;color:var(--faint)}
+.cta{display:flex;gap:9px;padding:16px 22px 26px}
+.cta .buy{flex:1;height:52px;background:var(--brass);color:#0B0A09;display:flex;align-items:center;
+ justify-content:center;gap:9px;font-size:13.5px;font-weight:600}
+.cta .buy svg{width:17px;height:17px;stroke:#0B0A09}
+.cta .wl{width:52px;height:52px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--bone)}
+.cta .wl svg{width:18px;height:18px}
+</style>
+</head>
+<body>
+<div class="col">
+<div class="tag"><b>صفحة المنتج</b>هرم النوتات — مدارات مضيئة بأيقونات نباتية، ومنحنى تطوّر العطر على مدار ٨ ساعات</div>
+<div class="app">
+
+  <div class="bar">
+    <span class="ic"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
+    <div style="display:flex">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4"/></svg></span>
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg></span>
+    </div>
+  </div>
+
+  <div class="ph">
+    <div class="fld"></div><div class="pt"></div><div class="gl"></div>
+    <div class="ves">
+      <div class="cp"></div><div class="nk"></div>
+      <div class="bd"><span class="sh"></span><span class="lb">BAYT AL·ANBAR</span></div>
+      <div class="fl"></div>
+    </div>
+    <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="head">
+    <div class="hs">
+      <svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5-7.5-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>
+      <span>BAYT AL·ANBAR</span>
+    </div>
+    <h1>ليل القاهرة</h1>
+    <div class="meta">
+      <span class="st">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        <svg class="o" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.6 19.6l1.2-6L3.3 9.4l6.1-.8z"/></svg>
+      </span>
+      <em>٤٫٦ · ٨٤ تقييم</em>
+      <span class="sep"></span>
+      <em>Eau de Parfum</em>
+    </div>
+    <div class="pricerow">
+      <span class="pv">٤٨٠ ج.م</span>
+      <span class="cn">٥٠ مل · تركيز ٢٠٪</span>
+    </div>
+  </div>
+
+  <!-- ============ NOTES ============ -->
+  <div class="nsec">
+    <div class="nhead">
+      <small>LA PYRAMIDE</small>
+      <h2>هرم النوتات</h2>
+      <p>العطر بيتغيّر على جسمك مع الوقت — دي الطبقات الثلاثة بالترتيب اللي هتشمّها بيه.</p>
+    </div>
+
+    <div class="pyr">
+      <div class="spine"></div>
+
+      <!-- TOP -->
+      <div class="tier">
+        <div class="tcol">
+          <div class="orb">
+            <span class="aura" style="background:radial-gradient(circle,rgba(194,168,92,.28) 0%,rgba(194,168,92,.06) 52%,rgba(194,168,92,0) 72%)"></span>
+            <span class="ring"></span>
+            <span class="gi" style="color:#C2A85C">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 6V4M12 6c-1.6 0-2.6-1-2.6-1M12 6c1.6 0 2.6-1 2.6-1"/><path d="M12 6v14M5.2 10.5l13.6 5M5.2 15.5l13.6-5"/></svg>
+            </span>
+          </div>
+          <div class="tm">٠ – ٢٠ دقيقة</div>
+        </div>
+        <div class="tbody">
+          <div class="tlab"><i class="dot" style="background:#C2A85C"></i><span class="en" style="color:#C2A85C">TÊTE</span></div>
+          <h3>النوتات الفوقية</h3>
+          <div class="chips">
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#C2A85C"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M17.7 6.3L6.3 17.7"/></svg>برغموت</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#C2A85C"><path d="M12 20V9.5"/><path d="M12 9.5C9 9.5 6.5 7 6.5 4 9.5 4 12 6.5 12 9.5z"/><path d="M12 13c3 0 5.5-2.5 5.5-5.5C14.5 7.5 12 10 12 13z"/></svg>هيل</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#C2A85C"><path d="M6 15c0-4 2.7-7 6-7s6 3 6 7"/><path d="M9 8.5c0-2 1.3-3.5 3-3.5s3 1.5 3 3.5"/><path d="M4.5 15h15v1.5a3 3 0 01-3 3h-9a3 3 0 01-3-3z"/></svg>زعفران</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEART -->
+      <div class="tier">
+        <div class="tcol">
+          <div class="orb">
+            <span class="aura" style="background:radial-gradient(circle,rgba(181,105,126,.3) 0%,rgba(181,105,126,.07) 52%,rgba(181,105,126,0) 72%)"></span>
+            <span class="ring"></span>
+            <span class="gi" style="color:#B5697E">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4"/><path d="M12 9.6c0-2.8-1.9-5-.1-5.4 1.9-.4 2 2.6.1 5.4z"/><path d="M14.4 12c2.8 0 5-1.9 5.4-.1.4 1.9-2.6 2-5.4.1z"/><path d="M12 14.4c0 2.8 1.9 5 .1 5.4-1.9.4-2-2.6-.1-5.4z"/><path d="M9.6 12c-2.8 0-5 1.9-5.4.1-.4-1.9 2.6-2 5.4-.1z"/></svg>
+            </span>
+          </div>
+          <div class="tm">٢٠ د – ٣ ساعات</div>
+        </div>
+        <div class="tbody">
+          <div class="tlab"><i class="dot" style="background:#B5697E"></i><span class="en" style="color:#B5697E">CŒUR</span></div>
+          <h3>نوتات القلب</h3>
+          <div class="chips">
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B5697E"><path d="M12 20v-5"/><circle cx="12" cy="10" r="5.5"/><path d="M12 10c0-2 1.4-3.4 3.2-3.4M12 10c0 2-1.4 3.4-3.2 3.4M12 10c-2 0-3.4-1.4-3.4-3.2"/></svg>ورد طائفي</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B5697E"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-3 1-4.5 0-4.5S12 7 12 10M14 12c3 0 4.5 1 4.5 0S17 12 14 12M12 14c0 3-1 4.5 0 4.5s0-1.5 0-4.5M10 12c-3 0-4.5-1-4.5 0S7 12 10 12"/></svg>ياسمين</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B5697E"><path d="M12 4c2.6 2.4 4 5 4 7.4 0 2.8-1.8 4.6-4 4.6s-4-1.8-4-4.6C8 9 9.4 6.4 12 4z"/><path d="M12 20v-4"/></svg>بنفسج</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BASE -->
+      <div class="tier">
+        <div class="tcol">
+          <div class="orb">
+            <span class="aura" style="background:radial-gradient(circle,rgba(138,104,56,.34) 0%,rgba(138,104,56,.08) 52%,rgba(138,104,56,0) 72%)"></span>
+            <span class="ring"></span>
+            <span class="gi" style="color:#B08D57">
+              <svg viewBox="0 0 24 24"><path d="M12 21c-3.9 0-6.5-2.4-6.5-5.6 0-3.9 3.4-5.6 3.4-9.4C8.9 4.3 10.2 3 12 3s3.1 1.3 3.1 3c0 3.8 3.4 5.5 3.4 9.4C18.5 18.6 15.9 21 12 21z"/><path d="M12 17.5c-1.4 0-2.3-.9-2.3-2 0-1.4 1.2-2 1.2-3.4"/></svg>
+            </span>
+          </div>
+          <div class="tm">٣ – ٨ ساعات +</div>
+        </div>
+        <div class="tbody">
+          <div class="tlab"><i class="dot" style="background:#B08D57"></i><span class="en" style="color:#B08D57">FOND</span></div>
+          <h3>النوتات القاعدية</h3>
+          <div class="chips">
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B08D57"><path d="M5 19c0-6 3-14 7-14s7 8 7 14z"/><path d="M8.4 19c.3-4.4 1.8-9.6 3.6-9.6s3.3 5.2 3.6 9.6"/></svg>عود</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B08D57"><path d="M12 3.5c2.8 3.8 4.6 6.8 4.6 9.6a4.6 4.6 0 11-9.2 0c0-2.8 1.8-5.8 4.6-9.6z"/></svg>عنبر</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B08D57"><path d="M4.5 16c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/><path d="M4.5 11.5c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/><path d="M4.5 7c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/></svg>مسك</span>
+            <span class="chip"><svg viewBox="0 0 24 24" style="color:#B08D57"><path d="M9 3.5c3.4 0 6 2.6 6 6v11h-2.4v-11c0-2-1.6-3.6-3.6-3.6z"/><path d="M9 8.5c1.2 0 2 .8 2 2"/></svg>فانيليا</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- evolution curve -->
+    <div class="evo">
+      <div class="eh"><h4>تطوّر العطر</h4><span>٨ ساعات</span></div>
+      <div class="sub">قوة كل طبقة على مدار اليوم — الفوقية بتطير بدري، والقاعدية بتفضل.</div>
+      <svg viewBox="0 0 330 116" style="width:100%;height:auto;display:block;stroke:none">
+        <defs>
+          <linearGradient id="gt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#C2A85C" stop-opacity=".55"/><stop offset="100%" stop-color="#C2A85C" stop-opacity=".03"/>
+          </linearGradient>
+          <linearGradient id="gh" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#B5697E" stop-opacity=".55"/><stop offset="100%" stop-color="#B5697E" stop-opacity=".03"/>
+          </linearGradient>
+          <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#B08D57" stop-opacity=".55"/><stop offset="100%" stop-color="#B08D57" stop-opacity=".03"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#2A2724" stroke-width="1">
+          <line x1="0" y1="96" x2="330" y2="96"/>
+          <line x1="82" y1="8" x2="82" y2="96" stroke-dasharray="2 4"/>
+          <line x1="176" y1="8" x2="176" y2="96" stroke-dasharray="2 4"/>
+          <line x1="262" y1="8" x2="262" y2="96" stroke-dasharray="2 4"/>
+        </g>
+        <path d="M330,96 L330,20 C300,24 282,44 258,74 C244,90 236,96 222,96 Z" fill="url(#gt)"/>
+        <path d="M330,20 C300,24 282,44 258,74 C244,90 236,96 222,96" fill="none" stroke="#C2A85C" stroke-width="1.5"/>
+        <path d="M282,96 C258,88 244,44 210,38 C168,31 140,64 96,90 C86,95 80,96 72,96 Z" fill="url(#gh)"/>
+        <path d="M282,96 C258,88 244,44 210,38 C168,31 140,64 96,90 C86,95 80,96 72,96" fill="none" stroke="#B5697E" stroke-width="1.5"/>
+        <path d="M222,96 C182,92 160,58 122,48 C86,39 46,40 0,50 L0,96 Z" fill="url(#gb)"/>
+        <path d="M222,96 C182,92 160,58 122,48 C86,39 46,40 0,50" fill="none" stroke="#B08D57" stroke-width="1.5"/>
+        <g fill="#8B837A" font-size="9" font-family="IBM Plex Sans Arabic" text-anchor="middle">
+          <text x="316" y="110">٠</text><text x="234" y="110">١س</text>
+          <text x="140" y="110">٣س</text><text x="54" y="110">٦س</text><text x="12" y="110">٨س</text>
+        </g>
+      </svg>
+      <div class="lg">
+        <div><i style="background:#C2A85C"></i>فوقية</div>
+        <div><i style="background:#B5697E"></i>قلبية</div>
+        <div><i style="background:#B08D57"></i>قاعدية</div>
+      </div>
+    </div>
+
+    <div class="perf">
+      <div>
+        <div class="pl">الثبات</div><div class="pn">٧ ساعات</div>
+        <div class="bars"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div>
+      </div>
+      <div>
+        <div class="pl">الفوحان</div><div class="pn">قوي</div>
+        <div class="bars"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div>
+      </div>
+      <div>
+        <div class="pl">الموسم</div><div class="pn">شتوي</div>
+        <div class="seas">
+          <svg viewBox="0 0 24 24" style="color:var(--brass)"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="M12 6.6l2-2M12 6.6l-2-2M12 17.4l2 2M12 17.4l-2 2"/></svg>
+          <svg viewBox="0 0 24 24" style="color:var(--brass)"><path d="M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"/><path d="M12 3.5v1.6M12 18.9v1.6M4.5 12H6.1M17.9 12h1.6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sizes">
+    <div class="sz"><b>٣٠ مل</b><span>٣٢٠ ج.م</span></div>
+    <div class="sz on"><b>٥٠ مل</b><span>٤٨٠ ج.م</span></div>
+    <div class="sz"><b>١٠٠ مل</b><span>٧٩٠ ج.م</span></div>
+  </div>
+  <div class="cta">
+    <span class="buy"><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg>أضف إلى السلة</span>
+    <span class="wl"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg></span>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الاسم — Name Candidates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noir:#0B0A09; --l1:#131211; --l2:#1C1A18; --l3:#242120; --hair:#2A2724;
+  --bone:#EDE8DF; --dim:#9A928A; --faint:#8B837A; --brass:#B08D57;
+  --fresh:#5A8C7C; --heart:#B5697E;
+  --m-quick:240ms; --e-out:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{direction:rtl}
+body{background:var(--noir);color:var(--bone);font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.latin{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+.num{font-variant-numeric:tabular-nums;unicode-bidi:isolate}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important}}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:26px}
+
+.mast{padding:64px 0 44px;border-block-end:1px solid var(--hair);margin-block-end:44px}
+.device{width:46px;height:46px;color:var(--brass);margin-block-end:24px}
+.mast .sub{font-family:'Bodoni Moda',serif;font-size:10.5px;letter-spacing:2.4px;color:var(--brass)}
+.mast h1{font-family:'Amiri',serif;font-size:33px;font-weight:400;margin-block:8px 16px}
+.mast p{color:var(--dim);max-width:64ch;line-height:1.85}
+
+.lbl{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);display:block;margin-block-end:14px}
+.rule{height:1px;background:var(--hair);margin-block:44px}
+
+/* criteria */
+.crit{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin-block-end:56px}
+@media(max-width:760px){.crit{grid-template-columns:repeat(2,1fr)}}
+.crit div{background:var(--noir);padding:18px}
+.crit .k{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--brass);margin-block-end:7px}
+.crit .v{color:var(--dim);font-size:10.5px;line-height:1.7}
+
+/* candidate */
+.cand{border:1px solid var(--hair);margin-block-end:20px;background:var(--l1)}
+.cand.top{border-color:rgba(176,141,87,.42)}
+.mark{padding:52px 30px 42px;text-align:center;border-block-end:1px solid var(--hair);position:relative;
+  background:radial-gradient(120% 130% at 50% 0%,#1A1613 0%,#0F0D0C 62%)}
+.mark .rk{position:absolute;top:16px;inset-inline-start:18px;font-family:'Bodoni Moda',serif;
+  font-size:9.5px;letter-spacing:2.4px;color:var(--faint)}
+.mark .dev{width:30px;height:30px;color:var(--brass);opacity:.85;margin:0 auto 22px}
+.mark .lat{font-family:'Bodoni Moda',serif;font-size:34px;letter-spacing:8px;font-weight:400;
+  padding-inline-start:8px;line-height:1.2}
+.mark .ar{font-family:'Amiri',serif;font-size:27px;color:var(--brass);margin-block-start:14px}
+.mark .tr{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:2.4px;color:var(--faint);margin-block-start:16px}
+
+.body{padding:24px 30px 28px}
+.mean{font-size:15px;line-height:1.75;margin-block-end:16px}
+.mean b{color:var(--brass);font-weight:400}
+.pt{display:flex;gap:11px;padding-block:7px;align-items:flex-start}
+.pt .m{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.4px;width:34px;flex-shrink:0;padding-top:2px}
+.pt.pro .m{color:var(--fresh)} .pt.con .m{color:var(--heart)} .pt.dom .m{color:var(--faint)}
+.pt .t{color:var(--dim);font-size:11.5px;line-height:1.75;flex:1}
+.pt .t b{color:var(--bone);font-weight:500}
+
+/* matrix */
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th,td{padding:11px 10px;text-align:start;border-block-end:1px solid var(--hair);vertical-align:middle}
+th{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.8px;color:var(--faint);font-weight:400}
+td.nm{font-family:'Bodoni Moda',serif;letter-spacing:2.4px;font-size:12px;color:var(--bone)}
+.sc{display:inline-flex;gap:3px}
+.sc i{width:5px;height:5px;border-radius:50%;background:var(--hair);display:block}
+.sc i.on{background:var(--brass)}
+
+/* icon previews */
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:640px){.icons{grid-template-columns:repeat(2,1fr)}}
+.ic{aspect-ratio:1;background:radial-gradient(120% 120% at 50% 18%,#241D18 0%,#0B0A09 72%);
+  border:1px solid var(--hair);border-radius:18%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px}
+.ic svg{width:30%;height:auto;color:var(--brass)}
+.ic .w{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:3.4px;color:var(--bone);padding-inline-start:3.4px}
+.icap{text-align:center;color:var(--faint);font-size:9.5px;margin-block-start:9px;
+  font-family:'Bodoni Moda',serif;letter-spacing:1.8px}
+
+
+/* English prose inside an RTL document — isolate so trailing punctuation lands correctly */
+.crit .v,.mean,.pt .t,.note,.rec,th,td{direction:ltr;text-align:left}
+.mark .tr,.icap{direction:ltr;text-align:center}
+td.nm{text-align:left}
+.note{border-inline-start:1px solid var(--brass);padding-inline-start:18px;color:var(--dim);
+  max-width:68ch;line-height:1.85;margin-block-start:26px}
+.note b{color:var(--bone);font-weight:500}
+.warn{border-inline-start-color:var(--heart)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <svg class="device" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" stroke-width="1"/>
+    <path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/>
+    <rect x="13" y="13" width="22" height="22" transform="rotate(45 24 24)" stroke-width=".8" opacity=".55"/>
+  </svg>
+  <div class="sub">Name Candidates — D-1</div>
+  <h1>الاسم</h1>
+  <p>ثمانية مرشّحين، كلٌّ منها معروض كعلامة نصّية حقيقية لا كقائمة.
+     الاسم يُحكم عليه بالعين لا بالوصف — كيف يبدو مُتباعد الحروف، وكيف يقف بجانب العربية.</p>
+</header>
+
+<span class="lbl">Selection criteria</span>
+<div class="crit">
+  <div><div class="k">Meaning</div><div class="v">Rooted in fragrance, trace or craft — never a generic category word.</div></div>
+  <div><div class="k">Distinctiveness</div><div class="v">Descriptive words make weak trademarks. "Perfume" cannot be owned.</div></div>
+  <div><div class="k">Bilingual form</div><div class="v">Must hold as letterspaced Bodoni caps and as Amiri Arabic.</div></div>
+  <div><div class="k">Not a first name</div><div class="v">The positioning is "more credible than an Instagram seller." A personal name undercuts exactly that.</div></div>
+</div>
+
+<!-- 01 ATHAR -->
+<div class="cand top">
+  <div class="mark">
+    <div class="rk">01</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">ATHAR</div>
+    <div class="ar">أثر</div>
+    <div class="tr">ˈA-thar</div>
+  </div>
+  <div class="body">
+    <div class="mean">The <b>trace</b> left behind — an impression, a mark. In the plural, <b>آثار</b>: Egypt's antiquities.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">A perfect double meaning. A scent is literally a trace left behind, and <b>آثار</b> is the most Egyptian word there is. Concept and country in one word.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Five clean caps. Letterspaces beautifully — the two A's give it symmetry.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Already the working mark in your design references, so the visual language was built around it.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">The most likely of all eight to be taken. "Athar" is used across the Gulf in fragrance and lifestyle.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">The antiquities association can read museum rather than modern if the visual language ever softened.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Assume the exact .com is gone. Screen <span class="latin">athar.eg</span>, <span class="latin">atharparfums</span>, <span class="latin">dar-athar</span>.</span></div>
+  </div>
+</div>
+
+<!-- 02 DIYAR -->
+<div class="cand top">
+  <div class="mark">
+    <div class="rk">02</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">DIYAR</div>
+    <div class="ar">ديار</div>
+    <div class="tr">di-ˈYAR</div>
+  </div>
+  <div class="body">
+    <div class="mean">The <b>houses</b> — plural of <b>دار</b>. The word your own interface already uses: <span class="num">٤٢</span> دار عطور.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t"><b>Structurally the most accurate name on this list.</b> You are not a perfume brand — you are a collection of perfume houses. This name says exactly that.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">It flatters sellers. "Brand independence" is a founding principle, and a name meaning "the houses" makes them the subject rather than the inventory.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Heavily used in Gulf real estate (Diyar Al Muharraq and others). Different class, but it dilutes distinctiveness and search results.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Says nothing about scent on its own. Needs a descriptor lockup — <span class="latin">DIYAR · PARFUMS</span>.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Screen <span class="latin">diyar.eg</span>, <span class="latin">diyarparfums</span>, <span class="latin">diyar.co</span>.</span></div>
+  </div>
+</div>
+
+<!-- 03 KHITAM -->
+<div class="cand top">
+  <div class="mark">
+    <div class="rk">03</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">KHITAM</div>
+    <div class="ar">ختام</div>
+    <div class="tr">khi-ˈTAM</div>
+  </div>
+  <div class="body">
+    <div class="mean">The <b>seal</b>, the closing. From <b>خِتامُهُ مِسْك</b> — "its seal is musk."</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">The deepest cultural resonance of any candidate. Educated Egyptians complete the phrase instantly, and it already links the word to musk.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t"><b>The most distinctive, therefore the strongest trademark.</b> Nobody in fragrance is using it.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">"Seal" carries a second meaning you actually need: verification. Your platform seals what it approves.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Six letters with a <span class="latin">KH</span> digraph. Harder for a non-Arabic speaker, and the Latin lockup is wider than the others.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Likely the most available. Screen <span class="latin">khitam.com</span>, <span class="latin">khitam.eg</span>.</span></div>
+  </div>
+</div>
+
+<!-- 04 AREEJ -->
+<div class="cand">
+  <div class="mark">
+    <div class="rk">04</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">AREEJ</div>
+    <div class="ar">أريج</div>
+    <div class="tr">a-ˈREEJ</div>
+  </div>
+  <div class="body">
+    <div class="mean">The <b>diffusion of sweet scent</b> — the classical Arabic word for fragrance spreading through air.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Arguably the most beautiful pure-fragrance word in Arabic. It describes projection — a field you literally have in the catalogue.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t"><b>It is a common Egyptian female first name.</b> That reads as a personal Instagram shop — the exact impression the platform exists to escape.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Descriptive of the category, which weakens trademark protection.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Almost certainly taken across the region.</span></div>
+  </div>
+</div>
+
+<!-- 05 MAQAM -->
+<div class="cand">
+  <div class="mark">
+    <div class="rk">05</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">MAQAM</div>
+    <div class="ar">مقام</div>
+    <div class="tr">ma-ˈQAM</div>
+  </div>
+  <div class="body">
+    <div class="mean">A <b>mode, a station, a standing</b> — the melodic system of Arabic music.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">The best metaphor available. A perfume is a composition in three movements — top, heart, base. Your notes pyramid is already built like a score.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Visually superb letterspaced. Symmetrical, opens and closes on <span class="latin">M</span>.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">The musical association is strong enough that people may expect audio, not scent.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t"><b>مقام</b> also means a shrine or saint's tomb. Worth checking that reading lands cleanly in Egypt.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Screen <span class="latin">maqam.eg</span>, <span class="latin">maqamparfums</span>.</span></div>
+  </div>
+</div>
+
+<!-- 06 NAFAS -->
+<div class="cand">
+  <div class="mark">
+    <div class="rk">06</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">NAFAS</div>
+    <div class="ar">نَفَس</div>
+    <div class="tr">ˈNA-fas</div>
+  </div>
+  <div class="body">
+    <div class="mean">A single <b>breath</b> — one inhalation.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">The most modern and minimal of the eight. Scent is only ever experienced through breath.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Five letters, easy in any language, no digraphs.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">One diacritic away from <b>نَفْس</b> — self, soul. Spoken aloud the two blur, and a name that must be explained is a weak name.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Reads slightly clinical — closer to wellness than to a fragrance house.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Screen <span class="latin">nafas.eg</span>. Used by wellness apps regionally.</span></div>
+  </div>
+</div>
+
+<!-- 07 SHADHA -->
+<div class="cand">
+  <div class="mark">
+    <div class="rk">07</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">SHADHA</div>
+    <div class="ar">شذا</div>
+    <div class="tr">ˈSHA-dha</div>
+  </div>
+  <div class="body">
+    <div class="mean"><b>Diffused sweetness</b> — the lingering trail of a scent in a room.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">The most poetic word here. <b>شذا</b> in Amiri is genuinely beautiful — three letters, one sweeping curve.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t"><b>The transliteration defeats it.</b> <span class="latin">SHADHA</span> is six letters with two digraphs and no obvious pronunciation. The Arabic is elegant; the Latin is not.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">Also used as a female name.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Transliteration ambiguity fragments the domain — <span class="latin">shadha / shatha / shaza</span>.</span></div>
+  </div>
+</div>
+
+<!-- 08 AWAN -->
+<div class="cand">
+  <div class="mark">
+    <div class="rk">08</div>
+    <svg class="dev" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1"/></svg>
+    <div class="lat">AWAN</div>
+    <div class="ar">أوان</div>
+    <div class="tr">a-ˈWAN</div>
+  </div>
+  <div class="body">
+    <div class="mean">The <b>right time</b>, the proper season — and near-homophone of <b>آنية</b>, vessels.</div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">Shortest and cleanest Latin form on the list. Four letters, perfect for an app icon.</span></div>
+    <div class="pt pro"><span class="m">FOR</span><span class="t">"Season" connects to a real catalogue field — season and occasion are how people actually choose a scent.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">The most abstract. It needs a descriptor to mean anything at all.</span></div>
+    <div class="pt con"><span class="m">RISK</span><span class="t">The vessel reading is a near-miss, not a real one — a nice story in a deck, invisible to a customer.</span></div>
+    <div class="pt dom"><span class="m">DOM</span><span class="t">Short domains are expensive. Expect <span class="latin">awan.com</span> to be held.</span></div>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- MATRIX -->
+<span class="lbl">Comparison</span>
+<table>
+  <thead><tr>
+    <th>Name</th><th>Meaning fit</th><th>Distinctive</th><th>Latin mark</th><th>Arabic mark</th><th>Says it once</th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="nm">ATHAR</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td></tr>
+    <tr><td class="nm">DIYAR</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td></tr>
+    <tr><td class="nm">KHITAM</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td></tr>
+    <tr><td class="nm">AREEJ</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i></i><i></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td></tr>
+    <tr><td class="nm">MAQAM</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></td></tr>
+    <tr><td class="nm">NAFAS</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td></tr>
+    <tr><td class="nm">SHADHA</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i></i><i></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td></tr>
+    <tr><td class="nm">AWAN</td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+      <td><span class="sc"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+      <td><span class="sc"><i class="on"></i><i></i><i></i><i></i><i></i></span></td></tr>
+  </tbody>
+</table>
+
+<div class="rule"></div>
+
+<!-- ICONS -->
+<span class="lbl">App icon — shortlist at store size</span>
+<div class="icons">
+  <div><div class="ic"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" stroke-width="1.4"/><path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width="1.4"/></svg></div><div class="icap">DEVICE ONLY</div></div>
+  <div><div class="ic"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z" stroke-width="1.4"/></svg><div class="w">ATHAR</div></div><div class="icap">ATHAR</div></div>
+  <div><div class="ic"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z" stroke-width="1.4"/></svg><div class="w">DIYAR</div></div><div class="icap">DIYAR</div></div>
+  <div><div class="ic"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z" stroke-width="1.4"/></svg><div class="w">KHITAM</div></div><div class="icap">KHITAM</div></div>
+</div>
+<p class="note">
+  <b>Device-only wins at icon size.</b> At <span class="num latin">60×60</span> on a home screen the wordmark
+  is illegible in every candidate — which is an argument for the name-independent device, not against any name.
+  The wordmark belongs on the splash and the storefront, not the icon.
+</p>
+
+<div class="rule"></div>
+
+<span class="lbl">Recommendation</span>
+<p class="rec" style="font-size:15px;line-height:1.85;max-width:68ch;margin-block-end:20px">
+  Screen <b style="color:var(--brass)">KHITAM</b>, <b style="color:var(--brass)">DIYAR</b> and
+  <b style="color:var(--brass)">ATHAR</b> — in that order.
+</p>
+<p class="rec" style="color:var(--dim);max-width:68ch;line-height:1.85;margin-block-end:14px">
+  <b style="color:var(--bone)">KHITAM</b> first because distinctiveness is the one criterion you cannot fix later.
+  It is the strongest trademark, nobody in fragrance holds it, and "the seal" carries the verification meaning
+  your platform is actually built on. Its weakness — the <span class="latin">KH</span> — is a typography problem, and typography is solvable.
+</p>
+<p class="rec" style="color:var(--dim);max-width:68ch;line-height:1.85;margin-block-end:14px">
+  <b style="color:var(--bone)">DIYAR</b> second because it describes the business more accurately than anything else here,
+  and it puts your sellers in the name.
+</p>
+<p class="rec" style="color:var(--dim);max-width:68ch;line-height:1.85">
+  <b style="color:var(--bone)">ATHAR</b> third — not because it is weaker as a word, but because it is the most likely
+  to be unavailable. Screen it early so you find out fast.
+</p>
+
+<p class="note warn">
+  <b>I have not verified any domain or trademark.</b> I have no way to check registries from here, so every
+  availability note above is a probability, not a fact. Screening is a real task with a real cost —
+  an Egyptian IP agent should run all three through the Trademark Office in the relevant classes
+  (<span class="num latin">3</span> for cosmetics and fragrance, <span class="num latin">35</span> for retail
+  and marketplace services) before you commit. Register the domain the same week the search clears.
+</p>
+
+<p class="rec" style="color:var(--faint);font-size:10.5px;line-height:1.85;max-width:66ch;margin-block-start:44px">
+  Governed by <span class="latin">docs/DESIGN_DOCTRINE.md</span> §5. Resolving this unblocks the wordmark,
+  splash, store listings, and the Apple organization enrolment clock behind them.
+</p>
+
+</div>
+</body>
+</html>

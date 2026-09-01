@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — الإدارة والتشغيل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-direction:column;gap:32px;
+  align-items:center;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:1100px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6;direction:ltr;text-align:left;max-width:74ch}
+.tag b{display:block;font-size:15px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;--hair:#2A2724;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--fresh:#5A8C7C;--heart:#B5697E;
+ background:var(--noir);color:var(--bone);overflow:hidden;direction:rtl;
+ display:flex;font-size:13px;line-height:1.6;min-height:600px}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+.lat{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+
+/* shell */
+.side{width:196px;flex-shrink:0;border-inline-end:1px solid var(--hair);padding-block:14px;background:var(--l1)}
+.side .brand{display:flex;align-items:center;gap:9px;padding:6px 16px 18px}
+.side .brand svg{width:18px;height:18px;color:var(--brass)}
+.side .brand span{font-family:'Bodoni Moda',serif;font-size:11px;letter-spacing:4px;padding-inline-start:4px}
+.side .sec{font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:2px;color:var(--faint);padding:14px 16px 6px}
+.nav{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:44px;font-size:12px;color:var(--dim);cursor:pointer}
+.nav.on{color:var(--bone);background:var(--l2);border-inline-start:1px solid var(--brass)}
+.nav .b{margin-inline-start:auto;font-size:10px;font-variant-numeric:tabular-nums;color:var(--brass)}
+.nav .b.hot{color:var(--heart)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-block-end:1px solid var(--hair);flex-shrink:0}
+.top h2{font-family:'Amiri',serif;font-size:24px;font-weight:400}
+.top .sub{color:var(--faint);font-size:10.5px;margin-top:2px}
+.who{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--dim)}
+.who .av{width:28px;height:28px;border-radius:50%;background:var(--l3);border:1px solid var(--hair)}
+.body{padding:20px 22px;overflow:hidden}
+
+.sechd{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:2.2px;color:var(--faint);margin-block-end:12px}
+
+/* exception rows */
+.ex{border:1px solid var(--hair);margin-block-end:12px}
+.exh{display:flex;align-items:center;gap:13px;padding:13px 16px;cursor:pointer}
+.exh .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.p0{background:var(--heart);box-shadow:0 0 0 4px rgba(181,105,126,.14)}
+.p1{background:var(--brass)}
+.p2{background:var(--faint)}
+.exh .t{flex:1;font-size:13px}
+.exh .n{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;min-width:34px;text-align:start}
+.exh .own{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint);
+  border:1px solid var(--hair);padding:3px 8px}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;border-block-start:1px solid var(--hair)}
+.tbl th{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.6px;color:var(--faint);
+  font-weight:400;text-align:start;padding:9px 16px;border-block-end:1px solid var(--hair)}
+.tbl td{padding:11px 16px;border-block-end:1px solid var(--hair);color:var(--dim)}
+.tbl td.k{color:var(--bone)}
+.tbl tr:last-child td{border-block-end:0}
+.tbl .lat{font-size:10px;letter-spacing:1.4px;color:var(--faint)}
+.pill{display:inline-flex;font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.4px;
+  border:1px solid var(--hair);padding:3px 7px;color:var(--dim)}
+.pill.bad{border-color:rgba(181,105,126,.45);color:var(--heart)}
+.pill.good{border-color:rgba(90,140,124,.45);color:var(--fresh)}
+.pill.warn{border-color:rgba(176,141,87,.45);color:var(--brass)}
+.act{color:var(--brass);font-size:11px;cursor:pointer}
+
+/* buttons */
+.btn{min-height:44px;padding-inline:20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid var(--hair);background:transparent;color:var(--bone);border-radius:2px;cursor:pointer;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12.5px}
+.btn.pri{background:var(--brass);color:var(--noir);border-color:var(--brass);font-weight:600}
+.btn.bad{color:var(--heart);border-color:rgba(181,105,126,.4)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* two-pane */
+.panes{display:flex;gap:20px}
+.pane{flex:1;min-width:0}
+.pane.narrow{flex:0 0 330px}
+.card{border:1px solid var(--hair)}
+.card .ch{padding:12px 16px;border-block-end:1px solid var(--hair);display:flex;align-items:center;justify-content:space-between}
+.card .ch b{font-size:12.5px;font-weight:500}
+.card .cb{padding:14px 16px}
+
+/* verification list */
+.v{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-block-end:1px solid var(--hair)}
+.v:last-child{border-block-end:0}
+.v .mk{width:16px;height:16px;flex-shrink:0;border-radius:50%;border:1px solid var(--hair);
+  display:flex;align-items:center;justify-content:center;margin-top:2px}
+.v .mk svg{width:9px;height:9px}
+.v.ok .mk{border-color:var(--fresh);color:var(--fresh)}
+.v.no .mk{border-color:var(--heart);color:var(--heart)}
+.v .bd{flex:1}
+.v .t1{font-size:12px}
+.v .t2{color:var(--faint);font-size:10px;margin-top:1px}
+
+/* audit */
+.aud{display:flex;gap:11px;padding:10px 0;border-block-end:1px solid var(--hair);font-size:11px}
+.aud:last-child{border-block-end:0}
+.aud .tm{color:var(--faint);font-size:9.5px;flex:0 0 84px;font-variant-numeric:tabular-nums}
+.aud .tx{flex:1;color:var(--dim);line-height:1.7}
+.aud .tx b{color:var(--bone);font-weight:500}
+
+/* claim flag */
+.claim{border:1px solid rgba(181,105,126,.4);background:rgba(181,105,126,.05);padding:14px 16px;margin-block-end:14px}
+.claim .h{display:flex;align-items:center;gap:9px;margin-block-end:9px}
+.claim .h svg{width:15px;height:15px;color:var(--heart)}
+.claim .h b{font-size:12.5px}
+.claim .q{background:var(--l2);padding:11px 13px;font-size:13px;margin-block-end:10px;border-inline-start:1px solid var(--heart)}
+.claim ul{list-style:none}
+.claim li{color:var(--dim);font-size:11px;padding-block:3px;padding-inline-start:14px;position:relative}
+.claim li::before{content:'';position:absolute;inset-inline-start:0;top:9px;width:5px;height:1px;background:var(--heart)}
+
+/* commission table */
+.rate{width:100%;border-collapse:collapse;font-size:12px}
+.rate th{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.6px;color:var(--faint);
+  font-weight:400;text-align:start;padding:10px 14px;border-block-end:1px solid var(--hair)}
+.rate td{padding:12px 14px;border-block-end:1px solid var(--hair)}
+.rate .v{font-variant-numeric:tabular-nums;font-size:14px;font-weight:600}
+.rate .v.low{color:var(--fresh)}
+.rate .src{color:var(--dim)}
+.rate .src i{display:block;font-style:normal;color:var(--faint);font-size:10px;margin-top:2px}
+
+.lock{display:flex;gap:11px;padding:13px 16px;background:var(--l1);border-inline-start:1px solid var(--heart);margin-block-start:16px}
+.lock svg{width:15px;height:15px;color:var(--heart);flex-shrink:0;margin-top:2px}
+.lock p{color:var(--dim);font-size:11px;line-height:1.75}
+.lock b{color:var(--bone);font-weight:500}
+
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin-block-end:20px}
+.kpi{background:var(--noir);padding:15px}
+.kpi .k{font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.8px;color:var(--faint);margin-block-end:6px}
+.kpi .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .v .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--dim);margin-inline-start:4px}
+.kpi .d{color:var(--faint);font-size:9.5px;margin-block-start:4px}
+.kpi .v.bad{color:var(--heart)}
+.kpi .v.good{color:var(--fresh)}
+
+/* waterfall */
+.wf{display:flex;align-items:flex-end;gap:8px;height:150px;padding-block-start:8px}
+.wf .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.wf .bar{width:100%;background:var(--l3);border-block-start:1px solid var(--hair)}
+.wf .bar.rev{background:rgba(176,141,87,.32);border-block-start-color:var(--brass)}
+.wf .bar.cost{background:rgba(181,105,126,.18);border-block-start-color:var(--heart)}
+.wf .bar.net{background:rgba(90,140,124,.24);border-block-start-color:var(--fresh)}
+.wfl{display:flex;gap:8px;margin-block-start:9px}
+.wfl div{flex:1;text-align:center}
+.wfl .n{font-size:11px;font-variant-numeric:tabular-nums}
+.wfl .l{color:var(--faint);font-size:9px;line-height:1.5;margin-top:3px}
+
+/* funnel */
+.fn{display:flex;flex-direction:column;gap:7px}
+.fstep{display:flex;align-items:center;gap:12px}
+.fstep .lb{flex:0 0 132px;font-size:11.5px;color:var(--dim)}
+.fstep .tr{flex:1;height:22px;background:var(--l2);position:relative}
+.fstep .fi{position:absolute;inset-block:0;inset-inline-start:0;background:rgba(176,141,87,.3);
+  border-inline-end:1px solid var(--brass)}
+.fstep .vv{flex:0 0 96px;text-align:start;font-size:11.5px;font-variant-numeric:tabular-nums}
+.fstep .vv i{font-style:normal;color:var(--faint);font-size:9.5px;margin-inline-start:6px}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. EXCEPTION DASHBOARD ============ -->
+<div class="col">
+  <div class="tag"><b>Daily exception dashboard</b>Doc 06 §13 makes this a daily ritual, so it is a product surface, not a report. Every exception carries a named owner — an alert nobody owns is not an alert.</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg><span>DIYAR</span></div>
+      <div class="sec">OPERATIONS</div>
+      <div class="nav on"><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>الاستثناءات<span class="b hot">12</span></div>
+      <div class="nav">الطلبات<span class="b">1,204</span></div>
+      <div class="nav">الدعم<span class="b hot">1</span></div>
+      <div class="sec">TRUST</div>
+      <div class="nav">طلبات الدور<span class="b">4</span></div>
+      <div class="nav">مراجعة المنتجات<span class="b">17</span></div>
+      <div class="nav">مراجعة التقييمات<span class="b">3</span></div>
+      <div class="sec">MONEY</div>
+      <div class="nav">العمولات</div>
+      <div class="nav">التحويلات</div>
+      <div class="sec">GOVERNANCE</div>
+      <div class="nav">سجلّ التدقيق</div>
+      <div class="nav">الخصوصيّة</div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div><h2>استثناءات اليوم</h2><div class="sub"><span class="num">1</span> سبتمبر <span class="num">2026</span> · تُراجَع كل صباح قبل <span class="num">10</span> ص</div></div>
+        <div class="who"><span>منى — عمليات</span><span class="av"></span></div>
+      </div>
+      <div class="body">
+
+        <div class="ex">
+          <div class="exh"><span class="dot p0"></span>
+            <span class="t">طلبات تجاوزت مهلة التأكيد</span>
+            <span class="n num">3</span><span class="own">OPS LEAD</span></div>
+          <table class="tbl">
+            <thead><tr><th>ORDER</th><th>الدار</th><th>تأخّر</th><th>المصدر</th><th>القيمة</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="lat">DY-24817-C</td><td class="k">أتيليه سيوة</td><td><span class="pill bad">+6H</span></td><td>متجر الدار</td><td class="num">330</td><td><span class="act">تواصل مع الدار</span></td></tr>
+              <tr><td class="lat">DY-24902-A</td><td class="k">دار الورد</td><td><span class="pill bad">+2H</span></td><td>بحث المنصّة</td><td class="num">1,240</td><td><span class="act">تواصل مع الدار</span></td></tr>
+              <tr><td class="lat">DY-24880-B</td><td class="k">بيت العنبر</td><td><span class="pill bad">+11H</span></td><td>حملة مدفوعة</td><td class="num">760</td><td><span class="act">ألغِ وأبلغ العميل</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ex">
+          <div class="exh"><span class="dot p1"></span>
+            <span class="t">تأخّر الشحن بعد التأكيد</span>
+            <span class="n num">5</span><span class="own">SELLER SUCCESS</span></div>
+        </div>
+
+        <div class="ex">
+          <div class="exh"><span class="dot p1"></span>
+            <span class="t">استثناءات الدفع — تحصيل غير مطابق</span>
+            <span class="n num">2</span><span class="own">FINANCE</span></div>
+          <table class="tbl">
+            <thead><tr><th>ORDER</th><th>الحالة</th><th>المتوقّع</th><th>المحصّل</th><th>الفارق</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="lat">DY-24755-C</td><td class="k">سُلّم — دفع عند الاستلام</td><td class="num">640</td><td class="num">600</td><td><span class="pill bad">−40</span></td><td><span class="act">افتح تسوية</span></td></tr>
+              <tr><td class="lat">DY-24701-A</td><td class="k">بوابة الدفع — لا رد</td><td class="num">890</td><td>—</td><td><span class="pill warn">معلّق</span></td><td><span class="act">أعد الاستعلام</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ex">
+          <div class="exh"><span class="dot p1"></span>
+            <span class="t">تكاملات فاشلة — <span class="lat">Bosta webhook</span></span>
+            <span class="n num">1</span><span class="own">ENGINEERING</span></div>
+        </div>
+
+        <div class="ex">
+          <div class="exh"><span class="dot p0"></span>
+            <span class="t">تذاكر <span class="lat">P0 / P1</span></span>
+            <span class="n num">1</span><span class="own">SUPPORT LEAD</span></div>
+        </div>
+
+        <div class="row" style="margin-block-start:6px">
+          <span style="color:var(--faint);font-size:10.5px">آخر تحديث <span class="num">08:42</span> ·
+          التقرير يُرسل تلقائيًا كل صباح لمالكي البنود</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. SELLER DUE DILIGENCE ============ -->
+<div class="col">
+  <div class="tag"><b>Seller due diligence</b>Eight controls, each with its evidence and reviewer. Approval stays disabled until all eight pass — there is no override, because "no self-approval path" is a schema constraint, not a policy preference.</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg><span>DIYAR</span></div>
+      <div class="sec">OPERATIONS</div>
+      <div class="nav">الاستثناءات<span class="b hot">12</span></div>
+      <div class="nav">الطلبات</div>
+      <div class="sec">TRUST</div>
+      <div class="nav on">طلبات الدور<span class="b">4</span></div>
+      <div class="nav">مراجعة المنتجات<span class="b">17</span></div>
+      <div class="nav">مراجعة التقييمات<span class="b">3</span></div>
+      <div class="sec">MONEY</div>
+      <div class="nav">العمولات</div>
+      <div class="nav">التحويلات</div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div><h2>أتيليه سيوة</h2><div class="sub">تقدّمت <span class="num">21</span> أغسطس · المراجع: منى · <span class="pill warn">UNDER REVIEW</span></div></div>
+        <div class="who"><span>منى — عمليات</span><span class="av"></span></div>
+      </div>
+      <div class="body">
+        <div class="panes">
+          <div class="pane">
+            <div class="sechd">VERIFICATION — 6 OF 8</div>
+            <div class="card"><div class="cb">
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">هويّة المالك والنشاط</div><div class="t2">بطاقة + سجل تجاري · تحقّق: منى · <span class="num">22</span> أغسطس</div></div></div>
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">ملكيّة حساب التحويل</div><div class="t2">كشف بنكي مطابق للاسم التجاري</div></div></div>
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">مسؤوليّة المنتج</div><div class="t2">جهة التصنيع موثّقة · <span class="num">11</span> منتجًا</div></div></div>
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">الملصقات والتغليف</div><div class="t2">صور العبوات مكتملة</div></div></div>
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">مسار الإرجاع والعيوب</div><div class="t2">عنوان استلام + مسؤول محدّد</div></div></div>
+              <div class="v ok"><span class="mk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <div class="bd"><div class="t1">مسؤول البيانات والخصوصيّة</div><div class="t2">مُسمّى ومُبلَّغ</div></div></div>
+              <div class="v no"><span class="mk"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+                <div class="bd"><div class="t1">إثبات الادّعاءات</div><div class="t2"><span class="num">3</span> أوصاف تحمل نِسَب تشابه غير مُثبتة</div></div></div>
+              <div class="v no"><span class="mk"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+                <div class="bd"><div class="t1">طلب تجريبي</div><div class="t2">لم يُنفَّذ بعد — مطلوب قبل التفعيل</div></div></div>
+            </div></div>
+
+            <div class="row" style="margin-block-start:16px">
+              <button class="btn pri" disabled>اعتمد الدار</button>
+              <button class="btn">اطلب استكمال</button>
+              <button class="btn bad">ارفض</button>
+            </div>
+            <div class="lock">
+              <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+              <p><b>الاعتماد مقفل حتى تكتمل الضوابط الثمانية.</b> لا يوجد تجاوز في الواجهة ولا في قاعدة البيانات —
+                 «لا مسار اعتماد ذاتي» قيد على المخطّط، لا سياسة قابلة للاستثناء.</p>
+            </div>
+          </div>
+
+          <div class="pane narrow">
+            <div class="sechd">AUDIT TRAIL</div>
+            <div class="card"><div class="cb">
+              <div class="aud"><span class="tm">31 AUG 14:02</span><span class="tx"><b>منى</b> علّمت «إثبات الادّعاءات» كمرفوض — <span class="num">3</span> أوصاف</span></div>
+              <div class="aud"><span class="tm">28 AUG 11:30</span><span class="tx"><b>منى</b> اعتمدت «مسؤوليّة المنتج»</span></div>
+              <div class="aud"><span class="tm">24 AUG 09:15</span><span class="tx"><b>خالد</b> رفع كشف الحساب البنكي</span></div>
+              <div class="aud"><span class="tm">22 AUG 16:44</span><span class="tx"><b>منى</b> اعتمدت «هويّة المالك»</span></div>
+              <div class="aud"><span class="tm">21 AUG 10:08</span><span class="tx">تقدّمت الدار بالطلب</span></div>
+            </div></div>
+            <p style="color:var(--faint);font-size:10px;line-height:1.75;margin-block-start:12px">
+              كل إجراء إداري يُسجَّل بالفاعل والتوقيت والقيمة قبل وبعد. السجلّ غير قابل للتعديل أو الحذف.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. LISTING MODERATION ============ -->
+<div class="col">
+  <div class="tag"><b>Listing moderation — prohibited claims</b>The highest legal-risk surface in the platform. Designer-name comparison remains blocked pending Egyptian counsel; the moderator is told that, rather than left to judge it.</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg><span>DIYAR</span></div>
+      <div class="sec">TRUST</div>
+      <div class="nav">طلبات الدور<span class="b">4</span></div>
+      <div class="nav on">مراجعة المنتجات<span class="b">17</span></div>
+      <div class="nav">مراجعة التقييمات<span class="b">3</span></div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div><h2>مراجعة منتج</h2><div class="sub">أتيليه سيوة · <span class="lat">SIW-50-NKL</span> · <span class="num">2</span> من <span class="num">17</span></div></div>
+        <div class="who"><span>منى — عمليات</span><span class="av"></span></div>
+      </div>
+      <div class="body">
+        <div class="panes">
+          <div class="pane">
+            <div class="claim">
+              <div class="h"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+                <b>مخالفتان في الوصف</b></div>
+              <div class="q">«عطر نخيل — مطابق ٩٥٪ لعطر <span class="lat">Baccarat Rouge 540</span>، بثبات أقوى.»</div>
+              <ul>
+                <li><b style="color:var(--bone);font-weight:500">نسبة تشابه غير مُثبتة</b> — «٩٥٪» ادّعاء كمّي بلا دليل مخبري. محظور صراحةً.</li>
+                <li><b style="color:var(--bone);font-weight:500">اسم علامة مسجّلة</b> — استخدام اسم مصمّم كمرجع مقارنة موقوف حتى صدور رأي قانوني مصري.</li>
+                <li>«ثبات أقوى» — مقارنة أداء بلا مصدر معلن.</li>
+              </ul>
+            </div>
+
+            <div class="sechd">SUGGESTED REWRITE — SENT TO THE HOUSE</div>
+            <div class="card"><div class="cb" style="font-size:13px;line-height:1.9;color:var(--dim)">
+              «عطر نخيل — شرقي خشبي يفتح بالبرغموت ويستقرّ على العنبر والمسك.
+              الثبات: <span style="color:var(--bone)">طويل (<span class="num">6</span>–<span class="num">8</span> ساعات)</span> — المصدر: بيانات الدار.»
+            </div></div>
+
+            <div class="row" style="margin-block-start:16px">
+              <button class="btn pri">أرسل طلب تعديل</button>
+              <button class="btn">اعتمد بعد التعديل</button>
+              <button class="btn bad">ارفض المنتج</button>
+            </div>
+
+            <div class="lock">
+              <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+              <p><b>البحث والمقارنة بأسماء المصمّمين معطّلان على مستوى المنصّة.</b>
+                 لا تعتمد أي وصف يحتوي اسم علامة أصلية حتى تُرفع هذه القيود بقرار قانوني موثّق.</p>
+            </div>
+          </div>
+
+          <div class="pane narrow">
+            <div class="sechd">HOUSE RECORD</div>
+            <div class="card"><div class="cb">
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">مخالفات ادّعاءات</div><div class="t2"><span class="num">3</span> خلال <span class="num">30</span> يومًا</div></div></div>
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">حالة الدار</div><div class="t2">تحت المراجعة — لم تُفعَّل بعد</div></div></div>
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">سلّم الإنفاذ</div><div class="t2">توجيه ← إنذار ← تقييد ← إيقاف</div></div></div>
+            </div></div>
+            <div class="sechd" style="margin-block-start:18px">AUDIT</div>
+            <div class="card"><div class="cb">
+              <div class="aud"><span class="tm">1 SEP 09:20</span><span class="tx"><b>منى</b> علّمت مخالفتين</span></div>
+              <div class="aud"><span class="tm">31 AUG 18:05</span><span class="tx"><b>الدار</b> أرسلت المنتج للمراجعة</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. COMMISSION RULES ============ -->
+<div class="col">
+  <div class="tag"><b>Commission configuration</b>Rates are data, never constants — configurable by source and by seller. Doc 04 §9: neither founder changes marketplace economics alone, so the screen enforces two-founder approval and snapshots the old value into the audit log.</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg><span>DIYAR</span></div>
+      <div class="sec">MONEY</div>
+      <div class="nav on">العمولات</div>
+      <div class="nav">التحويلات</div>
+      <div class="nav">التسويات</div>
+      <div class="sec">GOVERNANCE</div>
+      <div class="nav">سجلّ التدقيق</div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div><h2>قواعد العمولة</h2><div class="sub">سارية من <span class="num">1</span> يوليو <span class="num">2026</span> · النسخة <span class="num">3</span></div></div>
+        <div class="who"><span>أحمد — مؤسّس</span><span class="av"></span></div>
+      </div>
+      <div class="body">
+        <div class="panes">
+          <div class="pane">
+            <div class="sechd">DEFAULT RATES BY ORDER SOURCE</div>
+            <table class="rate">
+              <thead><tr><th>SOURCE</th><th>RATE</th><th>APPLIES WHEN</th></tr></thead>
+              <tbody>
+                <tr><td class="src">متجر الدار<i>storefront_referral</i></td><td class="v low num">5%</td><td style="color:var(--faint);font-size:11px">دخل العميل من رابط الدار</td></tr>
+                <tr><td class="src">زيارة مباشرة متكرّرة<i>direct_repeat</i></td><td class="v low num">5%</td><td style="color:var(--faint);font-size:11px">عميل سبق أن اشترى من الدار نفسها</td></tr>
+                <tr><td class="src">بحث المنصّة<i>organic_search</i></td><td class="v num">15%</td><td style="color:var(--faint);font-size:11px">اكتشاف داخل السوق</td></tr>
+                <tr><td class="src">حملة مدفوعة<i>paid_campaign</i></td><td class="v num">18%</td><td style="color:var(--faint);font-size:11px">إعلان مموّل من المنصّة</td></tr>
+                <tr><td class="src">صانع محتوى<i>creator_affiliate</i></td><td class="v num">15%</td><td style="color:var(--faint);font-size:11px">كود أو رابط شريك</td></tr>
+                <tr><td class="src">قوائم بريديّة<i>email_crm</i></td><td class="v num">12%</td><td style="color:var(--faint);font-size:11px">حملة من المنصّة</td></tr>
+                <tr><td class="src">غير محدّد<i>unknown</i></td><td class="v low num">5%</td><td style="color:var(--faint);font-size:11px">الشك يُفسَّر لصالح الدار</td></tr>
+              </tbody>
+            </table>
+
+            <div class="lock">
+              <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+              <p><b>تعديل أي نسبة يتطلّب موافقة المؤسّسَين كتابةً.</b> النسبة تُثبَّت على بند الطلب لحظة الشراء،
+                 فلا يتغيّر كشف حساب سابق أبدًا عند تغيير القواعد.</p>
+            </div>
+          </div>
+
+          <div class="pane narrow">
+            <div class="sechd">ATTRIBUTION WINDOW</div>
+            <div class="card"><div class="cb">
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">نافذة رابط الدار</div><div class="t2"><span class="num">30</span> يومًا من أول نقرة</div></div></div>
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">نافذة الحملة</div><div class="t2"><span class="num">7</span> أيام</div></div></div>
+              <div class="v"><span class="mk"></span><div class="bd"><div class="t1">مهلة الاعتراض</div><div class="t2"><span class="num">7</span> أيام من إصدار الكشف</div></div></div>
+            </div></div>
+
+            <div class="sechd" style="margin-block-start:18px">AUDIT — RATE CHANGES</div>
+            <div class="card"><div class="cb">
+              <div class="aud"><span class="tm">1 JUL 12:00</span><span class="tx"><b>أحمد + شريك</b> غيّرا «حملة مدفوعة» من <span class="num">15%</span> إلى <span class="num">18%</span></span></div>
+              <div class="aud"><span class="tm">1 JUL 12:00</span><span class="tx"><b>أحمد + شريك</b> غيّرا «غير محدّد» من <span class="num">15%</span> إلى <span class="num">5%</span></span></div>
+              <div class="aud"><span class="tm">3 MAY 09:40</span><span class="tx">النسخة <span class="num">2</span> سارية</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. FOUNDER DASHBOARD ============ -->
+<div class="col">
+  <div class="tag"><b>Founder dashboard — acceptance gate 8</b>Funnel, seller SLA and contribution inputs without touching the database. Doc 03 §10 forbids reporting GMV alone, so contribution margin is the headline and GMV is a supporting figure.</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg><span>DIYAR</span></div>
+      <div class="sec">BUSINESS</div>
+      <div class="nav on">لوحة المؤسّس</div>
+      <div class="nav">المسار البيعي</div>
+      <div class="nav">أداء الدور</div>
+      <div class="nav">التماسك والعودة</div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div><h2>آخر <span class="num">30</span> يومًا</h2><div class="sub"><span class="num">2</span> أغسطس – <span class="num">1</span> سبتمبر <span class="num">2026</span></div></div>
+        <div class="who"><span>أحمد — مؤسّس</span><span class="av"></span></div>
+      </div>
+      <div class="body">
+
+        <div class="kpis">
+          <div class="kpi"><div class="k">CONTRIBUTION / ORDER</div><div class="v num">7.2<span class="c">EGP</span></div><div class="d">الرقم الذي يقرّر البقاء</div></div>
+          <div class="kpi"><div class="k">EFFECTIVE TAKE</div><div class="v num">8.2<span class="c">%</span></div><div class="d">معظم الطلبات من الدور</div></div>
+          <div class="kpi"><div class="k">REFUSAL RATE</div><div class="v bad num">15.1<span class="c">%</span></div><div class="d">أكبر بند تكلفة مفرد</div></div>
+          <div class="kpi"><div class="k">90-DAY REPEAT</div><div class="v num">21<span class="c">%</span></div><div class="d">من أول مشترٍ</div></div>
+        </div>
+
+        <div class="panes">
+          <div class="pane">
+            <div class="sechd">CONTRIBUTION — WHERE THE REVENUE GOES</div>
+            <div class="wf">
+              <div class="b"><div class="bar rev" style="height:100%"></div></div>
+              <div class="b"><div class="bar cost" style="height:17%"></div></div>
+              <div class="b"><div class="bar cost" style="height:28%"></div></div>
+              <div class="b"><div class="bar cost" style="height:26%"></div></div>
+              <div class="b"><div class="bar cost" style="height:11%"></div></div>
+              <div class="b"><div class="bar cost" style="height:5%"></div></div>
+              <div class="b"><div class="bar net" style="height:12%"></div></div>
+            </div>
+            <div class="wfl">
+              <div><div class="n num">12,284</div><div class="l">إيراد المنصّة</div></div>
+              <div><div class="n num">−2,100</div><div class="l">تكلفة الدفع</div></div>
+              <div><div class="n num">−3,420</div><div class="l">رفض التسليم</div></div>
+              <div><div class="n num">−3,210</div><div class="l">الدعم</div></div>
+              <div><div class="n num">−1,400</div><div class="l">خصومات</div></div>
+              <div><div class="n num">−620</div><div class="l">صنّاع محتوى</div></div>
+              <div><div class="n num" style="color:var(--fresh)">1,534</div><div class="l">المساهمة</div></div>
+            </div>
+            <div class="lock" style="border-inline-start-color:var(--heart)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+              <p><b>الرفض عند الباب يبتلع <span class="num">28</span>٪ من إيراد المنصّة</b> — أكبر بند مفرد، وأكثرها قابليّة للخفض.
+                 <span class="num">38</span> شحنة مرفوضة من <span class="num">252</span> محاولة تسليم.</p>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="sechd">FUNNEL — 30 DAYS</div>
+            <div class="fn">
+              <div class="fstep"><span class="lb">زيارة</span><span class="tr"><i class="fi" style="width:100%"></i></span><span class="vv num">41,200</span></div>
+              <div class="fstep"><span class="lb">عرض منتج</span><span class="tr"><i class="fi" style="width:38%"></i></span><span class="vv num">15,600<i>38%</i></span></div>
+              <div class="fstep"><span class="lb">إضافة للحقيبة</span><span class="tr"><i class="fi" style="width:9%"></i></span><span class="vv num">3,720<i>24%</i></span></div>
+              <div class="fstep"><span class="lb">بدء الدفع</span><span class="tr"><i class="fi" style="width:4.4%"></i></span><span class="vv num">1,810<i>49%</i></span></div>
+              <div class="fstep"><span class="lb">طلب مُنشأ</span><span class="tr"><i class="fi" style="width:2.6%"></i></span><span class="vv num">1,062<i>59%</i></span></div>
+              <div class="fstep"><span class="lb">أكّدته الدار</span><span class="tr"><i class="fi" style="width:2.4%"></i></span><span class="vv num">986<i>93%</i></span></div>
+              <div class="fstep"><span class="lb">سُلّم فعليًا</span><span class="tr"><i class="fi" style="width:2%"></i></span><span class="vv num">824<i>84%</i></span></div>
+            </div>
+
+            <div class="sechd" style="margin-block-start:22px">WHAT REGISTRATIONS DO NOT TELL YOU</div>
+            <table class="rate">
+              <tbody>
+                <tr><td class="src">عودة مباشرة<i>direct_return</i></td><td class="v num">18%</td></tr>
+                <tr><td class="src">شراء عبر أكثر من دار<i>cross_brand_purchase</i></td><td class="v num">11%</td></tr>
+                <tr><td class="src">طلبات من صنع المنصّة<i>marketplace-originated</i></td><td class="v num">27%</td></tr>
+              </tbody>
+            </table>
+            <p style="color:var(--faint);font-size:10.5px;line-height:1.75;margin-block-start:12px">
+              المستخدم المسجَّل ليس عميلًا اكتسبته المنصّة. هذان الرقمان — العودة المباشرة والشراء عبر الدور —
+              هما الدليل الوحيد على أن السوق يصنع قيمة تتجاوز كونه أداة للدور.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

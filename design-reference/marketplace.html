@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اتجاهات — ماركتبليس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#6E6E6C;padding:26px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#fff;margin-bottom:11px;font-size:12.5px;line-height:1.6}
+.tag b{display:block;font-size:16px;font-weight:500;margin-bottom:2px}
+
+/* ============ D — أبيض ============ */
+.D{background:#fff;color:#111}
+.D .bar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px}
+.D .mark{font-size:14px;font-weight:500;letter-spacing:7px}
+.acts{display:flex;align-items:center}
+.D .ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.D .ic svg{width:19px;height:19px;stroke:#111;fill:none;stroke-width:1.3}
+.D .nav{display:flex;gap:0;padding:0 9px;border-bottom:1px solid #E8E8E6;overflow:hidden}
+.D .nav a{font-size:13px;color:#8C8C88;text-decoration:none;height:44px;display:flex;align-items:center;white-space:nowrap;padding:0 11px}
+.D .nav a.on{color:#111;box-shadow:inset 0 -1px 0 #111}
+.D .ed{padding:34px 20px 30px}
+.D .ed small{font-size:11px;letter-spacing:2.4px;color:#8C8C88;display:block;margin-bottom:14px}
+.D .ed h2{font-size:29px;font-weight:400;line-height:1.35;letter-spacing:-.4px;margin-bottom:12px}
+.D .ed p{font-size:13.5px;color:#6E6E6A;line-height:1.85;max-width:300px}
+.D .rail{display:flex;gap:1px;background:#E8E8E6;border-block:1px solid #E8E8E6;overflow:hidden}
+.D .rail div{flex:1;background:#fff;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.D .rail span{font-size:12px}
+.D .rail em{font-size:10.5px;color:#8C8C88;font-style:normal}
+.D .sec{display:flex;align-items:center;justify-content:space-between;padding:30px 20px 16px}
+.D .sec h3{font-size:12px;letter-spacing:2px;color:#111;font-weight:500}
+.D .sec a{font-size:12px;color:#8C8C88;text-decoration:none;height:44px;display:flex;align-items:center;padding-inline-start:14px}
+.D .g{display:grid;grid-template-columns:1fr 1fr;column-gap:1px;row-gap:1px;background:#E8E8E6}
+.D .c{background:#fff;padding:0 0 18px}
+.D .im{height:190px;background:#F6F6F4;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.D .fav{position:absolute;top:2px;left:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.D .fav svg{width:15px;height:15px;stroke:#111;fill:none;stroke-width:1.3}
+.D .tx{padding:14px 16px 0}
+.D .b{font-size:10.5px;letter-spacing:1.4px;color:#8C8C88;margin-bottom:5px}
+.D .n{font-size:13.5px;font-weight:400;margin-bottom:5px;line-height:1.4}
+.D .no{font-size:11.5px;color:#8C8C88;margin-bottom:9px;line-height:1.5}
+.D .p{font-size:13px;font-weight:500}
+.D .tb{display:flex;border-top:1px solid #E8E8E6;padding:4px 0 20px;margin-top:30px}
+.D .tb div{flex:1;height:49px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;color:#8C8C88}
+.D .tb div.on{color:#111}
+.D .tb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.4}
+
+/* ============ E — جرافيت ============ */
+.E{background:#141414;color:#EDEDEB}
+.E .bar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px}
+.E .mark{font-size:14px;font-weight:500;letter-spacing:7px}
+.E .ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.E .ic svg{width:19px;height:19px;stroke:#EDEDEB;fill:none;stroke-width:1.3}
+.E .nav{display:flex;gap:0;padding:0 9px;border-bottom:1px solid #2A2A2A;overflow:hidden}
+.E .nav a{font-size:13px;color:#8A8A86;text-decoration:none;height:44px;display:flex;align-items:center;white-space:nowrap;padding:0 11px}
+.E .nav a.on{color:#EDEDEB;box-shadow:inset 0 -1px 0 #EDEDEB}
+.E .ed{padding:34px 20px 30px}
+.E .ed small{font-size:11px;letter-spacing:2.4px;color:#8A8A86;display:block;margin-bottom:14px}
+.E .ed h2{font-size:29px;font-weight:400;line-height:1.35;letter-spacing:-.4px;margin-bottom:12px}
+.E .ed p{font-size:13.5px;color:#9A9A96;line-height:1.85;max-width:300px}
+.E .rail{display:flex;gap:1px;background:#2A2A2A;border-block:1px solid #2A2A2A;overflow:hidden}
+.E .rail div{flex:1;background:#141414;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.E .rail span{font-size:12px}
+.E .rail em{font-size:10.5px;color:#8A8A86;font-style:normal}
+.E .sec{display:flex;align-items:center;justify-content:space-between;padding:30px 20px 16px}
+.E .sec h3{font-size:12px;letter-spacing:2px;font-weight:500}
+.E .sec a{font-size:12px;color:#8A8A86;text-decoration:none;height:44px;display:flex;align-items:center;padding-inline-start:14px}
+.E .g{display:grid;grid-template-columns:1fr 1fr;column-gap:1px;row-gap:1px;background:#2A2A2A}
+.E .c{background:#141414;padding:0 0 18px}
+.E .im{height:190px;background:#1C1C1C;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.E .fav{position:absolute;top:2px;left:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.E .fav svg{width:15px;height:15px;stroke:#EDEDEB;fill:none;stroke-width:1.3}
+.E .tx{padding:14px 16px 0}
+.E .b{font-size:10.5px;letter-spacing:1.4px;color:#8A8A86;margin-bottom:5px}
+.E .n{font-size:13.5px;margin-bottom:5px;line-height:1.4}
+.E .no{font-size:11.5px;color:#8A8A86;margin-bottom:9px;line-height:1.5}
+.E .p{font-size:13px;font-weight:500}
+.E .tb{display:flex;border-top:1px solid #2A2A2A;padding:4px 0 20px;margin-top:30px}
+.E .tb div{flex:1;height:49px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;color:#8A8A86}
+.E .tb div.on{color:#EDEDEB}
+.E .tb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.4}
+
+/* refined bottle silhouettes */
+.bot{position:relative;margin-bottom:26px}
+.bot .body{border-radius:2px 2px 3px 3px;position:relative}
+.bot .neck{position:absolute;top:-9px;right:50%;transform:translateX(50%);width:22%;height:10px}
+.bot .cap{position:absolute;top:-24px;right:50%;transform:translateX(50%);border-radius:1px}
+.bot .gloss{position:absolute;top:12%;right:16%;width:11%;height:56%;border-radius:6px;background:rgba(255,255,255,.28)}
+.bot .shadow{position:absolute;bottom:-13px;right:50%;transform:translateX(50%);height:5px;border-radius:50%;background:rgba(0,0,0,.14);filter:blur(2px)}
+.E .bot .shadow{background:rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+
+<!-- ================= D ================= -->
+<div class="col">
+  <div class="tag"><b>د — أبيض</b>بدون حدود، بدون زوايا دائرية، بدون لون. الصور هي التصميم. أقرب للـ SSENSE / Farfetch</div>
+  <div class="D">
+    <div class="bar">
+      <div class="mark">ATHAR</div>
+      <div class="acts">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span>
+      </div>
+    </div>
+    <div class="nav">
+      <a href="#" class="on">الكل</a><a href="#">رجالي</a><a href="#">حريمي</a><a href="#">عود وبخور</a><a href="#">زيوت</a>
+    </div>
+    <div class="ed">
+      <small>البراندات</small>
+      <h2>٤٢ دار عطور<br>مصرية في مكان واحد</h2>
+      <p>تصفّح، قارن، واشترِ من أكتر من أربعين براند محلي — بطلب واحد.</p>
+    </div>
+    <div class="rail">
+      <div><span>بيت العنبر</span><em>١٢ منتج</em></div>
+      <div><span>دار نفح</span><em>٨ منتجات</em></div>
+      <div><span>عطور المعز</span><em>٢١ منتج</em></div>
+    </div>
+    <div class="sec"><h3>الأحدث</h3><a href="#">عرض الكل</a></div>
+    <div class="g">
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:52px">
+            <div class="cap" style="width:18px;height:16px;background:#2A2A28"></div>
+            <div class="neck" style="background:#6E5334"></div>
+            <div class="body" style="height:92px;background:#7A5C38"><span class="gloss"></span></div>
+            <div class="shadow" style="width:46px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">بيت العنبر</div>
+          <div class="n">ليل القاهرة</div>
+          <div class="no">عود، عنبر، صندل</div>
+          <div class="p">٤٨٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:44px">
+            <div class="cap" style="width:15px;height:20px;background:#B9AE96"></div>
+            <div class="neck" style="background:#D8CFBB"></div>
+            <div class="body" style="height:82px;background:#E2DAC7"><span class="gloss"></span></div>
+            <div class="shadow" style="width:40px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">دار نفح</div>
+          <div class="n">صندل أبيض</div>
+          <div class="no">صندل، مسك، حمضيات</div>
+          <div class="p">٣٩٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:48px">
+            <div class="cap" style="width:16px;height:14px;background:#2A2A28"></div>
+            <div class="neck" style="background:#8A3F52"></div>
+            <div class="body" style="height:88px;background:#9E4A5E"><span class="gloss"></span></div>
+            <div class="shadow" style="width:42px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">نُون للعطور</div>
+          <div class="n">ورد بلدي</div>
+          <div class="no">ورد، فانيليا، مسك</div>
+          <div class="p">٣٥٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:46px">
+            <div class="cap" style="width:15px;height:18px;background:#2F3A36"></div>
+            <div class="neck" style="background:#3E5A50"></div>
+            <div class="body" style="height:86px;background:#48685C"><span class="gloss"></span></div>
+            <div class="shadow" style="width:40px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">صنعة</div>
+          <div class="n">نسيم الساحل</div>
+          <div class="no">حمضيات، ياسمين، مسك</div>
+          <div class="p">٢٩٥ ج.م</div>
+        </div>
+      </div>
+    </div>
+    <div class="tb">
+      <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8z"/></svg>الرئيسية</div>
+      <div><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>البراندات</div>
+      <div><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>السلة</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>حسابي</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= E ================= -->
+<div class="col">
+  <div class="tag"><b>هـ — جرافيت</b>نفس البنية بالضبط، لكن داكن. رمادي محايد مش بني. الزجاجات هي اللون الوحيد</div>
+  <div class="E">
+    <div class="bar">
+      <div class="mark">ATHAR</div>
+      <div class="acts">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span>
+      </div>
+    </div>
+    <div class="nav">
+      <a href="#" class="on">الكل</a><a href="#">رجالي</a><a href="#">حريمي</a><a href="#">عود وبخور</a><a href="#">زيوت</a>
+    </div>
+    <div class="ed">
+      <small>البراندات</small>
+      <h2>٤٢ دار عطور<br>مصرية في مكان واحد</h2>
+      <p>تصفّح، قارن، واشترِ من أكتر من أربعين براند محلي — بطلب واحد.</p>
+    </div>
+    <div class="rail">
+      <div><span>بيت العنبر</span><em>١٢ منتج</em></div>
+      <div><span>دار نفح</span><em>٨ منتجات</em></div>
+      <div><span>عطور المعز</span><em>٢١ منتج</em></div>
+    </div>
+    <div class="sec"><h3>الأحدث</h3><a href="#">عرض الكل</a></div>
+    <div class="g">
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:52px">
+            <div class="cap" style="width:18px;height:16px;background:#151513"></div>
+            <div class="neck" style="background:#7E6038"></div>
+            <div class="body" style="height:92px;background:#8E6C3E"><span class="gloss"></span></div>
+            <div class="shadow" style="width:46px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">بيت العنبر</div>
+          <div class="n">ليل القاهرة</div>
+          <div class="no">عود، عنبر، صندل</div>
+          <div class="p">٤٨٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:44px">
+            <div class="cap" style="width:15px;height:20px;background:#9A9078"></div>
+            <div class="neck" style="background:#CFC5AF"></div>
+            <div class="body" style="height:82px;background:#DED5C0"><span class="gloss"></span></div>
+            <div class="shadow" style="width:40px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">دار نفح</div>
+          <div class="n">صندل أبيض</div>
+          <div class="no">صندل، مسك، حمضيات</div>
+          <div class="p">٣٩٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:48px">
+            <div class="cap" style="width:16px;height:14px;background:#151513"></div>
+            <div class="neck" style="background:#94465A"></div>
+            <div class="body" style="height:88px;background:#A85166"><span class="gloss"></span></div>
+            <div class="shadow" style="width:42px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">نُون للعطور</div>
+          <div class="n">ورد بلدي</div>
+          <div class="no">ورد، فانيليا، مسك</div>
+          <div class="p">٣٥٠ ج.م</div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="im">
+          <span class="fav"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.5-7 10-7 10z"/></svg></span>
+          <div class="bot" style="width:46px">
+            <div class="cap" style="width:15px;height:18px;background:#232B28"></div>
+            <div class="neck" style="background:#446255"></div>
+            <div class="body" style="height:86px;background:#517263"><span class="gloss"></span></div>
+            <div class="shadow" style="width:40px"></div>
+          </div>
+        </div>
+        <div class="tx">
+          <div class="b">صنعة</div>
+          <div class="n">نسيم الساحل</div>
+          <div class="no">حمضيات، ياسمين، مسك</div>
+          <div class="p">٢٩٥ ج.م</div>
+        </div>
+      </div>
+    </div>
+    <div class="tb">
+      <div class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8z"/></svg>الرئيسية</div>
+      <div><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>البراندات</div>
+      <div><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>السلة</div>
+      <div><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>حسابي</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — التطبيقات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#4A4744;padding:24px 14px 60px;display:flex;flex-wrap:wrap;gap:26px;
+  justify-content:center;align-items:flex-start;font-family:'IBM Plex Sans Arabic',sans-serif}
+.col{width:390px;max-width:100%}
+.tag{color:#D8D2C8;margin-bottom:12px;font-size:12.5px;line-height:1.6;direction:ltr;text-align:left}
+.tag b{display:block;font-size:15px;margin-bottom:3px;color:#fff;font-family:'Bodoni Moda',serif;letter-spacing:.5px}
+.tag em{font-style:normal;color:#B08D57}
+
+.app{--noir:#0B0A09;--l1:#131211;--l2:#1C1A18;--l3:#242120;--hair:#2A2724;
+ --bone:#EDE8DF;--dim:#9A928A;--faint:#8B837A;--brass:#B08D57;--fresh:#5A8C7C;--heart:#B5697E;
+ background:var(--noir);color:var(--bone);overflow:hidden;direction:rtl;height:800px;
+ display:flex;flex-direction:column;font-size:13px;line-height:1.6;position:relative}
+svg{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";unicode-bidi:isolate}
+.lat{font-family:'Bodoni Moda',serif;unicode-bidi:isolate}
+
+/* native chrome */
+.sb{height:47px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;flex-shrink:0;
+  font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;padding-top:8px}
+.sb .ind{display:flex;gap:5px;align-items:center;opacity:.9}
+.sb .ind i{display:block;width:15px;height:9px;border:1px solid currentColor;border-radius:2px;position:relative}
+.sb .ind i::after{content:'';position:absolute;inset:1.5px;background:currentColor;border-radius:1px}
+.hi{height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.hi i{width:120px;height:4px;border-radius:2px;background:rgba(237,232,223,.28);display:block}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 8px;flex-shrink:0}
+.ic{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone);position:relative}
+.ic svg{width:19px;height:19px}
+.ic .bdg{position:absolute;top:8px;inset-inline-start:7px;min-width:15px;height:15px;border-radius:8px;
+  background:var(--brass);color:var(--noir);font-size:9px;font-weight:600;display:flex;align-items:center;
+  justify-content:center;padding:0 4px;font-variant-numeric:tabular-nums}
+.nav .ttl{font-family:'Amiri',serif;font-size:19px}
+.scroll{flex:1;overflow:hidden}
+
+/* tab bar */
+.tabs{height:49px;display:flex;border-block-start:1px solid var(--hair);flex-shrink:0;background:var(--noir)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--faint);position:relative}
+.tab svg{width:19px;height:19px}
+.tab span{font-size:8.5px;letter-spacing:.2px}
+.tab.on{color:var(--brass)}
+.tab .bdg{position:absolute;top:5px;inset-inline-start:26px;min-width:14px;height:14px;border-radius:7px;
+  background:var(--brass);color:var(--noir);font-size:8.5px;font-weight:600;display:flex;align-items:center;
+  justify-content:center;padding:0 3px}
+
+/* ---- splash ---- */
+.splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.splash .field{position:absolute;inset:0;background:radial-gradient(120% 78% at 50% 40%,#2A211A 0%,#150F0C 46%,#0B0A09 78%)}
+.splash .patt{position:absolute;inset:0;opacity:.10;background-size:74px 74px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='74' height='74' viewBox='0 0 74 74'><g fill='none' stroke='%23C7A26A' stroke-width='.9'><path d='M37 4l9 24 24 9-24 9-9 24-9-24-24-9 24-9z'/><rect x='16' y='16' width='42' height='42' transform='rotate(45 37 37)'/></g></svg>")}
+.splash .in{position:relative;text-align:center}
+.splash .dev{width:62px;height:62px;color:var(--brass);margin:0 auto 26px}
+.splash .wm{font-family:'Bodoni Moda',serif;font-size:26px;letter-spacing:12px;padding-inline-start:12px}
+.splash .ar{font-family:'Amiri',serif;font-size:21px;color:var(--brass);margin-block-start:12px}
+.splash .sl{color:var(--faint);font-size:10px;font-family:'Bodoni Moda',serif;letter-spacing:2.4px;margin-block-start:34px}
+
+/* ---- live shipment strip ---- */
+.live{margin:0 16px 18px;border:1px solid rgba(176,141,87,.34);background:var(--l1)}
+.live .lh{display:flex;align-items:center;gap:9px;padding:12px 14px 9px}
+.live .lh .d{width:6px;height:6px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 4px rgba(176,141,87,.16)}
+.live .lh .t{flex:1;font-size:12px}
+.live .lh .x{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--faint)}
+.live .lb{padding:0 14px 13px;color:var(--faint);font-size:10.5px}
+.live .pb{height:2px;background:var(--hair);position:relative;margin:0 14px 12px}
+.live .pb i{position:absolute;inset-block:0;inset-inline-start:0;background:var(--brass);display:block}
+
+/* ---- section / rail ---- */
+.shd{display:flex;align-items:baseline;justify-content:space-between;padding:0 16px 12px}
+.shd h3{font-family:'Amiri',serif;font-size:22px;font-weight:400}
+.shd a{color:var(--brass);font-size:10.5px;text-decoration:none}
+.rail{display:flex;gap:12px;padding:0 16px 22px;overflow:hidden}
+.pc{width:148px;flex-shrink:0}
+.pc .im{aspect-ratio:4/5;position:relative;overflow:hidden;
+  background:radial-gradient(120% 100% at 50% 30%,#3A2F26,#1A1512 62%,#0D0B0A)}
+.pc .im .b{position:absolute;top:50%;right:50%;transform:translate(50%,-50%);width:44px;height:86px;
+  border-radius:2px 2px 3px 3px;background:linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)}
+.pc .im .v{position:absolute;inset:0;background:linear-gradient(to top,rgba(11,10,9,.72),rgba(11,10,9,0) 54%)}
+.pc .bd{font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.8px;color:var(--brass);margin-block:10px 4px}
+.pc .nm{font-family:'Amiri',serif;font-size:17px;line-height:1.25;margin-block-end:3px}
+.pc .mt{color:var(--faint);font-size:10px;margin-block-end:6px}
+.pc .pr{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.pc .pr .c{font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.2px;color:var(--dim);margin-inline-start:5px}
+
+/* ---- product hero ---- */
+.hero{height:330px;position:relative;overflow:hidden;flex-shrink:0}
+.hero .f{position:absolute;inset:0;background:radial-gradient(112% 82% at 50% 30%,#3F3226 0%,#241C16 46%,#0B0A09 80%)}
+.hero .bt{position:absolute;top:44px;right:50%;transform:translateX(50%);width:96px}
+.hero .cp{width:32px;height:26px;margin:0 auto;background:linear-gradient(100deg,#2A241D,#4A3F31 46%,#241F19);border-radius:2px}
+.hero .nk{width:25px;height:12px;margin:0 auto;background:linear-gradient(100deg,#6B5334,#9A7A4A 44%,#5E4830)}
+.hero .bd2{height:136px;border-radius:3px 3px 5px 5px;position:relative;overflow:hidden;
+  background:linear-gradient(100deg,#4A3720 0%,#8A6838 36%,#A37F4C 50%,#6E5228 68%,#3A2B18 100%)}
+.hero .sh{position:absolute;top:8%;right:13%;width:13%;height:64%;border-radius:8px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.4),rgba(255,255,255,.05))}
+.hero .lb{position:absolute;bottom:18px;right:50%;transform:translateX(50%);width:60%;height:28px;
+  background:rgba(15,12,9,.44);border-block:1px solid rgba(237,232,223,.2);display:flex;align-items:center;
+  justify-content:center;font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:2.4px;color:rgba(237,232,223,.85)}
+.hero .v{position:absolute;inset:0;background:linear-gradient(to top,#0B0A09 16%,rgba(11,10,9,.86) 38%,rgba(11,10,9,0) 68%)}
+.hero .cap{position:absolute;bottom:0;inset-inline:0;padding:0 16px 16px}
+.hero .cap .bd{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:2.4px;color:var(--brass);margin-block-end:6px}
+.hero .cap h2{font-family:'Amiri',serif;font-size:33px;font-weight:400;line-height:1.2}
+.hero .cap .mt{color:var(--dim);font-size:11px;margin-block-start:6px}
+
+/* ---- notes pyramid ---- */
+.pyr{padding:22px 16px 6px;position:relative}
+.pyr .spine{position:absolute;inset-inline-end:auto;inset-inline-start:36px;top:34px;bottom:26px;width:1px;
+  background:linear-gradient(to bottom,rgba(194,168,92,.5),rgba(181,105,126,.5),rgba(138,104,56,.5))}
+.tier{display:flex;gap:15px;padding-block:11px;position:relative}
+.tier .orb{width:41px;height:41px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;position:relative;background:var(--noir)}
+.tier .orb::before{content:'';position:absolute;inset:-4px;border-radius:50%;opacity:.16}
+.t-top .orb{border:1px solid #C2A85C;color:#C2A85C}
+.t-top .orb::before{background:radial-gradient(circle,#C2A85C,transparent 70%)}
+.t-heart .orb{border:1px solid #B5697E;color:#B5697E}
+.t-heart .orb::before{background:radial-gradient(circle,#B5697E,transparent 70%)}
+.t-base .orb{border:1px solid #8A6838;color:#8A6838}
+.t-base .orb::before{background:radial-gradient(circle,#8A6838,transparent 70%)}
+.tier .orb svg{width:17px;height:17px}
+.tier .tb{flex:1;padding-top:2px}
+.tier .tl2{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2.4px;margin-block-end:6px}
+.t-top .tl2{color:#C2A85C}.t-heart .tl2{color:#B5697E}.t-base .tl2{color:#8A6838}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 11px;border:1px solid var(--hair);font-size:11px;color:var(--dim);position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px}
+/* Visual 32px tall, hit area 44pt — note chips are tappable (discover by note). */
+.chip::after{content:'';position:absolute;inset:-7px 0}
+
+/* ---- evolution curve ---- */
+.evo{padding:14px 16px 20px}
+.evo .lg{display:flex;gap:14px;margin-block-end:10px}
+.evo .lg span{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--faint)}
+.evo .lg i{width:12px;height:2px;display:block}
+.evo .ax{display:flex;justify-content:space-between;color:var(--faint);font-size:9px;margin-block-start:6px;
+  font-variant-numeric:tabular-nums}
+
+/* ---- meters ---- */
+.mtr{padding:0 16px 16px}
+.mrow{margin-block-end:14px}
+.mh{display:flex;justify-content:space-between;align-items:baseline;margin-block-end:7px}
+.mn{font-size:11.5px;color:var(--dim)}
+.mv{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2px;color:var(--brass)}
+.mt2{height:2px;background:var(--hair);position:relative}
+.mf{position:absolute;inset-block:0;inset-inline-start:0;background:var(--brass)}
+.msrc{color:var(--faint);font-size:9px;margin-block-start:5px}
+
+/* ---- sticky buy ---- */
+.buy{padding:12px 16px;border-block-start:1px solid var(--hair);display:flex;gap:12px;align-items:center;flex-shrink:0}
+.buy .p{flex-shrink:0}
+.buy .p .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.buy .p .v .c{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:1.6px;color:var(--dim);margin-inline-start:5px}
+.buy .p .s{color:var(--faint);font-size:9.5px}
+.btn{flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;background:var(--brass);
+  color:var(--noir);border:0;border-radius:2px;font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer}
+.btn.g{background:transparent;color:var(--bone);border:1px solid var(--hair);font-weight:500;font-size:13px}
+
+/* ---- lock screen ---- */
+.lock{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;padding-top:56px}
+.lock .fld{position:absolute;inset:0;background:radial-gradient(110% 68% at 50% 22%,#241C16 0%,#120E0B 52%,#0B0A09 82%)}
+.lock .clk{position:relative;text-align:center;margin-block-end:40px}
+.lock .clk .t{font-size:74px;font-weight:200;font-variant-numeric:tabular-nums;line-height:1}
+.lock .clk .d{color:var(--dim);font-size:13px;margin-block-start:4px}
+.push{position:relative;width:calc(100% - 24px);background:rgba(28,26,24,.92);border:1px solid var(--hair);
+  border-radius:14px;padding:13px 14px;margin-block-end:9px;backdrop-filter:blur(20px)}
+.push .ph{display:flex;align-items:center;gap:8px;margin-block-end:7px}
+.push .ph .ai{width:19px;height:19px;border-radius:4px;background:var(--noir);border:1px solid rgba(176,141,87,.5);
+  display:flex;align-items:center;justify-content:center;color:var(--brass)}
+.push .ph .ai svg{width:11px;height:11px}
+.push .ph .an{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:2.4px;color:var(--dim);flex:1}
+.push .ph .tm{color:var(--faint);font-size:9.5px}
+.push .t1{font-size:13.5px;font-weight:600;margin-block-end:3px}
+.push .t2{color:var(--dim);font-size:12px;line-height:1.6}
+.push .acts{display:flex;gap:8px;margin-block-start:11px;padding-block-start:11px;border-block-start:1px solid var(--hair)}
+.push .pb2{flex:1;min-height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  font-size:12px;font-weight:600;background:var(--brass);color:var(--noir)}
+.push .pb2.g{background:rgba(237,232,223,.08);color:var(--bone);font-weight:500}
+
+/* ---- seller queue ---- */
+.sq{padding:14px 16px;border-block-end:1px solid var(--hair)}
+.sq .top{display:flex;justify-content:space-between;align-items:baseline;margin-block-end:7px}
+.sq .on{font-family:'Bodoni Moda',serif;font-size:9px;letter-spacing:2px;color:var(--faint)}
+.sq .clk{font-family:'Bodoni Moda',serif;font-size:9.5px;letter-spacing:1.4px;color:var(--brass)}
+.sq .clk.hot{color:var(--heart)}
+.sq .nm{font-size:13.5px;margin-block-end:3px}
+.sq .mt{color:var(--faint);font-size:10.5px;margin-block-end:10px}
+.sq .src{display:inline-flex;font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.4px;
+  border:1px solid var(--hair);padding:3px 7px;color:var(--dim)}
+.sq .src.own{border-color:rgba(90,140,124,.42);color:var(--fresh)}
+.sq .bot{display:flex;gap:9px;margin-block-start:11px}
+.sq .sb{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:2px;
+  font-size:12.5px;border:1px solid var(--hair);color:var(--bone)}
+.sq .sb.pri{background:var(--brass);color:var(--noir);border-color:var(--brass);font-weight:600}
+.sq .amt{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;margin-inline-start:auto}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border-block-end:1px solid var(--hair)}
+.tl3{background:var(--noir);padding:15px}
+.tl3 .k{font-family:'Bodoni Moda',serif;font-size:8px;letter-spacing:1.8px;color:var(--faint);margin-block-end:6px}
+.tl3 .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.tl3 .v .c{font-family:'Bodoni Moda',serif;font-size:8.5px;letter-spacing:1.4px;color:var(--dim);margin-inline-start:4px}
+.tl3 .d{color:var(--faint);font-size:9.5px;margin-block-start:4px}
+.tl3 .v.w{color:var(--brass)}
+
+.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--l1);border-block-start:1px solid var(--hair);
+  border-start-start-radius:14px;border-start-end-radius:14px;padding:10px 16px 26px;z-index:5}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--hair);margin:0 auto 16px}
+.sheet h4{font-family:'Amiri',serif;font-size:22px;margin-block-end:14px}
+.sl4{display:flex;justify-content:space-between;padding-block:7px;font-size:12px}
+.sl4 .k{color:var(--dim)}
+.sl4 .v{font-variant-numeric:tabular-nums}
+.scrim{position:absolute;inset:0;background:rgba(11,10,9,.72);z-index:4}
+</style>
+</head>
+<body>
+
+<!-- ============ BUYER 1 — SPLASH ============ -->
+<div class="col">
+  <div class="tag"><b>Buyer app — launch</b><em>DIYAR</em> as its first brand moment. Device above wordmark; the Arabic ديار stands unaided, the Latin takes the PARFUMS descriptor because the name alone does not say fragrance.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">9:41</span></div>
+    <div class="splash">
+      <div class="field"></div><div class="patt"></div>
+      <div class="in">
+        <svg class="dev" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="22" stroke-width=".9"/>
+          <path d="M24 7l5.4 13.6L43 26l-13.6 5.4L24 45l-5.4-13.6L5 26l13.6-5.4z" stroke-width=".9"/>
+          <rect x="13" y="13" width="22" height="22" transform="rotate(45 24 24)" stroke-width=".7" opacity=".5"/>
+        </svg>
+        <div class="wm">DIYAR</div>
+        <div class="ar">ديار</div>
+        <div class="sl">EGYPTIAN PERFUME HOUSES</div>
+      </div>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ BUYER 2 — HOME ============ -->
+<div class="col">
+  <div class="tag"><b>Buyer app — home</b>The app exists for people who already bought once, so it opens with what the website cannot do well: a live shipment. Discovery sits underneath, not on top.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">9:41</span></div>
+    <div class="nav">
+      <div style="display:flex;align-items:center;gap:9px;padding-inline-start:12px">
+        <svg style="width:17px;height:17px;color:var(--brass)" viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg>
+        <span class="lat" style="font-size:14px;letter-spacing:6px;padding-inline-start:6px">DIYAR</span>
+      </div>
+      <div style="display:flex">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></div>
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg><span class="bdg num">3</span></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="live">
+        <div class="lh"><span class="d"></span><span class="t">شحنتك من <span class="lat" style="font-size:10px;letter-spacing:1.8px;color:var(--brass)">DAR AL WARD</span></span><span class="x">DY-24817-B</span></div>
+        <div class="pb"><i style="width:72%"></i></div>
+        <div class="lb">في مركز التوزيع — مدينة نصر · يصل غدًا</div>
+      </div>
+
+      <div class="shd"><h3>عُد إليه</h3><a>كل مشترياتك</a></div>
+      <div class="rail">
+        <div class="pc"><div class="im"><div class="b"></div><div class="v"></div></div>
+          <div class="bd">MAISON NOUR</div><div class="nm">ليل القاهرة</div>
+          <div class="mt">اشتريته في مايو</div><div class="pr num">450<span class="c">EGP</span></div></div>
+        <div class="pc"><div class="im"><div class="b" style="background:linear-gradient(100deg,#26332E,#4A6B5E 40%,#5A8C7C 54%,#1E2A25)"></div><div class="v"></div></div>
+          <div class="bd">ATELIER SIWA</div><div class="nm">نخيل</div>
+          <div class="mt">اشتريته في مارس</div><div class="pr num">290<span class="c">EGP</span></div></div>
+      </div>
+
+      <div class="shd"><h3>دور جديدة</h3><a>الكل</a></div>
+      <div class="rail">
+        <div class="pc"><div class="im"><div class="b" style="background:linear-gradient(100deg,#5A2E38,#A8536B 40%,#C07A90 54%,#4A2530)"></div><div class="v"></div></div>
+          <div class="bd">DAR AL WARD</div><div class="nm">ورد الطائف</div>
+          <div class="mt"><span class="num">30</span> مل · زهري</div><div class="pr num">380<span class="c">EGP</span></div></div>
+        <div class="pc"><div class="im"><div class="b" style="background:linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)"></div><div class="v"></div></div>
+          <div class="bd">BAYT AL ANBAR</div><div class="nm">صحراء</div>
+          <div class="mt"><span class="num">100</span> مل · خشبي</div><div class="pr num">620<span class="c">EGP</span></div></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/></svg><span>الرئيسية</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><span>تصفّح</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><path d="M5.5 7h13l-1.1 12.4a1.5 1.5 0 01-1.5 1.4H8.1a1.5 1.5 0 01-1.5-1.4z"/><path d="M9 7V5.4A3 3 0 0115 5.4V7"/></svg><span class="bdg num">3</span><span>الحقيبة</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 7.5l8-4 8 4v9l-8 4-8-4z"/><path d="M4 7.5l8 4 8-4M12 11.5v9"/></svg><span>طلباتي</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg><span>حسابي</span></div>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ BUYER 3 — PRODUCT ============ -->
+<div class="col">
+  <div class="tag"><b>Buyer app — product</b>The notes pyramid as a vertical spine with three glowing orbs, and the eight-hour evolution curve reading right to left. Both driven by real product data, never hardcoded.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">9:41</span></div>
+    <div class="scroll">
+      <div class="hero">
+        <div class="f"></div>
+        <div class="bt"><div class="cp"></div><div class="nk"></div><div class="bd2"><div class="sh"></div><div class="lb">DIYAR</div></div></div>
+        <div class="v"></div>
+        <div class="cap"><div class="bd">MAISON NOUR</div><h2>ليل القاهرة</h2>
+          <div class="mt"><span class="num">50</span> مل · أو دو بارفان · شرقي دافئ</div></div>
+      </div>
+
+      <div class="pyr">
+        <div class="spine"></div>
+        <div class="tier t-top"><span class="orb"><svg viewBox="0 0 24 24"><path d="M12 3c3 3 4.5 6 4.5 9a4.5 4.5 0 01-9 0c0-3 1.5-6 4.5-9z"/></svg></span>
+          <div class="tb"><div class="tl2">TOP — أول ٣٠ دقيقة</div>
+            <div class="chips"><span class="chip">برغموت</span><span class="chip">زعفران</span><span class="chip">هيل</span></div></div></div>
+        <div class="tier t-heart"><span class="orb"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.8-7.5-10.4A4.1 4.1 0 0112 8a4.1 4.1 0 017.5 2.1c0 5.6-7.5 10.4-7.5 10.4z"/></svg></span>
+          <div class="tb"><div class="tl2">HEART — ساعتان</div>
+            <div class="chips"><span class="chip">ورد دمشقي</span><span class="chip">ياسمين</span></div></div></div>
+        <div class="tier t-base"><span class="orb"><svg viewBox="0 0 24 24"><path d="M12 21V9M12 9c0-3 2-5 5-5 0 3-2 5-5 5zM12 12c0-2.6-1.8-4.5-4.5-4.5 0 2.6 1.8 4.5 4.5 4.5z"/></svg></span>
+          <div class="tb"><div class="tl2">BASE — حتى ٨ ساعات</div>
+            <div class="chips"><span class="chip">عود</span><span class="chip">عنبر</span><span class="chip">مسك</span></div></div></div>
+      </div>
+
+      <div class="evo">
+        <div class="lg"><span><i style="background:#C2A85C"></i>القمة</span><span><i style="background:#B5697E"></i>القلب</span><span><i style="background:#8A6838"></i>القاعدة</span></div>
+        <svg viewBox="0 0 320 84" style="width:100%;height:84px;stroke:none">
+          <path d="M320 84 L320 22 C288 26 264 44 236 62 C212 76 190 82 160 84 Z" fill="rgba(194,168,92,.34)"/>
+          <path d="M320 84 L272 70 C246 52 222 34 196 30 C170 27 142 40 110 60 C86 74 62 82 40 84 Z" fill="rgba(181,105,126,.30)"/>
+          <path d="M320 84 L268 82 C238 78 208 66 176 56 C142 46 104 44 66 50 C42 54 20 62 0 72 L0 84 Z" fill="rgba(138,104,56,.34)"/>
+        </svg>
+        <div class="ax"><span class="num">8h</span><span class="num">6h</span><span class="num">4h</span><span class="num">2h</span><span>الرشّة</span></div>
+      </div>
+
+      <div class="mtr">
+        <div class="mrow"><div class="mh"><span class="mn">الثبات</span><span class="mv">LONG · <span class="num">6–8</span>H</span></div>
+          <div class="mt2"><div class="mf" style="width:74%"></div></div>
+          <div class="msrc">المصدر: تقييمات المشترين — <span class="num">38</span> مراجعة</div></div>
+        <div class="mrow"><div class="mh"><span class="mn">الانتشار</span><span class="mv">MODERATE</span></div>
+          <div class="mt2"><div class="mf" style="width:52%"></div></div>
+          <div class="msrc">المصدر: بيانات الدار</div></div>
+      </div>
+    </div>
+    <div class="buy">
+      <div class="p"><div class="v num">450<span class="c">EGP</span></div><div class="s">يصل خلال <span class="num">2–3</span> أيام</div></div>
+      <button class="btn">أضف إلى الحقيبة</button>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ SELLER 1 — LOCK SCREEN PUSH ============ -->
+<div class="col">
+  <div class="tag"><b>Seller app — the reason it exists</b>Confirm from the lock screen without opening the app. A web portal checked twice a day will breach every SLA you set; this is the operational case doc 03 §10 requires before building an app.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">21:47</span></div>
+    <div class="lock">
+      <div class="fld"></div>
+      <div class="clk"><div class="t num">21:47</div><div class="d">الاثنين، <span class="num">1</span> سبتمبر</div></div>
+
+      <div class="push">
+        <div class="ph"><span class="ai"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg></span>
+          <span class="an">DIYAR · دار الورد</span><span class="tm">الآن</span></div>
+        <div class="t1">طلب جديد — ورد الطائف</div>
+        <div class="t2">قطعة واحدة · <span class="num">380</span> جنيه · من متجرك (عمولة <span class="num">5</span>٪)<br>
+          مدينة نصر · الدفع عند الاستلام</div>
+        <div class="acts"><span class="pb2">أكّد</span><span class="pb2 g">افتح</span></div>
+      </div>
+
+      <div class="push" style="opacity:.62">
+        <div class="ph"><span class="ai"><svg viewBox="0 0 48 48"><path d="M24 5l6 15.4L45 26l-15 5.6L24 47l-6-15.4L3 26l15-5.6z"/></svg></span>
+          <span class="an">DIYAR</span><span class="tm">منذ ساعتين</span></div>
+        <div class="t1">تبقّت <span class="num">3</span> ساعات لتأكيد طلب</div>
+        <div class="t2"><span class="lat">DY-24880-B</span> · يتجاوز المهلة الساعة <span class="num">12:40</span> ص</div>
+      </div>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ SELLER 2 — QUEUE ============ -->
+<div class="col">
+  <div class="tag"><b>Seller app — the queue</b>The app opens straight into the queue. No dashboard first, because the job is confirming orders, and every extra tap is time against an SLA clock.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">9:41</span></div>
+    <div class="nav">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+      <div class="ttl">الطلبات</div>
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg><span class="bdg num">2</span></div>
+    </div>
+    <div class="tiles">
+      <div class="tl3"><div class="k">AWAITING YOU</div><div class="v w num">2</div><div class="d">أقربها <span class="num">2</span>س <span class="num">40</span>د</div></div>
+      <div class="tl3"><div class="k">TODAY</div><div class="v num">1,620<span class="c">EGP</span></div><div class="d"><span class="num">4</span> طلبات</div></div>
+    </div>
+    <div class="scroll">
+      <div class="sq">
+        <div class="top"><span class="on">DY-24817-B</span><span class="clk hot">2H 40M</span></div>
+        <div class="nm">ورد الطائف · <span class="num">30</span> مل</div>
+        <div class="mt">مدينة نصر · الدفع عند الاستلام · متاح <span class="num">4</span></div>
+        <span class="src own">متجرك · 5%</span>
+        <div class="bot"><span class="sb pri">أكّد</span><span class="sb">اعتذر</span><span class="amt num">380</span></div>
+      </div>
+      <div class="sq">
+        <div class="top"><span class="on">DY-24902-A</span><span class="clk">18H</span></div>
+        <div class="nm">عنبر ليلي · <span class="num">50</span> مل × <span class="num">2</span></div>
+        <div class="mt">المعادي · مدفوع بالبطاقة · متاح <span class="num">9</span></div>
+        <span class="src">بحث المنصّة · 15%</span>
+        <div class="bot"><span class="sb pri">أكّد</span><span class="sb">اعتذر</span><span class="amt num">1,240</span></div>
+      </div>
+      <div class="sq" style="opacity:.72">
+        <div class="top"><span class="on">DY-24790-A</span><span class="clk" style="color:var(--faint)">جهّز قبل ٦ م</span></div>
+        <div class="nm">ورد الطائف · <span class="num">30</span> مل</div>
+        <div class="mt">مؤكّد · بانتظار الشحن</div>
+        <span class="src own">متجرك · 5%</span>
+        <div class="bot"><span class="sb">احجز الشحن</span><span class="amt num">380</span></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 7.5l8-4 8 4v9l-8 4-8-4z"/><path d="M4 7.5l8 4 8-4M12 11.5v9"/></svg><span class="bdg num">2</span><span>الطلبات</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 10h16M10 10v10"/></svg><span>المنتجات</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M20 19H3"/></svg><span>الحساب</span></div>
+      <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/></svg><span>الدار</span></div>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+<!-- ============ SELLER 3 — CONFIRM SHEET ============ -->
+<div class="col">
+  <div class="tag"><b>Seller app — confirm sheet</b>What this order actually pays, before committing. Source and rate stated every time, so the asymmetric commission is felt as fairness rather than read once in a contract.</div>
+  <div class="app">
+    <div class="sb"><span class="ind"><i></i><svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0"/></svg></span><span class="num">9:41</span></div>
+    <div class="nav">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+      <div class="ttl">الطلبات</div>
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg></div>
+    </div>
+    <div class="scroll" style="position:relative">
+      <div class="sq"><div class="top"><span class="on">DY-24817-B</span><span class="clk hot">2H 40M</span></div>
+        <div class="nm">ورد الطائف · <span class="num">30</span> مل</div>
+        <div class="mt">مدينة نصر · الدفع عند الاستلام</div></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>تأكيد الطلب</h4>
+        <div class="sl4"><span class="k">المصدر</span><span class="v" style="color:var(--fresh)">متجرك — رابط حسابك</span></div>
+        <div class="sl4"><span class="k">العمولة</span><span class="v num" style="color:var(--fresh)">5%</span></div>
+        <div class="sl4"><span class="k">قيمة المنتج</span><span class="v num">380 EGP</span></div>
+        <div class="sl4"><span class="k">عمولة المنصّة</span><span class="v num" style="color:var(--heart)">−19 EGP</span></div>
+        <div class="sl4" style="border-block-start:1px solid var(--hair);margin-block-start:8px;padding-block-start:13px">
+          <span class="k" style="font-family:Amiri,serif;font-size:17px;color:var(--bone)">صافيك</span>
+          <span class="v num" style="font-size:19px;font-weight:600">361 EGP</span></div>
+        <div style="display:flex;gap:10px;margin-block-start:18px">
+          <button class="btn">أكّد الطلب</button>
+        </div>
+        <div style="text-align:center;color:var(--faint);font-size:9.5px;margin-block-start:11px">
+          بالتأكيد تلتزم بالشحن قبل <span class="num">6</span> م غدًا</div>
+      </div>
+    </div>
+    <div class="hi"><i></i></div>
+  </div>
+</div>
+
+</body>
+</html>
