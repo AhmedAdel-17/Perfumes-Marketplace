@@ -11,7 +11,7 @@
  * Rate application uses basis points (500 = 5%, 1500 = 15%) so a commission rate
  * never enters the system as 0.05 and never accumulates binary error.
  */
-import { CurrencyMismatch, InvalidMoney } from '../errors/index.js';
+import { CurrencyMismatch, InvalidMoney } from '../errors/index';
 
 export type Currency = 'EGP';
 

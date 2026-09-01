@@ -17,8 +17,8 @@
  * requires it — a coded reason. Doc 06 §7 forbids generic reasons, because the
  * cost of a failed delivery has to be allocated to a documented party.
  */
-import { InvalidTransition, ReasonCodeRequired, UnauthorisedActor } from '../errors/index.js';
-import type { Clock } from '../ports/clock.js';
+import { InvalidTransition, ReasonCodeRequired, UnauthorisedActor } from '../errors/index';
+import type { Clock } from '../ports/clock';
 
 export const SUB_ORDER_STATES = [
   'placed',

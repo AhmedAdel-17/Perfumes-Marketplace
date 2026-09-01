@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Money, sumMoney } from '../value-objects/money.js';
-import { CommissionPolicy, DEFAULT_RATES, ORDER_SOURCES } from './commission.js';
-import { AttributionResolver, type Touch } from './attribution.js';
-import { FixedClock } from '../ports/clock.js';
+import { Money, sumMoney } from '../value-objects/money';
+import { CommissionPolicy, DEFAULT_RATES, ORDER_SOURCES } from './commission';
+import { AttributionResolver, type Touch } from './attribution';
+import { FixedClock } from '../ports/clock';
 
 const ORDERED_AT = new Date('2026-09-01T18:00:00Z');
 const clock = () => new FixedClock(new Date('2026-09-01T18:00:05Z'));

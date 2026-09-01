@@ -17,8 +17,8 @@
  *   - the attribution WINDOW is snapshotted with the decision, so changing policy
  *     later cannot retroactively rewrite what a house was charged.
  */
-import type { Clock } from '../ports/clock.js';
-import type { OrderSource } from './commission.js';
+import type { Clock } from '../ports/clock';
+import type { OrderSource } from './commission';
 
 export type TouchChannel =
   | 'storefront_referral'

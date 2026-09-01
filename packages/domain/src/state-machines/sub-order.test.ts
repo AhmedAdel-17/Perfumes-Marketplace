@@ -5,9 +5,9 @@ import {
   TRANSITIONS,
   type Actor,
   type SubOrderState,
-} from './sub-order.js';
-import { FixedClock } from '../ports/clock.js';
-import { InvalidTransition, ReasonCodeRequired, UnauthorisedActor } from '../errors/index.js';
+} from './sub-order';
+import { FixedClock } from '../ports/clock';
+import { InvalidTransition, ReasonCodeRequired, UnauthorisedActor } from '../errors/index';
 
 const clock = () => new FixedClock(new Date('2026-09-01T21:42:00Z'));
 

@@ -15,7 +15,7 @@
  *     A statement issued in August must still reconcile after the rates change
  *     in September.
  */
-import type { BasisPoints, Money } from '../value-objects/money.js';
+import type { BasisPoints, Money } from '../value-objects/money';
 
 export const ORDER_SOURCES = [
   'storefront_referral',

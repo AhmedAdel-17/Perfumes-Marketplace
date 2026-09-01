@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Money, sumMoney } from './money.js';
-import { CurrencyMismatch, InvalidMoney } from '../errors/index.js';
+import { Money, sumMoney } from './money';
+import { CurrencyMismatch, InvalidMoney } from '../errors/index';
 
 describe('Money — construction', () => {
   it('rejects a float, because floating-point money is forbidden', () => {
