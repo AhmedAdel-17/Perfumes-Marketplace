@@ -10,7 +10,7 @@
  * Typed against Drizzle's driver-agnostic `PgDatabase`, so the same code serves
  * PGlite in tests and postgres-js in production. Nothing here is driver-specific.
  */
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
   Money, SubOrderLifecycle, InvalidTransition,
@@ -292,17 +292,64 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   subOrders: subOrderRepository(db),
 });
 
+/** Who is making the request. Drives every RLS policy in migration 0002. */
+export interface ActorContext {
+  readonly role: 'anon' | 'customer' | 'seller' | 'platform';
+  /** The Supabase auth user id. Null for anonymous traffic. */
+  readonly id: string | null;
+}
+
+export const ANONYMOUS: ActorContext = { role: 'anon', id: null };
+
 /**
- * Unit of Work over a real transaction.
+ * Unit of Work over a real transaction, carrying the actor.
  *
- * Order + sub-orders + line items commit together or not at all. A partially
- * written multi-seller order is unrecoverable: a house sees work it is not paid
- * for, and the customer's total reconciles to nothing.
+ * Two jobs, and the second is easy to forget:
+ *
+ *  1. Order + sub-orders + line items commit together or not at all. A partially
+ *     written multi-seller order is unrecoverable — a house sees work it is not
+ *     paid for, and the customer's total reconciles to nothing.
+ *
+ *  2. It sets `app.actor_role` and `app.actor_id` inside the transaction, which
+ *     is what makes the RLS policies in 0002 apply to THIS request. Without it
+ *     every policy evaluates against an empty actor and the isolation proved in
+ *     rls.test.ts does nothing in production. `set_config(..., true)` scopes the
+ *     setting to the transaction, so it cannot leak to the next request sharing
+ *     the connection.
  */
 export class DrizzleUnitOfWork implements UnitOfWork {
-  constructor(private readonly db: DiyarDatabase) {}
+  constructor(
+    private readonly db: DiyarDatabase,
+    private readonly actor: ActorContext = ANONYMOUS,
+    /**
+     * The unprivileged role every request runs as.
+     *
+     * Postgres NEVER applies row-level security to a superuser, or to a role
+     * with BYPASSRLS — whatever the policies say and whatever GUCs are set. A
+     * pool that happens to connect as the owner therefore bypasses every policy
+     * in 0002 silently, and an API test caught exactly that: one house
+     * successfully confirmed a competitor's sub-order.
+     *
+     * In Supabase this is `authenticated`/`anon`; here it is `app_user`, created
+     * in 0002. Setting it per transaction means the guarantee holds no matter
+     * which role the connection pool was opened with.
+     */
+    private readonly databaseRole: string = 'app_user',
+  ) {}
+
+  /** A view of the same database as a different actor. */
+  as(actor: ActorContext): DrizzleUnitOfWork {
+    return new DrizzleUnitOfWork(this.db, actor, this.databaseRole);
+  }
 
   async transaction<T>(work: (repos: Repositories) => Promise<T>): Promise<T> {
-    return this.db.transaction(async (tx) => work(repositoriesFor(tx as unknown as Executor)));
+    return this.db.transaction(async (tx) => {
+      const t = tx as unknown as Executor;
+      // Order matters: set the actor while still privileged, then drop the role.
+      await t.execute(sql`SELECT set_config('app.actor_role', ${this.actor.role}, true)`);
+      await t.execute(sql`SELECT set_config('app.actor_id', ${this.actor.id ?? ''}, true)`);
+      await t.execute(sql.raw(`SET LOCAL ROLE ${this.databaseRole}`));
+      return work(repositoriesFor(t));
+    });
   }
 }

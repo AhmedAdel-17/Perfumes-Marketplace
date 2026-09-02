@@ -28,6 +28,8 @@ const NOUR = 'maison-nour';
 
 let client: PGlite;
 
+const PLATFORM = '99999999-9999-9999-9999-999999999999';
+
 /**
  * A fresh world per case.
  *
@@ -36,10 +38,16 @@ let client: PGlite;
  */
 const harness = async (): Promise<ContractWorld> => {
   const pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql']) {
+  // 0002 included deliberately: the adapter now drops to the unprivileged role
+  // on every transaction, so the contract runs through RLS exactly as production
+  // does rather than against an unguarded database.
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
+
+  // Seeding runs as the owner, outside the Unit of Work.
+  await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
   const sellerIdBySlug = new Map<string, string>();
   for (const [slug, name] of [[WARD, 'دار الورد'], [NOUR, 'ميزون نور']] as const) {
@@ -68,7 +76,9 @@ const harness = async (): Promise<ContractWorld> => {
   }
 
   return {
-    uow: new DrizzleUnitOfWork(db),
+    // Repository mechanics are exercised as a platform operator, which is the
+    // role that legitimately touches every table.
+    uow: new DrizzleUnitOfWork(db, { role: 'platform', id: PLATFORM }),
     sellerIdBySlug,
     wardProductId: productIds[WARD]!,
     nourProductId: productIds[NOUR]!,
