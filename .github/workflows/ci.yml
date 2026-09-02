@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · test · architecture
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Strict TypeScript across every package. `any` and @ts-ignore are banned
+      # by ENGINEERING_PRINCIPLES §7, and the compiler is what enforces it.
+      - name: Typecheck
+        run: pnpm -r --if-present typecheck
+
+      # Includes:
+      #   - the architecture guard (packages/domain imports no framework, calls
+      #     no clock, does no floating-point money)
+      #   - the acceptance gates, executed against a real Postgres via PGlite
+      #   - the RLS proofs, run through an unprivileged role so the policies
+      #     actually bind
+      - name: Test
+        run: pnpm -r --if-present test
+
+  guard:
+    name: no forbidden values
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # DESIGN_DOCTRINE.md: never hardcode a colour that bypasses the tokens.
+      # A cheap grep is enough to keep the rule honest as apps are added.
+      - name: No hardcoded hex colours outside tokens
+        run: |
+          set -e
+          hits=$(grep -rnoE '#[0-9a-fA-F]{6}\b' \
+            --include='*.ts' --include='*.tsx' \
+            packages apps 2>/dev/null \
+            | grep -v 'packages/tokens/' \
+            | grep -v '\.test\.ts' || true)
+          if [ -n "$hits" ]; then
+            echo "Hardcoded colours found outside packages/tokens:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "No hardcoded colours."
+
+      # RTL: logical properties only. Physical directions silently mirror wrong
+      # in Arabic, and DESIGN_DOCTRINE §4a records how expensive that already was.
+      - name: No physical direction utilities
+        run: |
+          set -e
+          hits=$(grep -rnoE '\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)[0-9a-z]' \
+            --include='*.tsx' --include='*.ts' \
+            apps packages 2>/dev/null | grep -v '\.test\.' || true)
+          if [ -n "$hits" ]; then
+            echo "Physical direction utilities found — use logical properties (ms-, me-, ps-, pe-, start-, end-):"
+            echo "$hits"
+            exit 1
+          fi
+          echo "Logical properties only."
