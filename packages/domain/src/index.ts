@@ -1,4 +1,5 @@
 export * from './value-objects/money';
+export * from './value-objects/address';
 export * from './state-machines/sub-order';
 export * from './policies/commission';
 export * from './policies/attribution';
@@ -6,4 +7,7 @@ export * from './services/settlement';
 export * from './services/place-order';
 export * from './specifications/index';
 export * from './ports/clock';
+export * from './ports/repositories';
+export * from './ports/repository-contract';
+export * from './testing/in-memory-repositories';
 export * from './errors/index';

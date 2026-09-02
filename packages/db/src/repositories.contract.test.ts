@@ -1,0 +1,130 @@
+/**
+ * The SAME repository contract, run against Drizzle + Postgres.
+ *
+ * `@diyar/domain` runs this list against an in-memory adapter. If a case passes
+ * there and here, the behaviour is in the contract rather than in one adapter's
+ * accident — which is Liskov substitutability demonstrated, not asserted.
+ *
+ * Any divergence shows up as the same named case failing on one side only.
+ */
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  Address, FixedClock, Money, PlaceOrder,
+  repositoryContract, type ContractWorld,
+} from '@diyar/domain';
+import * as schema from './schema/index';
+import { DrizzleUnitOfWork, type DiyarDatabase } from './repositories';
+
+const MIGRATIONS = join(import.meta.dirname, '../migrations');
+const ORDERED_AT = new Date('2026-09-01T21:42:00Z');
+const egp = (v: string) => Money.fromMajorString(v);
+
+const WARD = 'dar-al-ward';
+const NOUR = 'maison-nour';
+
+let client: PGlite;
+
+/**
+ * A fresh world per case.
+ *
+ * Each case gets its own schema-loaded database rather than a shared one, so an
+ * atomicity failure in one cannot leave residue that makes the next pass.
+ */
+const harness = async (): Promise<ContractWorld> => {
+  const pg = new PGlite();
+  for (const f of ['0000_initial.sql', '0001_constraints.sql']) {
+    await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
+  }
+  const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
+
+  const sellerIdBySlug = new Map<string, string>();
+  for (const [slug, name] of [[WARD, 'دار الورد'], [NOUR, 'ميزون نور']] as const) {
+    const [s] = await db.insert(schema.sellers).values({
+      tradingName: name, ownerName: 'مالك', contactPhone: '01001234567',
+      slug, status: 'live',
+    }).returning({ id: schema.sellers.id });
+    sellerIdBySlug.set(slug, s!.id);
+  }
+
+  const [customer] = await db.insert(schema.customers)
+    .values({ phone: '01009998877', fullName: 'أحمد' })
+    .returning({ id: schema.customers.id });
+
+  const productIds: Record<string, string> = {};
+  for (const [slug, price, sku] of [[WARD, 38000, 'WRD-30'], [NOUR, 45000, 'NUR-50']] as const) {
+    const sellerId = sellerIdBySlug.get(slug)!;
+    const [b] = await db.insert(schema.brands)
+      .values({ sellerId, name: slug, slug: `${slug}-brand` })
+      .returning({ id: schema.brands.id });
+    const [p] = await db.insert(schema.products).values({
+      sellerId, brandId: b!.id, name: 'عطر', slug: `${slug}-product`,
+      sku, pricePiastres: price, volumeMl: 50,
+    }).returning({ id: schema.products.id });
+    productIds[slug] = p!.id;
+  }
+
+  return {
+    uow: new DrizzleUnitOfWork(db),
+    sellerIdBySlug,
+    wardProductId: productIds[WARD]!,
+    nourProductId: productIds[NOUR]!,
+    customerId: customer!.id,
+    async markRemitted(subOrderId) {
+      await db.insert(schema.shipments).values({
+        subOrderId, courier: 'bosta', codRemittedAt: new Date('2026-09-10T00:00:00Z'),
+      });
+    },
+    makeDraft(reference, opts) {
+      return new PlaceOrder(new FixedClock(ORDERED_AT)).build({
+        reference,
+        customerId: customer!.id,
+        contactPhone: '01001234567',
+        contactName: 'أحمد',
+        address: Address.create({
+          governorate: 'cairo', city: 'مدينة نصر', area: 'الحي السابع',
+          street: 'شارع عباس العقاد', building: '14', floor: '3', apartment: '7',
+          landmark: 'أمام مسجد الرحمن',
+        }),
+        lines: [
+          {
+            productId: opts?.bogusProductId ?? productIds[WARD]!, sellerId: WARD,
+            productName: 'ورد الطائف', brandName: 'دار الورد', sku: 'WRD-30',
+            volumeMl: 30, quantity: 1, unitPrice: egp('380'),
+          },
+          {
+            productId: productIds[NOUR]!, sellerId: NOUR,
+            productName: 'ليل القاهرة', brandName: 'ميزون نور', sku: 'NUR-50',
+            volumeMl: 50, quantity: 2, unitPrice: egp('450'),
+          },
+        ],
+        shipping: [
+          { sellerId: WARD, amount: egp('50'), etaDaysMin: 3, etaDaysMax: 4 },
+          { sellerId: NOUR, amount: egp('45'), etaDaysMin: 2, etaDaysMax: 3 },
+        ],
+        terms: [
+          { sellerId: WARD, confirmationSlaHours: 24, dispatchSlaHours: 48 },
+          { sellerId: NOUR, confirmationSlaHours: 24, dispatchSlaHours: 48 },
+        ],
+        paymentMethod: 'cod',
+        touches: [{ channel: 'organic_search', at: new Date('2026-09-01T21:00:00Z') }],
+        priorPurchaseSellerIds: new Set<string>(),
+        orderedAt: ORDERED_AT,
+      });
+    },
+  };
+};
+
+beforeAll(async () => { client = new PGlite(); }, 120_000);
+afterAll(async () => { await client?.close(); });
+
+describe('repository contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of repositoryContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(harness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});

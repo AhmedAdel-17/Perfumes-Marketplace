@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Money, sumMoney } from '../value-objects/money';
+import { Address } from '../value-objects/address';
 import { FixedClock } from '../ports/clock';
 import { InvalidMoney } from '../errors/index';
 import { PlaceOrder, type CartLine, type PlaceOrderInput } from './place-order';
@@ -31,6 +32,11 @@ const place = (over: Partial<PlaceOrderInput> = {}) =>
     customerId: 'cust-1',
     contactPhone: '01001234567',
     contactName: 'أحمد',
+    address: Address.create({
+      governorate: 'cairo', city: 'مدينة نصر', area: 'الحي السابع',
+      street: 'شارع عباس العقاد', building: '14', floor: '3', apartment: '7',
+      landmark: 'أمام مسجد الرحمن',
+    }),
     lines: [line(NOUR, '450', 2), line(NOUR, '620'), line(WARD, '380'), line(SIWA, '290')],
     shipping: [
       { sellerId: NOUR, amount: egp('45'), etaDaysMin: 2, etaDaysMax: 3 },

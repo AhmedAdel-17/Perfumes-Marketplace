@@ -18,6 +18,7 @@
  * transiently. They mirror the database CHECK constraints in 0001 exactly.
  */
 import { Money, sumMoney } from '../value-objects/money';
+import type { Address } from '../value-objects/address';
 import { CommissionPolicy, type CommissionSnapshot, type OrderSource } from '../policies/commission';
 import { AttributionResolver, type AttributionDecision, type Touch } from '../policies/attribution';
 import { InvalidMoney } from '../errors/index';
@@ -55,6 +56,8 @@ export interface PlaceOrderInput {
   readonly customerId: string;
   readonly contactPhone: string;
   readonly contactName: string;
+  /** Required. The database demands it; the domain must not build an order without one. */
+  readonly address: Address;
   readonly lines: readonly CartLine[];
   readonly shipping: readonly ShippingQuote[];
   readonly terms: readonly SellerTerms[];
@@ -97,6 +100,7 @@ export interface DraftOrder {
   readonly customerId: string;
   readonly contactPhone: string;
   readonly contactName: string;
+  readonly address: Address;
   readonly paymentMethod: PaymentMethod;
   readonly subOrders: readonly DraftSubOrder[];
   readonly merchandise: Money;
@@ -217,6 +221,7 @@ export class PlaceOrder {
       customerId: input.customerId,
       contactPhone: input.contactPhone,
       contactName: input.contactName,
+      address: input.address,
       paymentMethod: input.paymentMethod,
       subOrders,
       merchandise,

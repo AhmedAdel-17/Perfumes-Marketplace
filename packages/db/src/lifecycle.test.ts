@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
-  FixedClock, Money, PlaceOrder, SettlementService, SubOrderLifecycle,
+  Address, FixedClock, Money, PlaceOrder, SettlementService, SubOrderLifecycle,
   sumMoney, type PlaceOrderInput, type SettlementSubOrder,
 } from '@diyar/domain';
 
@@ -80,6 +80,11 @@ const draftInput = (): PlaceOrderInput => ({
     customerId: ids.customer!,
     contactPhone: '01009998877',
     contactName: 'أحمد',
+    address: Address.create({
+      governorate: 'cairo', city: 'مدينة نصر', area: 'الحي السابع',
+      street: 'شارع عباس العقاد', building: '14', floor: '3', apartment: '7',
+      landmark: 'أمام مسجد الرحمن',
+    }),
     lines: [
       {
         productId: ids[WARD + ':product']!, sellerId: WARD, productName: 'ورد الطائف',
