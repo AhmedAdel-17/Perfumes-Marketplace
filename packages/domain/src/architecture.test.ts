@@ -41,8 +41,19 @@ const sourceFiles = (dir: string): string[] =>
     return extname(full) === '.ts' ? [full] : [];
   });
 
+/**
+ * Comments are stripped before scanning.
+ *
+ * The first version matched raw text, so a doc comment containing the words
+ * `from "absent" to "present and undefined"` was read as an import of a module
+ * called "present and undefined". A guard that cries wolf gets switched off,
+ * which is worse than having no guard at all.
+ */
+const stripComments = (src: string): string =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
 const importsOf = (file: string): string[] => {
-  const src = readFileSync(file, 'utf8');
+  const src = stripComments(readFileSync(file, 'utf8'));
   const specifiers: string[] = [];
   const patterns = [
     /\bfrom\s+['"]([^'"]+)['"]/g,
@@ -115,7 +126,7 @@ describe('the clock rule', () => {
 
     for (const file of productionFiles) {
       if (file.endsWith(join('ports', 'clock.ts'))) continue;   // the one allowed place
-      const src = readFileSync(file, 'utf8');
+      const src = stripComments(readFileSync(file, 'utf8'));
       if (/\bnew Date\(\s*\)/.test(src)) violations.push(`${relative(SRC, file)}: new Date()`);
       if (/\bDate\.now\(\)/.test(src)) violations.push(`${relative(SRC, file)}: Date.now()`);
     }
@@ -132,7 +143,7 @@ describe('the money rule', () => {
 
     for (const file of productionFiles) {
       if (file.endsWith(join('value-objects', 'money.ts'))) continue;
-      const src = readFileSync(file, 'utf8');
+      const src = stripComments(readFileSync(file, 'utf8'));
       for (const m of src.matchAll(/[*/]\s*0\.\d+/g)) {
         violations.push(`${relative(SRC, file)}: "${m[0].trim()}"`);
       }
@@ -146,7 +157,7 @@ describe('the money rule', () => {
 
     for (const file of productionFiles) {
       if (file.endsWith(join('value-objects', 'money.ts'))) continue;
-      const src = readFileSync(file, 'utf8');
+      const src = stripComments(readFileSync(file, 'utf8'));
       for (const m of src.matchAll(/parseFloat\s*\(\s*\w*(?:price|amount|total|piastres)\w*/gi)) {
         violations.push(`${relative(SRC, file)}: "${m[0]}"`);
       }

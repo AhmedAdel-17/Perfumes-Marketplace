@@ -4,5 +4,6 @@ export * from './policies/commission';
 export * from './policies/attribution';
 export * from './services/settlement';
 export * from './services/place-order';
+export * from './specifications/index';
 export * from './ports/clock';
 export * from './errors/index';
