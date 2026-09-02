@@ -3,5 +3,6 @@ export * from './state-machines/sub-order';
 export * from './policies/commission';
 export * from './policies/attribution';
 export * from './services/settlement';
+export * from './services/place-order';
 export * from './ports/clock';
 export * from './errors/index';
