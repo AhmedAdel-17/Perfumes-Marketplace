@@ -8,3 +8,7 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+
+# Local PGlite development database — real Postgres, but disposable.
+# Recreate with: pnpm --filter @diyar/web seed -- --fresh
+.data/

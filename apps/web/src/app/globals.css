@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* Arabic-first, RTL-native. CLAUDE.md §14. */
+    direction: rtl;
+  }
+
+  body {
+    background: theme('colors.noir');
+    color: theme('colors.bone');
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Latin runs inside Arabic keep correct bidi behaviour. */
+  .latin {
+    font-family: var(--font-bodoni), serif;
+    unicode-bidi: isolate;
+  }
+
+  /* Prices align in a column. DESIGN_DOCTRINE.md §2. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    unicode-bidi: isolate;
+  }
+
+  /* Required. Do not remove. */
+  :focus-visible {
+    outline: 2px solid theme('colors.brass');
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* A control may LOOK smaller than its target; the target may not shrink. */
+  .tappable {
+    position: relative;
+  }
+  .tappable::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+}
