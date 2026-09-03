@@ -198,9 +198,53 @@ export interface OrderLookup {
   readonly houses: readonly OrderLookupHouse[];
 }
 
+export interface QueueItem {
+  readonly name: string;
+  readonly sku: string;
+  readonly volumeMl: number;
+  readonly quantity: number;
+}
+
+/**
+ * A sub-order as the HOUSE needs to see it.
+ *
+ * Everything required to decide and to pack, and nothing more: no order total
+ * across other houses, no customer record, no attribution trail.
+ */
+export interface QueueEntry {
+  readonly id: string;
+  readonly reference: string;
+  readonly state: string;
+  readonly merchandise: Money;
+  readonly shipping: Money;
+  readonly placedAt: Date;
+  /** When the confirmation SLA expires. The countdown the house is racing. */
+  readonly confirmDueAt: Date | null;
+  readonly recipientName: string;
+  readonly recipientPhone: string;
+  readonly governorate: string;
+  readonly city: string;
+  readonly area: string;
+  readonly street: string;
+  readonly building: string;
+  readonly floor: string | null;
+  readonly apartment: string | null;
+  readonly landmark: string | null;
+  readonly items: readonly QueueItem[];
+}
+
 export interface SubOrderRepository {
   findById(id: string): Promise<SubOrderRecord | null>;
   listBySeller(sellerId: string): Promise<readonly SubOrderRecord[]>;
+
+  /**
+   * The house's working queue: what to pack and where to send it.
+   *
+   * Separate from `listBySeller` because that returns the settlement view, and
+   * a house staring at an order queue needs the address and the line items
+   * rather than commission figures.
+   */
+  listQueueForSeller(sellerId: string): Promise<readonly QueueEntry[]>;
 
   /**
    * Move a sub-order, recording the transition.

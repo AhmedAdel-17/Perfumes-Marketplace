@@ -101,6 +101,25 @@ export const subOrders = pgTable('sub_orders', {
   commissionPiastres: integer('commission_piastres').default(0).notNull(),
 
   /* SLA clocks — the seller app exists to protect these */
+  /**
+   * Delivery details, copied from the order at placement (migration 0004).
+   *
+   * A house may not read `orders` — that would show it what the customer bought
+   * from competing houses — so what it needs to pack and label lives here. It is
+   * also a SNAPSHOT: this is where the parcel was sent, and a later edit to the
+   * customer's saved address must not rewrite it.
+   */
+  recipientName: text('recipient_name').notNull(),
+  recipientPhone: text('recipient_phone').notNull(),
+  governorate: governorate('governorate').notNull(),
+  city: text('city').notNull(),
+  area: text('area').notNull(),
+  street: text('street').notNull(),
+  building: text('building').notNull(),
+  floor: text('floor'),
+  apartment: text('apartment'),
+  landmark: text('landmark'),
+
   confirmDueAt: timestamp('confirm_due_at', { withTimezone: true }),
   dispatchDueAt: timestamp('dispatch_due_at', { withTimezone: true }),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),

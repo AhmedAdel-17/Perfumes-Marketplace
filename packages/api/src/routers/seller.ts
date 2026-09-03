@@ -16,14 +16,42 @@ export const sellerRouter = router({
    * would refuse anyway; this makes it impossible to even express.
    */
   queue: sellerProcedure.query(async ({ ctx }) => {
-    const subs = await ctx.uow.transaction((r) => r.subOrders.listBySeller(ctx.sellerId!));
-    return subs.map((s) => ({
-      id: s.id,
-      reference: s.reference,
-      state: s.state,
-      merchandisePiastres: s.merchandise.minor,
-      shippingPiastres: s.shipping.minor,
-    }));
+    const entries = await ctx.uow.transaction((r) =>
+      r.subOrders.listQueueForSeller(ctx.sellerId!));
+
+    // Soonest deadline first. A queue sorted by arrival looks tidier and buries
+    // the order that is about to breach its confirmation SLA behind five that
+    // are not — which is the only ordering that actually costs money.
+    return [...entries]
+      .sort((a, b) => {
+        const left = a.confirmDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const right = b.confirmDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return left - right;
+      })
+      .map((s) => ({
+        id: s.id,
+        reference: s.reference,
+        state: s.state,
+        merchandisePiastres: s.merchandise.minor,
+        shippingPiastres: s.shipping.minor,
+        placedAt: s.placedAt.toISOString(),
+        confirmDueAt: s.confirmDueAt?.toISOString() ?? null,
+        recipient: {
+          name: s.recipientName,
+          phone: s.recipientPhone,
+          governorate: s.governorate,
+          city: s.city,
+          area: s.area,
+          street: s.street,
+          building: s.building,
+          floor: s.floor,
+          apartment: s.apartment,
+          landmark: s.landmark,
+        },
+        items: s.items.map((i) => ({
+          name: i.name, sku: i.sku, volumeMl: i.volumeMl, quantity: i.quantity,
+        })),
+      }));
   }),
 
   confirm: sellerProcedure

@@ -15,8 +15,19 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 let db: PGlite;
 const MIGRATIONS = join(import.meta.dirname, '../../migrations');
 
-const runSql = async (f: string) =>
-  db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
+/**
+ * Variadic on purpose.
+ *
+ * It used to take exactly one file, so `runSql(a, b)` silently applied only the
+ * first — a migration was skipped with no error and the failure surfaced far
+ * away as a missing column. That happened twice. A signature that quietly
+ * discards an argument is a trap, and the fix is the signature, not the caller.
+ */
+const runSql = async (...files: string[]) => {
+  for (const f of files) {
+    await db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
+  }
+};
 
 /** Run a query as a given actor. This is what an authenticated request looks like. */
 const asActor = async <T>(role: string, actorId: string | null, sql: string, params: unknown[] = []) => {
@@ -61,7 +72,7 @@ beforeAll(async () => {
   await runSql('0000_initial.sql');
   await runSql('0001_constraints.sql');
   await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql');
+  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql');
 
   // Seed as platform, which is the only role that may create this much.
   await db.exec(`SET app.actor_role = 'platform'; SET app.actor_id = '99999999-9999-9999-9999-999999999999';`);
@@ -110,12 +121,17 @@ beforeAll(async () => {
      VALUES ('DY-90001',$1,'01009998877','أحمد','cairo','مدينة نصر','السابع','عباس العقاد','14',
        'storefront_referral',83000,9500,92500,'cod') RETURNING id`, [ids.ahmed])).id;
 
+  // Delivery details are NOT NULL since 0004 — a house cannot read the parent
+  // order, so what it needs to ship is copied onto its own row.
+  const DELIVERY = "'أحمد','01009998877','cairo','مدينة نصر','السابع','عباس العقاد','14'";
   ids.ahmedWardSub = (await mk<{ id: string }>(
-    `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres)
-     VALUES ($1,$2,'DY-90001-A',38000,4500) RETURNING id`, [ids.ahmedOrder, ids.wardSeller])).id;
+    `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,
+       recipient_name,recipient_phone,governorate,city,area,street,building)
+     VALUES ($1,$2,'DY-90001-A',38000,4500,${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.wardSeller])).id;
   ids.ahmedNourSub = (await mk<{ id: string }>(
-    `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres)
-     VALUES ($1,$2,'DY-90001-B',45000,5000) RETURNING id`, [ids.ahmedOrder, ids.nourSeller])).id;
+    `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,
+       recipient_name,recipient_phone,governorate,city,area,street,building)
+     VALUES ($1,$2,'DY-90001-B',45000,5000,${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.nourSeller])).id;
 
   await db.query(
     `INSERT INTO order_line_items (sub_order_id,product_id,product_name,brand_name,sku,volume_ml,
@@ -141,6 +157,27 @@ describe('seller isolation — the rule the marketplace depends on', () => {
 
   it("a house cannot read a competitor's sub-order even by id", () => within(async () => {
     const r = await asActor('seller', ids.wardOwner, `SELECT * FROM sub_orders WHERE id = $1`, [ids.ahmedNourSub]);
+    expect(r.rows).toHaveLength(0);
+  }));
+
+  it('a house CAN read the delivery details on its own sub-order', () => within(async () => {
+    // Migration 0004. Without this the house can see an order it must pack and
+    // has no way to learn where to send it — 0002 promised these details "on
+    // the sub-order" and the schema had never provided them.
+    const r = await asActor<{ recipient_name: string; city: string }>(
+      'seller', ids.wardOwner,
+      `SELECT recipient_name, city FROM sub_orders WHERE seller_id = $1`, [ids.wardSeller]);
+    expect(r.rows.length).toBeGreaterThan(0);
+    expect(r.rows[0]!.recipient_name).toBeTruthy();
+    expect(r.rows[0]!.city).toBeTruthy();
+  }));
+
+  it("cannot read the delivery details on a competitor's sub-order", () => within(async () => {
+    // The denormalisation must not have widened access. The row is invisible,
+    // so the columns on it are too.
+    const r = await asActor(
+      'seller', ids.wardOwner,
+      `SELECT recipient_name FROM sub_orders WHERE id = $1`, [ids.ahmedNourSub]);
     expect(r.rows).toHaveLength(0);
   }));
 

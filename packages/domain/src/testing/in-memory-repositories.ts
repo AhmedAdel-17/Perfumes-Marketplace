@@ -35,6 +35,8 @@ interface OrderRow {
 interface SubOrderLineRow {
   name: string;
   brandName: string;
+  sku: string;
+  volumeMl: number;
   quantity: number;
   unitPriceMinor: number;
 }
@@ -43,6 +45,20 @@ interface SubOrderRow {
   id: string;
   reference: string;
   lines: SubOrderLineRow[];
+  delivery: {
+    recipientName: string;
+    recipientPhone: string;
+    governorate: string;
+    city: string;
+    area: string;
+    street: string;
+    building: string;
+    floor: string | null;
+    apartment: string | null;
+    landmark: string | null;
+  };
+  placedAt: Date;
+  confirmDueAt: Date | null;
   orderId: string;
   sellerId: string;
   state: SubOrderState;
@@ -224,9 +240,27 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           s.subOrders.set(subId, {
             id: subId,
             reference: sub.reference,
+            // Copied from the order, exactly as the database does — the house
+            // cannot read the parent order. Migration 0004.
+            delivery: {
+              recipientName: draft.contactName,
+              recipientPhone: draft.contactPhone,
+              governorate: draft.address.governorate,
+              city: draft.address.city,
+              area: draft.address.area,
+              street: draft.address.street,
+              building: draft.address.building,
+              floor: draft.address.floor ?? null,
+              apartment: draft.address.apartment ?? null,
+              landmark: draft.address.landmark ?? null,
+            },
+            placedAt: draft.placedAt,
+            confirmDueAt: sub.confirmDueAt,
             lines: sub.lineItems.map((li) => ({
               name: li.productName,
               brandName: li.brandName,
+              sku: li.sku,
+              volumeMl: li.volumeMl,
               quantity: li.quantity,
               unitPriceMinor: li.unitPrice.minor,
             })),
@@ -327,6 +361,28 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       async findById(id) {
         const row = store().subOrders.get(id);
         return row ? toRecord(row) : null;
+      },
+
+      async listQueueForSeller(sellerId) {
+        const s = store();
+        return [...s.subOrders.values()]
+          .filter((so) => so.sellerId === sellerId)
+          .map((so) => ({
+            id: so.id,
+            reference: so.reference,
+            state: so.state,
+            merchandise: Money.fromMinor(so.merchandiseMinor),
+            shipping: Money.fromMinor(so.shippingMinor),
+            placedAt: so.placedAt,
+            confirmDueAt: so.confirmDueAt,
+            ...so.delivery,
+            items: so.lines.map((l) => ({
+              name: l.name,
+              sku: l.sku,
+              volumeMl: l.volumeMl,
+              quantity: l.quantity,
+            })),
+          }));
       },
 
       async listBySeller(sellerId) {

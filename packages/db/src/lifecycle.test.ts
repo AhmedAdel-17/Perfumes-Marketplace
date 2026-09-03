@@ -26,8 +26,19 @@ import {
 
 let db: PGlite;
 const MIGRATIONS = join(import.meta.dirname, '../migrations');
-const runSql = async (f: string) =>
-  db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
+/**
+ * Variadic on purpose.
+ *
+ * It used to take exactly one file, so `runSql(a, b)` silently applied only the
+ * first — a migration was skipped with no error and the failure surfaced far
+ * away as a missing column. That happened twice. A signature that quietly
+ * discards an argument is a trap, and the fix is the signature, not the caller.
+ */
+const runSql = async (...files: string[]) => {
+  for (const f of files) {
+    await db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
+  }
+};
 
 const ORDERED_AT = new Date('2026-09-01T18:00:00Z');
 const egp = (v: string) => Money.fromMajorString(v);
@@ -42,7 +53,7 @@ beforeAll(async () => {
   await runSql('0000_initial.sql');
   await runSql('0001_constraints.sql');
   await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql');
+  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql');
   await db.exec(`SET app.actor_role='platform'; SET app.actor_id='99999999-9999-9999-9999-999999999999';`);
 
   const one = async <T>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]!;
@@ -133,10 +144,15 @@ describe('checkout — the domain draft persists without contradiction', () => {
 
     for (const s of d.subOrders) {
       const sub = await db.query<{ id: string }>(
+        // Delivery details are NOT NULL since 0004 and come from the draft's
+        // address — the house cannot read the parent order.
         `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,
-           shipping_piastres,confirm_due_at)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-        [ids.order, ids[s.sellerId], s.reference, s.merchandise.minor, s.shipping.minor, s.confirmDueAt]);
+           shipping_piastres,confirm_due_at,
+           recipient_name,recipient_phone,governorate,city,area,street,building)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [ids.order, ids[s.sellerId], s.reference, s.merchandise.minor, s.shipping.minor, s.confirmDueAt,
+         d.contactName, d.contactPhone, d.address.governorate, d.address.city,
+         d.address.area, d.address.street, d.address.building]);
       ids[s.sellerId + ':sub'] = sub.rows[0]!.id;
 
       for (const li of s.lineItems) {

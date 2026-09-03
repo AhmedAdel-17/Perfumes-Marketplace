@@ -49,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
@@ -107,8 +107,12 @@ beforeAll(async () => {
        VALUES ($1,$2,'01009998877','أحمد','cairo','مدينة نصر','السابع','عباس','14','organic_search',
          38000,5000,43000,'cod') RETURNING id`, ['DY-' + slug, ids.customer]);
     const so = await pg.query<{ id: string }>(
-      `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,state)
-       VALUES ($1,$2,$3,38000,5000,'awaiting_seller') RETURNING id`,
+      // Delivery details are NOT NULL on sub_orders since 0004: a house cannot
+      // read the parent order, so what it needs to ship lives on its own row.
+      `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,state,
+         recipient_name,recipient_phone,governorate,city,area,street,building)
+       VALUES ($1,$2,$3,38000,5000,'awaiting_seller',
+         'أحمد','01009998877','cairo','مدينة نصر','السابع','عباس','14') RETURNING id`,
       [o.rows[0]!.id, ids[slug], 'DY-' + slug + '-A']);
     ids[slug + ':sub'] = so.rows[0]!.id;
   }
@@ -512,6 +516,55 @@ describe('authorisation — defence in depth, through the whole stack', () => {
     expect(rows.some((r) => r.id === ids['dar-al-ward:sub'])).toBe(false);
   });
 
+  it('gives a house the address it needs to ship — and nothing else', async () => {
+    // Migration 0002 said a house "receives the delivery details it needs on
+    // the sub-order" while the schema had no such columns, so a house could
+    // see an order it had to pack and no way to learn where to send it.
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+
+    const placed = await caller({ role: 'anon', id: null }).orders.place({
+      contactName: 'هالة مصطفى',
+      contactPhone: '01512223333',
+      address: {
+        governorate: 'giza', city: 'الشيخ زايد', area: 'الحي الثاني',
+        street: 'شارع 12', building: '8', floor: '2', landmark: 'خلف كارفور',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const rows = await ward.seller.queue();
+    const mine = rows.find((r) => r.reference.startsWith(placed.reference));
+
+    expect(mine).toBeDefined();
+    expect(mine!.recipient.name).toBe('هالة مصطفى');
+    expect(mine!.recipient.phone).toBe('01512223333');
+    expect(mine!.recipient.city).toBe('الشيخ زايد');
+    expect(mine!.recipient.landmark).toBe('خلف كارفور');
+    // And what to put in the box.
+    expect(mine!.items.length).toBeGreaterThan(0);
+    expect(mine!.items[0]!.sku).toBeTruthy();
+  });
+
+  // "a house still cannot read the parent order" is asserted in
+  // packages/db/src/schema/rls.test.ts, NOT here, and the difference is not
+  // stylistic. This file's PGlite connection runs as `postgres`, and a
+  // superuser BYPASSES row-level security outright — FORCE ROW LEVEL SECURITY
+  // binds the table owner, not a superuser. An RLS assertion written here
+  // returns every row and proves nothing; the first draft of it did exactly
+  // that. rls.test.ts switches to `app_user` first, which is what makes the
+  // policies bind and the assertion mean something.
+
+  it('puts the order closest to breaching its SLA at the top', async () => {
+    // Sorted by arrival, the order about to breach hides behind five that are
+    // not — the only ordering here that actually costs money.
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    const rows = await ward.seller.queue();
+    const due = rows.map((r) => r.confirmDueAt).filter((d): d is string => d !== null);
+    const sorted = [...due].sort();
+    expect(due).toEqual(sorted);
+  });
+
   it("a house cannot confirm a competitor's sub-order, even naming its id", async () => {
     // The crafted request names Nour's sub-order while authenticated as Ward.
     // RLS makes it invisible, so the router reports not-found rather than acting.
@@ -519,10 +572,13 @@ describe('authorisation — defence in depth, through the whole stack', () => {
     const result = await ward.seller.confirm({ subOrderId: ids['maison-nour:sub']! });
     expect(result.ok).toBe(false);
 
-    // and Nour's order is untouched
+    // and Nour's order is untouched. Found by id rather than by position:
+    // the queue is sorted by SLA deadline, so "the first row" is not a stable
+    // way to name a specific order once real ones exist beside the fixture.
     const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
     const rows = await nour.seller.queue();
-    expect(rows[0]!.state).toBe('awaiting_seller');
+    const seeded = rows.find((r) => r.id === ids['maison-nour:sub']);
+    expect(seeded?.state).toBe('awaiting_seller');
   });
 });
 

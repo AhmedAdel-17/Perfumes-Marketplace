@@ -209,6 +209,19 @@ const orderRepository = (db: Executor): OrderRepository => ({
         merchandisePiastres: sub.merchandise.minor,
         shippingPiastres: sub.shipping.minor,
         confirmDueAt: sub.confirmDueAt,
+        // The house cannot read the parent order — that would show it what the
+        // customer bought from competing houses — so everything it needs to
+        // pack and label is written onto its own row. Migration 0004.
+        recipientName: draft.contactName,
+        recipientPhone: draft.contactPhone,
+        governorate: a.governorate,
+        city: a.city,
+        area: a.area,
+        street: a.street,
+        building: a.building,
+        floor: a.floor ?? null,
+        apartment: a.apartment ?? null,
+        landmark: a.landmark ?? null,
       }).returning({ id: schema.subOrders.id });
 
       subOrderIds.push(row!.id);
@@ -316,6 +329,48 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     const [row] = await db.select().from(schema.subOrders)
       .where(eq(schema.subOrders.id, id)).limit(1);
     return row ? toSubOrder(row) : null;
+  },
+
+  async listQueueForSeller(sellerId) {
+    const rows = await db
+      .select()
+      .from(schema.subOrders)
+      .where(eq(schema.subOrders.sellerId, sellerId));
+
+    if (rows.length === 0) return [];
+
+    const items = await db
+      .select()
+      .from(schema.orderLineItems)
+      .where(inArray(schema.orderLineItems.subOrderId, rows.map((r) => r.id)));
+
+    return rows.map((r) => ({
+      id: r.id,
+      reference: r.reference,
+      state: r.state,
+      merchandise: Money.fromMinor(r.merchandisePiastres),
+      shipping: Money.fromMinor(r.shippingPiastres),
+      placedAt: r.createdAt,
+      confirmDueAt: r.confirmDueAt,
+      recipientName: r.recipientName,
+      recipientPhone: r.recipientPhone,
+      governorate: r.governorate,
+      city: r.city,
+      area: r.area,
+      street: r.street,
+      building: r.building,
+      floor: r.floor,
+      apartment: r.apartment,
+      landmark: r.landmark,
+      items: items
+        .filter((i) => i.subOrderId === r.id)
+        .map((i) => ({
+          name: i.productName,
+          sku: i.sku,
+          volumeMl: i.volumeMl,
+          quantity: i.quantity,
+        })),
+    }));
   },
 
   async listBySeller(sellerId) {
