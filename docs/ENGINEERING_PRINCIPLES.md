@@ -90,7 +90,9 @@ All must be true:
 - [ ] RTL verified with mixed Arabic/Latin content
 - [ ] 44pt hit areas verified by measurement, not by eye
 - [ ] Contrast verified against the token rules
-- [ ] Works at 360px width
+- [ ] Measured at **360, 768 and 1440** — a capped phone column on a monitor is unfinished,
+      and it looks finished, which is why this line names all three (`DESIGN_DOCTRINE.md` §4b)
+- [ ] Counted nouns go through `counted()` — Arabic has six plural forms (`§4c`)
 - [ ] Loading, empty, error and offline states all designed and implemented
 - [ ] `prefers-reduced-motion` respected
 - [ ] Observability in place with a named alert owner

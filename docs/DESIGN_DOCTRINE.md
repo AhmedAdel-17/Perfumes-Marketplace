@@ -207,6 +207,68 @@ Anything that fills, slides, anchors, or draws a connector gets a geometry asser
 
 ---
 
+## 4b. The phone-first trap: a website is not a wide phone
+
+Found on 3 September 2026, by the founder, on his own monitor — which is the worst way to find
+anything. Every buyer surface had been drawn at 390px and shipped with `max-w-[420px]`, so on a
+1440px screen the marketplace rendered as a phone-shaped column floating in black. It was not
+broken; it was **unfinished, and nothing said so.**
+
+The failure mode is specific and it is not laziness: mobile-first is correct, and a phone layout
+that works is genuine progress. The trap is that a capped phone layout **looks finished at every
+width**. There is no error, no overflow, no failing test — the page renders perfectly and is
+perfectly wrong. Compare this with the RTL trap above: same shape of bug, same reason it survived
+review, same fix.
+
+**The law.** A surface is not done until it has been measured at three widths:
+
+| Width | What it is | What must be true |
+|---|---|---|
+| **390** | the phone the design was drawn for | the reference design, exactly |
+| **768** | tablet / small laptop | a capped, centred column — never a stretched phone |
+| **1440** | the founder's monitor | a *composed* layout: columns, a real masthead, desktop type |
+
+**Desktop is a different composition, not a scaled one.** Three things change, and if none of
+them changed you did not do the work:
+
+1. **The type ramp changes.** `fontSize.h1` is 33px — a phone headline. On a 27-inch monitor it
+   reads as a screenshot of an app. The `Lg` steps exist for this and start at 1024.
+2. **Content gets columns.** A single 1240px column of body text is a spreadsheet. The product
+   page splits 7/5 with the media sticky; the grid goes 2 → 3 → 4.
+3. **Pinned things unpin.** A bar welded to the bottom of a 900px-tall browser window is a phone
+   habit. On desktop the same control sits inline, in the flow, where the eye already is.
+
+**Breakpoints are a decision, not a default.** Structure changes at `lg` (1024) because that is
+where two columns genuinely fit; type changes at `lg` too. Below that the page is the phone
+design, capped at `phoneMax` and centred — a comfortable column on a tablet beats a 900px-wide
+stretch of something drawn for 390px. Do not introduce a breakpoint without saying what becomes
+possible at that width.
+
+**And the meta-lesson, which matters more than the layout.** Verifying at one width and reporting
+the surface as complete was the actual defect. "It renders" is not "it is finished." Widths are
+now part of the Definition of Done for any visual surface, alongside the geometry assertions in
+§4a — measured at 390, 768 and 1440, or not claimed.
+
+---
+
+## 4c. Arabic plurals: six forms, not two
+
+`counted(n, PERFUME, editorial)` — never `${n} عطر`.
+
+Arabic inflects a counted noun **six** ways (CLDR: zero, one, two, few, many, other), and the
+categories depend on `n % 100`, so 103 behaves like 3 and 111 behaves like 11. Worse, `one`,
+`two` and `zero` carry the count *inside the word* — عطران already means "two perfumes" — so
+prefixing a numeral yields "٢ عطران", "two two-perfumes".
+
+Shipped wrong once already: the home page read **"٣ عطر"**, which lands on a native reader
+exactly the way "3 perfume" lands on an English one. This is the single most reliable tell that
+a product was localised rather than authored, and no amount of typographic refinement above it
+survives that one line.
+
+`@diyar/i18n` → `plural.ts` owns every form. Add a noun there; never inflect at a call site.
+
+---
+
 ## 5. Brand identity — still open
 
 **Selected 1 September 2026: DIYAR — ديار.** "The houses" — plural of دار, the word the

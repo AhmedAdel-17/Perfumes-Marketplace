@@ -1,0 +1,64 @@
+import { CURRENCY_LABEL, formatPrice } from '@diyar/i18n';
+
+/**
+ * Price and the single primary action.
+ *
+ * Rendered twice — pinned to the bottom of the viewport on a phone, sitting
+ * inline in the detail column on a desktop — because those are genuinely
+ * different placements, not two designs. The price formatting, the stock
+ * wording and the disabled state are decided once, here, so a phone can never
+ * disagree with a desktop about whether something is in stock.
+ */
+export function BuyBlock({
+  pricePiastres,
+  inStock,
+  variant,
+}: {
+  pricePiastres: number;
+  inStock: boolean;
+  variant: 'bar' | 'inline';
+}) {
+  const price = (
+    <div>
+      <div className={variant === 'bar' ? 'text-h4 font-semibold' : 'text-h3 font-semibold lg:text-h2Lg'}>
+        <span className="tnum">{formatPrice(pricePiastres)}</span>
+        <span className="latin ms-2 text-caption tracking-label text-dim">{CURRENCY_LABEL}</span>
+      </div>
+      <div className="mt-1 text-micro text-faint lg:text-caption">
+        {inStock ? 'متاح الآن' : 'غير متاح حاليًا'}
+      </div>
+    </div>
+  );
+
+  const button = (
+    <button
+      type="button"
+      disabled={!inStock}
+      className={[
+        'flex h-control items-center justify-center rounded-sm bg-brass text-bodyLg font-semibold text-noir',
+        'transition-opacity duration-instant ease-out active:opacity-press disabled:opacity-disabled',
+        variant === 'bar' ? 'flex-1' : 'w-full',
+      ].join(' ')}
+    >
+      أضف إلى الحقيبة
+    </button>
+  );
+
+  if (variant === 'bar') {
+    return (
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hair bg-noir lg:hidden">
+        <div className="mx-auto flex max-w-phoneMax items-center gap-3 px-5 py-3">
+          <div className="flex-none">{price}</div>
+          {button}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hidden border-y border-hair py-6 lg:block">
+      {price}
+      <div className="mt-5">{button}</div>
+    </div>
+  );
+}

@@ -4,7 +4,7 @@
  * Apps extend this rather than declaring colours of their own, so a value that
  * is not in the token file cannot be reached through a utility class.
  */
-import { color, fontSize, letterSpacing, lineHeight, motion, noteTier, opacity, radius, scentFamily, space, font } from './index';
+import { color, fontSize, layout, letterSpacing, lineHeight, motion, noteTier, opacity, radius, scentFamily, space, font } from './index';
 
 const px = (o: Record<string, number>) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k, `${v}px`]));
@@ -25,6 +25,9 @@ export const diyarPreset = {
       lineHeight: lineHeight as unknown as Record<string, string>,
       letterSpacing: px(letterSpacing),
       spacing: { ...px(space), touch: '44px', tab: '49px', control: '52px' },
+      // Layout widths come from tokens too, so 'how wide is a page' is one
+      // decision made once rather than a number retyped in every route.
+      maxWidth: px(layout),
       borderRadius: px(radius),
       opacity: Object.fromEntries(Object.entries(opacity).map(([k, v]) => [k, String(v)])),
       transitionDuration: ms(motion),

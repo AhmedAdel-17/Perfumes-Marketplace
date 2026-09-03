@@ -32,6 +32,18 @@ export const TOUCH_TARGET = raw.size.touchTarget;
 export const TAB_BAR = raw.size.tabBar;
 export const CONTROL = raw.size.control;
 
+/**
+ * Page widths. The phone column is capped so a 6.7-inch handset does not stretch
+ * a 2-up grid into something unreadable; the content column is capped because a
+ * 1240px measure is already generous and 1900px of text is not luxury, it is a
+ * spreadsheet.
+ */
+export const layout = {
+  phoneMax: raw.size.phoneMax,
+  contentMax: raw.size.contentMax,
+  proseMax: raw.size.proseMax,
+};
+
 /** Smallest permitted READING size. 9.5 and 10.5 are for letterspaced labels only. */
 export const MIN_READING_SIZE = 11;
 

@@ -1,6 +1,8 @@
-import Link from 'next/link';
 import { listPublishedProducts } from '@/core/catalogue';
-import { formatPrice, CURRENCY_LABEL, editorial } from '@diyar/i18n';
+import { ProductTile } from '@/features/catalogue/ProductTile';
+import { SiteHeader } from '@/features/shell/SiteHeader';
+import { SiteFooter } from '@/features/shell/SiteFooter';
+import { counted, editorial, PERFUME } from '@diyar/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,40 +10,65 @@ export default async function Home() {
   const products = await listPublishedProducts();
 
   return (
-    <main className="mx-auto max-w-[420px] pb-8">
-      <header className="flex items-center justify-between px-3 pb-2 pt-3">
-        <span className="latin ps-3 text-h4 tracking-wordmark">DIYAR</span>
-      </header>
+    <>
+      <SiteHeader />
 
-      <section className="px-5 pb-6 pt-4">
-        <h1 className="font-display text-h1 leading-heading">دور العطور المصرية</h1>
-        <p className="mt-2 text-small leading-relaxed text-dim">
-          {editorial(products.length)} عطرًا من دور مختارة، بمعلومات موحّدة وتقييمات موثّقة بالشراء.
-        </p>
-      </section>
+      <main>
+        {/*
+          The opening band is full-bleed on every width. Constraining the hero to
+          the content column is what makes a site read as "a phone layout that
+          was stretched"; a maison opens with the full page and constrains only
+          the text inside it.
+        */}
+        <section className="relative overflow-hidden border-b border-hair">
+          <div className="absolute inset-0 bg-[radial-gradient(80%_120%_at_78%_18%,#3F3226_0%,#1A1512_48%,#0B0A09_82%)]" />
+          <div className="relative mx-auto max-w-contentMax px-5 py-8 lg:px-8 lg:py-[96px]">
+            <div className="max-w-proseMax">
+              <div className="latin mb-4 text-micro tracking-label text-brass lg:text-caption">
+                CAIRO · ALEXANDRIA · GIZA
+              </div>
+              <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">
+                دور العطور المصرية
+              </h1>
+              <p className="mt-4 text-small leading-relaxed text-dim lg:mt-5 lg:text-bodyLg">
+                {/* Arabic inflects a counted noun six ways, so the phrase is
+                    built rather than concatenated. @diyar/i18n → plural.ts. */}
+                {counted(products.length, PERFUME, editorial)} من دور مختارة، بمعلومات
+                موحّدة وتقييمات موثّقة بالشراء.
+              </p>
+            </div>
+          </div>
+        </section>
 
-      <div className="grid grid-cols-2 gap-4 px-5">
-        {products.map((p) => (
-          <Link key={p.id} href={`/p/${p.slug}`} className="block">
-            <div className="relative aspect-[4/5] overflow-hidden bg-[radial-gradient(120%_100%_at_50%_30%,#3A2F26,#1A1512_62%,#0D0B0A)]">
-              <div
-                className="absolute end-1/2 top-1/2 h-[86px] w-[44px] translate-x-[-50%] translate-y-[-50%] rounded-sm"
-                style={{ background: p.bottle }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-noir/[.72] to-transparent" />
+        <section className="mx-auto max-w-contentMax px-5 py-7 lg:px-8 lg:py-8">
+          <div className="mb-5 flex items-baseline justify-between border-b border-hair pb-3 lg:mb-7">
+            <h2 className="font-display text-h3 lg:text-h2Lg">كل العطور</h2>
+            <span className="text-caption tracking-label text-faint lg:text-small">
+              {counted(products.length, PERFUME, editorial)}
+            </span>
+          </div>
+
+          {products.length === 0 ? (
+            /* Day one is a real state, not an edge case: the catalogue is empty
+               until the first house clears verification. Saying so plainly beats
+               a grid of skeletons that never fill in. */
+            <p className="py-8 text-center text-small leading-relaxed text-faint">
+              لم تُنشر أي عطور بعد. الدور الأولى قيد التوثيق.
+            </p>
+          ) : (
+            /* Two columns on a phone, rising to four on a wide monitor. The tile
+               is width-agnostic, so this line is the ONLY place the column count
+               is decided. */
+            <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:gap-x-6 lg:gap-y-8 xl:grid-cols-4">
+              {products.map((p) => (
+                <ProductTile key={p.id} product={p} />
+              ))}
             </div>
-            <div className="latin mb-1 mt-3 text-micro tracking-label text-brass">{p.brandLatin}</div>
-            <div className="font-display text-h4 leading-tight">{p.name}</div>
-            <div className="mt-1 text-caption text-faint">
-              <span className="tnum">{p.volumeMl}</span> مل · {p.familyLabel}
-            </div>
-            <div className="mt-2 text-bodyLg font-semibold">
-              <span className="tnum">{formatPrice(p.pricePiastres)}</span>
-              <span className="latin ms-2 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </main>
+          )}
+        </section>
+      </main>
+
+      <SiteFooter />
+    </>
   );
 }

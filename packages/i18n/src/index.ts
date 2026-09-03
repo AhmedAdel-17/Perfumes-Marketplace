@@ -5,6 +5,7 @@
  * translation job rather than a refactor (D-3 interim position).
  */
 export * from './numerals';
+export * from './plural';
 export { ar, type Dictionary } from './ar';
 
 import { ar, type Dictionary } from './ar';
