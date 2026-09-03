@@ -47,6 +47,8 @@ export const layout = {
 /** Smallest permitted READING size. 9.5 and 10.5 are for letterspaced labels only. */
 export const MIN_READING_SIZE = 11;
 
+export * from './glass';
+
 export type ColorName = keyof typeof raw.color;
 export type SpaceStep = keyof typeof raw.space;
 export type MotionSpeed = keyof typeof motion;

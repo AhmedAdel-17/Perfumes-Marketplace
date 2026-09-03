@@ -4,11 +4,12 @@ import { findProductBySlug, listPublishedProducts } from '@/core/catalogue';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
 import { PerformanceMeter } from '@/features/product/PerformanceMeter';
-import { BottleFigure } from '@/features/product/BottleFigure';
+import { Flacon } from '@/features/product/Flacon';
 import { BuyBlock } from '@/features/product/BuyBlock';
 import { ProductTile } from '@/features/catalogue/ProductTile';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { Reveal } from '@/features/shell/Reveal';
 import { DAY, data as num, plural } from '@diyar/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -65,16 +66,38 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 the same order a phone reads top to bottom. */}
             <div className="lg:col-span-7">
               <div className="lg:sticky lg:top-[100px]">
-                <div className="relative h-[330px] overflow-hidden lg:h-[600px] lg:rounded-sm">
-                  <div className="absolute inset-0 bg-[radial-gradient(112%_82%_at_50%_30%,#3F3226_0%,#241C16_46%,#0B0A09_80%)]" />
+                {/*
+                  A lit scene, in four layers: an ambient ground, a warm key
+                  light above and behind the flacon, the flacon itself, and a
+                  vignette that closes the corners. Collapse these into one
+                  gradient and the panel goes flat — which is exactly what it
+                  did before.
+                */}
+                <div className="relative h-[408px] overflow-hidden lg:h-[664px] lg:rounded-sm">
+                  <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,#2C221A_0%,#16110E_46%,#070606_84%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(38%_30%_at_50%_10%,rgba(206,168,100,.16),transparent_74%)]" />
 
-                  <div className="absolute end-1/2 top-11 translate-x-[-50%] lg:top-[104px]">
-                    <BottleFigure gradient={product.bottle} className="lg:scale-[1.85]" />
-                  </div>
+                  <Reveal className="absolute inset-0 flex items-start justify-center pt-3 lg:items-center lg:pt-0">
+                    <Flacon
+                      family={product.family}
+                      house={product.brandLatin}
+                      uid={`hero-${product.id}`}
+                      className="h-[80%] w-auto drop-shadow-[0_34px_64px_rgba(0,0,0,.55)] lg:h-[92%]"
+                    />
+                  </Reveal>
+
+                  <div className="absolute inset-0 bg-[radial-gradient(124%_104%_at_50%_44%,transparent_40%,rgba(6,5,5,.58)_100%)]" />
 
                   {/* Fades the plate into the page so the title can sit over it
                       on a phone without a hard seam. */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_top,#0B0A09_16%,rgba(11,10,9,.86)_38%,transparent_68%)] lg:hidden" />
+                  {/*
+                      The fade exists ONLY to give the overlaid title a ground to
+                      sit on, so it is measured in PIXELS from the bottom, not in
+                      percentages of the plate. As a percentage it climbed a third
+                      of the way up the image and swallowed the flacon's base and
+                      cast shadow — the two things that make the object sit on a
+                      surface rather than float. */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_top,#0B0A09_0px,#0B0A09_44px,rgba(11,10,9,.86)_82px,transparent_142px)] lg:hidden" />
                 </div>
               </div>
             </div>
@@ -88,7 +111,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="latin mb-2 text-caption tracking-label text-brass">
                   {product.brandLatin}
                 </div>
-                <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{product.name}</h1>
+                <h1 className="font-display text-h1 leading-[1.1] tracking-tight lg:text-displayLg">
+                  {product.name}
+                </h1>
                 <p className="mt-2 text-small text-dim lg:mt-3 lg:text-bodyLg">
                   <span className="tnum">{num(product.volumeMl)}</span> مل · {product.concentrationLabel}
                 </p>

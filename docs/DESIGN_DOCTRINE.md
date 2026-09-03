@@ -269,6 +269,42 @@ survives that one line.
 
 ---
 
+## 4d. Why the first pass looked machine-made
+
+The founder's verdict on the first build was: *very basic, AI generated, no sense of luxury.*
+He was right, and the diagnosis is worth keeping because the fix was never "add more gold".
+
+**1. The product was a rectangle with a gradient on it.** Everything else is downstream of
+this. A flacon reads as glass because of four things — near-black edges where light crosses the
+full thickness, a liquid line with empty glass above it, a caustic pool where the bottle focuses
+light onto the surface, and a hard contact shadow. A single fill has none of them, and no amount
+of typography above a plastic-looking object rescues the page. `Flacon.tsx` renders all four.
+
+**2. There was no light in the scene.** A flat field of `#0B0A09` is not a dark room, it is an
+absence. Every plate is now four layers — ambient ground, a warm key above and behind the
+subject, the subject, then a vignette closing the corners. Collapse those into one gradient and
+the panel goes flat again.
+
+**3. No grain.** Nothing physical is a perfectly even field of colour. At 3.5% the grain is
+invisible if you look for it, and without it large dark areas read as vinyl and wide gradients
+band on 8-bit panels.
+
+**4. The type was timid.** 33px is a phone headline. A maison opens at 72–108px.
+
+**5. Nothing arrived.** Content that simply exists the instant the bytes land feels like an app.
+A 700ms rise of twelve pixels on a decelerating curve is the entire effect.
+
+**6. The wordmark was letterspaced Bodoni** — which is what every generated brand looks like.
+A house has a *mark*: something drawn, legible at 16px in a tab, that means something.
+
+**The generalisable rule.** Every one of these is a *placeholder that was never replaced*, and
+placeholders are dangerous precisely because they render without error. A gradient rectangle
+where a product should be does not fail a test, does not throw, does not overflow — it simply
+looks like nothing was decided. Before calling a surface finished, ask of each element: was this
+chosen, or is it merely the first thing that rendered?
+
+---
+
 ## 5. Brand identity — still open
 
 **Selected 1 September 2026: DIYAR — ديار.** "The houses" — plural of دار, the word the

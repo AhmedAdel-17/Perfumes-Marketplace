@@ -12,7 +12,14 @@ import { database } from './db';
  * so a change of storage cannot ripple into the design layer.
  */
 
-/** Bottle gradients stand in until real photography exists (DESIGN_DOCTRINE §2). */
+/**
+ * The flacon is RENDERED from the scent family, not filled with a gradient.
+ * `Flacon.tsx` derives its whole palette from this one token via glassPalette(),
+ * which is why the card carries the family key itself rather than a colour: a
+ * component that receives a finished CSS gradient can never render glass.
+ *
+ * Retained only as the fallback ground behind the render.
+ */
 const BOTTLE: Record<string, string> = {
   oud: 'linear-gradient(100deg,#2E2318,#4A3328 38%,#6B4A38 52%,#241B14)',
   amber: 'linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)',
@@ -58,6 +65,8 @@ const SOURCE_AR: Record<string, string> = {
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
   pricePiastres: number; volumeMl: number; familyLabel: string; bottle: string;
+  /** Raw scent-family token key — drives the flacon render. */
+  family: string;
 }
 
 export interface ProductDetail extends ProductCard {
@@ -81,6 +90,7 @@ const toCard = (row: typeof schema.products.$inferSelect, brandLatin: string): P
   pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
   volumeMl: row.volumeMl,
   familyLabel: FAMILY_AR[row.scentFamily ?? ''] ?? '',
+  family: row.scentFamily ?? 'amber',
   bottle: BOTTLE[row.scentFamily ?? ''] ?? BOTTLE.amber!,
 });
 

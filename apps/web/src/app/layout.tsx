@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Amiri, Bodoni_Moda, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { Grain } from '@/features/shell/Grain';
 import './globals.css';
 
 /**
@@ -37,7 +38,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className={`${amiri.variable} ${bodoni.variable} ${plex.variable}`}>
-      <body className="bg-noir text-bone font-sans text-body leading-normal">{children}</body>
+      <body className="bg-noir text-bone font-sans text-body leading-normal">
+        {children}
+        {/* Sits above everything, catches no clicks. DESIGN_DOCTRINE §2. */}
+        <Grain />
+      </body>
     </html>
   );
 }
