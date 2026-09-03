@@ -49,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
@@ -389,8 +389,11 @@ describe('orders.byReference — two factors, neither a password', () => {
     });
 
     expect(found?.houses).toHaveLength(2);
-    // Every house starts at `placed` and moves only through the state machine.
-    expect(found?.houses.every((h) => h.state === 'placed')).toBe(true);
+    // Every house starts at `awaiting_seller`: placement hands the order over
+    // in the same transaction. This assertion said `placed` until the seller
+    // portal proved that a sub-order left in `placed` is one no house can
+    // confirm — the test was encoding the bug rather than the intent.
+    expect(found?.houses.every((h) => h.state === 'awaiting_seller')).toBe(true);
     expect(found?.houses.every((h) => h.items.length > 0)).toBe(true);
     expect(found?.paymentMethod).toBe('cod');
   });
@@ -514,6 +517,33 @@ describe('authorisation — defence in depth, through the whole stack', () => {
     expect(rows.some((r) => r.reference === 'DY-maison-nour-A')).toBe(true);
     expect(rows.some((r) => r.reference.includes('dar-al-ward'))).toBe(false);
     expect(rows.some((r) => r.id === ids['dar-al-ward:sub'])).toBe(false);
+  });
+
+  it('hands the order to the house, so the house can actually confirm it', async () => {
+    // Every layer was individually correct and the flow still did not work: an
+    // order was written as `placed`, nothing moved it to `awaiting_seller`, and
+    // the state machine only permits a house to confirm FROM `awaiting_seller`.
+    // The house saw the order and the confirm button could not legally do
+    // anything. Found by pressing it.
+    const placed = await caller({ role: 'anon', id: null }).orders.place({
+      contactName: 'نادية سمير',
+      contactPhone: '01144445555',
+      address: {
+        governorate: 'cairo', city: 'مصر الجديدة', area: 'الكوربة',
+        street: 'شارع بغداد', building: '5',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    const mine = (await ward.seller.queue()).find((r) => r.reference.startsWith(placed.reference));
+
+    expect(mine?.state).toBe('awaiting_seller');
+
+    // And the house can act on it, which is the whole point.
+    const confirmed = await ward.seller.confirm({ subOrderId: mine!.id });
+    expect(confirmed).toEqual({ ok: true, state: 'confirmed' });
   });
 
   it('gives a house the address it needs to ship — and nothing else', async () => {

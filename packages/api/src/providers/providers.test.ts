@@ -8,6 +8,7 @@ import {
   type Providers,
 } from './ports';
 import { cashOnDelivery, consoleOtpSender } from './stubs';
+import { generateOtpCode, isSessionValid, SELLER_SESSION_TTL_MS } from './session';
 
 const realOtp: OtpSender = { name: 'vodafone-sms', isStub: false, async send() {} };
 
@@ -117,5 +118,36 @@ describe('describeProviders', () => {
     expect(line).toContain('otp=console-otp (STUB)');
     expect(line).toContain('payments=cash-on-delivery');
     expect(line).not.toContain('cash-on-delivery (STUB)');
+  });
+});
+
+describe('seller sessions', () => {
+  it('generates codes across the WHOLE six-digit range', () => {
+    // `floor(random()*900000)+100000` is the usual one-liner and it silently
+    // excludes every code starting with a zero — a tenth of the space thrown
+    // away for a fixed width that padStart gives for free.
+    expect(generateOtpCode(() => 0)).toBe('000000');
+    expect(generateOtpCode(() => 7)).toBe('000007');
+    expect(generateOtpCode(() => 999_999)).toBe('999999');
+    expect(generateOtpCode(() => 42_513)).toBe('042513');
+  });
+
+  it('always produces exactly six digits', () => {
+    for (const value of [0, 1, 99, 100_000, 999_999]) {
+      expect(generateOtpCode(() => value)).toMatch(/^\d{6}$/);
+    }
+  });
+
+  it('expires a session after its window', () => {
+    const session = { sellerId: 's', staffAuthUserId: 'u', issuedAt: 1_000_000 };
+    expect(isSessionValid(session, 1_000_000)).toBe(true);
+    expect(isSessionValid(session, 1_000_000 + SELLER_SESSION_TTL_MS - 1)).toBe(true);
+    expect(isSessionValid(session, 1_000_000 + SELLER_SESSION_TTL_MS)).toBe(false);
+  });
+
+  it('refuses a session issued in the future', () => {
+    // A clock skew or a forged cookie must not buy an extra twelve hours.
+    const session = { sellerId: 's', staffAuthUserId: 'u', issuedAt: 2_000_000 };
+    expect(isSessionValid(session, 1_999_999)).toBe(false);
   });
 });

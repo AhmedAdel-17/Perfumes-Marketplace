@@ -23,12 +23,23 @@ import { unitOfWork } from './db';
  * published listings. Passing a real actor is an explicit act, so no route can
  * accidentally run with more authority than it needs.
  */
-export function api(actor: ActorContext = { role: 'anon', id: null }): ApiCaller {
+export function api(
+  actor: ActorContext = { role: 'anon', id: null },
+  /**
+   * The house this staff member belongs to, resolved ONCE at the composition
+   * root — here — from the signed session cookie.
+   *
+   * It is never accepted as a request argument. `actor.id` is an auth user id
+   * and a seller id is a different identity; passing one where the other is
+   * expected returns an empty result rather than an error, which is the worst
+   * kind of bug — a seller staring at an empty queue while their orders time
+   * out. Resolving it in one place means no router can confuse the two.
+   */
+  sellerId: string | null = null,
+): ApiCaller {
   const ctx: ApiContext = {
     actor,
-    // Not seller staff. Resolved for real once sessions exist; asserting null
-    // here rather than leaving it undefined keeps the seller guards honest.
-    sellerId: null,
+    sellerId,
     uow: unitOfWork(actor),
     // The checkout service role. Narrow by construction — see migration 0003.
     checkoutUow: unitOfWork({ role: 'checkout', id: null }),

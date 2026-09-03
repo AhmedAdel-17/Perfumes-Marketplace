@@ -53,7 +53,7 @@ beforeAll(async () => {
   await runSql('0000_initial.sql');
   await runSql('0001_constraints.sql');
   await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql');
+  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql');
   await db.exec(`SET app.actor_role='platform'; SET app.actor_id='99999999-9999-9999-9999-999999999999';`);
 
   const one = async <T>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]!;

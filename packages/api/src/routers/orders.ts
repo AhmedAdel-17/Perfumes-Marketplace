@@ -8,6 +8,7 @@ import {
   MAX_QUANTITY_PER_LINE,
   normaliseOrderReference,
   PlaceOrder,
+  SubOrderLifecycle,
   type CartLine,
   type SellerTerms,
   type ShippingQuote,
@@ -176,6 +177,26 @@ export const ordersRouter = router({
         // real ids, so the mapping is the identity.
         const identity = new Map(cart.houses.map((h) => [h.sellerId, h.sellerId]));
         const saved = await repos.orders.save(draft, identity);
+
+        // 7. Hand each sub-order to its house.
+        //
+        // `placed` means the marketplace holds the order; `awaiting_seller`
+        // means the HOUSE HAS BEEN TOLD and its confirmation SLA is running.
+        // Without this step an order arrives in the seller queue in a state the
+        // machine will not let the house confirm from — the house sees the
+        // order and cannot accept it, which is exactly what shipped.
+        //
+        // Inside the same transaction, so an order that could not be handed
+        // over does not exist. When notifications are built they dispatch from
+        // precisely here: the transition IS the moment the house was told.
+        for (const subOrderId of saved.subOrderIds) {
+          const record = SubOrderLifecycle.transition(
+            'placed', { to: 'awaiting_seller', actor: 'system' }, ctx.clock,
+          );
+          await repos.subOrders.applyTransition(
+            subOrderId, 'awaiting_seller', 'system', null, record,
+          );
+        }
 
         return {
           reference: saved.reference,

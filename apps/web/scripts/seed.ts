@@ -37,6 +37,7 @@ const pgArray = (items: readonly string[]): string => {
 const houses = [
   {
     slug: 'maison-nour',
+    phone: '01001112222',
     name: 'ميزون نور',
     nameEn: 'Maison Nour',
     owner: 'نور عبد الله',
@@ -66,6 +67,7 @@ const houses = [
   },
   {
     slug: 'dar-al-ward',
+    phone: '01113334444',
     name: 'دار الورد',
     nameEn: 'Dar Al Ward',
     owner: 'خالد منصور',
@@ -95,6 +97,7 @@ const houses = [
   },
   {
     slug: 'atelier-siwa',
+    phone: '01225556666',
     name: 'أتيليه سيوة',
     nameEn: 'Atelier Siwa',
     owner: 'سلمى فؤاد',
@@ -134,7 +137,7 @@ async function main() {
 
   const pg = new PGlite(DATA_DIR);
 
-  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql']) {
+  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql']) {
     const sql = readFileSync(join(MIGRATIONS, file), 'utf8').replace(/--> statement-breakpoint/g, '');
     try {
       await pg.exec(sql);
@@ -160,18 +163,20 @@ async function main() {
 
   for (const house of houses) {
     const s = await pg.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name, name_en, owner_name, contact_phone, slug, city, status)
-       VALUES ($1,$2,$3,'01001234567',$4,$5,'applied') RETURNING id`,
-      [house.name, house.nameEn, house.owner, house.slug, house.city],
-    ).catch(async () =>
-      // `name_en` does not exist on sellers; fall back to the real columns.
-      pg.query<{ id: string }>(
-        `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, city, status)
-         VALUES ($1,$2,'01001234567',$3,$4,'applied') RETURNING id`,
-        [house.name, house.owner, house.slug, house.city],
-      ),
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, city, status)
+       VALUES ($1,$2,$3,$4,$5,'applied') RETURNING id`,
+      [house.name, house.owner, house.phone, house.slug, house.city],
     );
     const sellerId = s.rows[0]!.id;
+
+    // An owner who can actually sign in. The portal resolves a phone to a house
+    // through `seller_staff`, so a house with no staff row is a house nobody can
+    // open — which is exactly how the portal looks broken on a first run.
+    await pg.query(
+      `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name, phone)
+       VALUES ($1, gen_random_uuid(), 'owner', $2, $3)`,
+      [sellerId, house.owner, house.phone],
+    );
 
     // The verification checklist is seeded by trigger; a house cannot go live
     // until every control passes, so approve them explicitly rather than
@@ -225,6 +230,9 @@ async function main() {
 
   const count = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products WHERE status='published'`);
   console.log(`\n✓ seeded ${count.rows[0]!.n} published products across ${houses.length} houses`);
+  console.log(String.fromCharCode(10) + '  Seller portal — /seller. Sign in with any of these numbers;');
+  console.log('  the one-time code is printed to the dev server console.');
+  for (const house of houses) console.log(`    ${house.phone}  ${house.name}`);
   await pg.close();
 }
 

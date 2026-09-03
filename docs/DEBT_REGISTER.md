@@ -14,7 +14,7 @@ An empty register is the goal state, not a sign nobody is looking.
 
 | # | Date | What | Why it was accepted | Cost to fix | Trigger that forces the fix | Owner |
 |---|---|---|---|---|---|---|
-| — | — | *(none)* | — | — | — | — |
+| 1 | 2026-09-03 | Seller one-time codes are held in a process-local Map (`apps/web/src/features/seller/session.ts`), so they do not survive a restart and do not work across instances. | Sign-in is a declared stub that `assertProductionSafe` refuses to boot in production, so it cannot reach real users on its own. Building a durable store now would be building it twice. | ~Half a day: a `seller_login_codes` table with a TTL index, or Redis if one exists by then. | **Whichever comes first:** the SMS adapter becomes real, OR the web app runs more than one instance. Replacing the sender without replacing this store makes sign-in fail for a fraction of requests behind a load balancer — a symptom that will look like anything except this. | Claude |
 
 ---
 
