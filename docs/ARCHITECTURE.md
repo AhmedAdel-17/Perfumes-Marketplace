@@ -202,3 +202,27 @@ Before writing a file, answer these:
 5. Can it be tested without a network, a database or a clock?
 
 If question 5 is "no" for anything in `packages/domain`, the design is wrong.
+
+---
+
+## PGlite: one process, always
+
+The local database is PGlite — a real Postgres compiled to WebAssembly, persisted to
+`apps/web/.data/pg`. It is **embedded and single-writer**. Opening that directory from a second
+process while the dev server is running does not fail loudly; it corrupts the reader's view.
+
+Found on 3 September 2026, expensively. A debugging script opened `.data/pg` to inspect seeded
+rows while `next dev` held it. Afterwards the home page still listed products, but every product
+page returned 404 — a three-way join returned zero rows while each of its three tables returned
+rows individually. Half an hour went into hunting an RLS bug that did not exist.
+
+**The rules:**
+
+- Never open `.data/pg` from a script while the dev server is running. Stop the server first.
+- To inspect data, add a temporary log inside the running server, or stop it and use `pnpm seed`.
+- If the database starts behaving impossibly — queries that contradict each other — do not debug
+  it. Delete `.data`, re-seed, and see whether the symptom survives a clean baseline. That is one
+  command and it eliminates the entire class.
+
+The generalisable lesson is about DEBUGGING, not about PGlite: when a tool has to touch the thing
+it is inspecting, rule out the tool before you trust its readings.

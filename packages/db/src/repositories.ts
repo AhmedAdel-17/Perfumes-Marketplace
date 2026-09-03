@@ -16,6 +16,7 @@ import {
   Money, SubOrderLifecycle, InvalidTransition,
   type Actor, type OrderSource, type ReasonCode, type SettlementSubOrder,
   type SubOrderState, type TransitionRecord,
+  type CustomerRepository,
   type DraftOrder, type OrderRepository, type PersistedOrder, type ProductRecord,
   type ProductRepository, type Repositories, type SellerRecord, type SellerRepository,
   type SubOrderRecord, type SubOrderRepository, type UnitOfWork,
@@ -74,6 +75,44 @@ const sellerRepository = (db: Executor): SellerRepository => ({
   async findBySlug(slug) {
     const [row] = await db.select().from(schema.sellers).where(eq(schema.sellers.slug, slug)).limit(1);
     return row ? toSeller(row) : null;
+  },
+});
+
+const customerRepository = (db: Executor): CustomerRepository => ({
+  async findOrCreateByPhone({ phone, fullName }) {
+    // ON CONFLICT rather than SELECT-then-INSERT: two tabs checking out at once
+    // would both see "no such customer" and both insert, and one would lose to
+    // the unique index. The name is refreshed because the most recent checkout
+    // is the best thing we know about how to address them.
+    const [row] = await db
+      .insert(schema.customers)
+      .values({ phone, fullName })
+      .onConflictDoUpdate({
+        target: schema.customers.phone,
+        set: { fullName, updatedAt: new Date() },
+      })
+      .returning({
+        id: schema.customers.id,
+        phone: schema.customers.phone,
+        fullName: schema.customers.fullName,
+        authUserId: schema.customers.authUserId,
+      });
+
+    return {
+      id: row!.id,
+      phone: row!.phone,
+      fullName: row!.fullName,
+      authUserId: row!.authUserId,
+    };
+  },
+
+  async listPriorPurchaseSellerIds(customerId) {
+    const rows = await db
+      .selectDistinct({ sellerId: schema.subOrders.sellerId })
+      .from(schema.subOrders)
+      .innerJoin(schema.orders, eq(schema.orders.id, schema.subOrders.orderId))
+      .where(eq(schema.orders.customerId, customerId));
+    return new Set(rows.map((r) => r.sellerId));
   },
 });
 
@@ -327,6 +366,7 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
 
 export const repositoriesFor = (db: Executor): Repositories => ({
   sellers: sellerRepository(db),
+  customers: customerRepository(db),
   products: productRepository(db),
   orders: orderRepository(db),
   subOrders: subOrderRepository(db),
@@ -334,7 +374,12 @@ export const repositoriesFor = (db: Executor): Repositories => ({
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */
 export interface ActorContext {
-  readonly role: 'anon' | 'customer' | 'seller' | 'platform';
+  /**
+   * `checkout` is a SERVICE role, not a user role: it is set only inside the
+   * order-placement transaction, after the router has validated the request,
+   * and it can create an order and read back what it just wrote. See 0003.
+   */
+  readonly role: 'anon' | 'customer' | 'seller' | 'platform' | 'checkout';
   /** The Supabase auth user id. Null for anonymous traffic. */
   readonly id: string | null;
 }

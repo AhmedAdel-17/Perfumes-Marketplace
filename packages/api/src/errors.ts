@@ -76,3 +76,51 @@ export const isKnownDomainError = (e: unknown): e is DomainError => e instanceof
 export {
   InvalidMoney, InvalidTransition, ReasonCodeRequired, UnauthorisedActor, CurrencyMismatch,
 };
+
+/** What a caller can actually DO about a failure. */
+export type ApiFailureKind = 'conflict' | 'invalid' | 'unauthorised' | 'unknown';
+
+export interface ApiFailure {
+  readonly kind: ApiFailureKind;
+  /** Already in Arabic and already safe to show. */
+  readonly message: string;
+}
+
+/**
+ * Classify a failure for a UI, without the UI importing tRPC.
+ *
+ * A checkout form has to tell "your basket changed, go and look" apart from
+ * "the network failed, try again" — those are different sentences and different
+ * next actions. Doing that by importing `TRPCError` into the web app would push
+ * the transport library into every consumer, including the mobile apps, purely
+ * so they can read one field.
+ *
+ * Identification is STRUCTURAL for the same reason `asDomainError` is: a
+ * workspace can load two copies of @trpc/server, and `instanceof` across module
+ * copies silently answers false.
+ */
+export const classifyApiError = (error: unknown): ApiFailure => {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error &&
+    typeof (error as { code: unknown }).code === 'string'
+      ? (error as { code: string }).code
+      : null;
+
+  const message =
+    error instanceof Error && error.message ? error.message : 'حدث خطأ. حاول مرّة أخرى.';
+
+  switch (code) {
+    case 'CONFLICT':
+      return { kind: 'conflict', message };
+    case 'BAD_REQUEST':
+    case 'PARSE_ERROR':
+      return { kind: 'invalid', message };
+    case 'UNAUTHORIZED':
+    case 'FORBIDDEN':
+      return { kind: 'unauthorised', message };
+    default:
+      // Never surface an internal message; the mapper above already replaced it,
+      // but this is the second gate and it must not depend on the first.
+      return { kind: 'unknown', message: 'حدث خطأ. حاول مرّة أخرى.' };
+  }
+};

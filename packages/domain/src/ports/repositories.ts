@@ -92,6 +92,36 @@ export interface SellerRepository {
   findBySlug(slug: string): Promise<SellerRecord | null>;
 }
 
+export interface CustomerRecord {
+  readonly id: string;
+  readonly phone: string;
+  readonly fullName: string | null;
+  /** Null while the record exists only from guest checkout. */
+  readonly authUserId: string | null;
+}
+
+export interface CustomerRepository {
+  /**
+   * The phone number IS the identity (CLAUDE.md §16), so a returning guest is
+   * the same customer whether or not they ever created an account. Two orders
+   * from one phone must not become two customers, or order history, repeat
+   * attribution and support all fracture along an invisible seam.
+   */
+  findOrCreateByPhone(input: {
+    readonly phone: string;
+    readonly fullName: string;
+  }): Promise<CustomerRecord>;
+
+  /**
+   * Houses this customer has bought from before.
+   *
+   * Drives `direct_repeat` attribution, which is the LOW commission rate — a
+   * house should not pay the marketplace rate for a customer it already earned.
+   * Getting this wrong overcharges sellers quietly.
+   */
+  listPriorPurchaseSellerIds(customerId: string): Promise<ReadonlySet<string>>;
+}
+
 export interface ProductRepository {
   findBySlug(slug: string): Promise<ProductRecord | null>;
   listPublishedBySeller(sellerId: string): Promise<readonly ProductRecord[]>;
@@ -149,6 +179,7 @@ export interface SubOrderRepository {
 /** All ports, handed to a use-case together. */
 export interface Repositories {
   readonly sellers: SellerRepository;
+  readonly customers: CustomerRepository;
   readonly products: ProductRepository;
   readonly orders: OrderRepository;
   readonly subOrders: SubOrderRepository;

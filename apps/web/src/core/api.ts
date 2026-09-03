@@ -30,6 +30,8 @@ export function api(actor: ActorContext = { role: 'anon', id: null }): ApiCaller
     // here rather than leaving it undefined keeps the seller guards honest.
     sellerId: null,
     uow: unitOfWork(actor),
+    // The checkout service role. Narrow by construction — see migration 0003.
+    checkoutUow: unitOfWork({ role: 'checkout', id: null }),
     clock: systemClock,
   };
   return appRouter.createCaller(ctx);

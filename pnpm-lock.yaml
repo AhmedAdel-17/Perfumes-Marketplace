@@ -148,6 +148,10 @@ importers:
         version: 2.1.9(@types/node@22.20.1)
 
   packages/i18n:
+    dependencies:
+      '@diyar/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: ^5.7.2

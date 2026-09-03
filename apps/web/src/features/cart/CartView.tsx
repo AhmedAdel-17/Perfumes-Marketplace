@@ -194,15 +194,14 @@ export function CartView() {
           {counted(priced.itemCount, PERFUME, editorial)} · الأسعار شاملة الضريبة
         </p>
 
-        <button
-          type="button"
-          disabled
-          className="relative mt-6 flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir disabled:opacity-disabled disabled:brightness-75"
+        <Link
+          href="/checkout"
+          className="relative mt-6 flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter] duration-base ease-out hover:brightness-110 active:opacity-press"
         >
           <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
           متابعة الشراء
-        </button>
-        <p className="mt-3 text-center text-micro text-faint">الدفع عند الاستلام — قريبًا</p>
+        </Link>
+        <p className="mt-3 text-center text-micro text-faint">الدفع عند الاستلام</p>
       </section>
     </div>
   );

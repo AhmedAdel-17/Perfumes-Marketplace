@@ -33,11 +33,15 @@ const PLATFORM = '99999999-9999-9999-9999-999999999999';
 
 const ids: Record<string, string> = {};
 
+/** Matches the products seeded below. */
+const MAX_STOCK = 25;
+
 const caller = (actor: ActorContext, sellerId: string | null = null) => {
   const ctx: ApiContext = {
     actor,
     sellerId,
     uow: new DrizzleUnitOfWork(db, actor),
+    checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);
@@ -45,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
@@ -189,6 +193,140 @@ describe('cart.price — anonymous, and priced from the database every time', ()
   });
 });
 
+describe('orders.place — the total is decided here, not by the client', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+
+  const ADDRESS = {
+    governorate: 'cairo' as const,
+    city: 'مدينة نصر',
+    area: 'الحي السابع',
+    street: 'شارع عباس العقاد',
+    building: '14',
+    landmark: 'أمام مسجد النور',
+  };
+
+  const order = (over: Record<string, unknown> = {}) => ({
+    contactName: 'أحمد عادل',
+    contactPhone: '01009998877',
+    address: ADDRESS,
+    lines: [{ productId: ids['dar-al-ward:product']!, quantity: 2 }],
+    paymentMethod: 'cod' as const,
+    ...over,
+  });
+
+  it('places a cash-on-delivery order and returns a readable reference', async () => {
+    const placed = await caller(ANON).orders.place(order());
+
+    expect(placed.reference).toMatch(/^DY-[CDFHJKMNPQRVWXY349]{8}$/);
+    // 2 x 380 merchandise + 55 shipping, computed from the database.
+    expect(placed.totalPiastres).toBe(76_000 + 5_500);
+    expect(placed.houseCount).toBe(1);
+  });
+
+  it('splits one basket into one sub-order per house', async () => {
+    const placed = await caller(ANON).orders.place(order({
+      lines: [
+        { productId: ids['dar-al-ward:product']!, quantity: 1 },
+        { productId: ids['maison-nour:product']!, quantity: 1 },
+      ],
+    }));
+
+    expect(placed.houseCount).toBe(2);
+    // Two parcels, two delivery charges — the same arithmetic the cart showed.
+    expect(placed.totalPiastres).toBe(38_000 + 38_000 + 5_500 + 5_500);
+  });
+
+  it('treats the phone as the identity across separate guest orders', async () => {
+    // Two checkouts, one phone, one customer. If this fractured, order history,
+    // repeat attribution and support would all split along an invisible seam.
+    const first = await caller(ANON).orders.place(order({ contactPhone: '01111112222' }));
+    const second = await caller(ANON).orders.place(order({ contactPhone: '01111112222' }));
+
+    expect(first.reference).not.toBe(second.reference);
+
+    const rows = await pg.query<{ n: number }>(
+      `SELECT count(*)::int n FROM customers WHERE phone = '01111112222'`);
+    expect(rows.rows[0]!.n).toBe(1);
+  });
+
+  it('refuses an address the domain considers undeliverable', async () => {
+    await expect(caller(ANON).orders.place(order({
+      address: { ...ADDRESS, building: '' },
+    }))).rejects.toThrow();
+  });
+
+  it('refuses a basket whose products have all gone', async () => {
+    await expect(caller(ANON).orders.place(order({
+      lines: [{ productId: '00000000-0000-0000-0000-000000000000', quantity: 1 }],
+    }))).rejects.toThrow();
+  });
+
+  it('refuses to place an order whose lines moved since the bag was shown', async () => {
+    // Quantity beyond stock would be silently reduced by the pricer. Silently
+    // ordering a different quantity than the customer agreed to is worse than
+    // failing, so placement rejects any adjustment and sends them back to the
+    // bag to see what changed.
+    await expect(caller(ANON).orders.place(order({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: MAX_STOCK + 5 }],
+    }))).rejects.toThrow();
+  });
+
+  it('refuses a payment method the configured gateway cannot process', async () => {
+    await expect(caller(ANON).orders.place(order({
+      paymentMethod: 'card',
+    }) as never)).rejects.toThrow();
+  });
+});
+
+describe('orders.byReference — two factors, neither a password', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+
+  it('finds an order from its reference and phone', async () => {
+    const placed = await caller(ANON).orders.place({
+      contactName: 'سارة محمود',
+      contactPhone: '01234445555',
+      address: {
+        governorate: 'giza', city: 'الدقي', area: 'المساحة',
+        street: 'شارع التحرير', building: '7',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const found = await caller(ANON).orders.byReference({
+      reference: placed.reference, phone: '01234445555',
+    });
+    expect(found?.reference).toBe(placed.reference);
+    expect(found?.totalPiastres).toBe(placed.totalPiastres);
+  });
+
+  it('forgives case and a missing hyphen in what the customer typed', async () => {
+    const placed = await caller(ANON).orders.place({
+      contactName: 'سارة محمود',
+      contactPhone: '01234445555',
+      address: {
+        governorate: 'giza', city: 'الدقي', area: 'المساحة',
+        street: 'شارع التحرير', building: '7',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const messy = placed.reference.toLowerCase().replace('-', ' ');
+    const found = await caller(ANON).orders.byReference({
+      reference: messy, phone: '01234445555',
+    });
+    expect(found?.reference).toBe(placed.reference);
+  });
+
+  it('returns nothing for a reference that cannot exist', async () => {
+    const found = await caller(ANON).orders.byReference({
+      reference: 'DY-OOOOOOOO', phone: '01234445555',
+    });
+    expect(found).toBeNull();
+  });
+});
+
 describe('input validation — rejected at the boundary, in Arabic', () => {
   it('refuses a non-Egyptian phone number', () => {
     expect(phoneSchema.safeParse('12345').success).toBe(false);
@@ -283,18 +421,30 @@ describe('authorisation — defence in depth, through the whole stack', () => {
     await expect(api.seller.queue()).rejects.toThrow(/غير مرتبط بدار/);
   });
 
+  // These assert what the claim actually IS — every row belongs to the caller —
+  // rather than a row COUNT. The count version passed only while this file
+  // seeded exactly one order per house, and broke the moment real orders were
+  // placed in the same database by another test. A test that fails when
+  // unrelated data appears is testing the fixture, not the isolation.
   it('a house sees ONLY its own queue', async () => {
     const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
     const rows = await ward.seller.queue();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]!.reference).toBe('DY-dar-al-ward-A');
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.some((r) => r.reference === 'DY-dar-al-ward-A')).toBe(true);
+    // Nothing belonging to the other house, by reference or by sub-order id.
+    expect(rows.some((r) => r.reference.includes('maison-nour'))).toBe(false);
+    expect(rows.some((r) => r.id === ids['maison-nour:sub'])).toBe(false);
   });
 
   it('and the other house sees only its own', async () => {
     const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
     const rows = await nour.seller.queue();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]!.reference).toBe('DY-maison-nour-A');
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.some((r) => r.reference === 'DY-maison-nour-A')).toBe(true);
+    expect(rows.some((r) => r.reference.includes('dar-al-ward'))).toBe(false);
+    expect(rows.some((r) => r.id === ids['dar-al-ward:sub'])).toBe(false);
   });
 
   it("a house cannot confirm a competitor's sub-order, even naming its id", async () => {
@@ -317,8 +467,11 @@ describe('the queue actually works for its owner', () => {
     const r = await ward.seller.confirm({ subOrderId: ids['dar-al-ward:sub']! });
     expect(r).toEqual({ ok: true, state: 'confirmed' });
 
+    // Find THAT sub-order rather than trusting its position in the queue —
+    // the queue's order is not part of the contract being tested here.
     const rows = await ward.seller.queue();
-    expect(rows[0]!.state).toBe('confirmed');
+    const confirmed = rows.find((row) => row.id === ids['dar-al-ward:sub']);
+    expect(confirmed?.state).toBe('confirmed');
   });
 
   it('maps an illegal transition to an Arabic message, not a 500', async () => {

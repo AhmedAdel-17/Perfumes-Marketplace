@@ -5,6 +5,7 @@ export * from './policies/commission';
 export * from './policies/attribution';
 export * from './services/settlement';
 export * from './services/cart';
+export * from './services/order-reference';
 export * from './services/place-order';
 export * from './specifications/index';
 export * from './ports/clock';

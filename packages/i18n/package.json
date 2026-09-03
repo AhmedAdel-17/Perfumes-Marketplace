@@ -15,5 +15,8 @@
   },
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@diyar/domain": "workspace:*"
   }
 }

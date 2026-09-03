@@ -14,12 +14,14 @@ import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
 import type { SettlementSubOrder } from '../services/settlement';
 import type {
+  CustomerRecord, CustomerRepository,
   OrderRepository, PersistedOrder, ProductRecord, ProductRepository, Repositories,
   SellerRecord, SellerRepository, SubOrderRecord, SubOrderRepository, UnitOfWork,
 } from '../ports/repositories';
 
 interface OrderRow {
   id: string;
+  customerId: string;
   reference: string;
   source: PersistedOrder['source'];
   totalMinor: number;
@@ -43,6 +45,7 @@ interface SubOrderRow {
 
 interface Store {
   sellers: Map<string, SellerRecord>;
+  customers: Map<string, CustomerRecord>;
   products: Map<string, ProductRecord>;
   orders: Map<string, OrderRow>;
   subOrders: Map<string, SubOrderRow>;
@@ -51,12 +54,13 @@ interface Store {
 }
 
 const emptyStore = (): Store => ({
-  sellers: new Map(), products: new Map(), orders: new Map(),
+  sellers: new Map(), customers: new Map(), products: new Map(), orders: new Map(),
   subOrders: new Map(), transitions: [], seq: 0,
 });
 
 const cloneStore = (s: Store): Store => ({
   sellers: new Map(s.sellers),
+  customers: new Map(s.customers),
   products: new Map(s.products),
   orders: new Map([...s.orders].map(([k, v]) => [k, { ...v, subOrderIds: [...v.subOrderIds] }])),
   subOrders: new Map([...s.subOrders].map(([k, v]) => [k, { ...v }])),
@@ -112,6 +116,35 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
       async findBySlug(slug) {
         return [...store().sellers.values()].find((s) => s.slug === slug) ?? null;
+      },
+    };
+
+    const customers: CustomerRepository = {
+      async findOrCreateByPhone({ phone, fullName }) {
+        const s = store();
+        const existing = [...s.customers.values()].find((c) => c.phone === phone);
+        if (existing) {
+          const updated = { ...existing, fullName };
+          s.customers.set(existing.id, updated);
+          return updated;
+        }
+        const record: CustomerRecord = {
+          id: `customer-${++s.seq}`, phone, fullName, authUserId: null,
+        };
+        s.customers.set(record.id, record);
+        return record;
+      },
+
+      async listPriorPurchaseSellerIds(customerId) {
+        const s = store();
+        const orderIds = new Set(
+          [...s.orders.values()].filter((o) => o.customerId === customerId).map((o) => o.id),
+        );
+        return new Set(
+          [...s.subOrders.values()]
+            .filter((so) => orderIds.has(so.orderId))
+            .map((so) => so.sellerId),
+        );
       },
     };
 
@@ -192,6 +225,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
 
         s.orders.set(orderId, {
           id: orderId,
+          customerId: draft.customerId,
           reference: draft.reference,
           source: draft.source,
           totalMinor: draft.total.minor,
@@ -275,7 +309,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
-    return { sellers, products, orders, subOrders };
+    return { sellers, customers, products, orders, subOrders };
   }
 }
 

@@ -25,6 +25,21 @@ export interface ApiContext {
   readonly sellerId: string | null;
   /** Already scoped to the actor, so every query runs under the right RLS policies. */
   readonly uow: UnitOfWork;
+  /**
+   * A Unit of Work running as the `checkout` SERVICE role (migration 0003).
+   *
+   * Guest checkout has to create a customer and an order, and every customer
+   * policy in 0002 is keyed on an authenticated `app.customer_id()` that a guest
+   * does not have — so without this, placing an order is impossible for exactly
+   * the visitor the product is built around.
+   *
+   * It lives on the CONTEXT rather than being constructed inside a router,
+   * because an elevation improvised at the point of use is an elevation nobody
+   * reviews. Here it is visible at the composition root, it exists on every
+   * request whether or not it is used, and `checkout` can still only write an
+   * order and read back what it just wrote.
+   */
+  readonly checkoutUow: UnitOfWork;
   readonly clock: Clock;
 }
 
