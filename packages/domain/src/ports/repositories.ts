@@ -16,7 +16,7 @@ import type {
   Actor, ReasonCode, SubOrderState, TransitionRecord,
 } from '../state-machines/sub-order';
 import type { DraftOrder } from '../services/place-order';
-import type { SettlementSubOrder } from '../services/settlement';
+import type { PayoutStatement, SettlementSubOrder } from '../services/settlement';
 
 export interface SellerRecord {
   readonly id: string;
@@ -296,6 +296,68 @@ export interface SubOrderRepository {
 
   /** Everything a settlement period needs, already shaped for the domain. */
   listForSettlement(sellerId: string): Promise<readonly SettlementSubOrder[]>;
+
+  /** COD: the courier has handed over the cash. The gate settlement waits on. */
+  recordRemittance(input: {
+    readonly subOrderId: string;
+    readonly collectedPiastres: number;
+    readonly remittedAt: Date;
+  }): Promise<void>;
+}
+
+export interface PayoutRepository {
+  /**
+   * Persist a statement produced by `SettlementService`.
+   *
+   * The statement is written WHOLE — header and every line, in one transaction.
+   * A payout header without its lines is a number a house is asked to trust
+   * with nothing behind it, and doc 03 §7 requires every payout to carry an
+   * itemised statement. Half a statement is worse than none, because it looks
+   * complete.
+   *
+   * Only `earned` and `reversed` lines are persisted. Held and excluded ones
+   * are not money moving in this period; they reappear in a later run when the
+   * hold clears, and writing them now would double-count them then.
+   */
+  save(input: {
+    readonly sellerId: string;
+    readonly reference: string;
+    readonly statement: PayoutStatement;
+  }): Promise<{ readonly id: string; readonly reference: string }>;
+
+  listForSeller(sellerId: string): Promise<readonly PayoutSummary[]>;
+
+  findWithLines(input: {
+    readonly payoutId: string;
+    readonly sellerId: string;
+  }): Promise<PayoutDetail | null>;
+}
+
+export interface PayoutSummary {
+  readonly id: string;
+  readonly reference: string;
+  readonly status: string;
+  readonly periodStart: Date;
+  readonly periodEnd: Date;
+  readonly gross: Money;
+  readonly commission: Money;
+  readonly net: Money;
+  readonly disputeDeadline: Date | null;
+  readonly paidAt: Date | null;
+}
+
+export interface PayoutDetailLine {
+  readonly subOrderReference: string;
+  readonly gross: Money;
+  readonly commission: Money;
+  readonly commissionSource: string;
+  readonly commissionBps: number;
+  readonly shipping: Money;
+  readonly net: Money;
+}
+
+export interface PayoutDetail extends PayoutSummary {
+  readonly lines: readonly PayoutDetailLine[];
 }
 
 /** All ports, handed to a use-case together. */
@@ -304,6 +366,7 @@ export interface Repositories {
   readonly customers: CustomerRepository;
   readonly products: ProductRepository;
   readonly orders: OrderRepository;
+  readonly payouts: PayoutRepository;
   readonly subOrders: SubOrderRepository;
 }
 

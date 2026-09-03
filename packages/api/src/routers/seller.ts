@@ -139,6 +139,67 @@ export const sellerRouter = router({
       });
     }),
 
+  /**
+   * The house's own payouts.
+   *
+   * RLS restricts these to the seller OWNER — migration 0002 keys them on
+   * `app.is_seller_owner()`, so a fulfilment clerk gets an empty list rather
+   * than a figure they have no business seeing. Money is owner-only and the
+   * database is what enforces it; this router does not re-filter.
+   */
+  payouts: sellerProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.uow.transaction((r) => r.payouts.listForSeller(ctx.sellerId!));
+    return rows.map((p) => ({
+      id: p.id,
+      reference: p.reference,
+      status: p.status,
+      periodStart: p.periodStart.toISOString(),
+      periodEnd: p.periodEnd.toISOString(),
+      grossPiastres: p.gross.minor,
+      commissionPiastres: p.commission.minor,
+      netPiastres: p.net.minor,
+      disputeDeadline: p.disputeDeadline?.toISOString() ?? null,
+      paidAt: p.paidAt?.toISOString() ?? null,
+    }));
+  }),
+
+  /**
+   * One statement, itemised.
+   *
+   * Doc 03 §7: every payout carries an itemised statement and a dispute
+   * deadline. A total with nothing behind it is a number a house is asked to
+   * take on faith, and the commission model cannot survive that.
+   */
+  statement: sellerProcedure
+    .input(z.object({ payoutId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const payout = await ctx.uow.transaction((r) => r.payouts.findWithLines({
+        payoutId: input.payoutId,
+        sellerId: ctx.sellerId!,
+      }));
+      if (!payout) return null;
+
+      return {
+        reference: payout.reference,
+        status: payout.status,
+        periodStart: payout.periodStart.toISOString(),
+        periodEnd: payout.periodEnd.toISOString(),
+        grossPiastres: payout.gross.minor,
+        commissionPiastres: payout.commission.minor,
+        netPiastres: payout.net.minor,
+        disputeDeadline: payout.disputeDeadline?.toISOString() ?? null,
+        lines: payout.lines.map((l) => ({
+          subOrderReference: l.subOrderReference,
+          grossPiastres: l.gross.minor,
+          commissionPiastres: l.commission.minor,
+          commissionSource: l.commissionSource,
+          commissionBps: l.commissionBps,
+          shippingPiastres: l.shipping.minor,
+          netPiastres: l.net.minor,
+        })),
+      };
+    }),
+
   decline: sellerProcedure
     .input(declineSchema)
     .mutation(async ({ ctx, input }) => {

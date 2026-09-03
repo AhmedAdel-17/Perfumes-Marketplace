@@ -180,7 +180,19 @@ export class SettlementService {
         gross,
         commission,
         shipping,
-        net: gross.minus(commission).minus(shipping),
+        // gross MINUS commission. Shipping is carried on the line as
+        // information — what the delivery cost was — and is NOT deducted.
+        //
+        // It was deducted, and that was a double charge. The customer pays the
+        // delivery fee at checkout and it goes to the marketplace, so the house
+        // never receives it; subtracting it again took the fee out of the
+        // house's merchandise revenue as well. On a 380 EGP order with 55 EGP
+        // delivery, every house was underpaid by 55.
+        //
+        // Caught by the database: `payout_lines_net_reconciles` in 0001 asserts
+        // `net = gross - commission`, and refused the row. Two layers holding
+        // the same rule disagreed, and the one with the CHECK constraint won.
+        net: gross.minus(commission),
         commissionSource: s.commissionSource,
         commissionBps: s.commissionBps,
         ...(holdReason ? { holdReason } : {}),
@@ -192,7 +204,7 @@ export class SettlementService {
     const commission = sumMoney(lines.map((l) => l.commission));
     const shipping = sumMoney(lines.map((l) => l.shipping));
     const adjustments = sumMoney(input.adjustments.map((a) => a.amount));
-    const net = gross.minus(commission).minus(shipping).plus(adjustments);
+    const net = gross.minus(commission).plus(adjustments);
 
     const heldGross = sumMoney(
       input.subOrders.filter((s, i) => lines[i]!.outcome === 'held').map((s) => s.merchandise),
@@ -233,14 +245,17 @@ export class SettlementService {
     const gross = sumMoney(statement.lines.map((l) => l.gross));
     const commission = sumMoney(statement.lines.map((l) => l.commission));
     const shipping = sumMoney(statement.lines.map((l) => l.shipping));
-    const net = gross.minus(commission).minus(shipping).plus(statement.adjustments);
+    const net = gross.minus(commission).plus(statement.adjustments);
 
     return (
       gross.equals(statement.gross) &&
       commission.equals(statement.commission) &&
+      // Shipping still has to ADD UP even though it is not deducted: it is
+      // reported to the house as what delivery cost, and a reported figure
+      // that does not reconcile is a reported figure nobody can trust.
       shipping.equals(statement.shipping) &&
       net.equals(statement.net) &&
-      statement.lines.every((l) => l.net.equals(l.gross.minus(l.commission).minus(l.shipping))) &&
+      statement.lines.every((l) => l.net.equals(l.gross.minus(l.commission))) &&
       // Nothing that did not complete may carry a fee.
       statement.lines.every(
         (l) =>

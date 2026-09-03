@@ -107,7 +107,9 @@ describe('gate 4 — each failure state settles differently', () => {
   it('releases it once the reserve has cleared', () => {
     const st = build([sub({ deliveredAt: daysBeforeEnd(8) })]);
     expect(st.lines[0]!.outcome).toBe('earned');
-    expect(st.net.toMajorString()).toBe('905.00');   // 1000 − 50 fee − 45 shipping
+    expect(st.net.toMajorString()).toBe('950.00');   // 1000 − 50 fee. Shipping is NOT deducted:
+    // the customer paid it to the marketplace, so charging the house for it too
+    // would take a fee out of the house that the house never received.
   });
 });
 
@@ -148,8 +150,9 @@ describe('a mixed period — the realistic case', () => {
     expect(st.commission.toMajorString()).toBe('103.00');
     // shipping: 45 + 50 − 40          = 55
     expect(st.shipping.toMajorString()).toBe('55.00');
-    // net: 1700 − 103 − 55 − 90       = 1452
-    expect(st.net.toMajorString()).toBe('1452.00');
+    // net: 1700 − 103 − 90 adjustments = 1507. Shipping is reported (55) but
+    // never deducted — see the note on the line-level assertion below.
+    expect(st.net.toMajorString()).toBe('1507.00');
   });
 
   it('reports the effective rate on EARNED business only, never flattered', () => {
@@ -182,12 +185,19 @@ describe('the statement cannot silently be wrong', () => {
     expect(SettlementService.reconciles(tampered)).toBe(false);
   });
 
-  it('every line net equals gross − commission − shipping', () => {
+  it('every line net equals gross MINUS commission — shipping is not deducted', () => {
+    // This assertion used to read `gross - commission - shipping`, matching the
+    // implementation and matching nothing else. The customer pays the delivery
+    // fee at checkout and it goes to the marketplace, so the house never
+    // receives it — deducting it again charged the house for a fee it was
+    // never given. The database's `payout_lines_net_reconciles` CHECK held the
+    // correct rule the whole time and refused the row.
+    // Shipping stays ON the line as information about what delivery cost.
     const st = build([
       sub(), sub({ state: 'returned' }), sub({ state: 'refused' }), sub({ cashInHand: false }),
     ]);
     for (const l of st.lines) {
-      expect(l.net.equals(l.gross.minus(l.commission).minus(l.shipping)), l.reference).toBe(true);
+      expect(l.net.equals(l.gross.minus(l.commission)), l.reference).toBe(true);
     }
   });
 

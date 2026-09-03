@@ -13,8 +13,9 @@ import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, typ
 import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
 import type { SettlementSubOrder } from '../services/settlement';
+import type { PayoutStatement } from '../services/settlement';
 import type {
-  CustomerRecord, CustomerRepository,
+  CustomerRecord, CustomerRepository, PayoutRepository,
   OrderRepository, PersistedOrder, ProductRecord, ProductRepository, Repositories,
   SellerRecord, SellerRepository, SubOrderRecord, SubOrderRepository, UnitOfWork,
 } from '../ports/repositories';
@@ -70,10 +71,32 @@ interface SubOrderRow {
   deliveredAt?: Date;
   /** Courier has remitted the cash. NOT implied by delivery. */
   codRemitted: boolean;
+  codRemittedAt?: Date;
 }
+
+interface PayoutRow {
+  id: string;
+  sellerId: string;
+  reference: string;
+  statement: PayoutStatement;
+}
+
+const toSummary = (p: PayoutRow) => ({
+  id: p.id,
+  reference: p.reference,
+  status: 'accruing',
+  periodStart: p.statement.periodStart,
+  periodEnd: p.statement.periodEnd,
+  gross: p.statement.gross,
+  commission: p.statement.commission,
+  net: p.statement.net,
+  disputeDeadline: p.statement.disputeDeadline,
+  paidAt: null,
+});
 
 interface Store {
   sellers: Map<string, SellerRecord>;
+  payouts: Map<string, PayoutRow>;
   customers: Map<string, CustomerRecord>;
   products: Map<string, ProductRecord>;
   orders: Map<string, OrderRow>;
@@ -83,13 +106,15 @@ interface Store {
 }
 
 const emptyStore = (): Store => ({
-  sellers: new Map(), customers: new Map(), products: new Map(), orders: new Map(),
+  sellers: new Map(), customers: new Map(), payouts: new Map(),
+  products: new Map(), orders: new Map(),
   subOrders: new Map(), transitions: [], seq: 0,
 });
 
 const cloneStore = (s: Store): Store => ({
   sellers: new Map(s.sellers),
   customers: new Map(s.customers),
+  payouts: new Map(s.payouts),
   products: new Map(s.products),
   orders: new Map([...s.orders].map(([k, v]) => [k, { ...v, subOrderIds: [...v.subOrderIds] }])),
   subOrders: new Map([...s.subOrders].map(([k, v]) => [k, { ...v }])),
@@ -420,6 +445,13 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         s.transitions.push({ ...record, from: row.state, to, actor, reason });
       },
 
+      async recordRemittance({ subOrderId, remittedAt }) {
+        const sub = store().subOrders.get(subOrderId);
+        if (!sub) throw new Error(`Unknown sub-order ${subOrderId}`);
+        sub.codRemitted = true;
+        sub.codRemittedAt = remittedAt;
+      },
+
       async listForSettlement(sellerId) {
         return [...store().subOrders.values()]
           .filter((s) => s.sellerId === sellerId)
@@ -437,7 +469,43 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
-    return { sellers, customers, products, orders, subOrders };
+    const payouts: PayoutRepository = {
+      async save({ sellerId, reference, statement }) {
+        const s = store();
+        const id = `payout-${++s.seq}`;
+        s.payouts.set(id, { id, sellerId, reference, statement });
+        return { id, reference };
+      },
+
+      async listForSeller(sellerId) {
+        return [...store().payouts.values()]
+          .filter((p) => p.sellerId === sellerId)
+          .map((p) => toSummary(p));
+      },
+
+      async findWithLines({ payoutId, sellerId }) {
+        const row = store().payouts.get(payoutId);
+        // Scoped by seller as well as id: a payout id from another house must
+        // read as "not found", never as someone else's money.
+        if (!row || row.sellerId !== sellerId) return null;
+        return {
+          ...toSummary(row),
+          lines: row.statement.lines
+            .filter((l) => l.outcome === 'earned' || l.outcome === 'reversed')
+            .map((l) => ({
+              subOrderReference: l.reference,
+              gross: l.gross,
+              commission: l.commission,
+              commissionSource: l.commissionSource,
+              commissionBps: l.commissionBps,
+              shipping: l.shipping,
+              net: l.net,
+            })),
+        };
+      },
+    };
+
+    return { sellers, customers, products, orders, subOrders, payouts };
   }
 }
 

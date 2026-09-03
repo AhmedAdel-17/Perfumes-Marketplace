@@ -16,7 +16,7 @@ import {
   Money, SubOrderLifecycle, InvalidTransition,
   type Actor, type OrderSource, type ReasonCode, type SettlementSubOrder,
   type SubOrderState, type TransitionRecord,
-  type CustomerRepository,
+  type CustomerRepository, type PayoutRepository,
   type DraftOrder, type OrderRepository, type PersistedOrder, type ProductRecord,
   type ProductRepository, type Repositories, type SellerRecord, type SellerRepository,
   type SubOrderRecord, type SubOrderRepository, type UnitOfWork,
@@ -455,6 +455,15 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     });
   },
 
+  async recordRemittance({ subOrderId, collectedPiastres, remittedAt }) {
+    // Written on the SHIPMENT, not the sub-order, because remittance is a fact
+    // about the parcel and the courier — how much came back and when. The
+    // sub-order's state says where the order is; this says where the money is.
+    await db.update(schema.shipments)
+      .set({ codCollectedPiastres: collectedPiastres, codRemittedAt: remittedAt })
+      .where(eq(schema.shipments.subOrderId, subOrderId));
+  },
+
   async listForSettlement(sellerId) {
     // Two plain queries stitched in memory, rather than correlated subqueries.
     // The first attempt inlined `SELECT commission_bps ... WHERE sub_order_id =`
@@ -510,12 +519,99 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
   },
 });
 
+
+const payoutRepository = (db: Executor): PayoutRepository => ({
+  async save({ sellerId, reference, statement }) {
+    const [payout] = await db.insert(schema.payouts).values({
+      sellerId,
+      reference,
+      periodStart: statement.periodStart,
+      periodEnd: statement.periodEnd,
+      grossPiastres: statement.gross.minor,
+      commissionPiastres: statement.commission.minor,
+      shippingPiastres: statement.shipping.minor,
+      adjustmentsPiastres: statement.adjustments.minor,
+      netPiastres: statement.net.minor,
+      disputeDeadline: statement.disputeDeadline,
+    }).returning({ id: schema.payouts.id });
+
+    const payoutId = payout!.id;
+
+    // Only money that actually moved this period. A held line is not owed yet
+    // and reappears in a later run once the hold clears; persisting it now
+    // would double-count it then.
+    for (const line of statement.lines) {
+      if (line.outcome !== 'earned' && line.outcome !== 'reversed') continue;
+      await db.insert(schema.payoutLines).values({
+        payoutId,
+        subOrderId: line.subOrderId,
+        grossPiastres: line.gross.minor,
+        commissionPiastres: line.commission.minor,
+        commissionSource: line.commissionSource,
+        commissionBps: line.commissionBps,
+        shippingPiastres: line.shipping.minor,
+        netPiastres: line.net.minor,
+      });
+    }
+
+    return { id: payoutId, reference };
+  },
+
+  async listForSeller(sellerId) {
+    const rows = await db.select().from(schema.payouts)
+      .where(eq(schema.payouts.sellerId, sellerId));
+    return rows.map(toPayoutSummary);
+  },
+
+  async findWithLines({ payoutId, sellerId }) {
+    // Scoped by seller as well as id. RLS refuses another house's payout
+    // anyway; matching on both means the query cannot even express the ask.
+    const [row] = await db.select().from(schema.payouts)
+      .where(and(eq(schema.payouts.id, payoutId), eq(schema.payouts.sellerId, sellerId)))
+      .limit(1);
+    if (!row) return null;
+
+    const lines = await db
+      .select({ line: schema.payoutLines, reference: schema.subOrders.reference })
+      .from(schema.payoutLines)
+      .innerJoin(schema.subOrders, eq(schema.subOrders.id, schema.payoutLines.subOrderId))
+      .where(eq(schema.payoutLines.payoutId, payoutId));
+
+    return {
+      ...toPayoutSummary(row),
+      lines: lines.map((l) => ({
+        subOrderReference: l.reference,
+        gross: Money.fromMinor(l.line.grossPiastres),
+        commission: Money.fromMinor(l.line.commissionPiastres),
+        commissionSource: l.line.commissionSource,
+        commissionBps: l.line.commissionBps,
+        shipping: Money.fromMinor(l.line.shippingPiastres),
+        net: Money.fromMinor(l.line.netPiastres),
+      })),
+    };
+  },
+});
+
+const toPayoutSummary = (row: typeof schema.payouts.$inferSelect) => ({
+  id: row.id,
+  reference: row.reference,
+  status: row.status,
+  periodStart: row.periodStart,
+  periodEnd: row.periodEnd,
+  gross: Money.fromMinor(row.grossPiastres),
+  commission: Money.fromMinor(row.commissionPiastres),
+  net: Money.fromMinor(row.netPiastres),
+  disputeDeadline: row.disputeDeadline,
+  paidAt: row.paidAt,
+});
+
 export const repositoriesFor = (db: Executor): Repositories => ({
   sellers: sellerRepository(db),
   customers: customerRepository(db),
   products: productRepository(db),
   orders: orderRepository(db),
   subOrders: subOrderRepository(db),
+  payouts: payoutRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */

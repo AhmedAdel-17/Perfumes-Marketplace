@@ -20,7 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   ORDER_SOURCES, SUB_ORDER_STATES, TRANSITIONS,
   REJECTION_REASONS, CANCELLATION_REASONS, REFUSAL_REASONS, RETURN_REASONS,
-  DEFAULT_RATES,
+  DEFAULT_RATES, FixedClock, Money, SettlementService,
 } from '@diyar/domain';
 
 let db: PGlite;
@@ -167,5 +167,62 @@ describe('money representation matches the Money value object', () => {
        WHERE table_schema='public' AND column_name LIKE '%_bps'`);
     expect(r.rows.length).toBeGreaterThan(5);
     for (const c of r.rows) expect(c.data_type, c.column_name).toBe('integer');
+  });
+});
+
+describe('the payout formula, held identically in both layers', () => {
+  it('the SQL CHECK and the domain agree that net = gross − commission', () => {
+    // These disagreed. The domain computed `gross − commission − shipping`
+    // while `payout_lines_net_reconciles` asserted `gross − commission`, and
+    // the disagreement was invisible until a real payout was written and the
+    // database refused the row. Every house would have been underpaid by the
+    // delivery fee — a fee the customer had already paid to the marketplace.
+    //
+    // Two layers holding the same rule is defence in depth only while a test
+    // proves they hold the SAME rule.
+    const sql = readFileSync(join(MIGRATIONS, '0001_constraints.sql'), 'utf8');
+    const constraint = sql
+      .replace(/\s+/g, ' ')
+      .match(/payout_lines_net_reconciles\s+CHECK \(([^)]*)\)/i);
+
+    expect(constraint, 'the CHECK must still exist').not.toBeNull();
+    const expression = constraint![1]!.replace(/\s+/g, ' ').trim();
+    expect(expression).toBe('net_piastres = gross_piastres - commission_piastres');
+    // Deliberately NOT a regex that would also pass for a formula mentioning
+    // shipping: the whole point is that this is exact.
+    expect(expression).not.toContain('shipping');
+  });
+
+  it('a statement built by the domain satisfies the SQL CHECK, line by line', () => {
+    const statement = new SettlementService(new FixedClock(new Date('2026-09-20T00:00:00Z'))).build({
+      sellerId: 'seller-1',
+      periodStart: new Date('2026-09-01T00:00:00Z'),
+      periodEnd: new Date('2026-09-30T00:00:00Z'),
+      subOrders: [
+        {
+          id: 'a', reference: 'DY-PARITY-A', state: 'delivered',
+          merchandise: Money.fromMinor(100_000), shipping: Money.fromMinor(5_500),
+          commissionSource: 'organic_search', commissionBps: 1500,
+          deliveredAt: new Date('2026-09-05T00:00:00Z'), cashInHand: true,
+        },
+        {
+          id: 'b', reference: 'DY-PARITY-B', state: 'returned',
+          merchandise: Money.fromMinor(38_000), shipping: Money.fromMinor(5_500),
+          commissionSource: 'storefront_referral', commissionBps: 500,
+          deliveredAt: new Date('2026-09-06T00:00:00Z'), cashInHand: true,
+        },
+      ],
+      adjustments: [],
+      reserveDays: 7,
+      disputeWindowDays: 7,
+    });
+
+    // Exactly what the database will evaluate on INSERT.
+    for (const line of statement.lines) {
+      expect(
+        line.net.minor,
+        `${line.reference} must satisfy net = gross - commission`,
+      ).toBe(line.gross.minor - line.commission.minor);
+    }
   });
 });

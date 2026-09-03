@@ -76,3 +76,39 @@ should be a decision on the record, not an accident. Note it here when made:
 | Decision | Status | Date |
 |---|---|---|
 | Proceeding to Phase 1 build before Phase 0 exit condition | ☐ Not recorded | — |
+
+---
+
+## Who receives the delivery fee when the house ships its own parcel?
+
+**Raised 3 September 2026, by a database CHECK constraint refusing a payout line.**
+
+**Settled for now:** `net = gross − commission`. The house is paid for merchandise minus the
+marketplace fee, and the delivery fee is neither paid to it nor charged to it.
+
+**What was wrong before:** the domain computed `gross − commission − shipping`, which deducted
+the delivery fee from the house's merchandise revenue. The customer had already paid that fee to
+the marketplace at checkout, so the house never received it — and was then charged for it anyway.
+Every house would have been underpaid by the delivery fee on every order. On a 380 EGP order with
+55 EGP delivery, that is 55 EGP per order, silently.
+
+**Why this is still open.** The current answer assumes the MARKETPLACE pays the courier. Today it
+does not: `manualCourier` means the HOUSE books the courier and pays for it out of its own pocket,
+then the marketplace keeps the delivery fee the customer paid. That is the house paying twice, in
+the other direction.
+
+Three positions are defensible and only the founder can choose:
+
+| | Formula | Who is out of pocket |
+|---|---|---|
+| **A** *(current)* | `gross − commission` | The house, while it books its own courier |
+| **B** | `gross − commission + shipping` | Nobody — the fee is passed through to whoever ships |
+| **C** | `gross − commission`, marketplace books the courier | Nobody — requires the Bosta integration |
+
+**B is correct for today's operating model** and is a one-line change plus a migration to the
+CHECK constraint. **C is the intended end state** — doc 03 §4 treats delivery as a
+"platform-funded delivery subsidy", which only makes sense if the platform is paying the courier.
+
+**Trigger:** decide before the first real payout run, because the first statement a house receives
+sets its expectation of what "net" means. Changing it afterwards reads as the marketplace altering
+the deal.

@@ -766,3 +766,118 @@ describe('the parcel reaches the customer tracking page', () => {
     expect(after?.houses[0]!.trackingNumber).toBe('EG44556677');
   });
 });
+
+describe('the money loop — order to payout, against a real Postgres', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+
+  /** Places, confirms and dispatches one order for Ward. Returns its sub-order. */
+  const shipOne = async () => {
+    const anon = caller(ANON);
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+
+    const placed = await anon.orders.place({
+      contactName: 'سلمى راضي',
+      contactPhone: '01099887766',
+      address: {
+        governorate: 'cairo', city: 'حلوان', area: 'عين حلوان',
+        street: 'شارع المنصور', building: '9',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const row = (await ward.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await ward.seller.confirm({ subOrderId: row.id });
+    await ward.seller.dispatch({ subOrderId: row.id, trackingNumber: `BST${Date.now()}` });
+    return { row, placed, ward };
+  };
+
+  it('refuses to let a HOUSE declare its own order delivered', async () => {
+    // The whole reason delivery is platform-only: a house that could mark its
+    // own order delivered would start its own reserve clock and trigger its own
+    // payout on its own say-so. The state machine excludes `seller` from this
+    // transition, and there is no seller procedure that performs it.
+    const { row, ward } = await shipOne();
+    expect('markDelivered' in ward.seller).toBe(false);
+
+    // And the platform path does work, so this is a refusal rather than a gap.
+    const delivered = await caller(PLATFORM_ACTOR).platform.markDelivered({ subOrderId: row.id });
+    expect(delivered).toEqual({ ok: true, state: 'delivered' });
+  });
+
+  it('holds the money until the courier has actually remitted', async () => {
+    // "Never pay faster than you are paid" (doc 03 §10). Delivery and cash are
+    // separate events days apart; collapsing them pays houses for money the
+    // marketplace does not yet hold.
+    const { row } = await shipOne();
+    const platform = caller(PLATFORM_ACTOR);
+    await platform.platform.markDelivered({ subOrderId: row.id });
+
+    const beforeRemittance = await platform.platform.runPayout({
+      sellerId: ids['dar-al-ward']!,
+      periodStart: new Date('2026-09-01T00:00:00Z').toISOString(),
+      periodEnd: new Date('2026-09-30T00:00:00Z').toISOString(),
+    });
+
+    // Delivered but unremitted: gross is held, so nothing is owed yet.
+    expect(beforeRemittance.heldGrossPiastres).toBeGreaterThan(0);
+  });
+
+  it('produces a statement whose lines reconcile to its own total', async () => {
+    const { row } = await shipOne();
+    const platform = caller(PLATFORM_ACTOR);
+    await platform.platform.markDelivered({ subOrderId: row.id });
+    await platform.platform.recordRemittance({
+      subOrderId: row.id,
+      collectedPiastres: 43_500,
+    });
+
+    const run = await platform.platform.runPayout({
+      sellerId: ids['dar-al-ward']!,
+      periodStart: new Date('2026-09-01T00:00:00Z').toISOString(),
+      periodEnd: new Date('2026-09-30T00:00:00Z').toISOString(),
+    });
+
+    // The house reads it back itself, which is the only view that matters.
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    const statement = await ward.seller.statement({ payoutId: run.payoutId });
+
+    expect(statement).not.toBeNull();
+    // Every line adds up to the header. A payout whose lines disagree with its
+    // own total destroys the trust the commission model rests on, quietly.
+    const lineNet = statement!.lines.reduce((sum, l) => sum + l.netPiastres, 0);
+    const lineGross = statement!.lines.reduce((sum, l) => sum + l.grossPiastres, 0);
+    const lineCommission = statement!.lines.reduce((sum, l) => sum + l.commissionPiastres, 0);
+    expect(lineNet).toBe(statement!.netPiastres);
+    expect(lineGross).toBe(statement!.grossPiastres);
+    expect(lineCommission).toBe(statement!.commissionPiastres);
+
+    // And commission was actually charged, at the snapshotted rate.
+    expect(statement!.commissionPiastres).toBeGreaterThan(0);
+    expect(statement!.lines[0]!.commissionBps).toBeGreaterThan(0);
+    expect(statement!.disputeDeadline).not.toBeNull();
+  });
+
+  it('shows a house only its OWN payouts', async () => {
+    const platform = caller(PLATFORM_ACTOR);
+    await platform.platform.runPayout({
+      sellerId: ids['dar-al-ward']!,
+      periodStart: new Date('2026-09-01T00:00:00Z').toISOString(),
+      periodEnd: new Date('2026-09-30T00:00:00Z').toISOString(),
+    });
+
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+    const wardPayouts = await caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward'])
+      .seller.payouts();
+
+    expect(wardPayouts.length).toBeGreaterThan(0);
+    // Nour sees none of Ward's, and asking for one by id reads as not-found
+    // rather than as someone else's money.
+    const nourPayouts = await nour.seller.payouts();
+    expect(nourPayouts.some((p) => wardPayouts.some((w) => w.id === p.id))).toBe(false);
+
+    const stolen = await nour.seller.statement({ payoutId: wardPayouts[0]!.id });
+    expect(stolen).toBeNull();
+  });
+});

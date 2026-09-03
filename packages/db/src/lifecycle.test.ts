@@ -329,7 +329,11 @@ describe('settlement — the statement reconciles against what the database hold
     expect(st.gross.toMajorString()).toBe('380.00');
     expect(st.commission.toMajorString()).toBe('19.00');     // 5%, the storefront rate
     expect(st.shipping.toMajorString()).toBe('50.00');
-    expect(st.net.toMajorString()).toBe('311.00');
+    // 380 − 19 fee = 361. Shipping (50) is REPORTED but never deducted: the
+    // customer paid it to the marketplace, so charging the house for it as well
+    // would take a fee out of the house that the house never received. The
+    // database's payout_lines_net_reconciles CHECK has always said so.
+    expect(st.net.toMajorString()).toBe('361.00');
     expect(SettlementService.reconciles(st)).toBe(true);
 
     // The fee the domain just computed equals the fee stored at purchase time.
