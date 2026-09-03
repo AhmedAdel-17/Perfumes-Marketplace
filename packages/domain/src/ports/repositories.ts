@@ -150,6 +150,52 @@ export interface OrderRepository {
    */
   save(draft: DraftOrder, sellerIdBySlug: ReadonlyMap<string, string>): Promise<PersistedOrder>;
   findByReference(reference: string): Promise<PersistedOrder | null>;
+
+  /**
+   * Order tracking, for a customer with no account.
+   *
+   * The phone is a PREDICATE, not a check performed afterwards. That is the
+   * whole design of this method and the reason it exists separately from
+   * `findByReference`: the first version of the tracking endpoint accepted a
+   * phone, described itself as two-factor, and never compared it — so any
+   * leaked reference disclosed the order, the name and the address. A
+   * comparison is a step that can be forgotten; a WHERE clause cannot be.
+   *
+   * Returns null for a wrong phone exactly as it does for an unknown
+   * reference, so the endpoint cannot be used to test whether a reference
+   * exists.
+   */
+  findForCustomerLookup(input: {
+    readonly reference: string;
+    readonly phone: string;
+  }): Promise<OrderLookup | null>;
+}
+
+export interface OrderLookupItem {
+  readonly name: string;
+  readonly brandName: string;
+  readonly quantity: number;
+  readonly unitPrice: Money;
+}
+
+export interface OrderLookupHouse {
+  readonly subOrderId: string;
+  readonly reference: string;
+  readonly sellerId: string;
+  readonly brandName: string;
+  readonly state: string;
+  readonly merchandise: Money;
+  readonly shipping: Money;
+  readonly items: readonly OrderLookupItem[];
+}
+
+export interface OrderLookup {
+  readonly reference: string;
+  readonly contactName: string;
+  readonly placedAt: Date;
+  readonly paymentMethod: string;
+  readonly total: Money;
+  readonly houses: readonly OrderLookupHouse[];
 }
 
 export interface SubOrderRepository {

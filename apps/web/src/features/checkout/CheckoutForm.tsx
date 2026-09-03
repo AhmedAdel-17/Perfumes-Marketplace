@@ -283,12 +283,20 @@ function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true
         </div>
       </dl>
 
-      <Link
-        href="/"
-        className="tappable mt-8 inline-block border-b border-brass/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-brass hover:text-brass"
-      >
-        متابعة التصفّح
-      </Link>
+      <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
+        <Link
+          href="/order"
+          className="tappable border-b border-brass/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+        >
+          تتبّع الطلب
+        </Link>
+        <Link
+          href="/"
+          className="tappable border-b border-hair pb-2 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+        >
+          متابعة التصفّح
+        </Link>
+      </div>
     </div>
   );
 }

@@ -319,11 +319,76 @@ describe('orders.byReference — two factors, neither a password', () => {
     expect(found?.reference).toBe(placed.reference);
   });
 
+  it('discloses NOTHING to a correct reference with the wrong phone', async () => {
+    // The claim this endpoint makes about itself. The first version accepted a
+    // phone, described itself as two-factor, and never compared it — so a
+    // reference shared in a WhatsApp screenshot handed over the customer's
+    // name, address and basket.
+    const placed = await caller(ANON).orders.place({
+      contactName: 'منى صلاح',
+      contactPhone: '01555554444',
+      address: {
+        governorate: 'alexandria', city: 'سموحة', area: 'فيكتور عمانويل',
+        street: 'شارع فوزي معاذ', building: '22',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const withWrongPhone = await caller(ANON).orders.byReference({
+      reference: placed.reference, phone: '01000000001',
+    });
+    expect(withWrongPhone).toBeNull();
+
+    // And the same reference with the right phone still works, so the test is
+    // proving the phone check rather than a broken lookup.
+    const withRightPhone = await caller(ANON).orders.byReference({
+      reference: placed.reference, phone: '01555554444',
+    });
+    expect(withRightPhone?.reference).toBe(placed.reference);
+    expect(withRightPhone?.contactName).toBe('منى صلاح');
+  });
+
+  it('returns the same null for a wrong phone and an unknown reference', async () => {
+    // Identical answers, so the endpoint cannot be used to enumerate which
+    // references exist.
+    const unknown = await caller(ANON).orders.byReference({
+      reference: 'DY-CDFHJKMN', phone: '01234445555',
+    });
+    expect(unknown).toBeNull();
+  });
+
   it('returns nothing for a reference that cannot exist', async () => {
     const found = await caller(ANON).orders.byReference({
       reference: 'DY-OOOOOOOO', phone: '01234445555',
     });
     expect(found).toBeNull();
+  });
+
+  it('carries each house and its state, for the tracking page', async () => {
+    const placed = await caller(ANON).orders.place({
+      contactName: 'ياسمين فؤاد',
+      contactPhone: '01277778888',
+      address: {
+        governorate: 'cairo', city: 'المعادي', area: 'دجلة',
+        street: 'شارع 9', building: '3',
+      },
+      lines: [
+        { productId: ids['dar-al-ward:product']!, quantity: 1 },
+        { productId: ids['maison-nour:product']!, quantity: 1 },
+      ],
+      paymentMethod: 'cod',
+    });
+
+    const found = await caller(ANON).orders.byReference({
+      reference: placed.reference, phone: '01277778888',
+    });
+
+    expect(found?.houses).toHaveLength(2);
+    // Every house starts at `placed` and moves only through the state machine.
+    expect(found?.houses.every((h) => h.state === 'placed')).toBe(true);
+    expect(found?.houses.every((h) => h.items.length > 0)).toBe(true);
+    expect(found?.paymentMethod).toBe('cod');
   });
 });
 

@@ -268,6 +268,38 @@ export const repositoryContract: readonly ContractCase[] = [
   },
 
   {
+    name: 'findForCustomerLookup() refuses a mismatched phone',
+    async run(setup) {
+      const w = await setup();
+      const draft = w.makeDraft('DY-C0100');
+      await w.uow.transaction((r) => r.orders.save(draft, w.sellerIdBySlug));
+
+      const right = await w.uow.transaction((r) =>
+        r.orders.findForCustomerLookup({ reference: 'DY-C0100', phone: draft.contactPhone }));
+      assert(right !== null, 'the correct phone must find the order');
+      equal(right!.reference, 'DY-C0100', 'reference');
+      assert(right!.houses.length > 0, 'houses are returned');
+
+      // The security claim. This is what the shipped version did not do.
+      const wrong = await w.uow.transaction((r) =>
+        r.orders.findForCustomerLookup({ reference: 'DY-C0100', phone: '01099999999' }));
+      equal(wrong, null, 'a wrong phone must disclose nothing');
+    },
+  },
+
+  {
+    name: 'findForCustomerLookup() returns null for an unknown reference, never throws',
+    async run(setup) {
+      const w = await setup();
+      // Identical answer to the wrong-phone case, so the endpoint cannot be
+      // used to discover which references exist.
+      const missing = await w.uow.transaction((r) =>
+        r.orders.findForCustomerLookup({ reference: 'DY-NOSUCH0', phone: '01000000000' }));
+      equal(missing, null, 'unknown reference');
+    },
+  },
+
+  {
     name: 'snapshotForCart() returns one row per known id and omits the rest',
     async run(setup) {
       const w = await setup();

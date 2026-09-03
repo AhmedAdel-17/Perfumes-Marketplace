@@ -257,6 +257,58 @@ const orderRepository = (db: Executor): OrderRepository => ({
       subOrderIds: subs.map((s) => s.id),
     };
   },
+
+  async findForCustomerLookup({ reference, phone }) {
+    // Both factors in the WHERE clause. Matching the phone afterwards in
+    // TypeScript is the version of this that shipped and disclosed every order
+    // to anyone holding a reference.
+    const [order] = await db
+      .select()
+      .from(schema.orders)
+      .where(and(
+        eq(schema.orders.reference, reference),
+        eq(schema.orders.contactPhone, phone),
+      ))
+      .limit(1);
+
+    if (!order) return null;
+
+    const subs = await db
+      .select({ sub: schema.subOrders, brandName: schema.sellers.tradingName })
+      .from(schema.subOrders)
+      .innerJoin(schema.sellers, eq(schema.sellers.id, schema.subOrders.sellerId))
+      .where(eq(schema.subOrders.orderId, order.id));
+
+    const items = await db
+      .select()
+      .from(schema.orderLineItems)
+      .where(inArray(schema.orderLineItems.subOrderId, subs.map((s) => s.sub.id)));
+
+    return {
+      reference: order.reference,
+      contactName: order.contactName,
+      placedAt: order.placedAt,
+      paymentMethod: order.paymentMethod,
+      total: Money.fromMinor(order.totalPiastres),
+      houses: subs.map((s) => ({
+        subOrderId: s.sub.id,
+        reference: s.sub.reference,
+        sellerId: s.sub.sellerId,
+        brandName: s.brandName,
+        state: s.sub.state,
+        merchandise: Money.fromMinor(s.sub.merchandisePiastres),
+        shipping: Money.fromMinor(s.sub.shippingPiastres),
+        items: items
+          .filter((i) => i.subOrderId === s.sub.id)
+          .map((i) => ({
+            name: i.productName,
+            brandName: i.brandName,
+            quantity: i.quantity,
+            unitPrice: Money.fromMinor(i.unitPricePiastres),
+          })),
+      })),
+    };
+  },
 });
 
 const subOrderRepository = (db: Executor): SubOrderRepository => ({

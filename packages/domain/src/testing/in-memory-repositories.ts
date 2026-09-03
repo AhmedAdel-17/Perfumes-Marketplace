@@ -22,15 +22,27 @@ import type {
 interface OrderRow {
   id: string;
   customerId: string;
+  contactPhone: string;
+  contactName: string;
+  placedAt: Date;
+  paymentMethod: string;
   reference: string;
   source: PersistedOrder['source'];
   totalMinor: number;
   subOrderIds: string[];
 }
 
+interface SubOrderLineRow {
+  name: string;
+  brandName: string;
+  quantity: number;
+  unitPriceMinor: number;
+}
+
 interface SubOrderRow {
   id: string;
   reference: string;
+  lines: SubOrderLineRow[];
   orderId: string;
   sellerId: string;
   state: SubOrderState;
@@ -212,6 +224,12 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           s.subOrders.set(subId, {
             id: subId,
             reference: sub.reference,
+            lines: sub.lineItems.map((li) => ({
+              name: li.productName,
+              brandName: li.brandName,
+              quantity: li.quantity,
+              unitPriceMinor: li.unitPrice.minor,
+            })),
             orderId,
             sellerId,
             state: 'placed',
@@ -226,6 +244,10 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         s.orders.set(orderId, {
           id: orderId,
           customerId: draft.customerId,
+          contactPhone: draft.contactPhone,
+          contactName: draft.contactName,
+          placedAt: draft.placedAt,
+          paymentMethod: draft.paymentMethod,
           reference: draft.reference,
           source: draft.source,
           totalMinor: draft.total.minor,
@@ -238,6 +260,43 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           source: draft.source,
           total: draft.total,
           subOrderIds,
+        };
+      },
+
+      async findForCustomerLookup({ reference, phone }) {
+        const s = store();
+        // Both factors, together. Never a match followed by a comparison —
+        // see the port for why that distinction is the whole point.
+        const row = [...s.orders.values()].find(
+          (o) => o.reference === reference && o.contactPhone === phone,
+        );
+        if (!row) return null;
+
+        return {
+          reference: row.reference,
+          contactName: row.contactName,
+          placedAt: row.placedAt,
+          paymentMethod: row.paymentMethod,
+          total: Money.fromMinor(row.totalMinor),
+          houses: row.subOrderIds.map((id) => {
+            const sub = s.subOrders.get(id)!;
+            const seller = s.sellers.get(sub.sellerId);
+            return {
+              subOrderId: sub.id,
+              reference: sub.reference,
+              sellerId: sub.sellerId,
+              brandName: seller?.tradingName ?? '',
+              state: sub.state,
+              merchandise: Money.fromMinor(sub.merchandiseMinor),
+              shipping: Money.fromMinor(sub.shippingMinor),
+              items: sub.lines.map((l) => ({
+                name: l.name,
+                brandName: l.brandName,
+                quantity: l.quantity,
+                unitPrice: Money.fromMinor(l.unitPriceMinor),
+              })),
+            };
+          }),
         };
       },
 

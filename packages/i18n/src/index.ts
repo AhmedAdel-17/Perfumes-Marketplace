@@ -7,6 +7,7 @@
 export * from './numerals';
 export * from './plural';
 export * from './governorates';
+export * from './states';
 export { ar, type Dictionary } from './ar';
 
 import { ar, type Dictionary } from './ar';

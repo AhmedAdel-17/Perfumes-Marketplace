@@ -190,10 +190,17 @@ export const ordersRouter = router({
   /**
    * Look up an order by reference AND phone.
    *
-   * Two factors, neither of them a password. The reference alone is guessable
-   * enough to matter at scale and gets shared in WhatsApp screenshots; the
-   * phone alone belongs to a person, not an order. Requiring both means a
-   * leaked reference discloses nothing.
+   * Two factors, neither of them a password. The reference alone gets shared in
+   * WhatsApp screenshots; the phone alone belongs to a person, not an order.
+   *
+   * The first version of this took a phone, said all of the above, and never
+   * compared it — so any leaked reference disclosed the customer's name, their
+   * address and everything they bought. The fix is not "remember to compare":
+   * the phone is now a predicate inside `findForCustomerLookup`, because a
+   * WHERE clause cannot be forgotten and a comparison can.
+   *
+   * A wrong phone returns null exactly as an unknown reference does, so this
+   * endpoint cannot be used to discover which references exist.
    */
   byReference: publicProcedure
     .input(z.object({ reference: z.string().min(3).max(40), phone: phoneSchema }))
@@ -201,13 +208,29 @@ export const ordersRouter = router({
       const reference = normaliseOrderReference(input.reference);
       if (!reference) return null;
 
-      const order = await ctx.checkoutUow.transaction((r) => r.orders.findByReference(reference));
+      const order = await ctx.checkoutUow.transaction((r) =>
+        r.orders.findForCustomerLookup({ reference, phone: input.phone }));
       if (!order) return null;
 
       return {
         reference: order.reference,
+        contactName: order.contactName,
+        placedAt: order.placedAt.toISOString(),
+        paymentMethod: order.paymentMethod,
         totalPiastres: order.total.minor,
-        subOrderCount: order.subOrderIds.length,
+        houses: order.houses.map((h) => ({
+          reference: h.reference,
+          brandName: h.brandName,
+          state: h.state,
+          merchandisePiastres: h.merchandise.minor,
+          shippingPiastres: h.shipping.minor,
+          items: h.items.map((i) => ({
+            name: i.name,
+            brandName: i.brandName,
+            quantity: i.quantity,
+            unitPricePiastres: i.unitPrice.minor,
+          })),
+        })),
       };
     }),
 });
