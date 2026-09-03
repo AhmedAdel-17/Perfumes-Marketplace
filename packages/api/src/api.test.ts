@@ -49,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;

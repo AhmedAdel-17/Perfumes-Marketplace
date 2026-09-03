@@ -370,6 +370,36 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     return row ?? null;
   },
 
+  async listOpsQueue() {
+    // Dispatched or delivered only. Anything earlier belongs to the house, and
+    // anything closed needs nobody.
+    const rows = await db
+      .select({
+        sub: schema.subOrders,
+        brandName: schema.sellers.tradingName,
+        trackingNumber: schema.shipments.trackingNumber,
+        remittedAt: schema.shipments.codRemittedAt,
+      })
+      .from(schema.subOrders)
+      .innerJoin(schema.sellers, eq(schema.sellers.id, schema.subOrders.sellerId))
+      .leftJoin(schema.shipments, eq(schema.shipments.subOrderId, schema.subOrders.id))
+      .where(inArray(schema.subOrders.state, ['dispatched', 'delivered']));
+
+    return rows.map((r) => ({
+      id: r.sub.id,
+      reference: r.sub.reference,
+      state: r.sub.state,
+      sellerId: r.sub.sellerId,
+      brandName: r.brandName,
+      recipientName: r.sub.recipientName,
+      total: Money.fromMinor(r.sub.merchandisePiastres + r.sub.shippingPiastres),
+      dispatchedAt: r.sub.dispatchedAt,
+      deliveredAt: r.sub.deliveredAt,
+      trackingNumber: r.trackingNumber,
+      remitted: r.remittedAt !== null,
+    }));
+  },
+
   async listQueueForSeller(sellerId) {
     const rows = await db
       .select()

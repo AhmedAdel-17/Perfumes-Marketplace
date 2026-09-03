@@ -137,7 +137,7 @@ async function main() {
 
   const pg = new PGlite(DATA_DIR);
 
-  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql']) {
+  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql']) {
     const sql = readFileSync(join(MIGRATIONS, file), 'utf8').replace(/--> statement-breakpoint/g, '');
     try {
       await pg.exec(sql);
@@ -228,11 +228,22 @@ async function main() {
     }
   }
 
+  // One operator, so the ops console can be opened on a first run. Without a
+  // platform_staff row it is a locked door with no key — the platform role was
+  // enforced everywhere and granted nowhere.
+  await pg.query(
+    `INSERT INTO platform_staff (auth_user_id, full_name, phone, role)
+     VALUES ($1, 'مشغّل المنصّة', '01000000001', 'admin')
+     ON CONFLICT (auth_user_id) DO NOTHING`,
+    [PLATFORM],
+  );
+
   const count = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products WHERE status='published'`);
   console.log(`\n✓ seeded ${count.rows[0]!.n} published products across ${houses.length} houses`);
   console.log(String.fromCharCode(10) + '  Seller portal — /seller. Sign in with any of these numbers;');
   console.log('  the one-time code is printed to the dev server console.');
   for (const house of houses) console.log(`    ${house.phone}  ${house.name}`);
+  console.log(String.fromCharCode(10) + '  Operations console — /ops. Sign in with 01000000001.');
   await pg.close();
 }
 

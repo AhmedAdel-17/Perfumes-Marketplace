@@ -25,6 +25,34 @@ import { platformProcedure, router } from '../trpc';
  * house.
  */
 export const platformRouter = router({
+  /**
+   * What is waiting on an operator.
+   *
+   * Two things stall an order once it has left a house, and both block the
+   * house getting paid: a parcel nobody has confirmed arrived, and cash nobody
+   * has recorded arriving. Everything else belongs to the house or to nobody,
+   * so it is not here — a console listing every order is a console nobody
+   * reads, and the point of this screen is that its emptiness is meaningful.
+   */
+  workQueue: platformProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.uow.transaction((r) => r.subOrders.listOpsQueue());
+    return rows.map((s) => ({
+      id: s.id,
+      reference: s.reference,
+      state: s.state,
+      sellerId: s.sellerId,
+      brandName: s.brandName,
+      recipientName: s.recipientName,
+      totalPiastres: s.total.minor,
+      dispatchedAt: s.dispatchedAt?.toISOString() ?? null,
+      deliveredAt: s.deliveredAt?.toISOString() ?? null,
+      trackingNumber: s.trackingNumber,
+      remitted: s.remitted,
+      // The one thing an operator needs told, rather than worked out.
+      needs: s.state === 'dispatched' ? ('delivery' as const) : ('remittance' as const),
+    }));
+  }),
+
   markDelivered: platformProcedure
     .input(z.object({ subOrderId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

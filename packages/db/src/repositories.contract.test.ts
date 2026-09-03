@@ -41,7 +41,7 @@ const harness = async (): Promise<ContractWorld> => {
   // 0002 included deliberately: the adapter now drops to the unprivileged role
   // on every transaction, so the contract runs through RLS exactly as production
   // does rather than against an unguarded database.
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;

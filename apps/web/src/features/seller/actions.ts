@@ -171,6 +171,18 @@ export async function fetchQueue() {
   return context.caller.seller.queue();
 }
 
+export async function fetchPayouts() {
+  const context = await sellerCaller();
+  if (!context) return null;
+  return context.caller.seller.payouts();
+}
+
+export async function fetchStatement(payoutId: string) {
+  const context = await sellerCaller();
+  if (!context) return null;
+  return context.caller.seller.statement({ payoutId });
+}
+
 export async function confirmSubOrder(subOrderId: string) {
   const context = await sellerCaller();
   if (!context) return { ok: false as const, message: 'انتهت الجلسة. سجّل الدخول مرّة أخرى.' };

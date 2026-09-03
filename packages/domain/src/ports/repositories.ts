@@ -235,6 +235,21 @@ export interface QueueEntry {
   readonly items: readonly QueueItem[];
 }
 
+export interface OpsQueueEntry {
+  readonly id: string;
+  readonly reference: string;
+  readonly state: string;
+  readonly sellerId: string;
+  readonly brandName: string;
+  readonly recipientName: string;
+  readonly total: Money;
+  readonly dispatchedAt: Date | null;
+  readonly deliveredAt: Date | null;
+  readonly trackingNumber: string | null;
+  /** COD collected and handed over. The gate settlement waits on. */
+  readonly remitted: boolean;
+}
+
 export interface SubOrderRepository {
   findById(id: string): Promise<SubOrderRecord | null>;
   listBySeller(sellerId: string): Promise<readonly SubOrderRecord[]>;
@@ -247,6 +262,16 @@ export interface SubOrderRepository {
    * rather than commission figures.
    */
   listQueueForSeller(sellerId: string): Promise<readonly QueueEntry[]>;
+
+  /**
+   * What needs a human at the marketplace, across every house.
+   *
+   * Deliberately narrow: only sub-orders WAITING on an operator. A dashboard
+   * listing everything is a dashboard nobody reads, and the two things that
+   * actually stall are a parcel nobody has confirmed arrived and cash nobody
+   * has recorded arriving. Both block a house getting paid.
+   */
+  listOpsQueue(): Promise<readonly OpsQueueEntry[]>;
 
   /**
    * Record that a parcel has been handed to a courier.

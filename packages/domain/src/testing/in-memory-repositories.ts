@@ -401,6 +401,25 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         return store().subOrders.get(subOrderId)?.shipment ?? null;
       },
 
+      async listOpsQueue() {
+        const s = store();
+        return [...s.subOrders.values()]
+          .filter((so) => so.state === 'dispatched' || so.state === 'delivered')
+          .map((so) => ({
+            id: so.id,
+            reference: so.reference,
+            state: so.state,
+            sellerId: so.sellerId,
+            brandName: s.sellers.get(so.sellerId)?.tradingName ?? '',
+            recipientName: so.delivery.recipientName,
+            total: Money.fromMinor(so.merchandiseMinor + so.shippingMinor),
+            dispatchedAt: so.shipment?.dispatchedAt ?? null,
+            deliveredAt: so.deliveredAt ?? null,
+            trackingNumber: so.shipment?.trackingNumber ?? null,
+            remitted: so.codRemitted,
+          }));
+      },
+
       async listQueueForSeller(sellerId) {
         const s = store();
         return [...s.subOrders.values()]

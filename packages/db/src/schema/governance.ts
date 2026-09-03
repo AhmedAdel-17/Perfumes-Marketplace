@@ -120,3 +120,24 @@ export const supportTickets = pgTable('support_tickets', {
   uniqueIndex('support_tickets_reference_key').on(t.reference),
   index('support_tickets_status_idx').on(t.status, t.priority),
 ]);
+
+/**
+ * Marketplace operators.
+ *
+ * Separate from `seller_staff` deliberately: these are different people with
+ * different authority, and one table with a nullable seller_id would let a
+ * mistake in one query grant a house platform rights. Two tables cannot be
+ * confused by accident.
+ */
+export const platformStaff = pgTable('platform_staff', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  authUserId: uuid('auth_user_id').notNull(),
+  fullName: text('full_name').notNull(),
+  phone: text('phone').notNull(),
+  role: text('role').default('operator').notNull(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('platform_staff_auth_user_key').on(t.authUserId),
+  index('platform_staff_active_phone_idx').on(t.phone),
+]);
