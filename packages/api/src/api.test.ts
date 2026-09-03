@@ -49,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
@@ -546,6 +546,92 @@ describe('authorisation — defence in depth, through the whole stack', () => {
     expect(confirmed).toEqual({ ok: true, state: 'confirmed' });
   });
 
+  it('carries an order all the way to dispatched, with a real parcel behind it', async () => {
+    const anon = caller({ role: 'anon', id: null });
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+
+    const placed = await anon.orders.place({
+      contactName: 'رانيا فتحي',
+      contactPhone: '01566667777',
+      address: {
+        governorate: 'alexandria', city: 'سيدي جابر', area: 'كليوباترا',
+        street: 'شارع أبو قير', building: '30',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const row = (await ward.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await ward.seller.confirm({ subOrderId: row.id });
+
+    const dispatched = await ward.seller.dispatch({
+      subOrderId: row.id,
+      // As a human types it off a label: lowercase, with a hyphen.
+      trackingNumber: 'bst-9988 7766',
+    });
+    expect(dispatched.ok).toBe(true);
+    expect(dispatched.trackingNumber).toBe('BST99887766');
+
+    const after = (await ward.seller.queue()).find((r) => r.id === row.id);
+    expect(after?.state).toBe('dispatched');
+    expect(after?.trackingNumber).toBe('BST99887766');
+  });
+
+  it('refuses to dispatch from a state the machine forbids', async () => {
+    // A parcel cannot leave before the house has confirmed it. If the guard ran
+    // after the write, an illegal dispatch would still leave a shipment behind.
+    const anon = caller({ role: 'anon', id: null });
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+
+    const placed = await anon.orders.place({
+      contactName: 'رانيا فتحي',
+      contactPhone: '01566667777',
+      address: {
+        governorate: 'alexandria', city: 'سيدي جابر', area: 'كليوباترا',
+        street: 'شارع أبو قير', building: '30',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const row = (await ward.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    // Still awaiting_seller — never confirmed.
+    await expect(ward.seller.dispatch({
+      subOrderId: row.id, trackingNumber: 'BST11112222',
+    })).rejects.toThrow(/لا يمكن تنفيذ هذا التغيير/);
+
+    const after = (await ward.seller.queue()).find((r) => r.id === row.id);
+    expect(after?.state).toBe('awaiting_seller');
+    expect(after?.trackingNumber).toBeNull();
+  });
+
+  it('refuses an unusable tracking number rather than storing rubbish', async () => {
+    const anon = caller({ role: 'anon', id: null });
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+
+    const placed = await anon.orders.place({
+      contactName: 'رانيا فتحي',
+      contactPhone: '01566667777',
+      address: {
+        governorate: 'alexandria', city: 'سيدي جابر', area: 'كليوباترا',
+        street: 'شارع أبو قير', building: '30',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const row = (await ward.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await ward.seller.confirm({ subOrderId: row.id });
+
+    await expect(ward.seller.dispatch({
+      subOrderId: row.id, trackingNumber: 'BST/1234',
+    })).rejects.toThrow();
+
+    // And the order did not move, so a rejected dispatch leaves no trace.
+    const after = (await ward.seller.queue()).find((r) => r.id === row.id);
+    expect(after?.state).toBe('confirmed');
+  });
+
   it('gives a house the address it needs to ship — and nothing else', async () => {
     // Migration 0002 said a house "receives the delivery details it needs on
     // the sub-order" while the schema had no such columns, so a house could
@@ -639,5 +725,44 @@ describe('the queue actually works for its owner', () => {
       subOrderId: ids['maison-nour:sub']!, reason: 'out_of_stock',
     });
     expect(r).toEqual({ ok: true, state: 'rejected' });
+  });
+});
+
+describe('the parcel reaches the customer tracking page', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+
+  it('shows the tracking number once the house has dispatched', async () => {
+    // Order tracking runs as the `checkout` role, which could read the order
+    // and the sub-orders but not the shipment — so a dispatched order said
+    // "in transit" and gave no way to find the parcel, which is the one thing
+    // the customer wants at that moment. Migration 0006.
+    const anon = caller(ANON);
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+
+    const placed = await anon.orders.place({
+      contactName: 'ليلى حسن',
+      contactPhone: '01188889999',
+      address: {
+        governorate: 'cairo', city: 'الزمالك', area: 'الجزيرة',
+        street: 'شارع 26 يوليو', building: '11',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const before = await anon.orders.byReference({
+      reference: placed.reference, phone: '01188889999',
+    });
+    expect(before?.houses[0]!.trackingNumber).toBeNull();
+
+    const row = (await nour.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await nour.seller.confirm({ subOrderId: row.id });
+    await nour.seller.dispatch({ subOrderId: row.id, trackingNumber: 'EG-4455 6677' });
+
+    const after = await anon.orders.byReference({
+      reference: placed.reference, phone: '01188889999',
+    });
+    expect(after?.houses[0]!.state).toBe('dispatched');
+    expect(after?.houses[0]!.trackingNumber).toBe('EG44556677');
   });
 });

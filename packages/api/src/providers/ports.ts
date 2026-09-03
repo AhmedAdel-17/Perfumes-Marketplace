@@ -62,6 +62,12 @@ export interface PaymentGateway extends ExternalProvider {
 export interface Providers {
   readonly otp: OtpSender;
   readonly payments: PaymentGateway;
+  /**
+   * Typed loosely on purpose: `assertProductionSafe` only ever reads `isStub`,
+   * and importing the courier's full shape here would make ports.ts depend on
+   * courier.ts while courier.ts depends on ports.ts.
+   */
+  readonly courier?: ExternalProvider;
 }
 
 export class StubInProductionError extends Error {

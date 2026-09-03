@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, data as num } from '@diyar/i18n';
-import { confirmSubOrder, declineSubOrder, fetchQueue } from './actions';
+import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
 type Entry = Queue[number];
@@ -39,8 +39,12 @@ export function OrderQueue() {
     return <p className="px-5 py-8 text-small text-faint lg:px-0">…جارٍ التحميل</p>;
   }
 
-  const open = queue.filter((e) => e.state === 'placed' || e.state === 'awaiting_seller');
-  const rest = queue.filter((e) => !open.includes(e));
+  // Three groups, in the order a house works through them: decide, then pack
+  // and ship, then everything that has left. A single list sorted by date makes
+  // the house re-read every row to find the two it can act on.
+  const toDecide = queue.filter((e) => e.state === 'placed' || e.state === 'awaiting_seller');
+  const toShip = queue.filter((e) => e.state === 'confirmed');
+  const rest = queue.filter((e) => !toDecide.includes(e) && !toShip.includes(e));
 
   return (
     <div className="px-5 lg:px-0">
@@ -50,9 +54,10 @@ export function OrderQueue() {
         </p>
       )}
 
-      <Section title="بانتظار الرد" entries={open} busyId={busyId} act={act} actionable />
+      <Section title="بانتظار الرد" entries={toDecide} busyId={busyId} act={act} stage="decide" />
+      <Section title="جاهزة للشحن" entries={toShip} busyId={busyId} act={act} stage="ship" />
       {rest.length > 0 && (
-        <Section title="بقية الطلبات" entries={rest} busyId={busyId} act={act} actionable={false} />
+        <Section title="بقية الطلبات" entries={rest} busyId={busyId} act={act} stage="done" />
       )}
 
       {queue.length === 0 && (
@@ -64,14 +69,16 @@ export function OrderQueue() {
   );
 }
 
+type Stage = 'decide' | 'ship' | 'done';
+
 function Section({
-  title, entries, busyId, act, actionable,
+  title, entries, busyId, act, stage,
 }: {
   title: string;
   entries: readonly Entry[];
   busyId: string | null;
   act(id: string, run: () => Promise<{ ok: boolean; message?: string }>): Promise<void>;
-  actionable: boolean;
+  stage: Stage;
 }) {
   if (entries.length === 0) return null;
   return (
@@ -81,21 +88,22 @@ function Section({
         <span className="tnum text-faint">{num(entries.length)}</span>
       </h2>
       {entries.map((entry) => (
-        <Row key={entry.id} entry={entry} busy={busyId === entry.id} act={act} actionable={actionable} />
+        <Row key={entry.id} entry={entry} busy={busyId === entry.id} act={act} stage={stage} />
       ))}
     </section>
   );
 }
 
 function Row({
-  entry, busy, act, actionable,
+  entry, busy, act, stage,
 }: {
   entry: Entry;
   busy: boolean;
   act(id: string, run: () => Promise<{ ok: boolean; message?: string }>): Promise<void>;
-  actionable: boolean;
+  stage: Stage;
 }) {
   const [declining, setDeclining] = useState(false);
+  const [tracking, setTracking] = useState('');
   const copy = stateCopy(entry.state);
   const r = entry.recipient;
 
@@ -140,7 +148,44 @@ function Row({
         </span>
       </div>
 
-      {actionable && !declining && (
+      {entry.trackingNumber && (
+        <div className="mt-3 flex justify-between border-t border-hair pt-3 text-caption">
+          <span className="text-faint">رقم الشحنة</span>
+          <span className="latin tnum select-all text-bone">{entry.trackingNumber}</span>
+        </div>
+      )}
+
+      {stage === 'ship' && (
+        <div className="mt-4 border-t border-hair pt-4">
+          <label className="mb-2 block text-caption tracking-label text-dim" htmlFor={`t-${entry.id}`}>
+            رقم الشحنة من شركة الشحن
+          </label>
+          <div className="flex gap-3">
+            <input
+              id={`t-${entry.id}`}
+              value={tracking}
+              onChange={(event) => setTracking(event.target.value)}
+              inputMode="text"
+              autoComplete="off"
+              className="latin h-control min-w-0 flex-1 rounded-sm border border-hair bg-noir px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+            />
+            <button
+              type="button"
+              disabled={busy || tracking.trim().length < 4}
+              onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))}
+              className="relative flex h-control items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] px-6 text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
+            >
+              <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
+              {busy ? '…' : 'تم الشحن'}
+            </button>
+          </div>
+          <p className="mt-2 text-micro leading-relaxed text-faint">
+            اكتب الرقم كما هو على البوليصة. سيراه العميل في صفحة التتبّع.
+          </p>
+        </div>
+      )}
+
+      {stage === 'decide' && !declining && (
         <div className="mt-4 flex gap-3">
           <button
             type="button"
@@ -162,7 +207,7 @@ function Row({
         </div>
       )}
 
-      {actionable && declining && <DeclineReasons entry={entry} busy={busy} act={act} onCancel={() => setDeclining(false)} />}
+      {stage === 'decide' && declining && <DeclineReasons entry={entry} busy={busy} act={act} onCancel={() => setDeclining(false)} />}
     </article>
   );
 }

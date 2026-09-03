@@ -5,7 +5,10 @@
  * procedures stay thin: the state machine decides what is legal, the repository
  * writes it, and the database refuses anything the first two let through.
  */
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { SubOrderLifecycle } from '@diyar/domain';
+import { manualCourier, TRACKING_MAX, TRACKING_MIN } from '../providers/courier';
 import { router, sellerProcedure } from '../trpc';
 import { confirmSchema, declineSchema } from '../validation';
 
@@ -16,8 +19,18 @@ export const sellerRouter = router({
    * would refuse anyway; this makes it impossible to even express.
    */
   queue: sellerProcedure.query(async ({ ctx }) => {
-    const entries = await ctx.uow.transaction((r) =>
-      r.subOrders.listQueueForSeller(ctx.sellerId!));
+    const { entries, shipments } = await ctx.uow.transaction(async (r) => {
+      const rows = await r.subOrders.listQueueForSeller(ctx.sellerId!);
+      // One lookup per dispatched row rather than for the whole queue: most
+      // rows are not dispatched and have no parcel to describe.
+      const found = new Map<string, string | null>();
+      for (const row of rows) {
+        if (row.state !== 'dispatched' && row.state !== 'delivered') continue;
+        const shipment = await r.subOrders.findShipment(row.id);
+        found.set(row.id, shipment?.trackingNumber ?? null);
+      }
+      return { entries: rows, shipments: found };
+    });
 
     // Soonest deadline first. A queue sorted by arrival looks tidier and buries
     // the order that is about to breach its confirmation SLA behind five that
@@ -51,6 +64,7 @@ export const sellerRouter = router({
         items: s.items.map((i) => ({
           name: i.name, sku: i.sku, volumeMl: i.volumeMl, quantity: i.quantity,
         })),
+        trackingNumber: shipments.get(s.id) ?? null,
       }));
   }),
 
@@ -66,6 +80,62 @@ export const sellerRouter = router({
         );
         await r.subOrders.applyTransition(sub.id, 'confirmed', 'seller', null, record);
         return { ok: true as const, state: 'confirmed' as const };
+      });
+    }),
+
+  /**
+   * The parcel has been handed to a courier.
+   *
+   * Two things happen together or not at all: the shipment is recorded and the
+   * sub-order moves to `dispatched`. A dispatched order with no shipment is an
+   * order nobody can trace, and a shipment against an order still marked
+   * `confirmed` is a parcel in the world that our records say is still on a
+   * shelf. Either half alone is worse than neither.
+   *
+   * The tracking number comes from a person reading a label, because Bosta's
+   * API is not integrated yet — see `manualCourier`, which is a REAL adapter
+   * for a real workflow rather than a stub, and therefore does not block a
+   * launch.
+   */
+  dispatch: sellerProcedure
+    .input(z.object({
+      subOrderId: z.string().uuid(),
+      trackingNumber: z.string().min(TRACKING_MIN).max(TRACKING_MAX + 10),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.uow.transaction(async (r) => {
+        const sub = await r.subOrders.findById(input.subOrderId);
+        if (!sub) return { ok: false as const };
+
+        const booked = await manualCourier.book({
+          subOrderReference: sub.reference,
+          trackingNumber: input.trackingNumber,
+          // What the courier must collect at the door. Settlement later
+          // reconciles what was remitted against exactly this figure.
+          codAmountPiastres: sub.merchandise.minor + sub.shipping.minor,
+        }).catch(() => null);
+
+        if (!booked) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'رقم الشحنة غير صالح' });
+        }
+
+        // The state machine decides whether this move is legal BEFORE anything
+        // is written, so an illegal dispatch cannot leave a shipment behind.
+        const record = SubOrderLifecycle.transition(
+          sub.state, { to: 'dispatched', actor: 'seller' }, ctx.clock,
+        );
+
+        await r.subOrders.recordShipment({
+          subOrderId: sub.id,
+          courier: booked.courier,
+          trackingNumber: booked.trackingNumber,
+          labelUrl: booked.labelUrl,
+          codAmountPiastres: sub.merchandise.minor + sub.shipping.minor,
+          dispatchedAt: ctx.clock.now(),
+        });
+        await r.subOrders.applyTransition(sub.id, 'dispatched', 'seller', null, record);
+
+        return { ok: true as const, state: 'dispatched' as const, trackingNumber: booked.trackingNumber };
       });
     }),
 

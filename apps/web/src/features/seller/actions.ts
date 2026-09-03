@@ -184,6 +184,19 @@ export async function confirmSubOrder(subOrderId: string) {
   }
 }
 
+export async function dispatchSubOrder(subOrderId: string, trackingNumber: string) {
+  const context = await sellerCaller();
+  if (!context) return { ok: false as const, message: 'انتهت الجلسة. سجّل الدخول مرّة أخرى.' };
+  try {
+    const result = await context.caller.seller.dispatch({ subOrderId, trackingNumber });
+    return result.ok
+      ? { ok: true as const }
+      : { ok: false as const, message: 'لم يعد هذا الطلب متاحًا.' };
+  } catch (error) {
+    return { ok: false as const, message: (error as Error).message };
+  }
+}
+
 export async function declineSubOrder(subOrderId: string, reason: string) {
   const context = await sellerCaller();
   if (!context) return { ok: false as const, message: 'انتهت الجلسة. سجّل الدخول مرّة أخرى.' };

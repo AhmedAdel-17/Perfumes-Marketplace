@@ -136,6 +136,17 @@ function OrderDetail({
               </ol>
             )}
 
+            {house.trackingNumber && (
+              <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-3">
+                <span className="text-caption text-faint">رقم الشحنة</span>
+                {/* Selectable, because the customer will paste it into the
+                    courier's own tracking page. */}
+                <span className="latin tnum select-all text-small text-bone">
+                  {house.trackingNumber}
+                </span>
+              </div>
+            )}
+
             <ul className="mt-5">
               {house.items.map((item) => (
                 <li key={item.name} className="flex justify-between py-1.5 text-small text-dim">

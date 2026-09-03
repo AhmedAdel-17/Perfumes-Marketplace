@@ -297,6 +297,14 @@ const orderRepository = (db: Executor): OrderRepository => ({
       .from(schema.orderLineItems)
       .where(inArray(schema.orderLineItems.subOrderId, subs.map((s) => s.sub.id)));
 
+    const parcels = await db
+      .select({
+        subOrderId: schema.shipments.subOrderId,
+        trackingNumber: schema.shipments.trackingNumber,
+      })
+      .from(schema.shipments)
+      .where(inArray(schema.shipments.subOrderId, subs.map((s) => s.sub.id)));
+
     return {
       reference: order.reference,
       contactName: order.contactName,
@@ -305,6 +313,8 @@ const orderRepository = (db: Executor): OrderRepository => ({
       total: Money.fromMinor(order.totalPiastres),
       houses: subs.map((s) => ({
         subOrderId: s.sub.id,
+        trackingNumber:
+          parcels.find((p) => p.subOrderId === s.sub.id)?.trackingNumber ?? null,
         reference: s.sub.reference,
         sellerId: s.sub.sellerId,
         brandName: s.brandName,
@@ -329,6 +339,35 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     const [row] = await db.select().from(schema.subOrders)
       .where(eq(schema.subOrders.id, id)).limit(1);
     return row ? toSubOrder(row) : null;
+  },
+
+  async recordShipment({ subOrderId, courier, trackingNumber, labelUrl, codAmountPiastres, dispatchedAt }) {
+    await db.insert(schema.shipments).values({
+      subOrderId,
+      courier,
+      trackingNumber,
+      labelUrl,
+      codAmountPiastres,
+      dispatchedAt,
+    });
+    // Mirrored onto the sub-order so the queue and the tracking page do not
+    // have to join to shipments for a single timestamp.
+    await db.update(schema.subOrders)
+      .set({ dispatchedAt })
+      .where(eq(schema.subOrders.id, subOrderId));
+  },
+
+  async findShipment(subOrderId) {
+    const [row] = await db
+      .select({
+        courier: schema.shipments.courier,
+        trackingNumber: schema.shipments.trackingNumber,
+        dispatchedAt: schema.shipments.dispatchedAt,
+      })
+      .from(schema.shipments)
+      .where(eq(schema.shipments.subOrderId, subOrderId))
+      .limit(1);
+    return row ?? null;
   },
 
   async listQueueForSeller(sellerId) {

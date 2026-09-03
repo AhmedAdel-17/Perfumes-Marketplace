@@ -59,6 +59,7 @@ interface SubOrderRow {
   };
   placedAt: Date;
   confirmDueAt: Date | null;
+  shipment?: { courier: string; trackingNumber: string | null; dispatchedAt: Date | null };
   orderId: string;
   sellerId: string;
   state: SubOrderState;
@@ -317,6 +318,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             const seller = s.sellers.get(sub.sellerId);
             return {
               subOrderId: sub.id,
+              trackingNumber: sub.shipment?.trackingNumber ?? null,
               reference: sub.reference,
               sellerId: sub.sellerId,
               brandName: seller?.tradingName ?? '',
@@ -361,6 +363,17 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       async findById(id) {
         const row = store().subOrders.get(id);
         return row ? toRecord(row) : null;
+      },
+
+      async recordShipment({ subOrderId, courier, trackingNumber, dispatchedAt }) {
+        const s = store();
+        const sub = s.subOrders.get(subOrderId);
+        if (!sub) throw new Error(`Unknown sub-order ${subOrderId}`);
+        sub.shipment = { courier, trackingNumber, dispatchedAt };
+      },
+
+      async findShipment(subOrderId) {
+        return store().subOrders.get(subOrderId)?.shipment ?? null;
       },
 
       async listQueueForSeller(sellerId) {

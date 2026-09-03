@@ -180,6 +180,8 @@ export interface OrderLookupItem {
 
 export interface OrderLookupHouse {
   readonly subOrderId: string;
+  /** Null until the house hands the parcel over. */
+  readonly trackingNumber: string | null;
   readonly reference: string;
   readonly sellerId: string;
   readonly brandName: string;
@@ -245,6 +247,36 @@ export interface SubOrderRepository {
    * rather than commission figures.
    */
   listQueueForSeller(sellerId: string): Promise<readonly QueueEntry[]>;
+
+  /**
+   * Record that a parcel has been handed to a courier.
+   *
+   * Separate from `applyTransition` because a shipment is a FACT about the
+   * world — a physical parcel with a number on it — while the transition is a
+   * fact about our record of it. They are written in the same transaction, so
+   * a dispatched sub-order can never exist without the shipment that explains
+   * where the parcel went.
+   *
+   * `codAmountPiastres` is carried on the shipment because it is what the
+   * courier must collect at the door, and settlement later reconciles what was
+   * remitted against it. A shipment that does not know its own COD value
+   * cannot be reconciled at all.
+   */
+  recordShipment(input: {
+    readonly subOrderId: string;
+    readonly courier: string;
+    readonly trackingNumber: string;
+    readonly labelUrl: string | null;
+    readonly codAmountPiastres: number;
+    readonly dispatchedAt: Date;
+  }): Promise<void>;
+
+  /** The parcel for a sub-order, if one has been handed over. */
+  findShipment(subOrderId: string): Promise<{
+    readonly courier: string;
+    readonly trackingNumber: string | null;
+    readonly dispatchedAt: Date | null;
+  } | null>;
 
   /**
    * Move a sub-order, recording the transition.

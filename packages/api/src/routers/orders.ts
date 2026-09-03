@@ -241,6 +241,7 @@ export const ordersRouter = router({
         totalPiastres: order.total.minor,
         houses: order.houses.map((h) => ({
           reference: h.reference,
+          trackingNumber: h.trackingNumber,
           brandName: h.brandName,
           state: h.state,
           merchandisePiastres: h.merchandise.minor,
