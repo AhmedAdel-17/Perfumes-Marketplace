@@ -266,4 +266,70 @@ export const repositoryContract: readonly ContractCase[] = [
       equal(subs[0]!.merchandise.toMajorString(), '380.00', 'ward merchandise');
     },
   },
+
+  {
+    name: 'snapshotForCart() returns one row per known id and omits the rest',
+    async run(setup) {
+      const w = await setup();
+      const rows = await w.uow.transaction((r) =>
+        r.products.snapshotForCart([
+          w.wardProductId,
+          w.nourProductId,
+          '00000000-0000-0000-0000-000000000000',
+        ]));
+
+      equal(rows.length, 2, 'known ids resolved');
+      // Absent, not null and not a placeholder: the cart decides what a missing
+      // product means, and a repository that invented an empty row would let it
+      // be priced.
+      assert(
+        rows.every((r) => r.productId === w.wardProductId || r.productId === w.nourProductId),
+        'unknown id must be omitted entirely',
+      );
+    },
+  },
+
+  {
+    name: 'snapshotForCart() carries price as Money and the house live flag',
+    async run(setup) {
+      const w = await setup();
+      const [row] = await w.uow.transaction((r) =>
+        r.products.snapshotForCart([w.wardProductId]));
+
+      assert(row !== undefined, 'ward product must resolve');
+      assert(row!.unitPrice instanceof Money, 'CatalogueSnapshot.unitPrice must be Money');
+      assert(row!.sellerId === w.sellerIdBySlug.get('dar-al-ward'), 'seller id matches');
+
+      // The two switches that decide whether a line may be sold, cross-checked
+      // against the SAME adapter's other reads rather than against a literal.
+      //
+      // The first version asserted `isPublished === true`, which encoded an
+      // assumption about how this fixture happens to seed rather than anything
+      // about the contract — and it failed on the adapter whose fixture seeds
+      // drafts. Comparing the snapshot to what the adapter itself reports
+      // elsewhere holds for any seed data and still catches the failure that
+      // matters: a join that reads the wrong row's status.
+      const published = await w.uow.transaction((r) =>
+        r.products.listPublishedBySeller(row!.sellerId));
+      equal(
+        row!.isPublished,
+        published.some((p) => p.id === row!.productId),
+        'isPublished agrees with listPublishedBySeller',
+      );
+
+      const house = await w.uow.transaction((r) => r.sellers.findById(row!.sellerId));
+      equal(row!.isHouseLive, house?.status === 'live', 'isHouseLive agrees with the seller row');
+    },
+  },
+
+  {
+    name: 'snapshotForCart() survives an empty id list',
+    async run(setup) {
+      const w = await setup();
+      // `IN ()` is a syntax error in Postgres, so this is the case that takes an
+      // empty cart page down if the adapter forgets to short-circuit.
+      const rows = await w.uow.transaction((r) => r.products.snapshotForCart([]));
+      equal(rows.length, 0, 'empty request yields empty result');
+    },
+  },
 ];

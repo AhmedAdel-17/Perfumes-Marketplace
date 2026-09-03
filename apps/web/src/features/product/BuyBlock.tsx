@@ -1,4 +1,5 @@
 import { CURRENCY_LABEL, formatPrice } from '@diyar/i18n';
+import { AddToBag } from '@/features/cart/AddToBag';
 
 /**
  * Price and the single primary action.
@@ -10,10 +11,12 @@ import { CURRENCY_LABEL, formatPrice } from '@diyar/i18n';
  * disagree with a desktop about whether something is in stock.
  */
 export function BuyBlock({
+  productId,
   pricePiastres,
   inStock,
   variant,
 }: {
+  productId: string;
   pricePiastres: number;
   inStock: boolean;
   variant: 'bar' | 'inline';
@@ -31,9 +34,10 @@ export function BuyBlock({
   );
 
   const button = (
-    <button
-      type="button"
-      disabled={!inStock}
+    <AddToBag
+      productId={productId}
+      pricePiastres={pricePiastres}
+      inStock={inStock}
       className={[
         // A flat brass slab with a bold label is a framework button wearing a
         // brand colour. Three things change that: a shallow vertical gradient
@@ -48,10 +52,7 @@ export function BuyBlock({
         'hover:brightness-110 active:opacity-press disabled:opacity-disabled disabled:brightness-75',
         variant === 'bar' ? 'flex-1' : 'w-full',
       ].join(' ')}
-    >
-      <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-      أضف إلى الحقيبة
-    </button>
+    />
   );
 
   if (variant === 'bar') {

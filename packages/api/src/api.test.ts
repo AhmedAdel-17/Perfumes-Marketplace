@@ -70,11 +70,15 @@ beforeAll(async () => {
       [ids[slug], name, slug + '-b']);
 
     const p = await pg.query<{ id: string }>(
-      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status,
+      // stock is seeded explicitly: the column defaults to 0, and a published
+      // listing with no stock is a legitimate state the cart correctly refuses.
+      // Leaving it at the default made every cart assertion here fail for a
+      // reason that had nothing to do with carts.
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,stock,status,
          concentration,form,gender_positioning,scent_family,notes_top,notes_heart,notes_base,
          seasons,occasions,day_night,projection_band,longevity_band,performance_source,
          responsible_party_name,return_eligibility,defect_route)
-       VALUES ($1,$2,'عطر',$3,$4,38000,50,'draft',
+       VALUES ($1,$2,'عطر',$3,$4,38000,50,25,'draft',
          'eau_de_parfum','spray','women','floral',ARRAY['برغموت'],ARRAY['ورد'],ARRAY['مسك'],
          ARRAY['spring']::season[],ARRAY['daily']::occasion[],'both','moderate','long','seller_provided',
          $5,'sealed_only','استلام') RETURNING id`,
@@ -109,6 +113,81 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => { await pg?.close(); });
+
+describe('cart.price — anonymous, and priced from the database every time', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+
+  it('prices a basket for a visitor who has not identified themselves', async () => {
+    // Requiring a login to see a total is the fastest way to lose a first-time
+    // customer, so this must work with no actor at all.
+    const cart = await caller(ANON).cart.price({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 2 }],
+    });
+
+    expect(cart.isEmpty).toBe(false);
+    expect(cart.merchandisePiastres).toBe(76_000);
+    expect(cart.itemCount).toBe(2);
+    expect(cart.totalPiastres).toBe(cart.merchandisePiastres + cart.shippingPiastres);
+  });
+
+  it('charges shipping per HOUSE, not per basket', async () => {
+    const one = await caller(ANON).cart.price({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+    });
+    const two = await caller(ANON).cart.price({
+      lines: [
+        { productId: ids['dar-al-ward:product']!, quantity: 1 },
+        { productId: ids['maison-nour:product']!, quantity: 1 },
+      ],
+    });
+
+    expect(two.houses).toHaveLength(2);
+    // Two houses pack two parcels. Quoting one delivery here and two at
+    // checkout is the version of this bug that reaches production.
+    expect(two.shippingPiastres).toBe(one.shippingPiastres * 2);
+  });
+
+  it('ignores the price the client claims it saw', async () => {
+    const cart = await caller(ANON).cart.price({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1, seenPricePiastres: 1 }],
+    });
+
+    expect(cart.merchandisePiastres).toBe(38_000);
+    const changed = cart.adjustments.find((a) => a.reason === 'price_changed');
+    expect(changed?.previousPricePiastres).toBe(1);
+    expect(changed?.currentPricePiastres).toBe(38_000);
+  });
+
+  it('drops an id that does not exist rather than failing the whole basket', async () => {
+    const cart = await caller(ANON).cart.price({
+      lines: [
+        { productId: ids['dar-al-ward:product']!, quantity: 1 },
+        { productId: '00000000-0000-0000-0000-000000000000', quantity: 1 },
+      ],
+    });
+
+    expect(cart.houses).toHaveLength(1);
+    expect(cart.adjustments.map((a) => a.reason)).toContain('no_longer_available');
+  });
+
+  it('prices an empty basket as zero instead of erroring', async () => {
+    // `IN ()` is a Postgres syntax error, so an empty cart is the request most
+    // likely to take the page down.
+    const cart = await caller(ANON).cart.price({ lines: [] });
+    expect(cart.isEmpty).toBe(true);
+    expect(cart.totalPiastres).toBe(0);
+  });
+
+  it('refuses a quantity or a basket size outside the permitted range', async () => {
+    await expect(caller(ANON).cart.price({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 0 }],
+    })).rejects.toThrow();
+
+    await expect(caller(ANON).cart.price({
+      lines: [{ productId: 'not-a-uuid', quantity: 1 }],
+    })).rejects.toThrow();
+  });
+});
 
 describe('input validation — rejected at the boundary, in Arabic', () => {
   it('refuses a non-Egyptian phone number', () => {

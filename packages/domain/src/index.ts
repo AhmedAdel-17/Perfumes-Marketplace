@@ -4,6 +4,7 @@ export * from './state-machines/sub-order';
 export * from './policies/commission';
 export * from './policies/attribution';
 export * from './services/settlement';
+export * from './services/cart';
 export * from './services/place-order';
 export * from './specifications/index';
 export * from './ports/clock';

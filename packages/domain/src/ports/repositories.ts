@@ -41,6 +41,34 @@ export interface ProductRecord {
   readonly status: string;
 }
 
+/**
+ * Everything the cart needs to price one product, in one row.
+ *
+ * A READ MODEL owned by the port, not by the service, so the dependency runs
+ * service -> port and the cart never learns how a catalogue row is stored.
+ *
+ * It carries `isHouseLive` alongside `isPublished` because availability has two
+ * independent switches. A published listing belonging to a suspended house must
+ * stop selling instantly, and a cart priced from the listing alone would keep
+ * taking money for it.
+ */
+export interface CatalogueSnapshot {
+  readonly productId: string;
+  readonly sellerId: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly brandName: string;
+  readonly brandLatin: string;
+  readonly sku: string;
+  readonly volumeMl: number;
+  readonly scentFamily: string;
+  readonly unitPrice: Money;
+  readonly stock: number;
+  readonly isPublished: boolean;
+  readonly isHouseLive: boolean;
+  readonly fulfilmentHours: number;
+}
+
 export interface PersistedOrder {
   readonly id: string;
   readonly reference: string;
@@ -67,6 +95,19 @@ export interface SellerRepository {
 export interface ProductRepository {
   findBySlug(slug: string): Promise<ProductRecord | null>;
   listPublishedBySeller(sellerId: string): Promise<readonly ProductRecord[]>;
+
+  /**
+   * Price-time snapshot of many products in ONE read.
+   *
+   * Deliberately not N calls to findBySlug: a five-line cart would issue five
+   * round trips on the checkout path, and the five would not be consistent with
+   * each other — a price could change between the second and the fourth, and
+   * the customer would be shown a total that never existed.
+   *
+   * Ids that do not resolve are simply absent from the result. The caller
+   * decides what a missing product means; the repository does not invent one.
+   */
+  snapshotForCart(productIds: readonly string[]): Promise<readonly CatalogueSnapshot[]>;
 }
 
 export interface OrderRepository {

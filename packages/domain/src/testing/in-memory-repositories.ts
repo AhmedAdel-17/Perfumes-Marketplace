@@ -124,6 +124,36 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           (p) => p.sellerId === sellerId && p.status === 'published',
         );
       },
+
+      async snapshotForCart(productIds) {
+        const s = store();
+        const wanted = new Set(productIds);
+        return [...s.products.values()]
+          .filter((p) => wanted.has(p.id))
+          .map((p) => {
+            // The house is looked up rather than assumed live, because that is
+            // exactly the case the Drizzle adapter joins for. An in-memory
+            // stand-in that always answers `true` here would let the contract
+            // test pass while the real query was wrong.
+            const seller = s.sellers.get(p.sellerId);
+            return {
+              productId: p.id,
+              sellerId: p.sellerId,
+              slug: p.slug,
+              name: p.name,
+              brandName: seller?.tradingName ?? '',
+              brandLatin: (seller?.tradingName ?? '').toUpperCase(),
+              sku: p.sku,
+              volumeMl: p.volumeMl,
+              scentFamily: 'amber',
+              unitPrice: p.price,
+              stock: p.stock,
+              isPublished: p.status === 'published',
+              isHouseLive: seller?.status === 'live',
+              fulfilmentHours: 48,
+            };
+          });
+      },
     };
 
     const orders: OrderRepository = {

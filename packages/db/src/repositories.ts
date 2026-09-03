@@ -88,6 +88,46 @@ const productRepository = (db: Executor): ProductRepository => ({
     );
     return rows.map(toProduct);
   },
+
+  async snapshotForCart(productIds) {
+    // `inArray` with an empty list generates `IN ()`, which is a syntax error in
+    // Postgres rather than an empty result. An empty cart is the most ordinary
+    // state a cart has, so it must not be able to take the page down.
+    if (productIds.length === 0) return [];
+
+    const rows = await db
+      .select({
+        p: schema.products,
+        brandName: schema.brands.name,
+        brandEn: schema.brands.nameEn,
+        sellerStatus: schema.sellers.status,
+      })
+      .from(schema.products)
+      .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
+      .innerJoin(schema.sellers, eq(schema.sellers.id, schema.products.sellerId))
+      .where(inArray(schema.products.id, [...productIds]));
+
+    return rows.map((r) => ({
+      productId: r.p.id,
+      sellerId: r.p.sellerId,
+      slug: r.p.slug,
+      name: r.p.name,
+      brandName: r.brandName,
+      brandLatin: (r.brandEn ?? r.brandName).toUpperCase(),
+      sku: r.p.sku,
+      volumeMl: r.p.volumeMl,
+      scentFamily: r.p.scentFamily ?? 'amber',
+      unitPrice: Money.fromMinor(r.p.promoPricePiastres ?? r.p.pricePiastres),
+      stock: r.p.stock,
+      // Reported honestly rather than assumed true. RLS already hides rows an
+      // anonymous visitor may not see, but the platform role sees everything,
+      // and a cart priced as platform must reach the same verdict as one priced
+      // as a shopper.
+      isPublished: r.p.status === 'published',
+      isHouseLive: r.sellerStatus === 'live',
+      fulfilmentHours: r.p.fulfilmentHours,
+    }));
+  },
 });
 
 const orderRepository = (db: Executor): OrderRepository => ({

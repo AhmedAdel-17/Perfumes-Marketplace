@@ -19,7 +19,8 @@
     "@diyar/domain": "workspace:*",
     "@diyar/i18n": "workspace:*",
     "@diyar/tokens": "workspace:*",
-    "@diyar/ui": "workspace:*"
+    "@diyar/ui": "workspace:*",
+    "@diyar/api": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

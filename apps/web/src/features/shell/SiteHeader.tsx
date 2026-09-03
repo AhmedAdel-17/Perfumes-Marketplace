@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BagLink } from '@/features/cart/BagLink';
 import { Monogram } from './Monogram';
 
 /**
@@ -32,10 +33,14 @@ export function SiteHeader() {
           <span className="latin text-h4 tracking-wordmark lg:text-h3Lg">DIYAR</span>
         </Link>
 
-        {/* The one piece of orientation a first-time visitor needs: what this is. */}
-        <span className="hidden text-caption tracking-label text-faint md:block">
-          دور العطور المصرية
-        </span>
+        <div className="flex items-center gap-6">
+          {/* The one piece of orientation a first-time visitor needs. It gives
+              way to the bag on a phone, where there is room for one of them. */}
+          <span className="hidden text-caption tracking-label text-faint md:block">
+            دور العطور المصرية
+          </span>
+          <BagLink />
+        </div>
       </div>
     </header>
   );

@@ -86,6 +86,15 @@ export const ORDER: PluralForms = {
   other: 'طلب',
 };
 
+export const SHIPMENT: PluralForms = {
+  zero: 'لا شحنات',
+  one: 'شحنة',
+  two: 'شحنتان',
+  few: 'شحنات',
+  many: 'شحنةً',
+  other: 'شحنة',
+};
+
 export const REVIEW: PluralForms = {
   zero: 'لا تقييمات',
   one: 'تقييم',

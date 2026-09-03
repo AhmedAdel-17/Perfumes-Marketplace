@@ -122,6 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div className="px-5 lg:px-0">
                 <div className="mt-7 lg:mt-8">
                   <BuyBlock
+                    productId={product.id}
                     pricePiastres={product.pricePiastres}
                     inStock={product.inStock}
                     variant="inline"
@@ -196,6 +197,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <SiteFooter />
 
       <BuyBlock
+        productId={product.id}
         pricePiastres={product.pricePiastres}
         inStock={product.inStock}
         variant="bar"

@@ -8,6 +8,7 @@ import {
   plural,
   pluralCategory,
   REVIEW,
+  SHIPMENT,
   type PluralCategory,
   type PluralForms,
 } from './plural';
@@ -88,7 +89,7 @@ describe('counted — the count and the noun together', () => {
 describe('the counted nouns themselves', () => {
   const NOUNS: ReadonlyArray<readonly [string, PluralForms]> = [
     ['PERFUME', PERFUME], ['HOUSE', HOUSE], ['DAY', DAY],
-    ['ORDER', ORDER], ['REVIEW', REVIEW],
+    ['ORDER', ORDER], ['REVIEW', REVIEW], ['SHIPMENT', SHIPMENT],
   ];
   const CATEGORIES: readonly PluralCategory[] = ['zero', 'one', 'two', 'few', 'many', 'other'];
 
