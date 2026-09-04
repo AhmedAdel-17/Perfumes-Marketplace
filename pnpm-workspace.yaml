@@ -1,9 +1,14 @@
 packages:
   - 'apps/*'
   - 'packages/*'
-allowBuilds:
-  esbuild: set this to true or false
+
 # esbuild ships prebuilt binaries and needs its install script to place them.
-# Explicit rather than prompted, so CI is deterministic.
-onlyBuiltDependencies:
-  - esbuild
+# Declared explicitly rather than approved interactively, so CI is deterministic
+# and no machine ends up with a different set of built dependencies than another.
+#
+# `allowBuilds` is pnpm 11's spelling. The old `onlyBuiltDependencies` list is
+# silently IGNORED by this version — which does not warn, it just refuses the
+# build and then fails every command that runs the dependency check, including
+# `pnpm dev`. The failure names esbuild and says nothing about the key.
+allowBuilds:
+  esbuild: true

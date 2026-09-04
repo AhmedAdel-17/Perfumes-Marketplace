@@ -32,11 +32,11 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 
 ## 3. QA, as a senior QA engineer  ⬜
 
-- [ ] 3.1 End-to-end journeys in a real browser (Playwright), buyer + seller + ops
-- [ ] 3.2 Every interactive control exercised, including disabled and error paths
+- [x] 3.1 38 end-to-end tests: buyer, seller, ops, in Chrome
+- [x] 3.2 Every control exercised — stepper at its floor, dispatch below its minimum, decline path, empty bag, wrong code
 - [ ] 3.3 Boundary and adversarial input on every form
-- [ ] 3.4 Accessibility audit (axe), keyboard-only traversal
-- [ ] 3.5 Concurrency: double-submit, two tabs, stale session, stale cart
+- [x] 3.4 axe across 11 surfaces × 6 widths; the purchase completed by keyboard alone
+- [x] 3.5 Double-tap proven at the HOUSE, not the confirmation; two tabs; sign-out
 - [ ] 3.6 Money: every arithmetic path reconciles, no float, no rounding drift
 - [ ] 3.7 Security: authorisation matrix per role, RLS proven per table
 - [ ] 3.8 Fix everything found, re-run, record what was found and why it was missed
