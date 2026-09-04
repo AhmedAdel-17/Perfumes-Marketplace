@@ -6,7 +6,10 @@
  * (see migrations/0001_constraints.sql), not by the admin UI alone.
  */
 import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { governorate, sellerStatus, staffRole, verificationControl, verificationStatus } from './enums';
+import {
+  deliveryFulfilledBy, governorate, sellerStatus, staffRole,
+  verificationControl, verificationStatus,
+} from './enums';
 
 export const sellers = pgTable('sellers', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -34,6 +37,8 @@ export const sellers = pgTable('sellers', {
   privacyContact: text('privacy_contact'),
 
   /** Money terms. Reserve period is why payouts are not immediate. */
+  /** Default for new orders. Snapshotted onto each sub-order at placement. */
+  deliveryFulfilledBy: deliveryFulfilledBy('delivery_fulfilled_by').default('seller').notNull(),
   payoutReserveDays: integer('payout_reserve_days').default(7).notNull(),
   disputeWindowDays: integer('dispute_window_days').default(7).notNull(),
 

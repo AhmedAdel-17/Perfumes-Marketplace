@@ -31,6 +31,15 @@ export type HoldReason =
   | 'payment_not_captured'
   | 'return_window_open';
 
+/**
+ * Who books and pays the courier — and therefore who receives the delivery fee.
+ *
+ * Snapshotted per sub-order, like the commission rate, so changing a house's
+ * arrangement tomorrow cannot rewrite what it was owed for an order it shipped
+ * last month.
+ */
+export type DeliveryFulfilledBy = 'seller' | 'platform';
+
 export interface SettlementSubOrder {
   readonly id: string;
   readonly reference: string;
@@ -43,6 +52,8 @@ export interface SettlementSubOrder {
   readonly deliveredAt?: Date;
   /** COD: the courier has remitted. Card: the payment captured. */
   readonly cashInHand: boolean;
+  /** Snapshotted at placement. Decides whether shipping is reimbursed. */
+  readonly deliveryFulfilledBy: DeliveryFulfilledBy;
 }
 
 export interface SettlementAdjustment {
@@ -160,16 +171,26 @@ export class SettlementService {
       let commission = Money.zero();
       let shipping = Money.zero();
 
+      // `shipping` on a statement line means the delivery fee REIMBURSED to
+      // this house: what the customer paid, passed through when the house
+      // booked the courier, and zero when the marketplace booked it. One
+      // definition for both arrangements, so `net` needs no branch.
+      const reimbursable = s.deliveryFulfilledBy === 'seller' ? s.shipping : Money.zero();
+
       if (outcome === 'earned') {
         gross = s.merchandise;
         commission = fullCommission;
-        shipping = s.shipping;
+        shipping = reimbursable;
       } else if (outcome === 'reversed') {
-        // The sale is undone: gross comes back off, and the fee is refunded in
-        // full. Doc 03 §8 — commission only on completed orders.
+        // The sale is undone: gross comes back off and the fee is refunded in
+        // full (doc 03 §8 — commission only on completed orders). The delivery
+        // reimbursement comes back off too, because the parcel still travelled
+        // and the house still paid for it — reclaiming the fee would charge the
+        // house for a return it did not cause. See the note on the reversal
+        // test: this is a deliberate position, not an oversight.
         gross = s.merchandise.negated();
         commission = fullCommission.negated();
-        shipping = s.shipping.negated();
+        shipping = Money.zero();
       }
 
       return {
@@ -192,7 +213,7 @@ export class SettlementService {
         // Caught by the database: `payout_lines_net_reconciles` in 0001 asserts
         // `net = gross - commission`, and refused the row. Two layers holding
         // the same rule disagreed, and the one with the CHECK constraint won.
-        net: gross.minus(commission),
+        net: gross.minus(commission).plus(shipping),
         commissionSource: s.commissionSource,
         commissionBps: s.commissionBps,
         ...(holdReason ? { holdReason } : {}),
@@ -204,7 +225,7 @@ export class SettlementService {
     const commission = sumMoney(lines.map((l) => l.commission));
     const shipping = sumMoney(lines.map((l) => l.shipping));
     const adjustments = sumMoney(input.adjustments.map((a) => a.amount));
-    const net = gross.minus(commission).plus(adjustments);
+    const net = gross.minus(commission).plus(shipping).plus(adjustments);
 
     const heldGross = sumMoney(
       input.subOrders.filter((s, i) => lines[i]!.outcome === 'held').map((s) => s.merchandise),
@@ -245,17 +266,16 @@ export class SettlementService {
     const gross = sumMoney(statement.lines.map((l) => l.gross));
     const commission = sumMoney(statement.lines.map((l) => l.commission));
     const shipping = sumMoney(statement.lines.map((l) => l.shipping));
-    const net = gross.minus(commission).plus(statement.adjustments);
+    const net = gross.minus(commission).plus(shipping).plus(statement.adjustments);
 
     return (
       gross.equals(statement.gross) &&
       commission.equals(statement.commission) &&
-      // Shipping still has to ADD UP even though it is not deducted: it is
-      // reported to the house as what delivery cost, and a reported figure
-      // that does not reconcile is a reported figure nobody can trust.
+      // Shipping is REIMBURSED, not deducted — the house booked the courier
+      // and paid for it, so the fee the customer paid passes through.
       shipping.equals(statement.shipping) &&
       net.equals(statement.net) &&
-      statement.lines.every((l) => l.net.equals(l.gross.minus(l.commission))) &&
+      statement.lines.every((l) => l.net.equals(l.gross.minus(l.commission).plus(l.shipping))) &&
       // Nothing that did not complete may carry a fee.
       statement.lines.every(
         (l) =>

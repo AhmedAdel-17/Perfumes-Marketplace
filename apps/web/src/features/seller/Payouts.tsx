@@ -111,6 +111,9 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
       <dl className="mt-6 border-t border-hair pt-5">
         <Row label="إجمالي المبيعات" piastres={statement.grossPiastres} />
         <Row label="عمولة المنصّة" piastres={-statement.commissionPiastres} />
+        {/* Added, not subtracted. The house booked and paid the courier, so the
+            delivery fee the customer paid passes through to it. */}
+        <Row label="استرداد التوصيل" piastres={statement.shippingPiastres} />
         <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-4">
           <dt className="font-display text-h4">الصافي</dt>
           <dd className="text-h3 font-semibold lg:text-h2Lg">
@@ -145,15 +148,16 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
             <span>العمولة</span>
             <span className="tnum">−{formatPrice(line.commissionPiastres)}</span>
           </div>
+          {line.shippingPiastres > 0 && (
+            <div className="flex justify-between text-small text-dim">
+              <span>استرداد التوصيل</span>
+              <span className="tnum">+{formatPrice(line.shippingPiastres)}</span>
+            </div>
+          )}
+          {/* Last, because the arithmetic above it should read top to bottom. */}
           <div className="mt-2 flex justify-between border-t border-hair pt-2 text-bodyLg font-semibold">
             <span>الصافي</span>
             <span className="tnum">{formatPrice(line.netPiastres)}</span>
-          </div>
-          {/* Reported, never deducted — the customer paid it to the marketplace.
-              Shown so the house can see the full economics of the order. */}
-          <div className="mt-2 text-micro text-faint">
-            تكلفة التوصيل <span className="tnum">{formatPrice(line.shippingPiastres)}</span>{' '}
-            {CURRENCY_LABEL} — يتحمّلها العميل ولا تُخصم من مستحقّاتك
           </div>
         </div>
       ))}

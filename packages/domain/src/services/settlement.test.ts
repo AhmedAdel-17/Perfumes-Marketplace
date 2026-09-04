@@ -28,6 +28,8 @@ const sub = (o: Partial<SettlementSubOrder> = {}): SettlementSubOrder => ({
   commissionBps: 500,
   deliveredAt: daysBeforeEnd(10),
   cashInHand: true,
+  // Every house ships its own parcel today, so the fee passes through to it.
+  deliveryFulfilledBy: 'seller' as const,
   ...o,
 });
 
@@ -107,9 +109,10 @@ describe('gate 4 — each failure state settles differently', () => {
   it('releases it once the reserve has cleared', () => {
     const st = build([sub({ deliveredAt: daysBeforeEnd(8) })]);
     expect(st.lines[0]!.outcome).toBe('earned');
-    expect(st.net.toMajorString()).toBe('950.00');   // 1000 − 50 fee. Shipping is NOT deducted:
-    // the customer paid it to the marketplace, so charging the house for it too
-    // would take a fee out of the house that the house never received.
+    // 1000 − 50 fee + 45 delivery reimbursed = 995. The house booked and paid
+    // the courier, so the fee the customer paid passes through to it. Whoever
+    // bears the cost receives the revenue.
+    expect(st.net.toMajorString()).toBe('995.00');
   });
 });
 
@@ -148,11 +151,13 @@ describe('a mixed period — the realistic case', () => {
     expect(st.gross.toMajorString()).toBe('1700.00');
     // fees:  76 + 93 − 66             = 103
     expect(st.commission.toMajorString()).toBe('103.00');
-    // shipping: 45 + 50 − 40          = 55
-    expect(st.shipping.toMajorString()).toBe('55.00');
-    // net: 1700 − 103 − 90 adjustments = 1507. Shipping is reported (55) but
-    // never deducted — see the note on the line-level assertion below.
-    expect(st.net.toMajorString()).toBe('1507.00');
+    // shipping REIMBURSED: 45 + 50 = 95. The returned line reimburses nothing,
+    // and reclaims nothing either — the parcel still travelled and the house
+    // still paid the courier, so clawing the fee back would charge the house
+    // for a return it did not cause.
+    expect(st.shipping.toMajorString()).toBe('95.00');
+    // net: 1700 − 103 + 95 delivery − 90 adjustments = 1602.
+    expect(st.net.toMajorString()).toBe('1602.00');
   });
 
   it('reports the effective rate on EARNED business only, never flattered', () => {
@@ -185,19 +190,23 @@ describe('the statement cannot silently be wrong', () => {
     expect(SettlementService.reconciles(tampered)).toBe(false);
   });
 
-  it('every line net equals gross MINUS commission — shipping is not deducted', () => {
-    // This assertion used to read `gross - commission - shipping`, matching the
-    // implementation and matching nothing else. The customer pays the delivery
-    // fee at checkout and it goes to the marketplace, so the house never
-    // receives it — deducting it again charged the house for a fee it was
-    // never given. The database's `payout_lines_net_reconciles` CHECK held the
-    // correct rule the whole time and refused the row.
-    // Shipping stays ON the line as information about what delivery cost.
+  it('every line net equals gross − commission + delivery reimbursed', () => {
+    // The formula has been wrong twice, in opposite directions, which is why
+    // it is asserted line by line rather than only in aggregate:
+    //
+    //   1. `gross - commission - shipping` — deducted a fee the house never
+    //      received. Caught by the database CHECK refusing the row.
+    //   2. `gross - commission` — correct only if the MARKETPLACE books the
+    //      courier, which it does not. The house paid for delivery and was not
+    //      reimbursed for it.
+    //
+    // Now: whoever bears the cost receives the revenue, decided per house and
+    // snapshotted per order.
     const st = build([
       sub(), sub({ state: 'returned' }), sub({ state: 'refused' }), sub({ cashInHand: false }),
     ]);
     for (const l of st.lines) {
-      expect(l.net.equals(l.gross.minus(l.commission)), l.reference).toBe(true);
+      expect(l.net.equals(l.gross.minus(l.commission).plus(l.shipping)), l.reference).toBe(true);
     }
   });
 
@@ -223,5 +232,64 @@ describe('dispute deadline', () => {
 
   it('is generated at an injected time, never Date.now()', () => {
     expect(build([sub()]).generatedAt.toISOString()).toBe('2026-09-01T09:00:00.000Z');
+  });
+});
+
+describe('who fulfils the delivery decides who receives the fee', () => {
+  it('reimburses the house that booked and paid the courier', () => {
+    const st = build([sub({ deliveryFulfilledBy: 'seller' })]);
+    const line = st.lines[0]!;
+
+    expect(line.shipping.toMajorString()).toBe('45.00');
+    // 1000 − 50 fee + 45 delivery = 995.
+    expect(line.net.toMajorString()).toBe('995.00');
+  });
+
+  it('reimburses nothing when the MARKETPLACE booked the courier', () => {
+    // The other arrangement, which does not exist in production yet and will
+    // the moment Bosta is integrated for some houses and not others. Both must
+    // work at once, which is why this is a per-order snapshot and not a
+    // constant.
+    const st = build([sub({ deliveryFulfilledBy: 'platform' })]);
+    const line = st.lines[0]!;
+
+    expect(line.shipping.isZero()).toBe(true);
+    expect(line.net.toMajorString()).toBe('950.00');
+  });
+
+  it('never charges commission on the delivery fee, under either arrangement', () => {
+    // A platform whose revenue rises with the cost of delivery has an incentive
+    // pointing the wrong way. Commission is charged on merchandise, and the
+    // two arrangements must not differ by a piastre of fee.
+    const bySeller = build([sub({ deliveryFulfilledBy: 'seller' })]);
+    const byPlatform = build([sub({ deliveryFulfilledBy: 'platform' })]);
+
+    expect(bySeller.commission.equals(byPlatform.commission)).toBe(true);
+    expect(bySeller.commission.toMajorString()).toBe('50.00');   // 5% of 1000, not of 1045
+  });
+
+  it('reconciles under both arrangements, mixed in one period', () => {
+    const st = build([
+      sub({ deliveryFulfilledBy: 'seller' }),
+      sub({ deliveryFulfilledBy: 'platform' }),
+    ]);
+    expect(SettlementService.reconciles(st)).toBe(true);
+    // Only the seller-fulfilled line contributes a reimbursement.
+    expect(st.shipping.toMajorString()).toBe('45.00');
+  });
+
+  it('holds the arrangement per ORDER, so a later change cannot rewrite history', () => {
+    // The same reason the commission rate is snapshotted. A house that moves to
+    // platform-fulfilled delivery next month must still be reimbursed for the
+    // parcels it paid to send this month.
+    const st = build([
+      sub({ reference: 'DY-OLD-A', deliveryFulfilledBy: 'seller' }),
+      sub({ reference: 'DY-NEW-A', deliveryFulfilledBy: 'platform' }),
+    ]);
+    const old = st.lines.find((l) => l.reference === 'DY-OLD-A')!;
+    const fresh = st.lines.find((l) => l.reference === 'DY-NEW-A')!;
+
+    expect(old.shipping.isZero()).toBe(false);
+    expect(fresh.shipping.isZero()).toBe(true);
   });
 });

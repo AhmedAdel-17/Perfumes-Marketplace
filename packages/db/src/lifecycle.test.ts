@@ -53,7 +53,7 @@ beforeAll(async () => {
   await runSql('0000_initial.sql');
   await runSql('0001_constraints.sql');
   await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql');
+  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql');
   await db.exec(`SET app.actor_role='platform'; SET app.actor_id='99999999-9999-9999-9999-999999999999';`);
 
   const one = async <T>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]!;
@@ -147,9 +147,9 @@ describe('checkout — the domain draft persists without contradiction', () => {
         // Delivery details are NOT NULL since 0004 and come from the draft's
         // address — the house cannot read the parent order.
         `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,
-           shipping_piastres,confirm_due_at,
+           shipping_piastres,confirm_due_at,delivery_fulfilled_by,
            recipient_name,recipient_phone,governorate,city,area,street,building)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+         VALUES ($1,$2,$3,$4,$5,$6,'seller',$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
         [ids.order, ids[s.sellerId], s.reference, s.merchandise.minor, s.shipping.minor, s.confirmDueAt,
          d.contactName, d.contactPhone, d.address.governorate, d.address.city,
          d.address.area, d.address.street, d.address.building]);
@@ -296,6 +296,7 @@ describe('settlement — the statement reconciles against what the database hold
       commissionBps: r.bps,
       ...(r.delivered ? { deliveredAt: new Date(r.delivered) } : {}),
       cashInHand: true,
+      deliveryFulfilledBy: 'seller' as const,
     }));
   };
 
@@ -329,11 +330,10 @@ describe('settlement — the statement reconciles against what the database hold
     expect(st.gross.toMajorString()).toBe('380.00');
     expect(st.commission.toMajorString()).toBe('19.00');     // 5%, the storefront rate
     expect(st.shipping.toMajorString()).toBe('50.00');
-    // 380 − 19 fee = 361. Shipping (50) is REPORTED but never deducted: the
-    // customer paid it to the marketplace, so charging the house for it as well
-    // would take a fee out of the house that the house never received. The
-    // database's payout_lines_net_reconciles CHECK has always said so.
-    expect(st.net.toMajorString()).toBe('361.00');
+    // 380 − 19 fee + 50 delivery reimbursed = 411. The house booked and paid
+    // the courier, so the fee the customer paid passes through to it —
+    // whoever bears the cost receives the revenue (migration 0008).
+    expect(st.net.toMajorString()).toBe('411.00');
     expect(SettlementService.reconciles(st)).toBe(true);
 
     // The fee the domain just computed equals the fee stored at purchase time.
@@ -365,7 +365,9 @@ describe('settlement — the statement reconciles against what the database hold
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [payout.rows[0]!.id, line.subOrderId, line.gross.minor, line.commission.minor,
        line.commissionSource, line.commissionBps, line.shipping.minor,
-       line.gross.minus(line.commission).minor]);
+       // The statement's own net, not a formula retyped here. Retyping it is
+       // how a test starts agreeing with itself instead of with the code.
+       line.net.minor]);
 
     // A deliberately unbalanced line must be refused by the CHECK constraint.
     let refused = '';

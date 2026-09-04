@@ -49,7 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql']) {
+  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql']) {
     await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
   }
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
@@ -110,8 +110,8 @@ beforeAll(async () => {
       // Delivery details are NOT NULL on sub_orders since 0004: a house cannot
       // read the parent order, so what it needs to ship lives on its own row.
       `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,state,
-         recipient_name,recipient_phone,governorate,city,area,street,building)
-       VALUES ($1,$2,$3,38000,5000,'awaiting_seller',
+         delivery_fulfilled_by,recipient_name,recipient_phone,governorate,city,area,street,building)
+       VALUES ($1,$2,$3,38000,5000,'awaiting_seller','seller',
          'أحمد','01009998877','cairo','مدينة نصر','السابع','عباس','14') RETURNING id`,
       [o.rows[0]!.id, ids[slug], 'DY-' + slug + '-A']);
     ids[slug + ':sub'] = so.rows[0]!.id;

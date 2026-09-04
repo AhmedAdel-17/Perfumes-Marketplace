@@ -10,6 +10,15 @@
  */
 import { pgEnum } from 'drizzle-orm/pg-core';
 
+/**
+ * Who books and pays the courier — and therefore who receives the delivery fee.
+ *
+ * Whoever bears the cost receives the revenue. Held per house and snapshotted
+ * per sub-order, because both arrangements will run at once the moment the
+ * courier integration covers some houses and not others.
+ */
+export const deliveryFulfilledBy = pgEnum('delivery_fulfilled_by', ['seller', 'platform']);
+
 /* ----------------------------------------------------------------- sellers */
 export const sellerStatus = pgEnum('seller_status', [
   'applied', 'under_review', 'approved', 'live', 'suspended', 'terminated',

@@ -186,6 +186,8 @@ export const sellerRouter = router({
         periodEnd: payout.periodEnd.toISOString(),
         grossPiastres: payout.gross.minor,
         commissionPiastres: payout.commission.minor,
+        // Delivery REIMBURSED to this house, not deducted from it.
+        shippingPiastres: payout.lines.reduce((sum, l) => sum + l.shipping.minor, 0),
         netPiastres: payout.net.minor,
         disputeDeadline: payout.disputeDeadline?.toISOString() ?? null,
         lines: payout.lines.map((l) => ({

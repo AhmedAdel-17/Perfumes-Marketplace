@@ -71,6 +71,8 @@ interface SubOrderRow {
   deliveredAt?: Date;
   /** Courier has remitted the cash. NOT implied by delivery. */
   codRemitted: boolean;
+  /** Snapshotted at placement — who booked and paid the courier. */
+  deliveryFulfilledBy: 'seller' | 'platform';
   codRemittedAt?: Date;
 }
 
@@ -298,6 +300,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             commissionSource: sub.lineItems[0]!.commission.source,
             commissionBps: sub.lineItems[0]!.commission.bps,
             codRemitted: false,
+            deliveryFulfilledBy: 'seller',
           });
         }
 
@@ -484,6 +487,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             commissionBps: r.commissionBps,
             ...(r.deliveredAt ? { deliveredAt: r.deliveredAt } : {}),
             cashInHand: r.codRemitted,
+            deliveryFulfilledBy: r.deliveryFulfilledBy,
           }));
       },
     };

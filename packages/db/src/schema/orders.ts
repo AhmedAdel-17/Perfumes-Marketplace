@@ -19,6 +19,7 @@ import { customers } from './identity';
 import { sellers } from './sellers';
 import { products } from './catalogue';
 import {
+  deliveryFulfilledBy,
   governorate, orderSource, paymentMethod, paymentState,
   reasonCode, subOrderState, touchChannel, transitionActor,
 } from './enums';
@@ -109,6 +110,13 @@ export const subOrders = pgTable('sub_orders', {
    * also a SNAPSHOT: this is where the parcel was sent, and a later edit to the
    * customer's saved address must not rewrite it.
    */
+  /**
+   * Snapshotted at placement, like the commission rate: changing a house's
+   * delivery arrangement tomorrow must not rewrite what it was owed for an
+   * order it shipped last month.
+   */
+  deliveryFulfilledBy: deliveryFulfilledBy('delivery_fulfilled_by').notNull(),
+
   recipientName: text('recipient_name').notNull(),
   recipientPhone: text('recipient_phone').notNull(),
   governorate: governorate('governorate').notNull(),

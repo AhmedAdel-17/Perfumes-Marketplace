@@ -198,6 +198,19 @@ const orderRepository = (db: Executor): OrderRepository => ({
     const orderId = order!.id;
     const subOrderIds: string[] = [];
 
+    // Read once, outside the loop. N queries inside it would make a three-house
+    // order three round trips slower for a value that cannot change between
+    // them — and this runs on the checkout path.
+    const sellerIds = [...new Set([...sellerIdBySlug.values()])];
+    const deliveryModes = new Map<string, 'seller' | 'platform'>();
+    if (sellerIds.length > 0) {
+      const modes = await db
+        .select({ id: schema.sellers.id, mode: schema.sellers.deliveryFulfilledBy })
+        .from(schema.sellers)
+        .where(inArray(schema.sellers.id, sellerIds));
+      for (const row of modes) deliveryModes.set(row.id, row.mode);
+    }
+
     for (const sub of draft.subOrders) {
       const sellerId = sellerIdBySlug.get(sub.sellerId);
       if (!sellerId) throw new Error(`No seller id for slug "${sub.sellerId}"`);
@@ -212,6 +225,11 @@ const orderRepository = (db: Executor): OrderRepository => ({
         // The house cannot read the parent order — that would show it what the
         // customer bought from competing houses — so everything it needs to
         // pack and label is written onto its own row. Migration 0004.
+        //
+        // The delivery arrangement is snapshotted here for the same reason the
+        // commission rate is: what the house is owed for a parcel it sent this
+        // month must not change when its arrangement changes next month.
+        deliveryFulfilledBy: deliveryModes.get(sellerId) ?? 'seller',
         recipientName: draft.contactName,
         recipientPhone: draft.contactPhone,
         governorate: a.governorate,
@@ -542,6 +560,7 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
         shipping: Money.fromMinor(r.shippingPiastres),
         commissionSource: (snap?.source ?? 'unknown') as OrderSource,
         commissionBps: snap?.bps ?? 0,
+        deliveryFulfilledBy: r.deliveryFulfilledBy,
         ...(r.deliveredAt ? { deliveredAt: r.deliveredAt } : {}),
         cashInHand: remitted.get(r.id) ?? false,
       };

@@ -180,17 +180,21 @@ describe('the payout formula, held identically in both layers', () => {
     //
     // Two layers holding the same rule is defence in depth only while a test
     // proves they hold the SAME rule.
-    const sql = readFileSync(join(MIGRATIONS, '0001_constraints.sql'), 'utf8');
+    // 0008 REPLACED the constraint, so the current rule is the last definition
+    // across all migrations, not the one in 0001. Reading only the earliest
+    // file would assert a rule the database stopped enforcing.
+    const sql = [
+      '0001_constraints.sql', '0008_delivery_fulfilment.sql',
+    ].map((f) => readFileSync(join(MIGRATIONS, f), 'utf8')).join(String.fromCharCode(10));
     const constraint = sql
       .replace(/\s+/g, ' ')
-      .match(/payout_lines_net_reconciles\s+CHECK \(([^)]*)\)/i);
+      .match(/payout_lines_net_reconciles\s+CHECK \(([^)]*)\)(?![\s\S]*payout_lines_net_reconciles\s+CHECK)/i);
 
     expect(constraint, 'the CHECK must still exist').not.toBeNull();
     const expression = constraint![1]!.replace(/\s+/g, ' ').trim();
-    expect(expression).toBe('net_piastres = gross_piastres - commission_piastres');
-    // Deliberately NOT a regex that would also pass for a formula mentioning
-    // shipping: the whole point is that this is exact.
-    expect(expression).not.toContain('shipping');
+    expect(expression).toBe(
+      'net_piastres = gross_piastres - commission_piastres + shipping_piastres',
+    );
   });
 
   it('a statement built by the domain satisfies the SQL CHECK, line by line', () => {
@@ -202,13 +206,13 @@ describe('the payout formula, held identically in both layers', () => {
         {
           id: 'a', reference: 'DY-PARITY-A', state: 'delivered',
           merchandise: Money.fromMinor(100_000), shipping: Money.fromMinor(5_500),
-          commissionSource: 'organic_search', commissionBps: 1500,
+          commissionSource: 'organic_search', commissionBps: 1500, deliveryFulfilledBy: 'seller',
           deliveredAt: new Date('2026-09-05T00:00:00Z'), cashInHand: true,
         },
         {
           id: 'b', reference: 'DY-PARITY-B', state: 'returned',
           merchandise: Money.fromMinor(38_000), shipping: Money.fromMinor(5_500),
-          commissionSource: 'storefront_referral', commissionBps: 500,
+          commissionSource: 'storefront_referral', commissionBps: 500, deliveryFulfilledBy: 'seller',
           deliveredAt: new Date('2026-09-06T00:00:00Z'), cashInHand: true,
         },
       ],
@@ -221,8 +225,8 @@ describe('the payout formula, held identically in both layers', () => {
     for (const line of statement.lines) {
       expect(
         line.net.minor,
-        `${line.reference} must satisfy net = gross - commission`,
-      ).toBe(line.gross.minor - line.commission.minor);
+        `${line.reference} must satisfy net = gross - commission + shipping`,
+      ).toBe(line.gross.minor - line.commission.minor + line.shipping.minor);
     }
   });
 });

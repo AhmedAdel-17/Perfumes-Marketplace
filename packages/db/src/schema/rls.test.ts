@@ -72,7 +72,7 @@ beforeAll(async () => {
   await runSql('0000_initial.sql');
   await runSql('0001_constraints.sql');
   await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql');
+  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql');
 
   // Seed as platform, which is the only role that may create this much.
   await db.exec(`SET app.actor_role = 'platform'; SET app.actor_id = '99999999-9999-9999-9999-999999999999';`);
@@ -126,12 +126,12 @@ beforeAll(async () => {
   const DELIVERY = "'أحمد','01009998877','cairo','مدينة نصر','السابع','عباس العقاد','14'";
   ids.ahmedWardSub = (await mk<{ id: string }>(
     `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,
-       recipient_name,recipient_phone,governorate,city,area,street,building)
-     VALUES ($1,$2,'DY-90001-A',38000,4500,${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.wardSeller])).id;
+       delivery_fulfilled_by,recipient_name,recipient_phone,governorate,city,area,street,building)
+     VALUES ($1,$2,'DY-90001-A',38000,4500,'seller',${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.wardSeller])).id;
   ids.ahmedNourSub = (await mk<{ id: string }>(
     `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,
-       recipient_name,recipient_phone,governorate,city,area,street,building)
-     VALUES ($1,$2,'DY-90001-B',45000,5000,${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.nourSeller])).id;
+       delivery_fulfilled_by,recipient_name,recipient_phone,governorate,city,area,street,building)
+     VALUES ($1,$2,'DY-90001-B',45000,5000,'seller',${DELIVERY}) RETURNING id`, [ids.ahmedOrder, ids.nourSeller])).id;
 
   await db.query(
     `INSERT INTO order_line_items (sub_order_id,product_id,product_name,brand_name,sku,volume_ml,

@@ -79,36 +79,45 @@ should be a decision on the record, not an accident. Note it here when made:
 
 ---
 
-## Who receives the delivery fee when the house ships its own parcel?
+## ~~Who receives the delivery fee when the house ships its own parcel?~~ — SETTLED
 
-**Raised 3 September 2026, by a database CHECK constraint refusing a payout line.**
+**Raised 3 September 2026 by a database CHECK constraint. Settled 4 September 2026.**
 
-**Settled for now:** `net = gross − commission`. The house is paid for merchandise minus the
-marketplace fee, and the delivery fee is neither paid to it nor charged to it.
+**The principle: whoever bears the delivery cost receives the delivery revenue.**
 
-**What was wrong before:** the domain computed `gross − commission − shipping`, which deducted
-the delivery fee from the house's merchandise revenue. The customer had already paid that fee to
-the marketplace at checkout, so the house never received it — and was then charged for it anyway.
-Every house would have been underpaid by the delivery fee on every order. On a 380 EGP order with
-55 EGP delivery, that is 55 EGP per order, silently.
+Delivery must be neither a hidden margin nor a hidden loss for either side. This is how every
+merchant-fulfilled marketplace works — Amazon FBM, Etsy, Noon, Jumia — and the reason is not
+convention. The moment the fee stops following the cost, one party is quietly subsidising the
+other and neither can see it in their own numbers.
 
-**Why this is still open.** The current answer assumes the MARKETPLACE pays the courier. Today it
-does not: `manualCourier` means the HOUSE books the courier and pays for it out of its own pocket,
-then the marketplace keeps the delivery fee the customer paid. That is the house paying twice, in
-the other direction.
+**It is modelled, not hardcoded.** `sellers.delivery_fulfilled_by` is `seller` or `platform`,
+snapshotted onto every sub-order at placement:
 
-Three positions are defensible and only the founder can choose:
-
-| | Formula | Who is out of pocket |
+| Arrangement | Who books the courier | Payout line |
 |---|---|---|
-| **A** *(current)* | `gross − commission` | The house, while it books its own courier |
-| **B** | `gross − commission + shipping` | Nobody — the fee is passed through to whoever ships |
-| **C** | `gross − commission`, marketplace books the courier | Nobody — requires the Bosta integration |
+| `seller` *(all houses today)* | the house | `net = gross − commission + shipping` |
+| `platform` *(when Bosta lands)* | the marketplace | `net = gross − commission` |
 
-**B is correct for today's operating model** and is a one-line change plus a migration to the
-CHECK constraint. **C is the intended end state** — doc 03 §4 treats delivery as a
-"platform-funded delivery subsidy", which only makes sense if the platform is paying the courier.
+`payout_lines.shipping_piastres` means **delivery reimbursed to this house** — the fee the
+customer paid, passed through when the house shipped, and zero when the marketplace did. Defining
+it that way keeps ONE formula for both arrangements instead of a conditional, and a conditional
+inside a CHECK constraint is a rule with a branch nobody tests.
 
-**Trigger:** decide before the first real payout run, because the first statement a house receives
-sets its expectation of what "net" means. Changing it afterwards reads as the marketplace altering
-the deal.
+**Why a column rather than a constant.** When the courier integration covers some houses and not
+others, both arrangements run at once. A hardcoded rule would make that migration a schema change
+plus a renegotiation with every seller; a per-house setting makes it a row update.
+
+**Why snapshotted.** Same reason the commission rate is. A house that moves to platform-fulfilled
+delivery next month must still be reimbursed for the parcels it paid to send this month. Changing
+an arrangement must never rewrite what was already owed.
+
+**What deliberately did not change:** commission is charged on merchandise, never on the delivery
+fee. A platform whose revenue rises with the cost of delivery has an incentive pointing the wrong
+way.
+
+**Where it was wrong.** Both directions at once — the domain deducted shipping from the house's
+payout while the house was also paying the courier itself and the marketplace kept the fee the
+customer paid. The house was charged twice for a delivery it performed. Migration 0008 and a
+parity test that reads the live CHECK out of the migrations now hold the two layers together.
+
+---

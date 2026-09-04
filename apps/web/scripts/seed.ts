@@ -137,7 +137,7 @@ async function main() {
 
   const pg = new PGlite(DATA_DIR);
 
-  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql']) {
+  for (const file of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql']) {
     const sql = readFileSync(join(MIGRATIONS, file), 'utf8').replace(/--> statement-breakpoint/g, '');
     try {
       await pg.exec(sql);
