@@ -14,7 +14,7 @@ PostgreSQL on Supabase · one shared package holding all money logic.
 | Marketplace website | Next.js (App Router) + React + TypeScript + Tailwind | Vercel |
 | Brand storefronts | Same app, own routes and metadata | Vercel |
 | Seller portal | Next.js — separate app, same repo | Vercel |
-| Admin + CMS | Next.js + Payload CMS mounted inside | Vercel |
+| Admin + CMS | Next.js — content tables in the platform console (§11) | Vercel |
 | Buyer mobile app | Expo (React Native) — iOS + Android | App Store / Play |
 | Seller mobile app | Expo (React Native) — iOS + Android | App Store / Play |
 
@@ -133,7 +133,7 @@ Recorded honestly so a later change is a decision, not a surprise.
 | Choice | Fallback | Cost to reverse |
 |---|---|---|
 | **NativeWind** | Generated React Native theme object from the same tokens | Low — same design, more code |
-| **Payload CMS** | Build content tables in the admin app | ~3 weeks. It never owns commerce data, so removal cannot touch orders or money. |
+| ~~**Payload CMS**~~ **→ taken: content tables in the platform console** (4 Sep 2026, §11) | Payload, if the content model outgrows what we build | Low while the model stays small — the block schema is ours either way |
 | **SMS aggregator** | Swap providers | Low by design — OTP is built provider-agnostic. Least certain item in the stack; Egyptian deliverability is hard to predict. |
 
 ---
@@ -148,3 +148,50 @@ Recorded honestly so a later change is a decision, not a surprise.
 - **In-app account deletion is mandatory** (Apple guideline 5.1.1(v)).
 - **Marketplace app review** asks about UGC moderation and seller verification. Designed
   in, not bolted on.
+
+---
+
+## 11. The CMS: why not Payload, after all
+
+Recorded 4 September 2026, when the CMS came up the roadmap. §9 listed Payload
+as the choice with "build content tables in the admin app" as the documented
+fallback. **We are taking the fallback**, deliberately, and this is the
+reasoning so a later reversal is a decision rather than a rediscovery.
+
+Payload's value is an editing UI you do not have to build. Everything else it
+brings, this repository already has: a schema and migration system (Drizzle), a
+security model (RLS keyed on `app.actor_role`), staff identity and roles
+(`platform_staff`), an audit trail, and a design system.
+
+Against that, four costs specific to THIS product:
+
+1. **Language and direction.** Payload's admin is English-first and LTR-first.
+   Ours is an Arabic-first, RTL-native product where the interface is the
+   proposition. Re-skinning someone else's admin to that standard is a fight
+   with a framework, repeated at every upgrade.
+
+2. **Two security models in one database.** Every read in this system passes
+   through RLS bound to a GUC set per request. Payload connects with its own
+   pool as the owning role. Content is platform-owned so the exposure is
+   modest — but "modest" is how a second security model always starts, and the
+   moment content references a seller it stops being modest.
+
+3. **Two migration systems in one Postgres.** Payload owns its tables and
+   evolves them on its own schedule. Drizzle owns ours. Nothing goes wrong
+   until a deploy orders them wrongly, and then it goes wrong in the one place
+   nobody wants surprises.
+
+4. **The block schema is ours either way.** A luxury brand does not hand an
+   editor a rich-text box: arbitrary HTML is both an injection surface and a
+   design surface, and the second is the one that actually breaks. Whichever
+   CMS we run, the content model is a closed set of blocks that the design
+   system renders. That is the hard part, and Payload does not do it for us.
+
+What we forgo: media library, scheduled publishing, and preview — all of which
+we would eventually build anyway, and two of which are one afternoon each.
+
+**The reversal condition, stated in advance.** If the content model grows
+beyond roughly a dozen block types, or non-technical editors need to create
+NEW page templates rather than fill in existing ones, the editing UI stops
+being an afternoon and Payload becomes the cheaper answer. The block schema
+transfers; the console screens do not.

@@ -8,26 +8,13 @@
  * SECURITY on, so the policies bind even the table owner.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { applyMigrations } from '../migrate';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let db: PGlite;
 const MIGRATIONS = join(import.meta.dirname, '../../migrations');
-
-/**
- * Variadic on purpose.
- *
- * It used to take exactly one file, so `runSql(a, b)` silently applied only the
- * first — a migration was skipped with no error and the failure surfaced far
- * away as a missing column. That happened twice. A signature that quietly
- * discards an argument is a trap, and the fix is the signature, not the caller.
- */
-const runSql = async (...files: string[]) => {
-  for (const f of files) {
-    await db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
-  }
-};
 
 /** Run a query as a given actor. This is what an authenticated request looks like. */
 const asActor = async <T>(role: string, actorId: string | null, sql: string, params: unknown[] = []) => {
@@ -69,10 +56,7 @@ const ids = {
 
 beforeAll(async () => {
   db = new PGlite();
-  await runSql('0000_initial.sql');
-  await runSql('0001_constraints.sql');
-  await runSql('0002_rls.sql');
-  await runSql('0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql');
+  await applyMigrations(db);
 
   // Seed as platform, which is the only role that may create this much.
   await db.exec(`SET app.actor_role = 'platform'; SET app.actor_id = '99999999-9999-9999-9999-999999999999';`);

@@ -18,8 +18,15 @@ export class InvalidTransition extends DomainError {
   constructor(
     readonly from: string,
     readonly to: string,
+    /**
+     * What was being moved. Defaults to the sub-order, which was the only state
+     * machine when this was written — and whose name the message asserted
+     * unconditionally, so the second machine to use it would have reported an
+     * illegal SUB-ORDER transition while refusing to publish a page.
+     */
+    readonly subject: string = 'sub-order',
   ) {
-    super(`Illegal sub-order transition: ${from} → ${to}`);
+    super(`Illegal ${subject} transition: ${from} → ${to}`);
   }
 }
 

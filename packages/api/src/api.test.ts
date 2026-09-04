@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FixedClock } from '@diyar/domain';
-import { DrizzleUnitOfWork, schema, type ActorContext, type DiyarDatabase } from '@diyar/db';
+import { DrizzleUnitOfWork, schema, type ActorContext, type DiyarDatabase, applyMigrations } from '@diyar/db';
 import { appRouter } from './routers/index';
 import { placeOrderSchema, declineSchema, phoneSchema } from './validation';
 import type { ApiContext } from './trpc';
@@ -49,9 +49,7 @@ const caller = (actor: ActorContext, sellerId: string | null = null) => {
 
 beforeAll(async () => {
   pg = new PGlite();
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql']) {
-    await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
-  }
+  await applyMigrations(pg);
   db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
 
   // Seed as platform so the RLS policies permit it.

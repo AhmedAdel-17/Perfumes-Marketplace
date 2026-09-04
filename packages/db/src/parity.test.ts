@@ -14,6 +14,7 @@
  * database and compares them to what the domain believes.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { applyMigrations, migrationFiles } from './migrate';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -41,8 +42,7 @@ const enumValues = async (name: string): Promise<string[]> => {
 
 beforeAll(async () => {
   db = new PGlite();
-  await runSql('0000_initial.sql');
-  await runSql('0001_constraints.sql');
+  await applyMigrations(db);
 }, 120_000);
 
 afterAll(async () => { await db?.close(); });
@@ -126,8 +126,14 @@ describe('the sub-order transition table is the same table twice', () => {
            VALUES ('P-'||substr(gen_random_uuid()::text,1,10),$1,'01001234567','t','cairo','c','a','s','1',
              'unknown',100,0,100,'cod') RETURNING id`, [customer])).rows[0]!.id;
         const sub = (await db.query<{ id: string }>(
-          `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,state)
-           VALUES ($1,$2,'P-'||substr(gen_random_uuid()::text,1,10),100,0,$3::sub_order_state)
+          // The delivery details denormalised onto the sub-order by 0004 are
+          // NOT NULL. This fixture predates them: it ran against a subset of
+          // the migrations, and applying all of them is what surfaced the gap.
+          `INSERT INTO sub_orders (order_id,seller_id,reference,merchandise_piastres,shipping_piastres,state,
+             recipient_name,recipient_phone,governorate,city,area,street,building,
+             delivery_fulfilled_by)
+           VALUES ($1,$2,'P-'||substr(gen_random_uuid()::text,1,10),100,0,$3::sub_order_state,
+             't','01001234567','cairo','c','a','s','1','seller')
            RETURNING id`, [order, seller, from])).rows[0]!.id;
 
         try {
@@ -183,9 +189,13 @@ describe('the payout formula, held identically in both layers', () => {
     // 0008 REPLACED the constraint, so the current rule is the last definition
     // across all migrations, not the one in 0001. Reading only the earliest
     // file would assert a rule the database stopped enforcing.
-    const sql = [
-      '0001_constraints.sql', '0008_delivery_fulfilment.sql',
-    ].map((f) => readFileSync(join(MIGRATIONS, f), 'utf8')).join(String.fromCharCode(10));
+    //
+    // EVERY migration, not a named pair. Naming them meant that the next
+    // migration to touch this constraint would be invisible here — the test
+    // would keep passing against a rule the database had already replaced,
+    // which is the precise failure the file is meant to catch.
+    const sql = migrationFiles()
+      .map((f) => readFileSync(join(MIGRATIONS, f), 'utf8')).join(String.fromCharCode(10));
     const constraint = sql
       .replace(/\s+/g, ' ')
       .match(/payout_lines_net_reconciles\s+CHECK \(([^)]*)\)(?![\s\S]*payout_lines_net_reconciles\s+CHECK)/i);

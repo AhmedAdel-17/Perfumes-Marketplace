@@ -8,6 +8,7 @@
  * Any divergence shows up as the same named case failing on one side only.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { applyMigrations } from './migrate';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,9 +42,7 @@ const harness = async (): Promise<ContractWorld> => {
   // 0002 included deliberately: the adapter now drops to the unprivileged role
   // on every transaction, so the contract runs through RLS exactly as production
   // does rather than against an unguarded database.
-  for (const f of ['0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql', '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql', '0007_platform_staff.sql', '0008_delivery_fulfilment.sql']) {
-    await pg.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
-  }
+  await applyMigrations(pg);
   const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
 
   // Seeding runs as the owner, outside the Unit of Work.

@@ -15,18 +15,13 @@
  * the one nobody has written a test for yet.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { applyMigrations } from '../migrate';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 let db: PGlite;
 const MIGRATIONS = join(import.meta.dirname, '../../migrations');
-
-const runSql = async (...files: string[]) => {
-  for (const f of files) {
-    await db.exec(readFileSync(join(MIGRATIONS, f), 'utf8').replace(/--> statement-breakpoint/g, ''));
-  }
-};
 
 interface Policy {
   tablename: string;
@@ -41,11 +36,7 @@ let policies: Policy[] = [];
 
 beforeAll(async () => {
   db = new PGlite();
-  await runSql(
-    '0000_initial.sql', '0001_constraints.sql', '0002_rls.sql', '0003_checkout.sql',
-    '0004_sub_order_delivery.sql', '0005_checkout_handoff.sql', '0006_tracking_visible.sql',
-    '0007_platform_staff.sql', '0008_delivery_fulfilment.sql',
-  );
+  await applyMigrations(db);
 
   tables = (await db.query<{ relname: string }>(
     `SELECT relname FROM pg_class
