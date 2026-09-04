@@ -36,10 +36,18 @@ export function api(
    * out. Resolving it in one place means no router can confuse the two.
    */
   sellerId: string | null = null,
+  /**
+   * The signed-in operator, from the ops session cookie. Same reasoning as
+   * `sellerId`: an auth user id and a staff id are different identities, and
+   * the one that ends up in a published revision has to be the right one.
+   */
+  platform: { staffId: string; role: string } | null = null,
 ): ApiCaller {
   const ctx: ApiContext = {
     actor,
     sellerId,
+    platformStaffId: platform?.staffId ?? null,
+    platformRole: platform?.role ?? null,
     uow: unitOfWork(actor),
     // The checkout service role. Narrow by construction — see migration 0003.
     checkoutUow: unitOfWork({ role: 'checkout', id: null }),

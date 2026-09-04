@@ -36,10 +36,16 @@ const ids: Record<string, string> = {};
 /** Matches the products seeded below. */
 const MAX_STOCK = 25;
 
-const caller = (actor: ActorContext, sellerId: string | null = null) => {
+const caller = (
+  actor: ActorContext,
+  sellerId: string | null = null,
+  platform: { staffId: string; role: string } | null = null,
+) => {
   const ctx: ApiContext = {
     actor,
     sellerId,
+    platformStaffId: platform?.staffId ?? null,
+    platformRole: platform?.role ?? null,
     uow: new DrizzleUnitOfWork(db, actor),
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     clock: CLOCK,

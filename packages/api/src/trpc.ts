@@ -23,6 +23,19 @@ export interface ApiContext {
    * the two.
    */
   readonly sellerId: string | null;
+  /**
+   * The signed-in operator's `platform_staff` row, and the role on it.
+   *
+   * Resolved once at the composition root for the same reason `sellerId` is:
+   * `actor.id` is an auth user id and a staff id is a different identity.
+   * Publishing records who published, in a NOT NULL column, so a router that
+   * confused the two would either write the wrong author or fail at the
+   * database — and the second is the lucky outcome.
+   *
+   * Both null for anyone who is not platform staff.
+   */
+  readonly platformStaffId: string | null;
+  readonly platformRole: string | null;
   /** Already scoped to the actor, so every query runs under the right RLS policies. */
   readonly uow: UnitOfWork;
   /**

@@ -61,11 +61,25 @@ export interface PassageBlock {
   text: string;
 }
 
+/*
+ * The optional fields below are written `?: T | undefined`, not `?: T`.
+ *
+ * `exactOptionalPropertyTypes` is on, which makes those two genuinely different
+ * types: the second permits the key to be ABSENT, the first also permits it to
+ * be present holding `undefined`. Zod's `.optional()` produces the second, so a
+ * parsed block was not assignable to a domain block and the guard in
+ * `content-validation.ts` caught it on the line whose only job is to catch it.
+ *
+ * Written the wider way here rather than narrowed at the boundary, because this
+ * data arrives as JSON and survives a round trip through JSONB — and the honest
+ * description of a field that may or may not be there, in a shape nobody
+ * controls end to end, is the wider one.
+ */
 export interface PullQuoteBlock {
   kind: 'pull_quote';
   text: string;
   /** Who said it. Absent for an unattributed line of house copy. */
-  attribution?: string;
+  attribution?: string | undefined;
 }
 
 /**
@@ -77,7 +91,7 @@ export interface PullQuoteBlock {
  */
 export interface NoteListBlock {
   kind: 'note_list';
-  items: ReadonlyArray<{ term: string; detail?: string }>;
+  items: ReadonlyArray<{ term: string; detail?: string | undefined }>;
 }
 
 export interface ImageBlock {
@@ -90,7 +104,7 @@ export interface ImageBlock {
    * page is being written rather than by an accessibility audit months later.
    */
   alt: string;
-  caption?: string;
+  caption?: string | undefined;
 }
 
 export interface DividerBlock {

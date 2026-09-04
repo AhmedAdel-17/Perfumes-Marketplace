@@ -22,6 +22,7 @@ import {
   type SubOrderRecord, type SubOrderRepository, type UnitOfWork,
 } from '@diyar/domain';
 import * as schema from './schema/index';
+import { contentRepository } from './content-repository';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -661,6 +662,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   orders: orderRepository(db),
   subOrders: subOrderRepository(db),
   payouts: payoutRepository(db),
+  content: contentRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */

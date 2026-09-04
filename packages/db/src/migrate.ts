@@ -19,8 +19,15 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** Anything with an `exec` — PGlite, or a pg client wrapper. */
-export interface Executor {
+/**
+ * Anything with an `exec` — PGlite, or a pg client wrapper.
+ *
+ * Named `SqlExecutor` rather than `Executor` because the repositories use that
+ * word for something else entirely (a Drizzle database handle), and two
+ * different `Executor` types exported from one package is a collision waiting
+ * to be imported wrongly.
+ */
+export interface SqlExecutor {
   exec(sql: string): Promise<unknown>;
 }
 
@@ -64,7 +71,7 @@ export function migrationFiles(dir: string = MIGRATIONS_DIR): string[] {
  * markers are stripped rather than honoured.
  */
 export async function applyMigrations(
-  db: Executor,
+  db: SqlExecutor,
   options: { dir?: string; onApplied?: (file: string) => void } = {},
 ): Promise<string[]> {
   const dir = options.dir ?? MIGRATIONS_DIR;

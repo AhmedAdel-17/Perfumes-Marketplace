@@ -9,6 +9,8 @@
  * Framework-free, like everything else in this package.
  */
 import { Money } from '../value-objects/money';
+import type { ContentPage } from '../content/page';
+import type { ContentRepository, ContentRevision } from '../ports/content-repository';
 import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, type TransitionRecord } from '../state-machines/sub-order';
 import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
@@ -125,6 +127,12 @@ const cloneStore = (s: Store): Store => ({
 });
 
 export class InMemoryUnitOfWork implements UnitOfWork {
+  private readonly contentPages = new Map<string, ContentPage>();
+
+  private readonly contentRevisions = new Map<string, ContentRevision>();
+
+  private revisionCounter = 0;
+
   private store: Store = emptyStore();
 
   /* ------------------------------------------------------------ seeding */
@@ -528,7 +536,118 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
-    return { sellers, customers, products, orders, subOrders, payouts };
+    /*
+     * Content, in memory.
+     *
+     * Exists so the contract test can run the same cases against this and the
+     * Drizzle adapter. An in-memory double that nobody holds to the same
+     * contract is a double that agrees with itself and with nothing else.
+     */
+    const contentPages = this.contentPages;
+    const contentRevisions = this.contentRevisions;
+    /*
+     * The counter lives on the INSTANCE, reached through this reference.
+     *
+     * It was a local `let` copied in and written back once — which meant it
+     * reset at the start of every transaction, so a second publish produced
+     * `rev-1` again and quietly overwrote the first revision in the Map. The
+     * contract case that keeps history caught it.
+     */
+    const fixture = this;
+
+    const content: ContentRepository = {
+      async list() {
+        return [...contentPages.values()].sort((a, b) => a.slug.localeCompare(b.slug));
+      },
+
+      async findById(id) {
+        return contentPages.get(id) ?? null;
+      },
+
+      async findBySlug(slug) {
+        return [...contentPages.values()].find((p) => p.slug === slug) ?? null;
+      },
+
+      async findLive(slug) {
+        const page = [...contentPages.values()].find((p) => p.slug === slug);
+        if (!page || page.state === 'archived' || !page.publishedRevisionId) return null;
+        const revision = contentRevisions.get(page.publishedRevisionId);
+        if (!revision) return null;
+        // The FROZEN revision, never the draft. Same rule as the adapter.
+        return {
+          slug: page.slug,
+          title: revision.title,
+          blocks: revision.blocks,
+          publishedAt: revision.publishedAt,
+        };
+      },
+
+      async listLive() {
+        return [...contentPages.values()]
+          .filter((p) => p.state !== 'archived' && p.publishedRevisionId)
+          .map((p) => ({
+            slug: p.slug,
+            title: contentRevisions.get(p.publishedRevisionId!)?.title ?? p.title,
+          }))
+          .sort((a, b) => a.slug.localeCompare(b.slug));
+      },
+
+      async create({ slug, title }) {
+        const page: ContentPage = {
+          id: `page-${contentPages.size + 1}`,
+          slug,
+          title,
+          state: 'draft',
+          draftBlocks: [],
+          publishedRevisionId: null,
+        };
+        contentPages.set(page.id, page);
+        return page;
+      },
+
+      async saveDraft(id, { title, blocks }) {
+        const page = contentPages.get(id);
+        if (!page) throw new Error(`No content page ${id}`);
+        contentPages.set(id, { ...page, title, draftBlocks: [...blocks] });
+      },
+
+      async setState(id, state) {
+        const page = contentPages.get(id);
+        if (!page) throw new Error(`No content page ${id}`);
+        contentPages.set(id, { ...page, state });
+      },
+
+      async publish(id, publishedBy) {
+        const page = contentPages.get(id);
+        if (!page) throw new Error(`No content page ${id}`);
+
+        fixture.revisionCounter += 1;
+        const revision: ContentRevision = {
+          id: `rev-${fixture.revisionCounter}`,
+          pageId: id,
+          title: page.title,
+          blocks: [...page.draftBlocks],
+          publishedBy,
+          // Each revision is a distinct instant, so `revisions()` can order
+          // them. A fixed clock would make two publishes indistinguishable and
+          // the history would come back in whatever order the Map iterated.
+          publishedAt: new Date(Date.UTC(2026, 0, 1) + fixture.revisionCounter * 1000),
+        };
+        contentRevisions.set(revision.id, revision);
+        contentPages.set(id, {
+          ...page, publishedRevisionId: revision.id, state: 'published',
+        });
+        return revision;
+      },
+
+      async revisions(pageId) {
+        return [...contentRevisions.values()]
+          .filter((r) => r.pageId === pageId)
+          .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+      },
+    };
+
+    return { sellers, customers, products, orders, subOrders, payouts, content };
   }
 }
 

@@ -1,3 +1,4 @@
+import type { ContentRepository } from './content-repository';
 /**
  * Repository ports.
  *
@@ -393,6 +394,7 @@ export interface Repositories {
   readonly orders: OrderRepository;
   readonly payouts: PayoutRepository;
   readonly subOrders: SubOrderRepository;
+  readonly content: ContentRepository;
 }
 
 /**

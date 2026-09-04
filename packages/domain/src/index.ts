@@ -13,5 +13,7 @@ export * from './specifications/index';
 export * from './ports/clock';
 export * from './ports/repositories';
 export * from './ports/repository-contract';
+export * from './ports/content-contract';
 export * from './testing/in-memory-repositories';
 export * from './errors/index';
+export * from './ports/content-repository';

@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   Address, FixedClock, Money, PlaceOrder,
   repositoryContract, type ContractWorld,
+  contentContract, type ContentContractWorld,
 } from '@diyar/domain';
 import * as schema from './schema/index';
 import { DrizzleUnitOfWork, type DiyarDatabase } from './repositories';
@@ -134,6 +135,39 @@ describe('repository contract — Drizzle + Postgres adapter', () => {
   for (const testCase of repositoryContract) {
     it(testCase.name, async () => {
       await expect(testCase.run(harness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
+
+/**
+ * A world with an operator in it, because a revision records who published it.
+ *
+ * Its own harness rather than an extra field on the other one: the content
+ * cases need a `platform_staff` row and none of the order cases do, and a
+ * fixture that seeds everything for everybody is a fixture where nobody can
+ * tell which row a case actually depends on.
+ */
+const contentHarness = async (): Promise<ContentContractWorld> => {
+  const pg = new PGlite();
+  await applyMigrations(pg);
+  const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
+
+  await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+
+  const [staff] = await db.insert(schema.platformStaff).values({
+    authUserId: PLATFORM, fullName: 'محرّرة', phone: '01000000009', role: 'admin',
+  }).returning();
+
+  return {
+    uow: new DrizzleUnitOfWork(db, { role: 'platform', id: PLATFORM }),
+    staffId: staff!.id,
+  };
+};
+
+describe('content contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of contentContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
     }, 60_000);
   }
 });
