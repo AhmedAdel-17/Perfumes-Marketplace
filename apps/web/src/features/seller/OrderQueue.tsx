@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, data as num } from '@diyar/i18n';
+import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, internal as num } from '@diyar/i18n';
 import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
@@ -109,39 +109,76 @@ function Row({
 
   return (
     <article className="mb-4 border border-hair bg-l1 p-4 lg:p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="latin text-caption tracking-label text-brass">{entry.reference}</span>
+      {/*
+        The card is read in the order the work happens: how long is left, what
+        to put in the box, where it goes. The reference is the least urgent
+        thing on it and used to be the most prominent.
+      */}
+      <header className="flex items-baseline justify-between gap-3 border-b border-hair pb-3">
         <Countdown dueAt={entry.confirmDueAt} state={entry.state} />
-      </div>
+        <span className="latin text-micro tracking-label text-faint">{entry.reference}</span>
+      </header>
 
+      {/* What goes in the box — the largest thing on the card, because it is
+          what the person holding it is looking for. */}
       <ul className="mt-4">
         {entry.items.map((item) => (
-          <li key={item.sku} className="flex justify-between py-1 text-bodyLg">
-            <span>
+          <li key={item.sku} className="flex items-baseline justify-between gap-3 py-1.5">
+            <span className="font-display text-h4">
               {item.name}
-              <span className="text-faint"> · <span className="tnum">{num(item.volumeMl)}</span> مل</span>
+              <span className="ms-2 text-caption text-faint">
+                <span className="tnum">{num(item.volumeMl)}</span> مل
+              </span>
             </span>
-            <span className="tnum text-dim">×{num(item.quantity)}</span>
+            <span className="flex items-baseline gap-2">
+              {item.quantity > 1 && (
+                <span className="rounded-sm bg-brass/15 px-2 py-0.5 text-caption text-brass">
+                  <span className="tnum">×{num(item.quantity)}</span>
+                </span>
+              )}
+              <span className="latin text-micro tracking-label text-faint">{item.sku}</span>
+            </span>
           </li>
         ))}
       </ul>
 
-      {/* Everything needed to pack and label, on the row. A house that has to
-          open a second screen to find the address will keep a paper notebook. */}
-      <div className="mt-4 border-t border-hair pt-3 text-caption leading-relaxed text-dim">
-        <div className="text-bone">{r.name}</div>
-        <div className="tnum latin">{r.phone}</div>
-        <div className="mt-1">
-          {r.building} {r.street}
-          {r.floor && <> · الدور <span className="tnum">{num(Number(r.floor) || 0) || r.floor}</span></>}
-          {r.apartment && <> · شقة <span className="tnum">{r.apartment}</span></>}
+      {/*
+        Everything needed to pack and label, on the row — a house that has to
+        open a second screen to find the address will keep a paper notebook.
+
+        The NAME AND PHONE are the brightest part of this block, because the
+        single most common action a house takes on an order is ringing the
+        customer before dispatch, and the address is read once at the label
+        printer.
+      */}
+      <div className="mt-4 border-t border-hair pt-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <span className="text-bodyLg text-bone">{r.name}</span>
+          <a
+            href={`tel:${r.phone}`}
+            className="tappable latin tnum flex min-h-touch items-center text-bodyLg text-brass transition-opacity duration-base ease-out hover:opacity-press"
+          >
+            {r.phone}
+          </a>
         </div>
-        <div>{r.area} · {r.city} · {GOVERNORATE_AR[r.governorate as keyof typeof GOVERNORATE_AR] ?? r.governorate}</div>
-        {r.landmark && <div className="mt-1 text-faint">علامة: {r.landmark}</div>}
+
+        <address className="mt-2 text-caption not-italic leading-relaxed text-dim">
+          {r.building} {r.street}
+          {r.floor && <> · الدور <span className="tnum">{r.floor}</span></>}
+          {r.apartment && <> · شقة <span className="tnum">{r.apartment}</span></>}
+          <br />
+          {r.area} · {r.city} · {GOVERNORATE_AR[r.governorate as keyof typeof GOVERNORATE_AR] ?? r.governorate}
+          {r.landmark && (
+            <>
+              <br />
+              <span className="text-faint">علامة مميزة: {r.landmark}</span>
+            </>
+          )}
+        </address>
       </div>
 
       <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-3">
-        <span className="text-caption text-faint">{copy.label}</span>
+        <span className="text-caption tracking-label text-faint">{copy.label}</span>
         <span className="text-bodyLg font-semibold">
           <span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span>
           <span className="latin ms-1.5 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
@@ -200,7 +237,7 @@ function Row({
             type="button"
             disabled={busy}
             onClick={() => setDeclining(true)}
-            className="flex h-control items-center justify-center rounded-sm border border-hair px-5 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-[#B5697E] hover:text-[#B5697E]"
+            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-hair px-6 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-[#B5697E] hover:text-[#B5697E]"
           >
             اعتذار
           </button>
@@ -292,10 +329,12 @@ function Countdown({ dueAt, state }: { dueAt: string | null; state: string }) {
       : 'text-faint';
 
   return (
-    <span className={`text-caption tracking-label ${tone}`}>
-      {overdue ? 'تأخّر ' : 'متبقٍ '}
-      {hours > 0 && <><span className="tnum">{num(hours)}</span> س </>}
-      <span className="tnum">{num(minutes)}</span> د
+    <span className={`flex items-baseline gap-1.5 text-bodyLg ${tone}`}>
+      <span className="text-caption tracking-label opacity-80">
+        {overdue ? 'تأخّر' : 'متبقٍ'}
+      </span>
+      {hours > 0 && <span className="tnum font-semibold">{num(hours)}<span className="text-caption font-normal"> س</span></span>}
+      <span className="tnum font-semibold">{num(minutes)}<span className="text-caption font-normal"> د</span></span>
     </span>
   );
 }

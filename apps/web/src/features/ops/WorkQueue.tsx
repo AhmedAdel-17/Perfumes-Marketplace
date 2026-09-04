@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
+import { CURRENCY_LABEL, formatPrice, internal as num } from '@diyar/i18n';
 import { opsMarkDelivered, opsRecordRemittance } from './actions';
 import { fetchWorkQueue } from './queue';
 

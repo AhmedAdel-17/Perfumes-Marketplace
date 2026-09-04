@@ -85,5 +85,21 @@ export const editorial = (n: number, group = true): string =>
   formatNumber(n, { context: 'editorial', group });
 
 /** Data helper: the default everywhere else. */
+/**
+ * Operating tools: the seller portal, ops, CMS and BI.
+ *
+ * Always Western, whatever the context — editorial numerals are a
+ * customer-facing brand device and a house counting its own orders is not
+ * being marketed to.
+ *
+ * It exists as its own helper rather than being reached through `data()`
+ * because those calls landed on the right digits for the wrong reason: nothing
+ * in them said "internal", so a later change to `editorial()` in the seller
+ * portal would have silently broken the rule while every test stayed green.
+ * A call site should state which rule it is obeying.
+ */
+export const internal = (n: number, group = true): string =>
+  formatNumber(n, { context: 'data', surface: 'internal', group });
+
 export const data = (n: number, group = true): string =>
   formatNumber(n, { context: 'data', group });

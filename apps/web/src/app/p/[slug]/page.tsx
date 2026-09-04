@@ -138,37 +138,49 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   />
                 </div>
 
-                {/* ----------------------------------------------- evolution */}
-                <div className="-mx-5 lg:mx-0">
-                  <EvolutionCurve
-                    topCount={product.notesTop.length}
-                    heartCount={product.notesHeart.length}
-                    baseCount={product.notesBase.length}
-                  />
-                </div>
-
-                {/* -------------------------------------------------- meters */}
-                {(product.longevity || product.projection) && (
-                  <section className="mt-8">
-                    <h2 className="latin mb-4 text-micro tracking-label text-faint">PERFORMANCE</h2>
-                    {product.longevity && <PerformanceMeter label="الثبات" band={product.longevity} />}
-                    {product.projection && <PerformanceMeter label="الانتشار" band={product.projection} />}
-                  </section>
-                )}
-
-                {/* --------------------------------------------------- house
-                    Brand independence (doc 01 §6): the seller stays visible
-                    everywhere. Never flatten houses into anonymous SKUs. */}
-                <section className="mt-8 border border-hair bg-l1 p-4 lg:p-5">
-                  <div className="latin mb-2 text-micro tracking-label text-brass">THE HOUSE</div>
-                  <div className="font-display text-h4 lg:text-h3">{product.brandName}</div>
-                  <p className="mt-2 text-caption leading-relaxed text-faint lg:text-small">
-                    تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
-                    <span className="tnum">{num(days)}</span> إلى{' '}
-                    <span className="tnum">{num(days + 1)}</span> {plural(days + 1, DAY)}.
-                  </p>
-                </section>
               </div>
+            </div>
+          </div>
+
+          {/*
+            Below the split, full width.
+
+            The evolution curve, the performance bands and the house block used
+            to sit inside the 5-of-12 detail column, which made that column run
+            four times the height of the media beside it and squeezed a
+            time-series chart into 380 pixels. A chart of eight hours needs
+            width more than any other element on this page, and the column it
+            was in was the narrowest place available.
+          */}
+          <div className="mt-8 px-5 lg:mt-[72px] lg:grid lg:grid-cols-12 lg:gap-8 lg:px-0">
+            <div className="lg:col-span-7">
+              <EvolutionCurve
+                topCount={product.notesTop.length}
+                heartCount={product.notesHeart.length}
+                baseCount={product.notesBase.length}
+              />
+            </div>
+
+            <div className="lg:col-span-5">
+              {(product.longevity || product.projection) && (
+                <section className="mt-8 lg:mt-0">
+                  <h2 className="latin mb-4 text-micro tracking-label text-faint">PERFORMANCE</h2>
+                  {product.longevity && <PerformanceMeter label="الثبات" band={product.longevity} />}
+                  {product.projection && <PerformanceMeter label="الانتشار" band={product.projection} />}
+                </section>
+              )}
+
+              {/* Brand independence (doc 01 §6): the seller stays visible
+                  everywhere. Never flatten houses into anonymous SKUs. */}
+              <section className="mt-8 border border-hair bg-l1 p-4 lg:p-5">
+                <div className="latin mb-2 text-micro tracking-label text-brass">THE HOUSE</div>
+                <div className="font-display text-h4 lg:text-h3">{product.brandName}</div>
+                <p className="mt-2 text-caption leading-relaxed text-faint lg:text-small">
+                  تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
+                  <span className="tnum">{num(days)}</span> إلى{' '}
+                  <span className="tnum">{num(days + 1)}</span> {plural(days + 1, DAY)}.
+                </p>
+              </section>
             </div>
           </div>
 
@@ -179,12 +191,22 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 من دور أخرى
               </h2>
 
-              {/* A rail that scrolls on a phone and a grid that does not on a
-                  desktop: horizontal scrolling with a mouse is a penalty, not a
-                  gesture. */}
+              {/*
+                A rail that scrolls on a phone and a grid that does not on a
+                desktop: horizontal scrolling with a mouse is a penalty, not a
+                gesture.
+
+                The tiles are capped in WIDTH rather than sharing the row, so a
+                short list of suggestions stays a rail instead of becoming a
+                second catalogue.
+              */}
               <div className="flex gap-3 overflow-x-auto px-5 pb-2 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
+                {/* A rail tile has a SIZE, not a share of the width. Letting two
+                    of them divide 1240px produced a pair of 740px-tall bottles
+                    that dwarfed the product being viewed — a suggestion louder
+                    than the thing it is suggesting about. */}
                 {others.map((p) => (
-                  <div key={p.id} className="w-[148px] flex-none lg:w-auto">
+                  <div key={p.id} className="w-[148px] flex-none lg:w-full lg:max-w-[240px]">
                     <ProductTile product={p} />
                   </div>
                 ))}

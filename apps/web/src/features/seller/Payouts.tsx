@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
+import { CURRENCY_LABEL, formatPrice, internal as num } from '@diyar/i18n';
 import { fetchPayouts, fetchStatement } from './actions';
 
 type Payouts = NonNullable<Awaited<ReturnType<typeof fetchPayouts>>>;

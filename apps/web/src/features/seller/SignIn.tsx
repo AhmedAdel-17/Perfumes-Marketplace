@@ -24,15 +24,31 @@ export function SellerSignIn() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /*
+    Every path clears `busy` and every failure says something.
+
+    Both forms used to call the server action bare: an exception propagated out
+    of the handler, `setBusy(false)` never ran, and the button stayed disabled
+    with no message. The form was dead and looked merely slow — the worst
+    failure state a sign-in can have, because the person keeps pressing.
+
+    Found when the ops action threw on a schema problem: the screen showed
+    nothing at all, and the bug looked like a missing step rather than a crash.
+  */
   const submitPhone = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
     setError(null);
-    const result = await requestSellerCode(phone);
-    if (result.ok) setStep('code');
-    else setError(result.message);
-    setBusy(false);
+    try {
+      const result = await requestSellerCode(phone);
+      if (result.ok) setStep('code');
+      else setError(result.message);
+    } catch {
+      setError('تعذّر الاتصال. حاول مرّة أخرى.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitCode = async (event: React.FormEvent) => {
@@ -40,12 +56,20 @@ export function SellerSignIn() {
     if (busy) return;
     setBusy(true);
     setError(null);
-    const result = await verifySellerCode(phone, code);
-    if (result.ok) router.push('/seller/orders');
-    else {
+    try {
+      const result = await verifySellerCode(phone, code);
+      if (result.ok) {
+        // Deliberately leaves `busy` set: the navigation is the next thing that
+        // happens, and re-enabling the button during it invites a second
+        // submit against a code that has already been spent.
+        router.push('/seller/orders');
+        return;
+      }
       setError(result.message);
-      setBusy(false);
+    } catch {
+      setError('تعذّر الاتصال. حاول مرّة أخرى.');
     }
+    setBusy(false);
   };
 
   return (

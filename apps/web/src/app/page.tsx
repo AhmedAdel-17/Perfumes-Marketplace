@@ -143,11 +143,23 @@ export default async function Home() {
               لم تُنشر أي عطور بعد. الدور الأولى قيد التوثيق.
             </p>
           ) : (
-            /* Two columns on a phone, rising to four on a wide monitor. The tile
-               is width-agnostic, so this line is the ONLY place the column count
-               is decided. The stagger caps at four so a long catalogue does not
-               animate for three seconds. */
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:gap-x-7 lg:gap-y-[68px] xl:grid-cols-4">
+            /*
+              Two columns on a phone, rising to four on a wide monitor — but
+              never more columns than there are products.
+              
+              A four-column grid holding three items leaves a hole the width of
+              a product and reads as a layout fault rather than a short
+              catalogue. Capping at the count keeps the row full at every size,
+              and the cap stops mattering the moment there are four listings.
+              The tile is width-agnostic, so this is the only place the column
+              count is decided.
+            */
+            <div className={[
+              'grid gap-x-4 gap-y-8 lg:gap-x-7 lg:gap-y-[68px]',
+              products.length === 1 ? 'grid-cols-1 max-w-[420px]' : 'grid-cols-2',
+              products.length >= 3 ? 'sm:grid-cols-3' : '',
+              products.length >= 4 ? 'xl:grid-cols-4' : '',
+            ].join(' ')}>
               {products.map((p, i) => (
                 <Reveal key={p.id} delay={Math.min(i, 3) * 90}>
                   <ProductTile product={p} />

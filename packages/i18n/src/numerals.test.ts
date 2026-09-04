@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CURRENCY_LABEL, data, editorial, formatNumber, formatPrice } from './numerals';
+import { CURRENCY_LABEL, data, editorial, formatNumber, formatPrice, internal } from './numerals';
 import { t } from './index';
 
 describe('the numeral rule — Arabic-Indic is editorial, Western is data', () => {
@@ -83,5 +83,27 @@ describe('copy layer', () => {
     expect(t('cart.eachHouseShips')).toContain('كل دار تشحن طلبها بنفسها');
     expect(t('order.yourOrderOurResponsibility')).toContain('مسؤوليتنا');
     expect(t('seller.weDontChargeForDemandWeDidntCreate')).toContain('لم نصنع طلبه');
+  });
+});
+
+describe('operating tools always get Western digits', () => {
+  it('ignores the editorial context on an internal surface', () => {
+    // The seller portal, ops, CMS and BI are tools, not brand surfaces. A house
+    // counting its own orders is not being marketed to.
+    expect(formatNumber(3, { context: 'editorial', surface: 'internal' })).toBe('3');
+    expect(formatNumber(1250, { context: 'editorial', surface: 'internal' })).toBe('1,250');
+  });
+
+  it('internal() says which rule it obeys, rather than arriving there by luck', () => {
+    // Those call sites used data(), which gives the same digits for a different
+    // reason. Nothing in them said "internal", so a later change to editorial()
+    // would have broken the rule with every test still green.
+    expect(internal(3)).toBe('3');
+    expect(internal(3)).toBe(formatNumber(3, { context: 'data', surface: 'internal' }));
+  });
+
+  it('still gives a CUSTOMER editorial numerals, which is the whole distinction', () => {
+    expect(editorial(3)).toBe('٣');
+    expect(internal(3)).not.toBe(editorial(3));
   });
 });
