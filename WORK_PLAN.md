@@ -30,7 +30,7 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
       rings, heading order, leaked enums. CLEAN.
 - [x] 2.9 CLS 0. Bundle 102 KB shared + 2-6 KB/route. Dropped 3 unused font weights and gave every family a real Arabic fallback stack — swap-period text was resolving to Times on some Android builds.
 
-## 3. QA, as a senior QA engineer  ⬜
+## 3. QA, as a senior QA engineer  ✅
 
 - [x] 3.1 38 end-to-end tests: buyer, seller, ops, in Chrome
 - [x] 3.2 Every control exercised — stepper at its floor, dispatch below its minimum, decline path, empty bag, wrong code
@@ -39,7 +39,7 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [x] 3.5 Double-tap proven at the HOUSE, not the confirmation; two tabs; sign-out
 - [x] 3.6 The quote reconciles against summary AND detail, and survives checkout, confirmation and a database round trip
 - [x] 3.7 Authorisation matrix in the browser; 25 policy-shape tests over every table, present and future
-- [ ] 3.8 Fix everything found, re-run, record what was found and why it was missed
+- [x] 3.8 All fixed and re-run. QA_REPORT.md records each finding and why it survived
 
 ## 4. CMS  ⬜
 
