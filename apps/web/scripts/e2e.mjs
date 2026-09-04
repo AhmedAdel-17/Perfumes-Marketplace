@@ -85,6 +85,21 @@ async function buyButton(page) {
   return { button, enabled: false };
 }
 
+/**
+ * Every money figure on the page, in piastres, in the order it is rendered.
+ *
+ * Prices are Western digits with thousands separators and a trailing EGP, and
+ * always two decimals — the numerals module renders money as `data`, never as
+ * editorial, precisely so it can be read and compared rather than admired.
+ */
+async function moneyOnScreen(page) {
+  const text = await page.locator('main').innerText();
+  return [...text.matchAll(/([\d,]+(?:\.\d{1,2})?)\s*EGP/g)]
+    .map((m) => Math.round(Number(m[1].replace(/,/g, '')) * 100));
+}
+
+const piastres = (n) => `${(n / 100).toFixed(2)} EGP`;
+
 async function addToBag(page, slug) {
   await page.goto(`${BASE}/p/${slug}`, { waitUntil: 'networkidle' });
   const { button, enabled } = await buyButton(page);
@@ -418,6 +433,100 @@ try {
       (await shopper.locator('main').innerText()).includes('لا يوجد طلب مطابق'),
       'an unknown reference and a wrong phone must be indistinguishable',
     );
+  });
+
+  /* ============================================================== the money */
+  group('the same figure survives four screens and a database');
+
+  /**
+   * A marketplace can survive a wrong colour. It cannot survive a total that
+   * changes between the bag and the door, and the arithmetic that produces it
+   * crosses a currency type, a settlement service, a database CHECK, four
+   * server components and a client store. Every one of those has its own tests.
+   * None of them can tell you the customer was quoted the same number twice.
+   */
+  let quoted = null;
+
+  await test('the bag totals its own lines', async () => {
+    await shopper.evaluate(() => localStorage.removeItem('diyar.cart.v1'));
+    await addToBag(shopper, inStock[0]);
+    await addToBag(shopper, inStock[1]);
+    await shopper.goto(`${BASE}/cart`, { waitUntil: 'networkidle' });
+    await shopper.waitForTimeout(2200);
+
+    const figures = await moneyOnScreen(shopper);
+    assert(figures.length >= 5, `expected lines, deliveries and a summary, saw ${figures.length}`);
+
+    /*
+     * The bag states the money TWICE — once as detail (a total per line, a
+     * delivery per house) and once as a summary (merchandise, delivery, total).
+     * That is deliberate: the summary is what the customer checks, the detail
+     * is what they argue with.
+     *
+     * Which makes this the strongest arithmetic assertion on the site. Both
+     * halves must land on the same number, so a mistake in either one is
+     * visible here rather than at the door.
+     */
+    quoted = figures.at(-1);
+    const [merchandise, delivery] = figures.slice(-3, -1);
+    const detail = figures.slice(0, -3).reduce((a, b) => a + b, 0);
+
+    equal(piastres(merchandise + delivery), piastres(quoted), 'the summary against the total');
+    equal(piastres(detail), piastres(quoted), 'the detail against the total');
+  });
+
+  await test('checkout quotes the bag, to the piastre', async () => {
+    await shopper.goto(`${BASE}/checkout`, { waitUntil: 'networkidle' });
+    await shopper.waitForTimeout(1800);
+    const figures = await moneyOnScreen(shopper);
+    equal(piastres(figures.at(-1)), piastres(quoted), 'the checkout total against the bag');
+  });
+
+  let moneyReference = null;
+
+  await test('the confirmation states the same number', async () => {
+    await fillCheckout(shopper, { phone: '01044445555' });
+    await shopper.locator('button[type="submit"]').click();
+    await shopper.waitForTimeout(4500);
+
+    const text = await shopper.locator('main').innerText();
+    moneyReference = text.match(/DY-[A-Z0-9]{8}/)?.[0] ?? null;
+    assert(moneyReference, 'the order must have been placed');
+
+    const figures = await moneyOnScreen(shopper);
+    assert(figures.length > 0, 'the confirmation must state what is owed');
+    assert(
+      figures.some((f) => piastres(f) === piastres(quoted)),
+      `the confirmation shows ${figures.map(piastres).join(', ')}, quoted ${piastres(quoted)}`,
+    );
+  });
+
+  await test('and so does the tracking page, after a database round trip', async () => {
+    // This is the one that crosses the persistence boundary: the figures here
+    // were written as integer piastres, read back, and re-formatted. A float
+    // anywhere along that path shows up as a total ending in .9999.
+    await shopper.goto(`${BASE}/order`, { waitUntil: 'networkidle' });
+    await fill(shopper, 'رقم الطلب', moneyReference);
+    await fill(shopper, 'رقم الموبايل', '01044445555');
+    await shopper.locator('button[type="submit"]').click();
+    await shopper.waitForTimeout(3000);
+
+    const figures = await moneyOnScreen(shopper);
+    equal(piastres(figures.at(-1)), piastres(quoted), 'the tracked total against the quote');
+
+    // And it still reconciles against its own parts on the far side.
+    const parts = figures.slice(0, -1).reduce((a, b) => a + b, 0);
+    equal(piastres(parts), piastres(quoted), 'the tracked total against its own lines');
+  });
+
+  await test('no figure carries a rounding artefact', async () => {
+    // Money is integer piastres end to end. A figure that reaches the screen
+    // with more than two decimals, or as .9999, means something along the way
+    // did the arithmetic in floating point.
+    const text = await shopper.locator('main').innerText();
+    const suspicious = [...text.matchAll(/[\d,]+\.(\d{3,})\s*EGP/g)].map((m) => m[0]);
+    equal(suspicious.length, 0, `figures with more than two decimals: ${suspicious.join(', ')}`);
+    assert(!/\.9{3,}|\.0{2,}\d/.test(text), 'a figure shows a floating-point artefact');
   });
 
   /* ================================================== concurrency and tabs */

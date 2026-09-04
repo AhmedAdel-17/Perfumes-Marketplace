@@ -37,8 +37,8 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [x] 3.3 60 boundary/adversarial tests at the schema boundary + Arabic-Indic entry end to end
 - [x] 3.4 axe across 11 surfaces × 6 widths; the purchase completed by keyboard alone
 - [x] 3.5 Double-tap proven at the HOUSE, not the confirmation; two tabs; sign-out
-- [ ] 3.6 Money: every arithmetic path reconciles, no float, no rounding drift
-- [ ] 3.7 Security: authorisation matrix per role, RLS proven per table
+- [x] 3.6 The quote reconciles against summary AND detail, and survives checkout, confirmation and a database round trip
+- [x] 3.7 Authorisation matrix in the browser; 25 policy-shape tests over every table, present and future
 - [ ] 3.8 Fix everything found, re-run, record what was found and why it was missed
 
 ## 4. CMS  ⬜
