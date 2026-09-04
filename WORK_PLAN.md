@@ -54,7 +54,51 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 Stack decision recorded in TECH_STACK §11 — built here rather than on Payload,
 with the condition under which that should be reversed stated in advance.
 
-Then continue the roadmap phase by phase.
+---
+
+## The remaining MVP gates
+
+Doc 04 §8 lists eight acceptance gates for the MVP. Four are met. The rest are
+the work, in the order below — chosen by what blocks the others, not by size.
+
+| Gate (doc 04 §8) | State |
+|---|---|
+| Seller approved, publishes a product, receives an attributed order, sees a statement | **partial** — orders, attribution and statements work; a house cannot list a product |
+| Customer understands shipping and completes COD checkout | ✅ |
+| Split order produces correct seller tasks and customer tracking | ✅ |
+| Cancelled, refused, returned, failed-payment states reconcile | **partial** — the machine is complete and tested; refused and returned have no screen |
+| Only delivered orders create verified-purchase reviews | **not started** |
+| Admin actions, fee changes and payout adjustments are auditable | **partial** — the table exists; nothing writes to it |
+| Privacy, terms, seller agreement, return policy, prohibited products | **partial** — the CMS can carry them; the prohibited-product control does not exist |
+| Owner sees funnel, seller SLA and contribution without database work | **not started** |
+
+## 5. The seller's catalogue  ⬜
+
+The largest remaining gap, and the one everything else waits on: today every
+product in the system was seeded by hand. A marketplace where the platform
+enters the catalogue is not a marketplace.
+
+- [ ] 5.1 Product draft/review/publish, reusing the content state machine's shape
+- [ ] 5.2 The listing form — notes, concentration, volume, price, stock
+- [ ] 5.3 Platform review before a listing goes live, with coded rejection reasons
+- [ ] 5.4 Prohibited-product controls (gate 7)
+- [ ] 5.5 Stock and price editing on a live listing, with an audit trail
+- [ ] 5.6 Tests, audit, end-to-end
+
+## 6. The audit trail  ⬜
+Nothing writes to `audit_log`. Every platform action, fee change and payout
+adjustment has to land there, and it has to be readable without SQL (gate 6).
+
+## 7. Reviews  ⬜
+Verified purchase only, from delivered orders (gate 5).
+
+## 8. Refused and returned  ⬜
+The state machine handles them; no screen does (gate 4).
+
+## 9. What the owner can see  ⬜
+Funnel, seller SLA, contribution inputs — without touching the database (gate 8).
+
+Then the roadmap's Phase 2, and the mobile apps.
 
 ---
 

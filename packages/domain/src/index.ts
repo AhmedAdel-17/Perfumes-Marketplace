@@ -17,3 +17,6 @@ export * from './ports/content-contract';
 export * from './testing/in-memory-repositories';
 export * from './errors/index';
 export * from './ports/content-repository';
+export * from './catalogue/claims';
+export * from './catalogue/listing';
+export * from './catalogue/completeness';
