@@ -68,10 +68,36 @@ export interface SqlQueryable extends SqlExecutor {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
-const LEDGER = `CREATE TABLE IF NOT EXISTS schema_migrations (
-  filename text PRIMARY KEY,
-  applied_at timestamptz NOT NULL DEFAULT now()
-)`;
+/*
+ * The ledger, and the fact that the application cannot see it.
+ *
+ * It is INFRASTRUCTURE, not application data: it is written by whoever runs
+ * migrations, connected as the owner, and no request ever touches it. So rather
+ * than giving it a policy — which would imply some actor is meant to read it —
+ * the application role is simply not granted anything on it.
+ *
+ * RLS is ENABLED but not FORCED, and that distinction matters here: `FORCE`
+ * binds the table owner too, and the owner is exactly who has to write this row
+ * while running a migration with no actor GUC set. Forcing it would make the
+ * first migration fail on the statement that records the first migration.
+ */
+const LEDGER = [
+  `CREATE TABLE IF NOT EXISTS schema_migrations (
+     filename text PRIMARY KEY,
+     applied_at timestamptz NOT NULL DEFAULT now()
+   )`,
+  'ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY',
+].join(';');
+
+/*
+ * Taking the application's access away, AFTER the migrations have run.
+ *
+ * Migration 0002 ends with `GRANT ... ON ALL TABLES IN SCHEMA public TO
+ * app_user`, which is the right thing for it to do and which sweeps this table
+ * up with the rest. Revoking before that runs achieves nothing — the grant
+ * follows and hands it straight back — so the revoke has to come last.
+ */
+const SEAL_LEDGER = 'REVOKE ALL ON schema_migrations FROM PUBLIC, app_user';
 
 /**
  * Run every migration that has not run yet.
@@ -121,6 +147,11 @@ export async function applyMigrations(
     applied.push(file);
     options.onApplied?.(file);
   }
+
+  // Last, for the reason above. `catch` because a database that has never run
+  // 0002 has no `app_user` to revoke from, and a fresh test database is exactly
+  // that until the migrations finish.
+  await db.exec(SEAL_LEDGER).catch(() => undefined);
 
   return applied;
 }

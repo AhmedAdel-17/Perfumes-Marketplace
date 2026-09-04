@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
   isUsableSlug, movePage, nextStates, objectionsToPublishing, PAGE_STATES,
-  type ContentRole,
+  type ContentRole, type PublishObjection,
 } from '@diyar/domain';
 import { platformProcedure, publicProcedure, router } from '../trpc';
 import { blocksSchema, pageTitleSchema } from '../content-validation';
@@ -103,6 +103,9 @@ export const contentRouter = router({
         slug: page.slug,
         title: page.title,
         state: page.state,
+        // Whether a visitor can reach it, which is NOT `state === 'published'`
+        // — a published page pulled back to draft is still on the site.
+        isLive: page.publishedRevisionId !== null && page.state !== 'archived',
         blocks: page.draftBlocks,
         canMoveTo: nextStates(page.state, role),
         // Shown while editing, so an editor learns what will block publishing
@@ -165,15 +168,36 @@ export const contentRouter = router({
         // comes back as objections, because that is an editor's ordinary
         // working state and not an error.
         const result = movePage(page, input.to, role, ctx.clock);
-        if ('objections' in result) return { published: false, objections: result.objections };
+        if ('objections' in result) {
+          return {
+            objections: result.objections,
+            // Nothing moved, so the page can still do exactly what it could.
+            state: page.state,
+            canMoveTo: nextStates(page.state, role),
+          };
+        }
 
         if (result.moved.publishes) {
           await r.content.publish(input.id, staffOrThrow(ctx));
-          return { published: true, objections: [] };
+        } else {
+          await r.content.setState(input.id, input.to);
         }
 
-        await r.content.setState(input.id, input.to);
-        return { published: false, objections: [] };
+        /*
+         * The moves available FROM THE NEW STATE, answered here.
+         *
+         * The console needs them the instant a move succeeds, and the
+         * alternative was for it to work them out — which would put the
+         * transition table in a screen as well as in the domain. One of the two
+         * copies would eventually be wrong, and it would be the screen: a
+         * button offered that does nothing, which is the exact defect the
+         * seller portal already shipped once.
+         */
+        return {
+          objections: [] as PublishObjection[],
+          state: input.to,
+          canMoveTo: nextStates(input.to, role),
+        };
       });
     }),
 

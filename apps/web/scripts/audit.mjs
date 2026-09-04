@@ -228,6 +228,18 @@ async function auditPage(page, surface, width) {
   const focusless = await page.evaluate(() => {
     const controls = [...document.querySelectorAll('a, button')]
       .filter((e) => e.getClientRects().length > 0)
+      /*
+       * Disabled controls are excluded, because they cannot be focused BY
+       * ANYONE — they are not in the tab order, and `el.focus()` on one is a
+       * no-op that leaves the computed style ringless.
+       *
+       * This surfaced the first time a screen was audited that has a disabled
+       * control on load: the CMS, where "create" starts disabled until a slug
+       * is typed and the first block's "move up" is disabled by definition. The
+       * rule was reporting an accessibility failure on elements no keyboard
+       * user can ever reach.
+       */
+      .filter((e) => !e.disabled && e.getAttribute('aria-disabled') !== 'true')
       .slice(0, 6);
     const bad = [];
     for (const el of controls) {
@@ -341,10 +353,27 @@ try {
   await ops.locator('button[type="submit"]').click();
   await ops.waitForURL('**/ops/queue', { timeout: 20_000 });
 
+  // The content console is held to the same standard as the shopfront. It is
+  // an internal tool, which is exactly why it gets skipped — and it is a tool
+  // people use for hours, which is why it should not be.
+  const opsRoutes = [['ops-queue', '/ops/queue'], ['ops-content', '/ops/content']];
+
   for (const size of WIDTHS) {
     await ops.setViewportSize({ width: size.width, height: size.height });
-    await ops.goto(`${BASE}/ops/queue`, { waitUntil: 'networkidle' });
-    await auditPage(ops, 'ops-queue', size.name);
+    for (const [surface, path] of opsRoutes) {
+      await ops.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+      await auditPage(ops, surface, size.name);
+    }
+  }
+
+  // And one page editor, which is where every form control in the CMS lives.
+  const firstPage = await ops.locator('a[href^="/ops/content/"]').first().getAttribute('href');
+  if (firstPage) {
+    for (const size of WIDTHS) {
+      await ops.setViewportSize({ width: size.width, height: size.height });
+      await ops.goto(`${BASE}${firstPage}`, { waitUntil: 'networkidle' });
+      await auditPage(ops, 'ops-page-editor', size.name);
+    }
   }
 } catch (error) {
   /*

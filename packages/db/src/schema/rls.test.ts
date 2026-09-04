@@ -328,8 +328,14 @@ describe('the audit trail is platform-only', () => {
 describe('RLS is forced, not merely enabled', () => {
   it('every protected table has FORCE ROW LEVEL SECURITY', async () => {
     const r = await db.query<{ relname: string; relforcerowsecurity: boolean; relrowsecurity: boolean }>(
+      // `schema_migrations` is excluded: FORCE binds the table OWNER, and the
+      // owner is who writes that row while running a migration with no actor
+      // set. Forcing it would make the first migration fail on the statement
+      // that records the first migration. `policy-shape.test.ts` proves the
+      // application role cannot reach it, which is what actually protects it.
       `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
-       WHERE relnamespace = 'public'::regnamespace AND relkind = 'r'`);
+       WHERE relnamespace = 'public'::regnamespace AND relkind = 'r'
+         AND relname <> 'schema_migrations'`);
     const unprotected = r.rows.filter((t) => !t.relrowsecurity || !t.relforcerowsecurity);
     expect(unprotected.map((t) => t.relname)).toEqual([]);
   });

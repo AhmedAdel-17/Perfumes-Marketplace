@@ -41,7 +41,18 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [x] 3.7 Authorisation matrix in the browser; 25 policy-shape tests over every table, present and future
 - [x] 3.8 All fixed and re-run. QA_REPORT.md records each finding and why it survived
 
-## 4. CMS  ⬜
+## 4. CMS  ✅
+
+- [x] 4.1 Content model — a closed block set, not a rich-text box
+- [x] 4.2 Draft/revision split, publishing state machine, editor vs publisher
+- [x] 4.3 Migration 0009, RLS, immutability trigger, both adapters under one contract
+- [x] 4.4 tRPC router with the public read separated from the console by procedure
+- [x] 4.5 Public rendering, editorial route, footer directory
+- [x] 4.6 The console: list, block editor, publish flow
+- [x] 4.7 16 surfaces in the audit, 11 end-to-end tests over the CMS
+
+Stack decision recorded in TECH_STACK §11 — built here rather than on Payload,
+with the condition under which that should be reversed stated in advance.
 
 Then continue the roadmap phase by phase.
 

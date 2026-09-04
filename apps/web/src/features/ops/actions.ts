@@ -100,7 +100,10 @@ export async function activeOperator() {
   if (!session) return null;
 
   const [row] = await database()
-    .select({ id: schema.platformStaff.id })
+    // The role comes back with the id, because it is read at the same moment
+    // and for the same reason: what this operator may do is a fact about the
+    // CURRENT row, not about the cookie they signed in with.
+    .select({ id: schema.platformStaff.id, role: schema.platformStaff.role })
     .from(schema.platformStaff)
     .where(and(
       eq(schema.platformStaff.id, session.staffId),
@@ -115,13 +118,17 @@ export async function activeOperator() {
     await clearOpsSession().catch(() => undefined);
     return null;
   }
-  return session;
+  return { ...session, role: row.role };
 }
 
 async function opsCaller() {
   const session = await activeOperator();
   if (!session) return null;
-  return api({ role: 'platform', id: session.authUserId });
+  return api(
+    { role: 'platform', id: session.authUserId },
+    null,
+    { staffId: session.staffId, role: session.role },
+  );
 }
 
 export async function opsMarkDelivered(subOrderId: string): Promise<OpsResult> {

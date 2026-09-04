@@ -41,6 +41,7 @@ beforeAll(async () => {
   tables = (await db.query<{ relname: string }>(
     `SELECT relname FROM pg_class
       WHERE relnamespace = 'public'::regnamespace AND relkind = 'r'
+        AND relname <> 'schema_migrations'
       ORDER BY relname`)).rows.map((r) => r.relname);
 
   policies = (await db.query<Policy>(
@@ -58,6 +59,32 @@ describe('the catalogue this file reasons over', () => {
   it('found the tables and the policies', () => {
     expect(tables.length).toBeGreaterThan(25);
     expect(policies.length).toBeGreaterThan(25);
+  });
+});
+
+describe('the migration ledger is not an application table', () => {
+  /*
+   * `schema_migrations` is excluded from every rule in this file, and the
+   * exclusion carries its own proof rather than being a name on a list.
+   *
+   * It is written by whoever runs migrations, connected as the owner. No
+   * request touches it, so it has no policy — and the reason that is safe is
+   * that the application role cannot reach it at all. That is what is asserted
+   * here. If a future grant opened it up, this fails and the exemption above
+   * stops being justified.
+   */
+  it('grants the application role nothing on it', async () => {
+    const r = await db.query<{ n: number }>(
+      `SELECT count(*)::int n FROM information_schema.role_table_grants
+        WHERE table_name = 'schema_migrations' AND grantee = 'app_user'`);
+    expect(r.rows[0]!.n).toBe(0);
+  });
+
+  it('has row-level security enabled', async () => {
+    const r = await db.query<{ relrowsecurity: boolean }>(
+      `SELECT relrowsecurity FROM pg_class
+        WHERE relname = 'schema_migrations' AND relnamespace = 'public'::regnamespace`);
+    expect(r.rows[0]?.relrowsecurity).toBe(true);
   });
 });
 

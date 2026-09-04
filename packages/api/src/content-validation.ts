@@ -40,10 +40,18 @@ const pullQuote = z.object({
 
 const noteList = z.object({
   kind: z.literal('note_list'),
+  /*
+   * `.readonly()` so the parsed type matches the domain's `ReadonlyArray`.
+   *
+   * Without it a domain `Block` cannot be passed to this router at all: a
+   * readonly array is not assignable to a mutable one, and the domain is right
+   * to say these items are not to be mutated in place. Weakening the domain to
+   * satisfy the wire format would have been the easier fix and the wrong one.
+   */
   items: z.array(z.object({
     term: trimmed(LIMITS.noteTerm),
     detail: trimmed(LIMITS.noteDetail).optional(),
-  }).strict()).max(LIMITS.noteItems),
+  }).strict()).max(LIMITS.noteItems).readonly(),
 }).strict();
 
 const image = z.object({

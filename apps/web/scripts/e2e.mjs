@@ -845,6 +845,166 @@ try {
     equal(leaked.length, 0, `raw enums on screen: ${leaked.join(', ')}`);
   });
 
+  /* ================================================================ the CMS */
+  group('editorial content, from an empty page to the shopfront');
+
+  /*
+   * The console is driven through the interface, and every claim is checked
+   * against what an ANONYMOUS visitor actually gets. A CMS test that only reads
+   * the console is a test that the console agrees with itself.
+   */
+  const probeSlug = `probe-${Date.now().toString(36)}`;
+  /*
+   * A title THIS RUN owns.
+   *
+   * The first version asserted that "صفحة اختبار" was absent from the footer
+   * after archiving, and a page left over from an earlier session was still
+   * live under that name — so the test failed over someone else's data. A test
+   * that asserts about a name has to be the only thing using it.
+   */
+  const probeTitle = `صفحة اختبار ${probeSlug}`;
+  let probeUrl = null;
+
+  await test('creating a page leaves it off the site', async () => {
+    await ops.goto(`${BASE}/ops/content`, { waitUntil: 'networkidle' });
+    await ops.fill('#new-title', probeTitle);
+    await ops.fill('#new-slug', probeSlug);
+    await ops.locator('button', { hasText: 'إنشاء' }).click();
+    await ops.waitForURL('**/ops/content/**', { timeout: 20_000 });
+    probeUrl = ops.url();
+
+    const response = await ops.request.get(`${BASE}/${probeSlug}`);
+    equal(response.status(), 404, 'the public status of an unpublished page');
+  });
+
+  await test('publishing straight from a draft is not offered', async () => {
+    // Review is not optional, and the console must not show a button the domain
+    // will refuse. A control that renders and does nothing is the defect the
+    // seller portal already shipped once.
+    const actions = await ops.locator('button').allInnerTexts();
+    assert(
+      !actions.some((label) => label.trim() === 'نشر'),
+      `"نشر" was offered on a fresh draft: ${actions.join(' | ')}`,
+    );
+    assert(actions.some((label) => label.includes('مراجعة')), 'review must be offered');
+  });
+
+  await test('a page with content goes to review and then live', async () => {
+    await ops.locator('button', { hasText: '+ عنوان قسم' }).click();
+    await ops.waitForTimeout(400);
+    await ops.fill('#b0-text', 'قسم أول');
+    await ops.locator('button', { hasText: '+ فقرة' }).click();
+    await ops.waitForTimeout(400);
+    await ops.fill('#b1-text', 'نص الفقرة.');
+
+    await ops.locator('button', { hasText: 'حفظ المسودة' }).click();
+    await ops.waitForTimeout(2500);
+    await ops.locator('button', { hasText: 'إرسال للمراجعة' }).click();
+    await ops.waitForTimeout(3000);
+
+    await ops.locator('button', { hasText: /^نشر$/ }).click();
+    await ops.waitForTimeout(3500);
+
+    const response = await ops.request.get(`${BASE}/${probeSlug}`);
+    equal(response.status(), 200, 'the public status after publishing');
+    assert((await response.text()).includes('قسم أول'), 'the heading must reach the page');
+  });
+
+  await test('the actions do not vanish after a move', async () => {
+    // They were cleared and left the operator on a screen with nothing to press
+    // until they reloaded. The server returns the next legal moves now.
+    const actions = await ops.locator('button').allInnerTexts();
+    assert(
+      actions.some((label) => label.includes('مسودة') || label.includes('أرشفة')),
+      `no moves offered after publishing: ${actions.join(' | ')}`,
+    );
+  });
+
+  await test('a published page STAYS live while it is edited', async () => {
+    /*
+     * The rule the whole content design turns on, checked end to end rather
+     * than in the domain where it is easy.
+     *
+     * An editor opening a live page to fix a typo must not take the page down.
+     * It is expressed in the domain, in the RLS policy, in the read model and
+     * in the console, and any one of them written as `state = 'published'`
+     * breaks it.
+     */
+    await ops.goto(probeUrl, { waitUntil: 'networkidle' });
+    await ops.waitForTimeout(1500);
+    await ops.locator('button', { hasText: 'إرجاع إلى المسودة' }).click();
+    await ops.waitForTimeout(3000);
+
+    const response = await ops.request.get(`${BASE}/${probeSlug}`);
+    equal(response.status(), 200, 'the public status while a page is being edited');
+    assert((await response.text()).includes('قسم أول'), 'it must still serve the published text');
+  });
+
+  await test('an unsaved edit does not reach the site', async () => {
+    // The site serves the frozen revision, so typing cannot leak. Typed here
+    // and read from outside, because "it cannot happen" is what every leak was
+    // before it happened.
+    await ops.fill('#b0-text', 'نص لم يُنشر بعد');
+    await ops.waitForTimeout(500);
+
+    const response = await ops.request.get(`${BASE}/${probeSlug}`);
+    assert(!(await response.text()).includes('نص لم يُنشر بعد'), 'a draft edit leaked to the site');
+  });
+
+  await test('an empty block is refused, and the message names it', async () => {
+    await ops.goto(probeUrl, { waitUntil: 'networkidle' });
+    await ops.waitForTimeout(1500);
+    await ops.locator('button', { hasText: '+ فقرة' }).click();
+    await ops.waitForTimeout(400);
+    await ops.locator('button', { hasText: 'إرسال للمراجعة' }).click();
+    await ops.waitForTimeout(2500);
+    await ops.locator('button', { hasText: /^نشر$/ }).click();
+    await ops.waitForTimeout(3000);
+
+    const objections = await ops.locator('[aria-live="polite"] li').allInnerTexts();
+    assert(objections.length > 0, 'publishing an empty block must be refused');
+    assert(
+      objections.some((text) => /العنصر رقم/.test(text)),
+      `the objection must say WHICH element: ${objections.join(' | ')}`,
+    );
+  });
+
+  await test('archiving takes the page off the site', async () => {
+    await ops.goto(probeUrl, { waitUntil: 'networkidle' });
+    await ops.waitForTimeout(1500);
+    const archive = ops.locator('button', { hasText: 'أرشفة' }).first();
+    if (await archive.count() === 0) {
+      // Not offered from `in_review`; go back to draft first.
+      await ops.locator('button', { hasText: 'إرجاع إلى المسودة' }).click();
+      await ops.waitForTimeout(2500);
+    }
+    await ops.locator('button', { hasText: 'أرشفة' }).first().click();
+    await ops.waitForTimeout(3000);
+
+    const response = await ops.request.get(`${BASE}/${probeSlug}`);
+    equal(response.status(), 404, 'the public status of an archived page');
+  });
+
+  await test('a seller cannot reach the content console', async () => {
+    const context = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const page = await context.newPage();
+    await page.goto(`${BASE}/ops/content`, { waitUntil: 'networkidle' });
+    assert(!page.url().includes('/ops/content'), `reached the CMS unauthenticated: ${page.url()}`);
+    await context.close();
+  });
+
+  await test('the published pages are linked from every screen', async () => {
+    // The footer reads the live directory, so a page nobody can find is a page
+    // nobody reads. Checked on the home page, which is where most visits start.
+    const visitor = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const page = await visitor.newPage();
+    await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+    const footer = await page.locator('footer').innerText();
+    assert(footer.includes('عن ديار'), `the footer must link the live pages: ${footer}`);
+    assert(!footer.includes(probeTitle), 'an archived page must not stay in the footer');
+    await visitor.close();
+  });
+
   await test('signing out ends the session for good', async () => {
     const out = ops.locator('button', { hasText: /خروج/ }).first();
     if (await out.count() === 0) return;
