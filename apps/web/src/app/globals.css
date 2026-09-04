@@ -33,6 +33,22 @@
     outline-offset: 2px;
   }
 
+  /*
+    Nothing may be invisible on paper.
+
+    Entrance animation is a screen affordance; a printed page has no scroll and
+    therefore no way to trigger one. Belt and braces alongside Reveal rendering
+    visible by default — a printed order confirmation with a blank middle is a
+    customer holding proof of nothing.
+  */
+  @media print {
+    * {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

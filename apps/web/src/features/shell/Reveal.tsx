@@ -9,23 +9,36 @@ import { useEffect, useRef, useState } from 'react';
  * The practical difference between a luxury surface and a fast one is that on
  * the luxury surface content ARRIVES — it does not simply exist the instant the
  * bytes land. A 700ms rise of twelve pixels on a decelerating curve is the
- * whole effect; anything more energetic than that reads as a consumer app.
+ * whole effect; anything more energetic reads as a consumer app.
  *
- * Three rules this enforces, all of which are usually got wrong:
+ * THE ORDER OF STATES IS THE WHOLE DESIGN, and the first version got it exactly
+ * backwards. It rendered hidden and waited for JavaScript to reveal — so the
+ * server-rendered HTML carried `opacity: 0` on everything below the fold, and
+ * anything that does not scroll saw a blank page: a full-page screenshot, a
+ * print, a reader mode, a crawler that renders but does not scroll. The whole
+ * product grid was invisible in a screenshot of the home page, which is how it
+ * was found.
  *
- *   1. It reveals ONCE and then disconnects. Elements that re-animate every
- *      time they re-enter the viewport turn scrolling into a slideshow.
- *   2. It never hides content that will not be revealed. If IntersectionObserver
- *      is unavailable, or JavaScript never runs, the initial state is visible —
- *      the opposite bet (start at opacity 0, hope the script arrives) is how
- *      pages ship blank.
- *   3. `prefers-reduced-motion` is honoured by not animating AT ALL, rather than
- *      by animating faster. The CSS in globals.css collapses durations, but a
- *      12px translate would still fire; this checks the query directly.
+ * The comment above that code correctly warned against precisely this bet. A
+ * rule stated in a comment and contradicted by the code beneath it is worse
+ * than no rule, because it stops the next reader from checking.
  *
- * Pattern — a headless behaviour component: it owns the timing and none of the
- * appearance, so a section decides how it looks and this decides when.
+ * So: RENDER VISIBLE, then hide only what is genuinely below the fold, and only
+ * once JavaScript is running and IntersectionObserver exists to bring it back.
+ *
+ *   - No JavaScript      → visible. Nothing can strand it.
+ *   - Reduced motion     → visible, immediately, no transition at all.
+ *   - Above the fold     → visible; it was already on screen, so animating it
+ *                          in is a flash rather than an arrival.
+ *   - Below the fold     → hidden after mount, revealed on approach, and the
+ *                          observer disconnects so scrolling never becomes a
+ *                          slideshow.
+ *
+ * The hide-after-mount cannot flash, because by definition it only applies to
+ * elements the viewer cannot currently see.
  */
+type Phase = 'visible' | 'armed';
+
 export function Reveal({
   children,
   delay = 0,
@@ -39,31 +52,38 @@ export function Reveal({
   className?: string;
 }) {
   const ref = useRef<HTMLElement | null>(null);
-  const [shown, setShown] = useState(false);
+  // Visible is the SSR state and the state every non-scrolling reader sees.
+  const [phase, setPhase] = useState<Phase>('visible');
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || typeof IntersectionObserver === 'undefined') {
-      setShown(true);
+    if (
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
       return;
     }
 
-    // Already on screen at mount (above the fold) — reveal without waiting for
-    // a scroll that may never happen.
+    // Already on screen: leave it alone. Fading in something the viewer is
+    // already looking at is a flicker, not an entrance.
+    const box = node.getBoundingClientRect();
+    if (box.top < window.innerHeight) return;
+
+    setPhase('armed');
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setShown(true);
+            setPhase('visible');
             observer.disconnect();
           }
         }
       },
-      // Fire slightly before the element reaches the fold, so the motion is
-      // finishing as it becomes properly visible rather than starting then.
+      // Slightly before the fold, so the motion finishes as the element becomes
+      // properly visible rather than starting then.
       { rootMargin: '0px 0px -8% 0px', threshold: 0.01 },
     );
 
@@ -75,9 +95,9 @@ export function Reveal({
     <Tag
       ref={ref as never}
       className={`${className} motion-safe:transition-[opacity,transform] motion-safe:duration-slow motion-safe:ease-out ${
-        shown ? 'opacity-100 translate-y-0' : 'motion-safe:opacity-0 motion-safe:translate-y-3'
+        phase === 'armed' ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
       }`}
-      style={shown ? { transitionDelay: `${delay}ms` } : undefined}
+      style={phase === 'visible' ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
     </Tag>

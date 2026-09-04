@@ -12,3 +12,6 @@ coverage/
 # Local PGlite development database — real Postgres, but disposable.
 # Recreate with: pnpm --filter @diyar/web seed -- --fresh
 .data/
+
+# Screenshots are generated, never committed.
+.shots/
