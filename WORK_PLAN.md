@@ -128,3 +128,16 @@ Newest last. One line per completed item, with anything the next session must kn
   button permanently disabled with no message; the product page put a time-series chart in the
   narrowest column on the page while its detail column ran 4x the height of the media beside it.
   Both fixed. 416 tests green.
+- 2026-09-04 — §3 QA complete (QA_REPORT.md), §4 CMS complete, §5 seller catalogue
+  complete except media, §6 audit trail written (console screen outstanding).
+  769 tests, 19 audit surfaces, 56 end-to-end. 42 commits.
+
+  **The one thing blocking MVP gate 1** is media: a listing cannot publish
+  without a primary image whose ownership is confirmed, and a house has no way
+  to add one. It needs a storage decision — provider, cost, signed uploads —
+  which is Ahmed's to make, not mine. Everything on either side of it is built.
+
+  Operational notes for the next session, both learned the hard way again:
+  never run `pnpm seed` without `--fresh` against a database created before the
+  migration ledger existed, and PowerShell's `-replace` on a file containing
+  Arabic will corrupt the encoding — use python for edits to those files.
