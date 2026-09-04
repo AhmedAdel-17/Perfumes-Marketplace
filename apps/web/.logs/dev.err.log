@@ -1,2 +1,0 @@
-$ next dev -p 3100
- ⨯ [Error: aborted] { code: 'ECONNRESET', digest: '2106348812' }

@@ -15,3 +15,7 @@ coverage/
 
 # Screenshots are generated, never committed.
 .shots/
+
+# Dev server logs. The one-time codes printed here are real credentials for
+# the seeded accounts, and a log is not a place to keep those.
+.logs/
