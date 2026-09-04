@@ -48,6 +48,20 @@ export const listingsRouter = router({
     }));
   }),
 
+  /**
+   * The house's own brand, needed to create a listing.
+   *
+   * A listing belongs to a brand and a brand belongs to a house. Most houses
+   * have exactly one, so the console does not ask — but it cannot invent one
+   * either, and a house with none must be told rather than shown a form whose
+   * submit will fail.
+   */
+  myBrand: sellerProcedure.query(async ({ ctx }) => {
+    const sellerId = houseOrThrow(ctx);
+    const brands = await ctx.uow.transaction((r) => r.sellers.brandsFor(sellerId));
+    return brands[0] ? { id: brands[0].id, name: brands[0].name } : null;
+  }),
+
   get: sellerProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {

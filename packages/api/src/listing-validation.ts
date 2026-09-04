@@ -45,28 +45,38 @@ export const newListingSchema = z.object({
  * then the only defence would be a router remembering to ignore it.
  */
 export const listingDraftSchema = z.object({
-  name: z.string().trim().min(1).max(160).optional(),
-  sku: z.string().trim().min(1).max(60).optional(),
+  name: z.string().trim().min(1).max(160).nullish(),
+  sku: z.string().trim().min(1).max(60).nullish(),
 
   // Money as integer piastres, never a float — the same rule as everywhere.
-  pricePiastres: z.number().int().min(0).max(100_000_000).optional(),
+  pricePiastres: z.number().int().min(0).max(100_000_000).nullish(),
   promoPricePiastres: z.number().int().min(0).max(100_000_000).nullish(),
-  volumeMl: z.number().int().min(0).max(5_000).optional(),
-  stock: z.number().int().min(0).max(100_000).optional(),
-  fulfilmentHours: z.number().int().min(1).max(336).optional(),
+  volumeMl: z.number().int().min(0).max(5_000).nullish(),
+  stock: z.number().int().min(0).max(100_000).nullish(),
+  fulfilmentHours: z.number().int().min(1).max(336).nullish(),
 
   concentration: z.enum(CONCENTRATIONS).nullish(),
   form: z.enum(PRODUCT_FORMS).nullish(),
   genderPositioning: z.enum(GENDER_POSITIONINGS).nullish(),
   scentFamily: z.enum(SCENT_FAMILIES).nullish(),
 
-  notesTop: notes.optional(),
-  notesHeart: notes.optional(),
-  notesBase: notes.optional(),
+  /*
+   * `.nullish()`, not `.optional()`.
+   *
+   * These columns are nullable, so a listing read back from the database
+   * arrives with `notesTop: null` — and `.optional()` accepts `undefined` and
+   * refuses `null`. The console loads a listing, sends it back untouched, and
+   * the save was rejected by its own data. Nothing on screen said why, because
+   * a schema failure is an internal error and internal errors are deliberately
+   * generic.
+   */
+  notesTop: notes.nullish(),
+  notesHeart: notes.nullish(),
+  notesBase: notes.nullish(),
 
-  seasons: z.array(z.enum(SEASONS)).max(4).optional(),
+  seasons: z.array(z.enum(SEASONS)).max(4).nullish(),
   dayNight: z.enum(DAY_NIGHT).nullish(),
-  occasions: z.array(z.enum(OCCASIONS)).max(5).optional(),
+  occasions: z.array(z.enum(OCCASIONS)).max(5).nullish(),
   projectionBand: z.enum(PROJECTION_BANDS).nullish(),
   longevityBand: z.enum(LONGEVITY_BANDS).nullish(),
 

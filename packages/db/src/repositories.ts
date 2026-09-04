@@ -70,6 +70,13 @@ const toSubOrder = (r: typeof schema.subOrders.$inferSelect): SubOrderRecord => 
 // ------------------------------------------------------------- repositories
 
 const sellerRepository = (db: Executor): SellerRepository => ({
+  async brandsFor(sellerId) {
+    return db.select({ id: schema.brands.id, name: schema.brands.name })
+      .from(schema.brands)
+      .where(eq(schema.brands.sellerId, sellerId))
+      .orderBy(schema.brands.name);
+  },
+
   async findById(id) {
     const [row] = await db.select().from(schema.sellers).where(eq(schema.sellers.id, id)).limit(1);
     return row ? toSeller(row) : null;

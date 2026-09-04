@@ -63,7 +63,20 @@ export const toTRPCError = (error: unknown): TRPCError => {
     return new TRPCError({ code, message, cause: error });
   }
 
-  // Never leak an internal message to a customer.
+  /*
+   * Never leak an internal message to a customer — and never lose it either.
+   *
+   * This branch means something the system did not anticipate went wrong, which
+   * is the single most important thing to be able to read afterwards. The
+   * message is deliberately generic on screen; without this line it was generic
+   * EVERYWHERE, and diagnosing a failed listing creation meant adding a log
+   * statement, reproducing it, and taking the statement out again.
+   *
+   * `cause` carries it to any transport that inspects it; this puts it where a
+   * person looking at the server actually looks.
+   */
+  console.error('[api] unhandled error:', error);
+
   return new TRPCError({
     code: 'INTERNAL_SERVER_ERROR',
     message: 'حدث خطأ. حاول مرّة أخرى.',

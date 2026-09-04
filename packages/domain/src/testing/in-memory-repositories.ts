@@ -194,6 +194,13 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const store = () => this.store;
 
     const sellers: SellerRepository = {
+      async brandsFor(sellerId) {
+        // One brand per house in the fixture, named after the house. Enough to
+        // exercise the shape without pretending to model a portfolio.
+        const seller = store().sellers.get(sellerId);
+        return seller ? [{ id: `brand-${sellerId}`, name: seller.tradingName }] : [];
+      },
+
       async findById(id) {
         return store().sellers.get(id) ?? null;
       },

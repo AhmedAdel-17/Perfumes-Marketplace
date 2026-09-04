@@ -89,9 +89,22 @@ export interface SubOrderRecord {
   readonly shipping: Money;
 }
 
+export interface BrandRecord {
+  readonly id: string;
+  readonly name: string;
+}
+
 export interface SellerRepository {
   findById(id: string): Promise<SellerRecord | null>;
   findBySlug(slug: string): Promise<SellerRecord | null>;
+  /**
+   * The house's brands.
+   *
+   * A listing belongs to a brand, not directly to a house — most houses have
+   * one, and the ones that will have several are the reason this returns a list
+   * rather than the single row today's console needs.
+   */
+  brandsFor(sellerId: string): Promise<readonly BrandRecord[]>;
 }
 
 export interface CustomerRecord {

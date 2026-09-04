@@ -50,16 +50,27 @@ const toRecord = (row: Row): ListingRecord => ({
   updatedAt: row.updatedAt,
 });
 
-/** Only the columns a house may write. State is not one of them. */
+/**
+ * Only the columns a house may write. State is not one of them.
+ *
+ * `undefined` means "not sent" and is skipped. For the NULLABLE columns `null`
+ * means "cleared" and is written. For the NOT NULL ones — name, sku, price,
+ * volume, stock, hours — null is skipped too: the first version coerced it to
+ * an empty string or a zero, so a caller sending a field it had not loaded
+ * would silently blank a listing's name. `sent()` makes that one decision in
+ * one place instead of twenty-three times.
+ */
+const sent = (value: unknown): boolean => value !== undefined && value !== null;
+
 const writableColumns = (input: ListingDraft) => ({
-  ...(input.name !== undefined ? { name: input.name ?? '' } : {}),
-  ...(input.sku !== undefined ? { sku: input.sku ?? '' } : {}),
-  ...(input.pricePiastres !== undefined ? { pricePiastres: input.pricePiastres ?? 0 } : {}),
+  ...(sent(input.name) ? { name: input.name! } : {}),
+  ...(sent(input.sku) ? { sku: input.sku! } : {}),
+  ...(sent(input.pricePiastres) ? { pricePiastres: input.pricePiastres! } : {}),
   ...(input.promoPricePiastres !== undefined
     ? { promoPricePiastres: input.promoPricePiastres } : {}),
-  ...(input.volumeMl !== undefined ? { volumeMl: input.volumeMl ?? 0 } : {}),
-  ...(input.stock !== undefined ? { stock: input.stock ?? 0 } : {}),
-  ...(input.fulfilmentHours !== undefined ? { fulfilmentHours: input.fulfilmentHours ?? 48 } : {}),
+  ...(sent(input.volumeMl) ? { volumeMl: input.volumeMl! } : {}),
+  ...(sent(input.stock) ? { stock: input.stock! } : {}),
+  ...(sent(input.fulfilmentHours) ? { fulfilmentHours: input.fulfilmentHours! } : {}),
   ...(input.concentration !== undefined ? { concentration: input.concentration } : {}),
   ...(input.form !== undefined ? { form: input.form } : {}),
   ...(input.genderPositioning !== undefined

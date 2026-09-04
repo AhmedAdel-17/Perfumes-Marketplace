@@ -336,7 +336,11 @@ try {
 
   for (const size of WIDTHS) {
     await seller.setViewportSize({ width: size.width, height: size.height });
-    for (const [surface, path] of [['seller-queue', '/seller/orders'], ['seller-payouts', '/seller/payouts']]) {
+    for (const [surface, path] of [
+      ['seller-queue', '/seller/orders'],
+      ['seller-listings', '/seller/listings'],
+      ['seller-payouts', '/seller/payouts'],
+    ]) {
       await seller.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
       await auditPage(seller, surface, size.name);
     }
@@ -356,7 +360,11 @@ try {
   // The content console is held to the same standard as the shopfront. It is
   // an internal tool, which is exactly why it gets skipped — and it is a tool
   // people use for hours, which is why it should not be.
-  const opsRoutes = [['ops-queue', '/ops/queue'], ['ops-content', '/ops/content']];
+  const opsRoutes = [
+    ['ops-queue', '/ops/queue'],
+    ['ops-content', '/ops/content'],
+    ['ops-moderation', '/ops/moderation'],
+  ];
 
   for (const size of WIDTHS) {
     await ops.setViewportSize({ width: size.width, height: size.height });
@@ -367,7 +375,14 @@ try {
   }
 
   // And one page editor, which is where every form control in the CMS lives.
-  const firstPage = await ops.locator('a[href^="/ops/content/"]').first().getAttribute('href');
+  //
+  // Navigating first rather than assuming: the loop above leaves the browser on
+  // whichever ops route is LAST, and adding one to that list silently moved
+  // this lookup onto a page with no content links on it.
+  await ops.goto(`${BASE}/ops/content`, { waitUntil: 'networkidle' });
+  const firstPage = await ops.locator('a[href^="/ops/content/"]').first()
+    .getAttribute('href', { timeout: 10_000 })
+    .catch(() => null);
   if (firstPage) {
     for (const size of WIDTHS) {
       await ops.setViewportSize({ width: size.width, height: size.height });
@@ -385,7 +400,12 @@ try {
    * cause in a line was sitting in memory when the process died over a form
    * label that was missing because of it.
    */
-  record('audit', '—', 'crashed', String(error.message ?? error).split(String.fromCharCode(10))[0]);
+  // The whole message, and where it happened. The first line of a Playwright
+  // timeout says what timed out and not which page it was on, which is the
+  // half that matters when six passes share one helper.
+  record('audit', '—', 'crashed',
+    String(error.message ?? error).split(String.fromCharCode(10)).slice(0, 3).join(' / ')
+    + ' @ ' + String((error).stack ?? '').split(String.fromCharCode(10)).slice(1, 3).join(' / '));
 } finally {
   await browser.close();
 }

@@ -4,11 +4,12 @@ import { signOutSeller } from './actions';
 /**
  * The portal's own chrome.
  *
- * Two destinations and a way out. A house does two things here — work the queue
- * and check what it is owed — and a navigation offering more than a house
- * actually does is a navigation it has to read past every time.
+ * Three destinations and a way out. A house does three things here — works the
+ * queue, writes its listings, and checks what it is owed. Nothing more goes in
+ * here: a navigation offering more than a house actually does is one it has to
+ * read past every time.
  */
-export function SellerNav({ current }: { current: 'orders' | 'payouts' }) {
+export function SellerNav({ current }: { current: 'orders' | 'listings' | 'payouts' }) {
   const link = (active: boolean) =>
     [
       'tappable flex min-h-touch items-center text-caption tracking-label',
@@ -19,6 +20,7 @@ export function SellerNav({ current }: { current: 'orders' | 'payouts' }) {
   return (
     <nav className="flex items-center gap-6">
       <Link href="/seller/orders" className={link(current === 'orders')}>الطلبات</Link>
+      <Link href="/seller/listings" className={link(current === 'listings')}>المنتجات</Link>
       <Link href="/seller/payouts" className={link(current === 'payouts')}>المستحقّات</Link>
       <form action={signOutSeller}>
         <button

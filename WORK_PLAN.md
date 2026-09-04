@@ -78,12 +78,16 @@ The largest remaining gap, and the one everything else waits on: today every
 product in the system was seeded by hand. A marketplace where the platform
 enters the catalogue is not a marketplace.
 
-- [ ] 5.1 Product draft/review/publish, reusing the content state machine's shape
-- [ ] 5.2 The listing form — notes, concentration, volume, price, stock
-- [ ] 5.3 Platform review before a listing goes live, with coded rejection reasons
-- [ ] 5.4 Prohibited-product controls (gate 7)
-- [ ] 5.5 Stock and price editing on a live listing, with an audit trail
-- [ ] 5.6 Tests, audit, end-to-end
+- [x] 5.1 Listing lifecycle — draft → pending_moderation → published ⇄ suspended
+- [x] 5.2 The listing form — 24 fields in 6 groups, gaps counted while writing
+- [x] 5.3 Platform moderation queue with coded reasons and a waiting clock
+- [x] 5.4 Prohibited-claim controls: refused outright, or flagged for a person
+- [x] 5.5 Stock and price editable on a live listing (the audit trail is §6)
+- [x] 5.6 Domain tests, database guards, 19 surfaces in the audit
+- [ ] 5.7 **BLOCKED — media.** A listing cannot publish without a primary image
+      whose ownership is confirmed, and there is no way for a house to add one.
+      Needs a storage decision (provider, cost, signed uploads) before it can be
+      built. This is the last thing standing between the platform and MVP gate 1.
 
 ## 6. The audit trail  ⬜
 Nothing writes to `audit_log`. Every platform action, fee change and payout

@@ -200,6 +200,57 @@ describe('the platform still moves listings', () => {
   }));
 });
 
+describe('a draft may have no price or size yet, and nothing else may', () => {
+  it('creates a draft with no price and no size', () => within(async () => {
+    // A house names a listing long before it decides what to charge. The
+    // constraint used to refuse this and the seller saw "something went wrong".
+    const r = await asActor<{ id: string }>('seller', OWNER,
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status)
+       VALUES ($1,$2,'بلا سعر','no-price-yet','NUR-N-50',0,0,'draft') RETURNING id`,
+      [ids.seller, ids.brand]);
+    expect(r.rows).toHaveLength(1);
+  }));
+
+  it('refuses to move a zero-priced listing out of draft', () => within(async () => {
+    /*
+     * Strictly stronger than the constraint it replaced.
+     *
+     * The old rule said `price > 0` in every state, so it was satisfied the
+     * moment a row existed and never asked again. This one is checked on the
+     * update too, which means a listing cannot reach the queue — or the
+     * shopfront — without a price.
+     */
+    const id = (await asActor<{ id: string }>('seller', OWNER,
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status)
+       VALUES ($1,$2,'بلا سعر','no-price-2','NUR-N2-50',0,0,'draft') RETURNING id`,
+      [ids.seller, ids.brand])).rows[0]!.id;
+
+    // Archived rather than submitted: submitting also trips the completeness
+    // gate from 0001, which would refuse it whether this constraint existed or
+    // not. Archiving reaches this constraint and nothing else.
+    await expect(asActor('seller', OWNER,
+      `UPDATE products SET status='archived' WHERE id=$1`, [id],
+    )).rejects.toThrow(/products_price_positive/);
+  }));
+
+  it('still refuses a negative price on a draft', () => within(async () => {
+    await expect(asActor('seller', OWNER,
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status)
+       VALUES ($1,$2,'سالب','negative','NUR-X-50',-1,0,'draft')`,
+      [ids.seller, ids.brand],
+    )).rejects.toThrow();
+  }));
+
+  it('still refuses a negative volume on a draft', () => within(async () => {
+    // Zero means undecided; below zero means wrong, in any state.
+    await expect(asActor('seller', OWNER,
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status)
+       VALUES ($1,$2,'سالب','negative-2','NUR-X2-50',0,-5,'draft')`,
+      [ids.seller, ids.brand],
+    )).rejects.toThrow();
+  }));
+});
+
 describe('and none of this weakened the wall between houses', () => {
   it('a rival cannot touch a listing that is not theirs', () => within(async () => {
     // RLS filters the row out, so the update matches nothing and changes
