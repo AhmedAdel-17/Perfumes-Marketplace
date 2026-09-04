@@ -21,6 +21,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   ORDER_SOURCES, SUB_ORDER_STATES, TRANSITIONS,
   REJECTION_REASONS, CANCELLATION_REASONS, REFUSAL_REASONS, RETURN_REASONS,
+  LISTING_STATES, MODERATION_REASONS,
+  CONCENTRATIONS, PRODUCT_FORMS, GENDER_POSITIONINGS, SCENT_FAMILIES, SEASONS,
+  DAY_NIGHT, OCCASIONS, PROJECTION_BANDS, LONGEVITY_BANDS, PERFORMANCE_SOURCES,
+  RETURN_ELIGIBILITIES,
   DEFAULT_RATES, FixedClock, Money, SettlementService,
 } from '@diyar/domain';
 
@@ -47,6 +51,13 @@ beforeAll(async () => {
 
 afterAll(async () => { await db?.close(); });
 
+/** Named so the table above can loop, rather than repeating eleven near-identical cases. */
+const CATALOGUE_VOCABULARIES = {
+  CONCENTRATIONS, PRODUCT_FORMS, GENDER_POSITIONINGS, SCENT_FAMILIES, SEASONS,
+  DAY_NIGHT, OCCASIONS, PROJECTION_BANDS, LONGEVITY_BANDS, PERFORMANCE_SOURCES,
+  RETURN_ELIGIBILITIES,
+} as const;
+
 describe('controlled vocabularies exist identically on both sides', () => {
   it('sub-order states', async () => {
     expect((await enumValues('sub_order_state')).sort()).toEqual([...SUB_ORDER_STATES].sort());
@@ -54,6 +65,38 @@ describe('controlled vocabularies exist identically on both sides', () => {
 
   it('order sources', async () => {
     expect((await enumValues('order_source')).sort()).toEqual([...ORDER_SOURCES].sort());
+  });
+
+  it('listing states', async () => {
+    expect((await enumValues('product_status')).sort()).toEqual([...LISTING_STATES].sort());
+  });
+
+  it.each([
+    ['concentration', 'CONCENTRATIONS'],
+    ['product_form', 'PRODUCT_FORMS'],
+    ['gender_positioning', 'GENDER_POSITIONINGS'],
+    ['scent_family', 'SCENT_FAMILIES'],
+    ['season', 'SEASONS'],
+    ['day_night', 'DAY_NIGHT'],
+    ['occasion', 'OCCASIONS'],
+    ['projection_band', 'PROJECTION_BANDS'],
+    ['longevity_band', 'LONGEVITY_BANDS'],
+    ['performance_source', 'PERFORMANCE_SOURCES'],
+    ['return_eligibility', 'RETURN_ELIGIBILITIES'],
+  ] as const)('the catalogue vocabulary %s', async (dbEnum, constant) => {
+    // Each of these exists as a Postgres enum, a Drizzle mirror, a domain
+    // constant and a Zod schema. Three of the four are derived from the domain
+    // one; this is what holds the fourth — the database — against it.
+    const domain = CATALOGUE_VOCABULARIES[constant];
+    expect((await enumValues(dbEnum)).sort()).toEqual([...domain].sort());
+  });
+
+  it('moderation reasons', async () => {
+    // A reason the domain can send and the database cannot store is a takedown
+    // that fails at the last statement — which is how the seller portal's
+    // fourth decline button came to render and do nothing.
+    expect((await enumValues('moderation_reason')).sort())
+      .toEqual([...MODERATION_REASONS].sort());
   });
 
   it('reason codes — every domain code exists in the database enum', async () => {

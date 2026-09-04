@@ -11,6 +11,7 @@
 import { Money } from '../value-objects/money';
 import type { ContentPage } from '../content/page';
 import type { ContentRepository, ContentRevision } from '../ports/content-repository';
+import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, type TransitionRecord } from '../state-machines/sub-order';
 import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
@@ -132,6 +133,24 @@ export class InMemoryUnitOfWork implements UnitOfWork {
   private readonly contentRevisions = new Map<string, ContentRevision>();
 
   private revisionCounter = 0;
+
+  private readonly listingRows = new Map<string, ListingRecord>();
+
+  /** Which listings have a usable primary image. Set by tests that need one. */
+  readonly listingImages = new Set<string>();
+
+  private listingTick = 0;
+
+  /**
+   * A distinct instant per write, so `updatedAt` can order a list.
+   *
+   * A fixed clock would make every listing equally recent and the ordering
+   * would fall back to whatever the Map iterated, which is not an ordering.
+   */
+  listingClock(): Date {
+    this.listingTick += 1;
+    return new Date(Date.UTC(2026, 0, 1) + this.listingTick * 1000);
+  }
 
   private store: Store = emptyStore();
 
@@ -554,6 +573,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
      * contract case that keeps history caught it.
      */
     const fixture = this;
+    const listingRows = this.listingRows;
+    const listingImages = this.listingImages;
 
     const content: ContentRepository = {
       async list() {
@@ -647,7 +668,104 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
-    return { sellers, customers, products, orders, subOrders, payouts, content };
+    /*
+     * Listings, in memory.
+     *
+     * It does NOT re-implement the status guard from migration 0010. That guard
+     * is a database backstop against a caller that reached the tables another
+     * way; the domain's state machine is what the application asks, and a fake
+     * that enforced it twice would let a bug in the machine pass because the
+     * fake caught it.
+     */
+    const listings: ListingRepository = {
+      async listForSeller(sellerId) {
+        return [...listingRows.values()]
+          .filter((l) => l.sellerId === sellerId)
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      },
+
+      async findForSeller(id, sellerId) {
+        const row = listingRows.get(id);
+        return row && row.sellerId === sellerId ? row : null;
+      },
+
+      async findAnywhere(id) {
+        return listingRows.get(id) ?? null;
+      },
+
+      async create(sellerId, input) {
+        const record: ListingRecord = {
+          id: `listing-${listingRows.size + 1}`,
+          sellerId,
+          state: 'draft',
+          name: input.name,
+          slug: input.slug,
+          sku: input.sku,
+          brandId: input.brandId,
+          pricePiastres: 0,
+          volumeMl: 0,
+          stock: 0,
+          moderationReason: null,
+          submittedAt: null,
+          moderatedAt: null,
+          updatedAt: fixture.listingClock(),
+        };
+        listingRows.set(record.id, record);
+        return record;
+      },
+
+      async update(id, sellerId, input) {
+        const row = listingRows.get(id);
+        if (!row || row.sellerId !== sellerId) return;
+        // `undefined` means "not sent", which is different from `null` meaning
+        // "cleared" — the same distinction the adapter makes.
+        const patch = Object.fromEntries(
+          Object.entries(input).filter(([, value]) => value !== undefined),
+        );
+        listingRows.set(id, { ...row, ...patch, updatedAt: fixture.listingClock() });
+      },
+
+      async move(id, to, input) {
+        const row = listingRows.get(id);
+        if (!row) return;
+        listingRows.set(id, {
+          ...row,
+          state: to,
+          moderationReason: input.reason ?? null,
+          updatedAt: input.at,
+          ...(to === 'pending_moderation' ? { submittedAt: input.at } : {}),
+          ...(input.moderatedBy ? { moderatedAt: input.at } : {}),
+        });
+      },
+
+      async hasPrimaryImage(id) {
+        return listingImages.has(id);
+      },
+
+      async moderationQueue() {
+        return [...listingRows.values()]
+          .filter((l) => l.state === 'pending_moderation')
+          .sort((a, b) => (a.submittedAt?.getTime() ?? 0) - (b.submittedAt?.getTime() ?? 0))
+          .map((l) => ({
+            id: l.id,
+            sellerId: l.sellerId,
+            brandName: 'دار',
+            name: l.name ?? '',
+            slug: l.slug ?? '',
+            pricePiastres: l.pricePiastres ?? 0,
+            volumeMl: l.volumeMl ?? 0,
+            submittedAt: l.submittedAt,
+            claimText: [
+              l.name ?? '',
+              ...(l.notesTop ?? []),
+              ...(l.notesHeart ?? []),
+              ...(l.notesBase ?? []),
+            ].filter(Boolean),
+          }));
+      },
+    };
+
+    return { sellers, customers, products, orders, subOrders, payouts, content, listings };
   }
 }
 

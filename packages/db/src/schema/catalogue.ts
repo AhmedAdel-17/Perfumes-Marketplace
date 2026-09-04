@@ -17,8 +17,7 @@ import { sellers } from './sellers';
 import {
   concentration, dayNight, genderPositioning, longevityBand, occasion,
   performanceSource, productForm, productStatus, projectionBand,
-  returnEligibility, scentFamily, season,
-} from './enums';
+  returnEligibility, scentFamily, season, moderationReason } from './enums';
 
 export const brands = pgTable('brands', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -80,6 +79,20 @@ export const products = pgTable('products', {
 
   /* moderation */
   moderationNotes: text('moderation_notes'),
+
+  /*
+   * Moderation, from 0010.
+   *
+   * `moderationReason` is a CODE, not the free text in `moderationNotes` beside
+   * it: notes are for a person to read and a code is what the seller
+   * performance record counts. Both, because neither answers the other's
+   * question.
+   */
+  moderationReason: moderationReason('moderation_reason'),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  moderatedAt: timestamp('moderated_at', { withTimezone: true }),
+  moderatedBy: uuid('moderated_by'),
+
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

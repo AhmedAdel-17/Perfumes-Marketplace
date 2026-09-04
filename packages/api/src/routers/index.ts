@@ -2,6 +2,7 @@ import { router } from '../trpc';
 import { cartRouter } from './cart';
 import { catalogueRouter } from './catalogue';
 import { contentRouter } from './content';
+import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
 import { platformRouter } from './platform';
 import { sellerRouter } from './seller';
@@ -10,6 +11,7 @@ export const appRouter = router({
   cart: cartRouter,
   catalogue: catalogueRouter,
   content: contentRouter,
+  listings: listingsRouter,
   orders: ordersRouter,
   platform: platformRouter,
   seller: sellerRouter,

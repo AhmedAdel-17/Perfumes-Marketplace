@@ -1,3 +1,4 @@
+import type { ListingRepository } from './listing-repository';
 import type { ContentRepository } from './content-repository';
 /**
  * Repository ports.
@@ -395,6 +396,7 @@ export interface Repositories {
   readonly payouts: PayoutRepository;
   readonly subOrders: SubOrderRepository;
   readonly content: ContentRepository;
+  readonly listings: ListingRepository;
 }
 
 /**

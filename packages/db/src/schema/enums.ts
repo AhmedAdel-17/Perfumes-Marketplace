@@ -91,6 +91,18 @@ export const transitionActor = pgEnum('transition_actor', [
   'system', 'seller', 'customer', 'platform', 'courier',
 ]);
 
+/**
+ * Why a listing was sent back or taken down (0010).
+ *
+ * Mirrors `MODERATION_REASONS` in the domain, and `parity.test.ts` holds the
+ * two together — the same arrangement every other vocabulary here has.
+ */
+export const moderationReason = pgEnum('moderation_reason', [
+  'prohibited_claim', 'missing_required_fields', 'unsupported_claim',
+  'misleading_media', 'implausible_pricing', 'duplicate_listing',
+  'restricted_ingredient',
+]);
+
 /** Doc 06 §7: "No generic reason allowed." Cost allocation depends on these. */
 export const reasonCode = pgEnum('reason_code', [
   'out_of_stock', 'pricing_error', 'area_not_served', 'suspected_fraud',
