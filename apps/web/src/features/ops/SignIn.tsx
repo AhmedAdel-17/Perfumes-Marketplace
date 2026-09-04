@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Field } from '@/features/checkout/Field';
 import { requestOpsCode, verifyOpsCode } from './actions';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 /**
  * Operator sign-in.
@@ -74,19 +75,14 @@ export function OpsSignIn() {
       )}
 
       {error && (
-        <p role="alert" className="mb-5 border border-[#B5697E]/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-5 border border-danger/50 bg-l1 p-4 text-small text-bone">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="relative flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
-      >
-        <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-        {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
-      </button>
+      <PrimaryButton type="submit" disabled={busy} fill="full">
+      {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
+    </PrimaryButton>
 
       <p className="mt-5 text-center text-micro leading-relaxed text-faint">
         وضع التطوير: يُطبع الرمز في سجلّ الخادم.

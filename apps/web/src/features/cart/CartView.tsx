@@ -9,6 +9,7 @@ import {
 } from '@diyar/i18n';
 import { priceCart, type PricedCartResult } from './actions';
 import { useCart } from './CartStore';
+import { PrimaryHighlight, primarySurface, primarySurfaceStyle } from '@/features/shell/primary-surface';
 
 /**
  * The bag.
@@ -123,7 +124,18 @@ export function CartView() {
           <ul>
             {house.lines.map((line) => (
               <li key={line.productId} className="flex gap-4 border-b border-hair/60 py-4 last:border-0">
-                <Link href={`/p/${line.slug}`} className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,#2A2019,#131010_52%,#070606)]">
+                {/*
+                  The flacon is decorative — the product name sits beside it as
+                  its own link — but the image is still a LINK, and a link whose
+                  only content is an aria-hidden SVG announces itself as
+                  nothing. Two links to one place is fine; an unnamed one is
+                  not.
+                */}
+                <Link
+                  href={`/p/${line.slug}`}
+                  aria-label={line.name}
+                  className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,#2A2019,#131010_52%,#070606)]"
+                >
                   <Flacon
                     family={line.scentFamily}
                     house={line.brandLatin}
@@ -194,11 +206,14 @@ export function CartView() {
           {counted(priced.itemCount, PERFUME, editorial)} · الأسعار شاملة الضريبة
         </p>
 
+        {/* A LINK, not a button: it navigates. Identical surface, correct
+            element — middle-click and "open in new tab" have to work. */}
         <Link
           href="/checkout"
-          className="relative mt-6 flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter] duration-base ease-out hover:brightness-110 active:opacity-press"
+          style={primarySurfaceStyle}
+          className={`${primarySurface} mt-6 w-full`}
         >
-          <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
+          <PrimaryHighlight />
           متابعة الشراء
         </Link>
         <p className="mt-3 text-center text-micro text-faint">الدفع عند الاستلام</p>

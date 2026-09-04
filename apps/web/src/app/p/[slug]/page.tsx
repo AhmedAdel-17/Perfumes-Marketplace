@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { color } from '@diyar/tokens';
 import { findProductBySlug, listPublishedProducts } from '@/core/catalogue';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
@@ -97,7 +98,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                       of the way up the image and swallowed the flacon's base and
                       cast shadow — the two things that make the object sit on a
                       surface rather than float. */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_top,#0B0A09_0px,#0B0A09_44px,rgba(11,10,9,.86)_82px,transparent_142px)] lg:hidden" />
+                  <div
+                    className="absolute inset-0 lg:hidden"
+                    style={{
+                      // Built from the token: this fade exists to continue the
+                      // page background, so if that background ever moves and
+                      // this does not, the seam becomes visible.
+                      backgroundImage:
+                        `linear-gradient(to top,${color.noir} 0px,${color.noir} 44px,` +
+                        `${color.noir}dd 82px,transparent 142px)`,
+                    }}
+                  />
                 </div>
               </div>
             </div>

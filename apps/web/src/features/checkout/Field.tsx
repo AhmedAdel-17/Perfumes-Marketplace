@@ -64,12 +64,12 @@ export function Field({
           'h-control w-full rounded-sm border bg-l1 px-4 text-bodyLg text-bone',
           'transition-colors duration-base ease-out',
           'placeholder:text-faint focus:outline-none focus-visible:border-brass',
-          error ? 'border-[#B5697E]' : 'border-hair focus:border-dim',
+          error ? 'border-danger' : 'border-hair focus:border-dim',
         ].join(' ')}
       />
 
       {error ? (
-        <p id={errorId} role="alert" className="mt-2 text-caption text-[#B5697E]">
+        <p id={errorId} role="alert" className="mt-2 text-caption text-danger">
           {error}
         </p>
       ) : hint ? (

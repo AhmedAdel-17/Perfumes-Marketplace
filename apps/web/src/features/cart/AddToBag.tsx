@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PrimaryHighlight, primarySurfaceStyle } from '@/features/shell/primary-surface';
 import { useCart } from './CartStore';
 
 /**
@@ -44,9 +45,10 @@ export function AddToBag({
       onClick={onClick}
       disabled={!inStock || !hydrated}
       aria-live="polite"
+      style={primarySurfaceStyle}
       className={className}
     >
-      <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
+      <PrimaryHighlight />
       {!inStock ? 'غير متاح حاليًا' : confirmed ? 'أُضيف إلى الحقيبة' : 'أضف إلى الحقيبة'}
     </button>
   );

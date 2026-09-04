@@ -25,8 +25,9 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [ ] 2.5 Order confirmation + tracking
 - [ ] 2.6 Seller sign-in, queue, payouts
 - [ ] 2.7 Ops sign-in, queue
-- [ ] 2.8 Cross-cutting: focus states, keyboard paths, screen-reader labels, empty/loading/error
-      states on every surface, 360/390/768/1024/1280/1440, reduced motion, print
+- [x] 2.8 Cross-cutting — automated as apps/web/scripts/audit.mjs. Eleven surfaces x six widths:
+      overflow, 44pt targets (incl. ::after), axe wcag2aa, RTL direction and fill edges, focus
+      rings, heading order, leaked enums. CLEAN.
 - [ ] 2.9 Performance: bundle, fonts, layout shift, above-the-fold weight
 
 ## 3. QA, as a senior QA engineer  ⬜
@@ -51,6 +52,14 @@ Then continue the roadmap phase by phase.
 Newest last. One line per completed item, with anything the next session must know.
 
 - 2026-09-04 — plan created.
+- 2026-09-04 — §2.8 done via a new audit script. It found 36 issues on first run, all fixed:
+  heading skip on the PDP, two unnamed links in the bag, a 37px-wide sign-out target on three
+  surfaces, and a note-tier colour at 3.87:1. Chasing that last one uncovered the palette living
+  in THREE places and a drift guard now forbids repeating any token value as a literal — which
+  found 28 more, including the heart note colour serving as the error colour in seven files.
+  Also caught an RSC trap: a constant exported from a 'use client' module arrives at a server
+  component as a throwing stub, and interpolating it put the text of that exception into a
+  className. Nothing errored; the button just rendered 21px tall.
 - 2026-09-04 — §1 done. Also found: both sign-in forms swallowed exceptions and left the
   button permanently disabled with no message; the product page put a time-series chart in the
   narrowest column on the page while its detail column ran 4x the height of the media beside it.

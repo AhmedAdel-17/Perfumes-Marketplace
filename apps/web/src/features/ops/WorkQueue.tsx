@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { CURRENCY_LABEL, formatPrice, internal as num } from '@diyar/i18n';
 import { opsMarkDelivered, opsRecordRemittance } from './actions';
 import { fetchWorkQueue } from './queue';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchWorkQueue>>>;
 type Entry = Queue[number];
@@ -50,7 +51,7 @@ export function OpsWorkQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-[#B5697E]/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small text-bone">
           {error}
         </p>
       )}
@@ -63,15 +64,9 @@ export function OpsWorkQueue() {
 
       <Group title="بانتظار تأكيد التسليم" entries={awaitingDelivery}>
         {(entry) => (
-          <button
-            type="button"
-            disabled={busyId === entry.id}
-            onClick={() => act(entry.id, () => opsMarkDelivered(entry.id))}
-            className="relative flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
-          >
-            <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-            {busyId === entry.id ? '…' : 'تأكيد التسليم'}
-          </button>
+          <PrimaryButton type="button" disabled={busyId === entry.id} onClick={() => act(entry.id, () => opsMarkDelivered(entry.id))} fill="full">
+      {busyId === entry.id ? '…' : 'تأكيد التسليم'}
+    </PrimaryButton>
         )}
       </Group>
 
@@ -153,15 +148,9 @@ function RemitForm({
           autoComplete="off"
           className="tnum h-control min-w-0 flex-1 rounded-sm border border-hair bg-noir px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
         />
-        <button
-          type="button"
-          disabled={busy || !valid}
-          onClick={() => act(entry.id, () => opsRecordRemittance(entry.id, piastres))}
-          className="relative flex h-control items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] px-6 text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
-        >
-          <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-          {busy ? '…' : 'تسجيل'}
-        </button>
+        <PrimaryButton type="button" disabled={busy || !valid} onClick={() => act(entry.id, () => opsRecordRemittance(entry.id, piastres))} fill="auto">
+      {busy ? '…' : 'تسجيل'}
+    </PrimaryButton>
       </div>
       <p className="mt-2 text-micro leading-relaxed text-faint">
         المتوقّع <span className="tnum">{formatPrice(entry.totalPiastres)}</span>{' '}

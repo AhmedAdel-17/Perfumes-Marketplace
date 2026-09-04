@@ -1,5 +1,6 @@
 import { CURRENCY_LABEL, formatPrice } from '@diyar/i18n';
 import { AddToBag } from '@/features/cart/AddToBag';
+import { primarySurface } from '@/features/shell/primary-surface';
 
 /**
  * Price and the single primary action.
@@ -38,20 +39,7 @@ export function BuyBlock({
       productId={productId}
       pricePiastres={pricePiastres}
       inStock={inStock}
-      className={[
-        // A flat brass slab with a bold label is a framework button wearing a
-        // brand colour. Three things change that: a shallow vertical gradient
-        // so the surface has a light direction, a hairline top edge where that
-        // light catches, and a LETTERSPACED label at normal weight — bold type
-        // on a saturated ground is the loudest thing an interface can do, and
-        // law VII is never shout.
-        'group/cta relative flex h-control items-center justify-center overflow-hidden rounded-sm',
-        'bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-noir',
-        'text-bodyLg font-medium tracking-[1.2px]',
-        'transition-[filter,opacity] duration-base ease-out',
-        'hover:brightness-110 active:opacity-press disabled:opacity-disabled disabled:brightness-75',
-        variant === 'bar' ? 'flex-1' : 'w-full',
-      ].join(' ')}
+      className={[primarySurface, variant === 'bar' ? 'flex-1' : 'w-full'].join(' ')}
     />
   );
 

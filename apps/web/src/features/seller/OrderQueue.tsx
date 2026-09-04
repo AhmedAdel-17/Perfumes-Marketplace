@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, internal as num } from '@diyar/i18n';
 import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
 type Entry = Queue[number];
@@ -49,7 +50,7 @@ export function OrderQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-[#B5697E]/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small text-bone">
           {error}
         </p>
       )}
@@ -206,15 +207,9 @@ function Row({
               autoComplete="off"
               className="latin h-control min-w-0 flex-1 rounded-sm border border-hair bg-noir px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
             />
-            <button
-              type="button"
-              disabled={busy || tracking.trim().length < 4}
-              onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))}
-              className="relative flex h-control items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] px-6 text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
-            >
-              <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-              {busy ? '…' : 'تم الشحن'}
-            </button>
+            <PrimaryButton type="button" disabled={busy || tracking.trim().length < 4} onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))} fill="auto">
+      {busy ? '…' : 'تم الشحن'}
+    </PrimaryButton>
           </div>
           <p className="mt-2 text-micro leading-relaxed text-faint">
             اكتب الرقم كما هو على البوليصة. سيراه العميل في صفحة التتبّع.
@@ -224,20 +219,14 @@ function Row({
 
       {stage === 'decide' && !declining && (
         <div className="mt-4 flex gap-3">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => act(entry.id, () => confirmSubOrder(entry.id))}
-            className="relative flex h-control flex-1 items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 disabled:opacity-disabled"
-          >
-            <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-            {busy ? '…' : 'تأكيد'}
-          </button>
+          <PrimaryButton type="button" disabled={busy} onClick={() => act(entry.id, () => confirmSubOrder(entry.id))} fill="flex">
+      {busy ? '…' : 'تأكيد'}
+    </PrimaryButton>
           <button
             type="button"
             disabled={busy}
             onClick={() => setDeclining(true)}
-            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-hair px-6 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-[#B5697E] hover:text-[#B5697E]"
+            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-hair px-6 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-danger hover:text-danger"
           >
             اعتذار
           </button>
@@ -282,7 +271,7 @@ function DeclineReasons({
             type="button"
             disabled={busy}
             onClick={() => act(entry.id, () => declineSubOrder(entry.id, reason.value))}
-            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-4 text-small text-bone transition-colors duration-base ease-out hover:border-[#B5697E] hover:text-[#B5697E] disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-4 text-small text-bone transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
           >
             {reason.label}
           </button>
@@ -323,7 +312,7 @@ function Countdown({ dueAt, state }: { dueAt: string | null; state: string }) {
   const minutes = Math.floor((Math.abs(remaining) % 3_600_000) / 60_000);
 
   const tone = overdue
-    ? 'text-[#D69AA8]'
+    ? 'text-danger'
     : remaining < 3_600_000
       ? 'text-brass'
       : 'text-faint';

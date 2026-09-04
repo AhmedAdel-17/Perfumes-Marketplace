@@ -26,7 +26,10 @@ export default async function OpsQueuePage() {
         <form action={signOutOps}>
           <button
             type="submit"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
+            // `خروج` is three narrow glyphs — 37px wide, under the floor on the
+            // cross axis even with the height fixed. A target has TWO dimensions
+            // and only one of them was being enforced.
+            className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
           >
             خروج
           </button>

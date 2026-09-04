@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Amiri, Bodoni_Moda, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
+import { color } from '@diyar/tokens';
 import './globals.css';
 
 /**
@@ -31,7 +32,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0B0A09',
+  // The browser chrome matches the page. From the token, so it cannot
+  // drift away from the background it is meant to continue.
+  themeColor: color.noir,
   width: 'device-width',
   initialScale: 1,
 };

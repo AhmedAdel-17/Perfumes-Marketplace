@@ -12,23 +12,6 @@ import { database } from './db';
  * so a change of storage cannot ripple into the design layer.
  */
 
-/**
- * The flacon is RENDERED from the scent family, not filled with a gradient.
- * `Flacon.tsx` derives its whole palette from this one token via glassPalette(),
- * which is why the card carries the family key itself rather than a colour: a
- * component that receives a finished CSS gradient can never render glass.
- *
- * Retained only as the fallback ground behind the render.
- */
-const BOTTLE: Record<string, string> = {
-  oud: 'linear-gradient(100deg,#2E2318,#4A3328 38%,#6B4A38 52%,#241B14)',
-  amber: 'linear-gradient(100deg,#4A3720,#8A6838 38%,#A37F4C 52%,#3A2B18)',
-  woody: 'linear-gradient(100deg,#2E2A24,#5A5148 38%,#7A6F63 52%,#26221D)',
-  floral: 'linear-gradient(100deg,#5A2E38,#A8536B 40%,#C07A90 54%,#4A2530)',
-  fresh: 'linear-gradient(100deg,#26332E,#4A6B5E 40%,#5A8C7C 54%,#1E2A25)',
-  gourmand: 'linear-gradient(100deg,#3A2A1E,#7A5236 40%,#9A6B4A 54%,#2E2018)',
-  musk: 'linear-gradient(100deg,#3A3630,#6E675D 40%,#8E8578 54%,#2E2B26)',
-};
 
 const FAMILY_AR: Record<string, string> = {
   oud: 'عود', amber: 'عنبر', woody: 'خشبي', floral: 'زهري',
@@ -64,7 +47,7 @@ const SOURCE_AR: Record<string, string> = {
 
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
-  pricePiastres: number; volumeMl: number; familyLabel: string; bottle: string;
+  pricePiastres: number; volumeMl: number; familyLabel: string;
   /** Raw scent-family token key — drives the flacon render. */
   family: string;
 }
@@ -91,7 +74,6 @@ const toCard = (row: typeof schema.products.$inferSelect, brandLatin: string): P
   volumeMl: row.volumeMl,
   familyLabel: FAMILY_AR[row.scentFamily ?? ''] ?? '',
   family: row.scentFamily ?? 'amber',
-  bottle: BOTTLE[row.scentFamily ?? ''] ?? BOTTLE.amber!,
 });
 
 export async function listPublishedProducts(): Promise<ProductCard[]> {

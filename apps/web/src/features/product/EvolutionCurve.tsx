@@ -1,3 +1,5 @@
+import { noteTier } from '@diyar/tokens';
+
 /**
  * How the perfume evolves over eight hours.
  *
@@ -27,10 +29,13 @@ export function EvolutionCurve({
   return (
     <section className="mx-5 mt-8 border border-hair bg-l1 p-4 pt-5">
       <div className="mb-3 flex gap-4">
+        {/* From the tokens. These were three retyped hexes, and one of them was
+            still the OLD base colour after that token was raised to clear its
+            contrast floor — a legend disagreeing with the chart it labels. */}
         {[
-          ['القمة', '#C2A85C'],
-          ['القلب', '#B5697E'],
-          ['القاعدة', '#8A6838'],
+          ['القمة', noteTier.top],
+          ['القلب', noteTier.heart],
+          ['القاعدة', noteTier.base],
         ].map(([label, colour]) => (
           <span key={label} className="flex items-center gap-2 text-micro text-faint">
             <i aria-hidden className="block h-[2px] w-3" style={{ background: colour }} />

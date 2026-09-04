@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Field } from '@/features/checkout/Field';
 import { requestSellerCode, verifySellerCode } from './actions';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 /**
  * House sign-in.
@@ -105,19 +106,14 @@ export function SellerSignIn() {
       )}
 
       {error && (
-        <p role="alert" className="mb-5 border border-[#B5697E]/50 bg-l1 p-4 text-small leading-relaxed text-bone">
+        <p role="alert" className="mb-5 border border-danger/50 bg-l1 p-4 text-small leading-relaxed text-bone">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="relative flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 active:opacity-press disabled:opacity-disabled disabled:brightness-75"
-      >
-        <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-        {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
-      </button>
+      <PrimaryButton type="submit" disabled={busy} fill="full">
+      {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
+    </PrimaryButton>
 
       {/*
         The stub, named on screen. A developer who cannot find the code wastes

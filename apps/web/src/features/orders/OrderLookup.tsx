@@ -6,6 +6,7 @@ import {
 } from '@diyar/i18n';
 import { Field } from '@/features/checkout/Field';
 import { lookupOrder, type OrderLookupResult } from './actions';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 /**
  * Order tracking, without an account.
@@ -58,14 +59,9 @@ export function OrderLookup() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={searching}
-        className="relative flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 active:opacity-press disabled:opacity-disabled disabled:brightness-75"
-      >
-        <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-        {searching ? '…جارٍ البحث' : 'تتبّع الطلب'}
-      </button>
+      <PrimaryButton type="submit" disabled={searching} fill="full">
+      {searching ? '…جارٍ البحث' : 'تتبّع الطلب'}
+    </PrimaryButton>
     </form>
   );
 }
@@ -109,7 +105,7 @@ function OrderDetail({
                 className={[
                   'rounded-pill px-3 py-1 text-micro tracking-label',
                   copy.terminal && house.state !== 'delivered'
-                    ? 'bg-[#B5697E]/15 text-[#D69AA8]'
+                    ? 'bg-danger/15 text-danger'
                     : 'bg-brass/15 text-brass',
                 ].join(' ')}
               >

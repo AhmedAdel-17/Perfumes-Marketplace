@@ -1,3 +1,4 @@
+import { noteTier } from '@diyar/tokens';
 import { NOTE_ICON } from './note-icons';
 
 /**
@@ -9,7 +10,7 @@ import { NOTE_ICON } from './note-icons';
  * right edge, which is where the orbs sit. Getting that backwards put the spine
  * 350px away from its own nodes once already (DESIGN_DOCTRINE §4a).
  *
- * Driven entirely by product data. Nothing here is hardcoded.
+ * Driven entirely by product data, and coloured from the tokens.
  */
 const TIERS = [
   { key: 'top', en: 'TOP', ar: 'القمة', when: 'أول ٣٠ دقيقة', colour: 'var(--note-top)' },
@@ -26,10 +27,20 @@ export function NotesPyramid({
     <section
       className="relative px-5"
       style={{
-        // Tier colours as CSS variables so the spine gradient can reference them.
-        ['--note-top' as string]: '#C2A85C',
-        ['--note-heart' as string]: '#B5697E',
-        ['--note-base' as string]: '#8A6838',
+        /*
+          Tier colours as CSS variables so the spine gradient can reference
+          them — read FROM THE TOKENS, not retyped.
+
+          These were three hard-coded hexes, under a header that said "nothing
+          here is hardcoded". The same three values also sat in
+          packages/tokens/src/globals.css, which nothing imported. So the
+          palette lived in three places, tokens.json was the only one anybody
+          edited, and raising `base` to clear its contrast floor changed
+          nothing on screen.
+        */
+        ['--note-top' as string]: noteTier.top,
+        ['--note-heart' as string]: noteTier.heart,
+        ['--note-base' as string]: noteTier.base,
       }}
     >
       <div
@@ -76,7 +87,15 @@ export function NotesPyramid({
                   {tier.en}
                 </span>
               </div>
-              <h3 className="mb-3 font-display text-h4">{tier.ar}</h3>
+              {/*
+                h2, not h3. The product name is the h1 and these tiers are its
+                direct children — h1 → h3 leaves a screen reader announcing a
+                level that has no parent, and the reader cannot tell whether it
+                missed something. The SIZE is unchanged; heading level and type
+                scale are different decisions and this is why they are separate
+                properties.
+              */}
+              <h2 className="mb-3 font-display text-h4">{tier.ar}</h2>
               <ul className="flex flex-wrap gap-2">
                 {list.map((note) => (
                   <li

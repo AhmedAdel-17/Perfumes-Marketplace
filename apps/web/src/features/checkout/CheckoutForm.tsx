@@ -7,6 +7,7 @@ import { priceCart, type PricedCartResult } from '@/features/cart/actions';
 import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
 import { placeOrder, type PlaceOrderResult } from './actions';
+import { PrimaryButton } from '@/features/shell/PrimaryButton';
 
 /**
  * Checkout.
@@ -121,7 +122,7 @@ export function CheckoutForm() {
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
       {result && !result.ok && (
-        <div role="alert" className="mb-6 border border-[#B5697E]/50 bg-l1 p-4 text-small leading-relaxed text-bone">
+        <div role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small leading-relaxed text-bone">
           {result.message}
           {result.reason === 'cart_changed' && (
             <Link href="/cart" className="tappable mt-3 block text-brass underline">
@@ -190,14 +191,9 @@ export function CheckoutForm() {
 
       <Summary cart={cart} />
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="relative mt-7 flex h-control w-full items-center justify-center overflow-hidden rounded-sm bg-[linear-gradient(180deg,#C4A06A_0%,#B08D57_52%,#9A7A48_100%)] text-bodyLg font-medium tracking-[1.2px] text-noir transition-[filter,opacity] duration-base ease-out hover:brightness-110 active:opacity-press disabled:opacity-disabled disabled:brightness-75"
-      >
-        <span className="absolute inset-x-0 top-0 h-px bg-white/30" aria-hidden />
-        {submitting ? '…جارٍ تأكيد الطلب' : 'تأكيد الطلب'}
-      </button>
+      <PrimaryButton type="submit" disabled={submitting} fill="full">
+      {submitting ? '…جارٍ تأكيد الطلب' : 'تأكيد الطلب'}
+    </PrimaryButton>
 
       <p className="mt-3 pb-8 text-center text-micro leading-relaxed text-faint">
         بتأكيد الطلب فأنت توافق على شروط البيع وسياسة الإرجاع.

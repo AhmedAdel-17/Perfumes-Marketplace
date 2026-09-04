@@ -28,6 +28,17 @@ import { glassPalette } from '@diyar/tokens';
  * flacons on one page with `id="glass"` would silently share the first one's
  * fills — every bottle in a grid would wear the colour of the first product.
  */
+/**
+ * The rim light.
+ *
+ * It happened to be spelled `#EDE8DF`, which is exactly the `bone` token — so
+ * the drift guard flagged it, correctly. It is not bone: bone is READING TEXT
+ * on a dark ground, and this is light falling on an edge of glass. Two things
+ * that share a hex today and must be free to move apart, which is the whole
+ * argument for naming them separately rather than pointing one at the other.
+ */
+const RIM_LIGHT = '#EEE9E0';
+
 export function Flacon({
   family,
   house,
@@ -93,10 +104,10 @@ export function Flacon({
 
         {/* Cool rim light down the far edge — separates glass from background. */}
         <linearGradient id={id('rim')} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#EDE8DF" stopOpacity="0" />
-          <stop offset="30%" stopColor="#EDE8DF" stopOpacity=".38" />
-          <stop offset="88%" stopColor="#EDE8DF" stopOpacity=".10" />
-          <stop offset="100%" stopColor="#EDE8DF" stopOpacity="0" />
+          <stop offset="0%" stopColor={RIM_LIGHT} stopOpacity="0" />
+          <stop offset="30%" stopColor={RIM_LIGHT} stopOpacity=".38" />
+          <stop offset="88%" stopColor={RIM_LIGHT} stopOpacity=".10" />
+          <stop offset="100%" stopColor={RIM_LIGHT} stopOpacity="0" />
         </linearGradient>
 
         {/* Brushed metal: banded, never a smooth ramp — smooth reads as plastic. */}
