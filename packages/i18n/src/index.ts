@@ -36,3 +36,4 @@ export function t<K extends string>(path: K, locale: Locale = DEFAULT_LOCALE): s
   if (typeof node !== 'string') throw new Error(`Copy key is not a string: ${path}`);
   return node;
 }
+

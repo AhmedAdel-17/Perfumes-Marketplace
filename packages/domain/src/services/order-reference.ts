@@ -24,7 +24,7 @@
  * `Math.random()` is untestable and, worse, unverifiable — you cannot prove the
  * alphabet is respected if every run produces something different.
  */
-import { InvalidMoney } from '../errors/index';
+import { InvalidRandomness } from '../errors/index';
 
 /** 18 symbols, none of which can be misread as another. */
 export const REFERENCE_ALPHABET = 'CDFHJKMNPQRVWXY349';
@@ -38,7 +38,7 @@ export type RandomBytes = (length: number) => Uint8Array;
 /**
  * `DY-XXXXXXXX`.
  *
- * The modulo bias across a 25-symbol alphabet over 256 values is real but
+ * The modulo bias across an 18-symbol alphabet over 256 values is real but
  * irrelevant here: this is an identifier, not a secret, and it is protected by a
  * unique index rather than by entropy. Reaching for rejection sampling would be
  * precision applied to the wrong problem.
@@ -46,7 +46,7 @@ export type RandomBytes = (length: number) => Uint8Array;
 export function generateOrderReference(random: RandomBytes): string {
   const bytes = random(REFERENCE_BODY_LENGTH);
   if (bytes.length !== REFERENCE_BODY_LENGTH) {
-    throw new InvalidMoney(
+    throw new InvalidRandomness(
       `Reference generator asked for ${REFERENCE_BODY_LENGTH} bytes and received ${bytes.length}`,
     );
   }
@@ -71,8 +71,27 @@ const PATTERN = new RegExp(
  * cannot be a real reference, so guessing which symbol was meant would be
  * inventing an order.
  */
+/**
+ * Arabic-Indic and extended Arabic-Indic digits, as Western.
+ *
+ * DELIBERATE DUPLICATION of `westernDigits` in @diyar/i18n. The domain has no
+ * runtime dependencies and must not grow one on a presentation package to
+ * reach three lines of character arithmetic — the dependency rule is worth
+ * more than the duplication. `westernDigits.test.ts` in the API package, which
+ * can see both, asserts the two agree on every digit so they cannot drift.
+ *
+ * It belongs in the domain because forgiving how a human typed a reference is
+ * this function's whole job: the alphabet contains 3, 4 and 9, and a customer
+ * reading one back over the phone will type them on the keyboard they have.
+ */
+const toWesternDigits = (input: string): string =>
+  input.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => {
+    const code = d.charCodeAt(0);
+    return String(code - (code >= 0x06F0 ? 0x06F0 : 0x0660));
+  });
+
 export function normaliseOrderReference(input: string): string | null {
-  const cleaned = input.trim().toUpperCase().replace(/[\s-]/g, '');
+  const cleaned = toWesternDigits(input).trim().toUpperCase().replace(/[\s-]/g, '');
   if (!cleaned.startsWith(REFERENCE_PREFIX)) return null;
   const candidate = `${REFERENCE_PREFIX}-${cleaned.slice(REFERENCE_PREFIX.length)}`;
   return PATTERN.test(candidate) ? candidate : null;

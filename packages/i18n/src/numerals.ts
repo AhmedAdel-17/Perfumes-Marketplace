@@ -28,6 +28,32 @@ export type Surface = 'customer' | 'internal';
 const toArabicIndic = (s: string): string =>
   s.replace(/[0-9]/g, (d) => ARABIC_INDIC[Number(d)]!);
 
+/**
+ * The inverse: whatever numerals a person TYPED, as Western digits.
+ *
+ * An Egyptian keyboard produces ٠١٢…, and a customer typing their own phone
+ * number in their own numerals is not making a mistake. Without this they meet
+ * "invalid Egyptian mobile number" over a number that is plainly correct to
+ * them, with nothing on screen suggesting what to change — the single most
+ * frustrating shape a form error can take.
+ *
+ * Two ranges, not one. U+0660 is the Arabic-Indic set; U+06F0 is the extended
+ * set used for Persian and Urdu, and several Android Arabic keyboards emit it.
+ * Handling only the first would fix the fault for most people and leave it
+ * exactly as impassable for the rest.
+ *
+ * Conversion happens at the INPUT, where the field shows what it understood.
+ * Doing it inside the validation schema would hide it: the schema is also the
+ * identity boundary, and a phone number silently rewritten there could make one
+ * person into two customers depending on which keyboard they used.
+ */
+export const westernDigits = (input: string): string =>
+  input.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => {
+    const code = d.charCodeAt(0);
+    const base = code >= 0x06F0 ? 0x06F0 : 0x0660;
+    return String(code - base);
+  });
+
 const groupThousands = (whole: string): string =>
   whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 

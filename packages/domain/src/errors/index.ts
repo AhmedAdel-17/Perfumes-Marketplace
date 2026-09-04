@@ -50,3 +50,15 @@ export class CurrencyMismatch extends DomainError {
 export class InvalidMoney extends DomainError {
   readonly code = 'INVALID_MONEY';
 }
+
+/**
+ * A source of randomness did not return what it was asked for.
+ *
+ * Its own class because the alternative in use was `InvalidMoney`, thrown from
+ * the order-reference generator, where no money is involved. A delivery layer
+ * mapping error codes to Arabic messages would have told the customer their
+ * payment amount was invalid because a random-byte call came back short.
+ */
+export class InvalidRandomness extends DomainError {
+  readonly code = 'INVALID_RANDOMNESS';
+}

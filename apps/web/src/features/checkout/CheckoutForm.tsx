@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   counted, CURRENCY_LABEL, DAY, editorial, formatPrice, GOVERNORATE_OPTIONS,
-  plural, SHIPMENT, data as num,
-} from '@diyar/i18n';
+  plural, SHIPMENT, data as num } from '@diyar/i18n';
 import { priceCart, type PricedCartResult } from '@/features/cart/actions';
 import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
@@ -121,6 +120,8 @@ export function CheckoutForm() {
       </div>
     );
   }
+
+
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">

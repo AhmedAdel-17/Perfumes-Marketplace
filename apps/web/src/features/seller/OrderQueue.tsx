@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, internal as num } from '@diyar/i18n';
 import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { REJECTION_REASONS } from '@diyar/domain';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
 type Entry = Queue[number];
@@ -246,12 +247,27 @@ function Row({
  * platform never learns which houses run out of stock and which simply do not
  * open the app.
  */
-const REASONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'out_of_stock', label: 'نفد المخزون' },
-  { value: 'pricing_error', label: 'خطأ في السعر' },
-  { value: 'cannot_fulfil_sla', label: 'لا يمكن التجهيز في الوقت' },
-  { value: 'suspected_fraud', label: 'اشتباه في الطلب' },
-];
+/**
+ * The CODES come from the domain; only the wording lives here.
+ *
+ * This list used to be retyped, and had drifted: it offered
+ * `cannot_fulfil_sla`, which is not in the domain vocabulary, not in the
+ * database enum, and not accepted by the schema. The button rendered, the house
+ * pressed it, and the decline was refused — a dead control on the one screen
+ * where a house says no.
+ *
+ * Typing the labels as a full Record means the compiler now refuses to build if
+ * a reason gains a code with no wording, or keeps wording for a code that no
+ * longer exists. The list cannot drift again without failing the typecheck.
+ */
+const REASON_LABELS: Record<(typeof REJECTION_REASONS)[number], string> = {
+  out_of_stock: 'نفد المخزون',
+  pricing_error: 'خطأ في السعر',
+  area_not_served: 'لا نوصّل إلى هذه المنطقة',
+  suspected_fraud: 'اشتباه في الطلب',
+};
+
+const REASONS = REJECTION_REASONS.map((value) => ({ value, label: REASON_LABELS[value] }));
 
 function DeclineReasons({
   entry, busy, act, onCancel,

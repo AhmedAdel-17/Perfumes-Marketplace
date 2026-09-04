@@ -34,7 +34,7 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 
 - [x] 3.1 38 end-to-end tests: buyer, seller, ops, in Chrome
 - [x] 3.2 Every control exercised — stepper at its floor, dispatch below its minimum, decline path, empty bag, wrong code
-- [ ] 3.3 Boundary and adversarial input on every form
+- [x] 3.3 60 boundary/adversarial tests at the schema boundary + Arabic-Indic entry end to end
 - [x] 3.4 axe across 11 surfaces × 6 widths; the purchase completed by keyboard alone
 - [x] 3.5 Double-tap proven at the HOUSE, not the confirmation; two tabs; sign-out
 - [ ] 3.6 Money: every arithmetic path reconciles, no float, no rounding drift

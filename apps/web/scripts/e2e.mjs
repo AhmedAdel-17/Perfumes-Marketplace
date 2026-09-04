@@ -103,10 +103,17 @@ const SELLERS = ['01001112222', '01113334444', '01225556666'];
 const OPERATOR = '01000000001';
 
 /**
- * A phone used by exactly one order in the whole run, so the seller queues can
- * be counted for it. Distinct from every other number this suite types.
+ * A phone belonging to THIS RUN, so the seller queues can be counted for it.
+ *
+ * It was a fixed number, and the count test passed once and then failed
+ * forever: the development database persists between runs, so the second run
+ * found the first run's order sitting beside its own and reported a duplicate.
+ * A test that counts rows has to own the rows it counts.
+ *
+ * Shaped as a real Egyptian mobile — `010` and eight digits — because the
+ * validation that this order has to pass is the point of placing it.
  */
-const DOUBLE_TAP_PHONE = '01098765432';
+const DOUBLE_TAP_PHONE = `010${String(Date.now()).slice(-8)}`;
 
 const ADDRESS = {
   'المدينة': 'المهندسين',
@@ -295,6 +302,30 @@ try {
         await shopper.waitForTimeout(1200);
       }
     }
+  });
+
+  await test('accepts a phone typed in Arabic-Indic numerals', async () => {
+    // An Egyptian keyboard produces ٠١٢…, and every validator downstream reads
+    // Western digits. Before the field normalised as it typed, a customer
+    // entering their own number in their own numerals was told it was not a
+    // valid Egyptian mobile with nothing on screen to say what was wrong.
+    await shopper.goto(`${BASE}/checkout`, { waitUntil: 'networkidle' });
+    await shopper.waitForTimeout(1500);
+
+    const id = await fieldId(shopper, 'رقم الموبايل');
+    await shopper.fill(`#${id}`, '٠١٠١١١١٢٢٢٢');
+
+    // The field shows what it understood, while the customer is still looking.
+    equal(await shopper.inputValue(`#${id}`), '01011112222', 'the field after typing');
+  });
+
+  await test('a street name keeps the numerals it was given', async () => {
+    // Only digits-as-data are converted. An address line is prose, and
+    // rewriting the numerals inside it would be the site correcting a
+    // customer's own words back at them.
+    const id = await fieldId(shopper, 'الشارع');
+    await shopper.fill(`#${id}`, 'شارع ٢٦ يوليو');
+    equal(await shopper.inputValue(`#${id}`), 'شارع ٢٦ يوليو', 'the street after typing');
   });
 
   let reference = null;
@@ -591,6 +622,37 @@ try {
     assert(text.includes('نفد المخزون'), 'the coded reasons must appear');
     equal(await seller.locator('textarea').count(), 0, 'free-text boxes on the decline path');
     await seller.locator('button', { hasText: /^رجوع$/ }).first().click();
+  });
+
+  await test('EVERY decline reason actually declines an order', async () => {
+    // Checking that the reasons RENDER is not the test. The portal offered a
+    // fourth reason — `cannot_fulfil_sla` — that exists in no vocabulary the
+    // system has: not the domain's, not the database enum, not the schema. It
+    // rendered perfectly and did nothing when pressed, and a house saying no in
+    // the one way the interface offered was simply ignored.
+    const labels = ['نفد المخزون', 'خطأ في السعر', 'لا نوصّل إلى هذه المنطقة', 'اشتباه في الطلب'];
+
+    for (const label of labels) {
+      // Counted over ALL of them. The first version measured `.first()`, which
+      // is one or zero by construction, against the full count — so it compared
+      // 1 against 19 and called a successful decline a failure.
+      const all = seller.locator('button', { hasText: /^اعتذار$/ });
+      const before = await all.count();
+      if (before === 0) break; // the queue ran out of decisions
+      await all.first().click();
+      await seller.waitForTimeout(700);
+
+      const reason = seller.locator('button', { hasText: label }).first();
+      assert(await reason.count() > 0, `"${label}" must be offered`);
+      await reason.click();
+      await seller.waitForTimeout(3500);
+
+      const after = await seller.locator('button', { hasText: /^اعتذار$/ }).count();
+      assert(
+        after === before - 1,
+        `declining with "${label}" left the order in the queue (${before} → ${after}) — the reason was refused`,
+      );
+    }
   });
 
   await test('the double-tapped order reached a house exactly ONCE', async () => {

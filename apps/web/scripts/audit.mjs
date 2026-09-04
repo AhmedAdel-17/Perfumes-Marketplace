@@ -29,7 +29,8 @@
  * the day CI exists.
  */
 import { chromium } from 'playwright';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -55,6 +56,57 @@ const WIDTHS = [
 const findings = [];
 const record = (surface, width, rule, detail) =>
   findings.push({ surface, width, rule, detail });
+
+/*
+ * The static checks run FIRST, before a browser opens.
+ *
+ * They were at the end. When the client-directive fault below took every form
+ * page to a 500, the audit died on a missing form label and never reached the
+ * check that would have named the cause in one line.
+ */
+/* ------------------------------------------------- static source checks */
+
+/**
+ * `'use client'` must be the FIRST statement in its file.
+ *
+ * JavaScript directive prologues only count before any other statement, so an
+ * import placed above the directive does not fail, does not warn, and does not
+ * error at build time — the module quietly stops being a client component. The
+ * shared form field lost its directive this way to a one-line import, and every
+ * page carrying a form began returning 500 while typecheck and lint stayed
+ * clean.
+ *
+ * Comments are stripped before deciding whether a file HAS a directive at all.
+ * `primary-surface.tsx` explains in its header comment why it deliberately
+ * carries none, and a guard that cannot tell prose from code teaches people to
+ * delete the prose. The token drift guard learned this same lesson.
+ */
+function checkClientDirectives(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) { checkClientDirectives(full); continue; }
+    if (!/\.tsx?$/.test(entry.name)) continue;
+
+    const source = readFileSync(full, 'utf8');
+    const code = source
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+
+    if (!/['"]use client['"]/.test(code)) continue;
+
+    const first = code.trim();
+    if (!(first.startsWith("'use client'") || first.startsWith('"use client"'))) {
+      record(
+        relative(process.cwd(), full).replace(/\\/g, '/'), '—', 'client-directive',
+        "'use client' is not the first statement, so this file is not a client component",
+      );
+    }
+  }
+}
+
+checkClientDirectives(join(process.cwd(), 'src'));
+
 
 function codeFor(phone) {
   const lines = readFileSync(LOG, 'utf8').split('\n').filter((l) => l.includes(phone));
@@ -288,6 +340,17 @@ try {
     await ops.goto(`${BASE}/ops/queue`, { waitUntil: 'networkidle' });
     await auditPage(ops, 'ops-queue', size.name);
   }
+} catch (error) {
+  /*
+   * A crash is a FINDING, not an exit.
+   *
+   * The browser pass used to take the process down with it, which meant the
+   * static checks above — already run, already holding the answer — were never
+   * printed. The one time it mattered, the report that would have named the
+   * cause in a line was sitting in memory when the process died over a form
+   * label that was missing because of it.
+   */
+  record('audit', '—', 'crashed', String(error.message ?? error).split(String.fromCharCode(10))[0]);
 } finally {
   await browser.close();
 }

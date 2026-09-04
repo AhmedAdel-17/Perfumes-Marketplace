@@ -5,7 +5,7 @@ import {
   REFERENCE_ALPHABET,
   REFERENCE_BODY_LENGTH,
 } from './order-reference';
-import { InvalidMoney } from '../errors/index';
+import { InvalidRandomness } from '../errors/index';
 
 /** Deterministic bytes, so the alphabet can actually be asserted. */
 const bytes = (...values: number[]): (length: number) => Uint8Array =>
@@ -57,7 +57,10 @@ describe('order references — read down a phone line', () => {
   });
 
   it('refuses a generator that returns the wrong number of bytes', () => {
-    expect(() => generateOrderReference(() => new Uint8Array(3))).toThrow(InvalidMoney);
+    // InvalidRandomness, not InvalidMoney. The generator threw the money error
+    // for a short random-byte read, and a delivery layer mapping codes to
+    // Arabic would have told the customer their payment amount was invalid.
+    expect(() => generateOrderReference(() => new Uint8Array(3))).toThrow(InvalidRandomness);
   });
 
   it('is deterministic for the same bytes, which is what makes it testable', () => {
