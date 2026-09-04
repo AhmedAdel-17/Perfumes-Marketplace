@@ -12,15 +12,29 @@
  * site does it: a person who fixes one problem and is immediately shown the
  * next gives up somewhere around the third.
  *
- * WHAT IS DELIBERATELY NOT REQUIRED. Media and attribution are two of doc 04's
- * eight groups and neither is checked here, because neither is built yet.
- * Requiring a field the system cannot store would make submission impossible;
- * pretending the rule is complete would be worse. `UNENFORCED_GROUPS` names
- * them so the gap is visible rather than forgotten.
+ * IT MUST AGREE WITH THE DATABASE. Migration 0001 carries a trigger that
+ * refuses to publish a listing with missing required fields, and this function
+ * is the readable copy of that rule — the one a form can consult before a
+ * seller presses anything. Two copies is deliberate (ENGINEERING_PRINCIPLES
+ * §4: one place to read the rule, one place it cannot be evaded), and it is
+ * only defensible while they say the same thing, which `publish-gate-parity`
+ * asserts field by field.
+ *
+ * The first version of this file did NOT agree. It declared media unenforced
+ * on the grounds that it was not built — and `product_media` has existed since
+ * the initial migration, with the database requiring a primary image whose
+ * ownership the seller has confirmed and whose alt text is not blank. A listing
+ * would have passed this check, told the seller it was ready, and then been
+ * refused by the database at the moment of publishing with an error they had
+ * no way to anticipate.
+ *
+ * WHAT IS STILL NOT REQUIRED. Attribution — doc 04 §4's eighth group — is
+ * checked by neither layer. `UNENFORCED_GROUPS` names it so the gap stays
+ * visible instead of being forgotten.
  */
 
-/** Groups from doc 04 §4 that this function does not yet enforce. */
-export const UNENFORCED_GROUPS = ['media', 'attribution'] as const;
+/** Groups from doc 04 §4 that neither this nor the database enforces. */
+export const UNENFORCED_GROUPS = ['attribution'] as const;
 
 export const LISTING_FIELDS = [
   // Identity
@@ -35,6 +49,12 @@ export const LISTING_FIELDS = [
   'performanceSource',
   // Compliance
   'responsiblePartyName', 'returnEligibility', 'defectRoute',
+  /*
+   * Media. Not a column on the product — it is a row in `product_media` that is
+   * primary, has confirmed ownership, and has non-blank alt text. The caller
+   * resolves that to a boolean, because this module performs no I/O.
+   */
+  'primaryImage',
 ] as const;
 
 export type ListingField = (typeof LISTING_FIELDS)[number];
@@ -72,6 +92,14 @@ export interface ListingDraft {
   responsiblePartyName?: string | null;
   returnEligibility?: string | null;
   defectRoute?: string | null;
+  /**
+   * Whether a primary image exists with confirmed ownership and alt text.
+   *
+   * A boolean rather than the media rows themselves: the rule is about whether
+   * one qualifies, and handing this module a list would invite it to grow
+   * opinions about media it has no business having.
+   */
+  primaryImage?: boolean | null;
 }
 
 export type ListingGapCode =
@@ -102,6 +130,12 @@ export function listingGaps(draft: ListingDraft): ListingGap[] {
   const gaps: ListingGap[] = [];
 
   for (const field of LISTING_FIELDS) {
+    if (field === 'primaryImage') {
+      // `false` is a legitimate value that means missing, and `isBlank` would
+      // read it as present.
+      if (!draft.primaryImage) gaps.push({ field, code: 'missing' });
+      continue;
+    }
     if (isBlank(draft[field])) gaps.push({ field, code: 'missing' });
   }
 

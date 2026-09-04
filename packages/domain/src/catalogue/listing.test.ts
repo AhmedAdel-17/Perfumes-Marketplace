@@ -122,7 +122,7 @@ const complete = (): ListingDraft => ({
   concentration: 'eau_de_parfum',
   form: 'spray',
   genderPositioning: 'unisex',
-  scentFamily: 'oriental',
+  scentFamily: 'oud',
   notesTop: ['برغموت'],
   notesHeart: ['ورد'],
   notesBase: ['عود'],
@@ -135,6 +135,7 @@ const complete = (): ListingDraft => ({
   responsiblePartyName: 'ميزون نور',
   returnEligibility: 'sealed_only',
   defectRoute: 'استبدال خلال ١٤ يومًا',
+  primaryImage: true,
 });
 
 describe('whether a listing may be submitted', () => {
@@ -202,10 +203,15 @@ describe('whether a listing may be submitted', () => {
       .some((g) => g.field === 'fulfilmentHours')).toBe(true);
   });
 
-  it('names the groups it does not yet enforce', () => {
-    // Media and attribution are two of doc 04's eight groups and neither is
-    // built. Naming them keeps the gap visible instead of forgotten.
-    expect(UNENFORCED_GROUPS).toContain('media');
-    expect(UNENFORCED_GROUPS).toContain('attribution');
+  it('requires a primary image, because the database does', () => {
+    // This check said media was unenforced while the database refused to
+    // publish without a primary image whose ownership is confirmed. A seller
+    // would have been told the listing was ready and then refused.
+    expect(listingGaps({ ...complete(), primaryImage: false }).map((g) => g.field))
+      .toContain('primaryImage');
+  });
+
+  it('names the group NEITHER layer enforces', () => {
+    expect(UNENFORCED_GROUPS).toEqual(['attribution']);
   });
 });
