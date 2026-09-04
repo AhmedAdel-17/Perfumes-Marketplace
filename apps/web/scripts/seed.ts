@@ -1,4 +1,4 @@
-import { applyMigrations } from '@diyar/db';
+import { applyMigrations } from '@diyar/db/migrate';
 /**
  * Seed a local database with real content.
  *
@@ -225,6 +225,73 @@ async function main() {
      ON CONFLICT (auth_user_id) DO NOTHING`,
     [PLATFORM],
   );
+
+  /*
+   * Editorial content.
+   *
+   * Two pages, both published, because an empty CMS tells you nothing about
+   * whether the CMS works. `care` exercises every block kind the renderer
+   * knows — a fixture that only uses headings and passages leaves the other
+   * five untested on every screen anybody actually looks at.
+   */
+  const staffId = (await pg.query<{ id: string }>(
+    `SELECT id FROM platform_staff WHERE auth_user_id = $1`, [PLATFORM])).rows[0]!.id;
+
+  const pages = [
+    {
+      slug: 'about',
+      title: 'عن ديار',
+      blocks: [
+        { kind: 'passage', text: 'ديار سوق للعطور المصرية المستقلّة.\n\nنعمل مع دور صغيرة تصنع بكميات محدودة، وتُجهّز كل طلب وتشحنه بنفسها. لا مخزن مركزي، ولا وسيط بين الدار والعميل.' },
+        { kind: 'heading', level: 2, text: 'لماذا الدور المستقلّة' },
+        { kind: 'passage', text: 'العطر المصري له تقليد أقدم من السوق الحديثة، وأغلبه اليوم يُباع دون اسم. الدار التي تضع اسمها على الزجاجة تتحمّل مسؤوليتها.' },
+        { kind: 'pull_quote', text: 'ما نبيعه ليس عطرًا فقط؛ هو اسم أحدهم على زجاجة.', attribution: 'من ميثاق ديار' },
+        { kind: 'divider' },
+        { kind: 'heading', level: 2, text: 'كيف نعمل' },
+        { kind: 'note_list', items: [
+          { term: 'التجهيز', detail: 'كل دار تُجهّز طلبها بنفسها، وتُخطر العميل عند الشحن.' },
+          { term: 'الدفع', detail: 'الدفع عند الاستلام في كل الطلبات حاليًا.' },
+          { term: 'الأسعار', detail: 'بالجنيه المصري وشاملة الضريبة، والتوصيل مذكور منفصلًا لكل دار.' },
+        ] },
+        { kind: 'call_to_action', label: 'تصفّح العطور', href: '/' },
+      ],
+    },
+    {
+      slug: 'care',
+      title: 'العناية بالعطر',
+      blocks: [
+        { kind: 'passage', text: 'العطر مادة حيّة تتغيّر بالحرارة والضوء. القواعد التالية تطيل عمره سنوات.' },
+        { kind: 'heading', level: 2, text: 'التخزين' },
+        { kind: 'note_list', items: [
+          { term: 'الحرارة', detail: 'أقل من ٢٥ درجة. الحمّام أسوأ مكان في البيت.' },
+          { term: 'الضوء', detail: 'بعيدًا عن الشمس المباشرة. العلبة الأصلية تكفي.' },
+          { term: 'الهواء', detail: 'أغلق الزجاجة جيدًا؛ الأكسجين يغيّر القمة أولًا.' },
+        ] },
+        { kind: 'heading', level: 3, text: 'الثلاجة' },
+        { kind: 'passage', text: 'ليست ضرورية، ولا تضرّ. المهم هو ثبات الحرارة لا انخفاضها.' },
+        { kind: 'call_to_action', label: 'تتبّع طلبك', href: '/order' },
+      ],
+    },
+  ] as const;
+
+  for (const page of pages) {
+    const pageId = (await pg.query<{ id: string }>(
+      `INSERT INTO content_pages (slug, title, draft_blocks)
+       VALUES ($1,$2,$3::jsonb)
+       ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, draft_blocks = EXCLUDED.draft_blocks
+       RETURNING id`,
+      [page.slug, page.title, JSON.stringify(page.blocks)])).rows[0]!.id;
+
+    const revisionId = (await pg.query<{ id: string }>(
+      `INSERT INTO content_revisions (page_id, title, blocks, published_by)
+       VALUES ($1,$2,$3::jsonb,$4) RETURNING id`,
+      [pageId, page.title, JSON.stringify(page.blocks), staffId])).rows[0]!.id;
+
+    await pg.query(
+      `UPDATE content_pages SET published_revision_id=$2, state='published' WHERE id=$1`,
+      [pageId, revisionId]);
+  }
+  console.log(`\u00b7 published ${pages.length} content pages`);
 
   const count = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products WHERE status='published'`);
   console.log(`\n✓ seeded ${count.rows[0]!.n} published products across ${houses.length} houses`);

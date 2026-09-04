@@ -19,3 +19,6 @@ coverage/
 # Dev server logs. The one-time codes printed here are real credentials for
 # the seeded accounts, and a log is not a place to keep those.
 .logs/
+
+# Screenshots taken while working. Regenerated on demand, never reviewed.
+.shots/

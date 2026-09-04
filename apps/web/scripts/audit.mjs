@@ -295,6 +295,12 @@ try {
     ['cart', '/cart'],
     ['checkout', '/checkout'],
     ['order-lookup', '/order'],
+    // Editorial pages go through the same eleven checks as everything else.
+    // Content written by a person is exactly where a heading order breaks or a
+    // contrast fails, and it is the only part of the site that changes without
+    // a deploy — so it needs the audit more than the fixed screens do.
+    ['content-about', '/about'],
+    ['content-care', '/care'],
   ];
 
   for (const size of WIDTHS) {

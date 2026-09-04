@@ -63,24 +63,56 @@ export function migrationFiles(dir: string = MIGRATIONS_DIR): string[] {
   return files;
 }
 
+/** Anything that can also be queried, so the ledger can be read back. */
+export interface SqlQueryable extends SqlExecutor {
+  query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
+}
+
+const LEDGER = `CREATE TABLE IF NOT EXISTS schema_migrations (
+  filename text PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+)`;
+
 /**
- * Run them all.
+ * Run every migration that has not run yet.
+ *
+ * A LEDGER, not a try/catch. The seeder runs against a database that persists
+ * between runs, so re-applying `0000` raises "type already exists" — and the
+ * version of this that swallowed that error would have swallowed a genuine
+ * failure with the same shape, which is the whole problem with catching by
+ * accident rather than recording by intent.
+ *
+ * A fresh database applies everything, so tests are unaffected: they each open
+ * their own PGlite and the ledger starts empty.
  *
  * `--> statement-breakpoint` is Drizzle's marker for where it would split a
  * file into separate statements. PGlite's `exec` takes a whole script, so the
  * markers are stripped rather than honoured.
  */
 export async function applyMigrations(
-  db: SqlExecutor,
+  db: SqlExecutor | SqlQueryable,
   options: { dir?: string; onApplied?: (file: string) => void } = {},
 ): Promise<string[]> {
   const dir = options.dir ?? MIGRATIONS_DIR;
   const applied: string[] = [];
 
+  await db.exec(LEDGER);
+
+  const done = new Set<string>();
+  if ('query' in db) {
+    const rows = await db.query<{ filename: string }>('SELECT filename FROM schema_migrations');
+    for (const row of rows.rows) done.add(row.filename);
+  }
+
   for (const file of migrationFiles(dir)) {
+    if (done.has(file)) continue;
+
     const sql = readFileSync(join(dir, file), 'utf8').replace(/--> statement-breakpoint/g, '');
     try {
       await db.exec(sql);
+      // Recorded through `exec` so this works for a plain SqlExecutor too. The
+      // filename is ours, from a directory listing, never user input.
+      await db.exec(`INSERT INTO schema_migrations (filename) VALUES ('${file}')`);
     } catch (cause) {
       // Name the file. A migration failure reported only by its SQL error is a
       // hunt through nine files for the statement that produced it.
