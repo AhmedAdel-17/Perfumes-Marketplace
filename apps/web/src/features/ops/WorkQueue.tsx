@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, formatPrice, internal as num } from '@diyar/i18n';
+import { CURRENCY_LABEL, DAY, formatPrice, plural, internal as num } from '@diyar/i18n';
 import { opsMarkDelivered, opsRecordRemittance } from './actions';
 import { fetchWorkQueue } from './queue';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
@@ -77,6 +77,27 @@ export function OpsWorkQueue() {
   );
 }
 
+/**
+ * Days since the parcel left, coloured by how overdue it feels.
+ *
+ * Amber past three days, danger past seven — a courier that has held a parcel
+ * for a week has usually lost it, and the cash behind it is money the house is
+ * waiting on. Neutral before that, because most parcels arrive normally and a
+ * screen that shouts about all of them shouts about none.
+ */
+function Waiting({ since }: { since: string | null }) {
+  if (!since) return <span className="text-caption text-faint">—</span>;
+
+  const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
+  const tone = days >= 7 ? 'text-danger' : days >= 3 ? 'text-brass' : 'text-faint';
+
+  return (
+    <span className={`text-caption tracking-label ${tone}`}>
+      {days === 0 ? 'اليوم' : <>منذ <span className="tnum">{num(days)}</span> {plural(days, DAY)}</>}
+    </span>
+  );
+}
+
 function Group({
   title, entries, children,
 }: {
@@ -93,9 +114,17 @@ function Group({
       {entries.map((entry) => (
         <article key={entry.id} className="mb-4 border border-hair bg-l1 p-4 lg:p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="latin text-caption tracking-label text-brass">{entry.reference}</span>
-            <span className="text-caption text-faint">{entry.brandName}</span>
+            {/* How long it has been waiting, first.
+                
+                A list becomes a QUEUE when it says which item is oldest. An
+                operator confirming deliveries needs to know whether a parcel
+                has been in transit two days or nine — the second one needs
+                chasing and the first does not, and without this the screen
+                gives no way to tell them apart. */}
+            <Waiting since={entry.dispatchedAt ?? entry.deliveredAt} />
+            <span className="latin text-micro tracking-label text-faint">{entry.reference}</span>
           </div>
+          <div className="mt-1 text-caption text-faint">{entry.brandName}</div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-small text-dim">{entry.recipientName}</span>
             <span className="text-bodyLg font-semibold">

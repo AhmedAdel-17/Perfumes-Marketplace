@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, DAY, formatPrice, GOVERNORATE_OPTIONS, plural, data as num } from '@diyar/i18n';
+import {
+  counted, CURRENCY_LABEL, DAY, editorial, formatPrice, GOVERNORATE_OPTIONS,
+  plural, SHIPMENT, data as num,
+} from '@diyar/i18n';
 import { priceCart, type PricedCartResult } from '@/features/cart/actions';
 import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
@@ -222,6 +225,33 @@ function Summary({ cart }: { cart: PricedCartResult }) {
           </span>
         </div>
       ))}
+
+      {/*
+        The same breakdown the bag showed.
+
+        Checkout listed only per-house totals, so the merchandise and delivery
+        split VANISHED between the two screens — the customer sees a figure at
+        one step and a different arrangement of the same figure at the next, and
+        has to take on trust that they agree. Showing delivery before payment is
+        the entire reason the bag is grouped by house; dropping it here undoes
+        that one screen before the money.
+      */}
+      <div className="mt-4 border-t border-hair pt-4">
+        <div className="flex justify-between py-1 text-small text-dim">
+          <span>المنتجات</span>
+          <span>
+            <span className="tnum">{formatPrice(cart.merchandisePiastres)}</span>
+            <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
+          </span>
+        </div>
+        <div className="flex justify-between py-1 text-small text-dim">
+          <span>التوصيل · {counted(cart.houses.length, SHIPMENT, editorial)}</span>
+          <span>
+            <span className="tnum">{formatPrice(cart.shippingPiastres)}</span>
+            <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
+          </span>
+        </div>
+      </div>
 
       <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-4">
         <span className="font-display text-h4">الإجمالي</span>

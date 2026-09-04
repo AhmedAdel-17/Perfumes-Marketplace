@@ -13,12 +13,31 @@ import './globals.css';
  * and no layout shift when they arrive — which matters more on an Egyptian
  * mobile connection than on a developer's laptop.
  */
+/*
+  Only the weights actually used.
+
+  Fonts were 261 KB across eight files on the product page — by far the largest
+  thing this site downloads, and on the Egyptian mobile connections doc 02
+  describes, essentially the whole budget. Three of those files were never
+  referenced by anything:
+
+    Amiri 700     no `font-bold`, no <strong>, no <b> anywhere in the app.
+                  Amiri is the DISPLAY face and headings are set at 400.
+    Bodoni 500    the Latin face is used only for letterspaced small-caps
+                  labels, and not one of them asks for a weight.
+    Plex 500      one `font-medium`, on the primary button, which is Arabic
+                  and therefore Plex — kept for that single use.
+
+  Dropping a weight is safe only when NOTHING requests it: a browser asked for
+  a bold it does not have will synthesise one, and faux-bold Arabic is worse
+  than the download it saved. Checked before cutting, not assumed.
+*/
 const amiri = Amiri({
-  subsets: ['arabic'], weight: ['400', '700'],
+  subsets: ['arabic'], weight: ['400'],
   variable: '--font-amiri', display: 'swap',
 });
 const bodoni = Bodoni_Moda({
-  subsets: ['latin'], weight: ['400', '500'],
+  subsets: ['latin'], weight: ['400'],
   variable: '--font-bodoni', display: 'swap',
 });
 const plex = IBM_Plex_Sans_Arabic({

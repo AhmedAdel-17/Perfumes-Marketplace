@@ -16,10 +16,26 @@ export const diyarPreset = {
   theme: {
     extend: {
       colors: { ...color, note: noteTier, family: scentFamily },
+      /*
+        Real fallback stacks, not a bare generic.
+
+        The webfonts load with `display: swap`, so on a slow connection every
+        visitor reads the page in the FALLBACK first — and `sans-serif` alone
+        resolves to Times on some Android builds, which renders Arabic badly
+        enough to look broken. Naming the system Arabic faces means the swap
+        period looks like a different typeface rather than like a failure.
+
+        Segoe UI is Windows, Geeza Pro and SF Arabic are Apple, Noto Naskh
+        Arabic ships on Android and most Linux desktops.
+      */
       fontFamily: {
-        display: [font.display, 'serif'],
-        latin: [font.displayLatin, 'serif'],
-        sans: [font.body, 'sans-serif'],
+        display: [font.display, 'Amiri Quran', '"Noto Naskh Arabic"', 'serif'],
+        latin: [font.displayLatin, 'Georgia', '"Times New Roman"', 'serif'],
+        sans: [
+          font.body,
+          '"Segoe UI"', '"SF Arabic"', '"Geeza Pro"', '"Noto Naskh Arabic"',
+          'system-ui', 'sans-serif',
+        ],
       },
       fontSize: px(fontSize),
       lineHeight: lineHeight as unknown as Record<string, string>,

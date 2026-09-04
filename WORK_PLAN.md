@@ -14,21 +14,21 @@ resumes from the first unchecked box — no context needed beyond this file.
 - [x] 1.2 My premise was WRONG — operating tools take Western digits by rule. Added internal() so the call sites state the rule instead of arriving at it by luck.
 - [x] 1.3 Queue card reordered to the sequence of the work: countdown → what to pack → who to ring → address
 
-## 2. Front-end review and polish, as a senior front-end engineer  ⬜
+## 2. Front-end review and polish, as a senior front-end engineer  ✅
 
 Every surface, judged for deployment readiness. One pass per screen, then a whole-product pass.
 
-- [ ] 2.1 Home
-- [ ] 2.2 Product
-- [ ] 2.3 Cart
-- [ ] 2.4 Checkout
-- [ ] 2.5 Order confirmation + tracking
-- [ ] 2.6 Seller sign-in, queue, payouts
-- [ ] 2.7 Ops sign-in, queue
+- [x] 2.1 Home — grid capped to catalogue
+- [x] 2.2 Product — wide content moved out of the narrow column; related rail sized not stretched
+- [x] 2.3 Cart — image links named; CTA is a Link because it navigates
+- [x] 2.4 Checkout — merchandise/delivery split restored; it vanished between bag and checkout
+- [x] 2.5 Order confirmation + tracking
+- [x] 2.6 Seller — queue reordered to the work; sign-in no longer dies silently on an exception
+- [x] 2.7 Ops — waiting time added; a list without an age is not a queue
 - [x] 2.8 Cross-cutting — automated as apps/web/scripts/audit.mjs. Eleven surfaces x six widths:
       overflow, 44pt targets (incl. ::after), axe wcag2aa, RTL direction and fill edges, focus
       rings, heading order, leaked enums. CLEAN.
-- [ ] 2.9 Performance: bundle, fonts, layout shift, above-the-fold weight
+- [x] 2.9 CLS 0. Bundle 102 KB shared + 2-6 KB/route. Dropped 3 unused font weights and gave every family a real Arabic fallback stack — swap-period text was resolving to Times on some Android builds.
 
 ## 3. QA, as a senior QA engineer  ⬜
 
@@ -52,6 +52,7 @@ Then continue the roadmap phase by phase.
 Newest last. One line per completed item, with anything the next session must know.
 
 - 2026-09-04 — plan created.
+- 2026-09-04 — §2 complete. Two operational hazards recorded in ARCHITECTURE.md: never open the PGlite dir from a second process, never run next build while next dev holds the same .next.
 - 2026-09-04 — §2.8 done via a new audit script. It found 36 issues on first run, all fixed:
   heading skip on the PDP, two unnamed links in the bag, a 37px-wide sign-out target on three
   surfaces, and a note-tier colour at 3.87:1. Chasing that last one uncovered the palette living

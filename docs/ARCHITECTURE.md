@@ -226,3 +226,16 @@ rows individually. Half an hour went into hunting an RLS bug that did not exist.
 
 The generalisable lesson is about DEBUGGING, not about PGlite: when a tool has to touch the thing
 it is inspecting, rule out the tool before you trust its readings.
+
+## Never build while the dev server is running
+
+`next build` and `next dev` share `apps/web/.next`. Running the build against a live dev server
+corrupts the dev output, and the symptom is not a build error — the pages still serve, they just
+stop hydrating. Every client component silently becomes inert: the add-to-bag button stays
+disabled, so every product reads as out of stock, and nothing in the logs says why.
+
+Cost the second time it happened: a screenshot run that reported all three seeded products
+unavailable. `rm -rf .next` and a restart fixed it in seconds once the cause was recognised.
+
+**Stop the dev server before building.** Both hazards on this page share a shape — one process,
+one directory — and both produce symptoms that point anywhere except at the cause.
