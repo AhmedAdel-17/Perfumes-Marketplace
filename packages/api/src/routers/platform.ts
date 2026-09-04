@@ -82,11 +82,26 @@ export const platformRouter = router({
       collectedPiastres: z.number().int().nonnegative(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.uow.transaction((r) => r.subOrders.recordRemittance({
-        subOrderId: input.subOrderId,
-        collectedPiastres: input.collectedPiastres,
-        remittedAt: ctx.clock.now(),
-      }));
+      await ctx.uow.transaction(async (r) => {
+        await r.subOrders.recordRemittance({
+          subOrderId: input.subOrderId,
+          collectedPiastres: input.collectedPiastres,
+          remittedAt: ctx.clock.now(),
+        });
+
+        // Inside the SAME transaction, not beside it. Cash arriving is what
+        // starts a house's payout clock, so who recorded it and for how much is
+        // a money decision — and an audit entry that survives a failed
+        // remittance records something that did not happen.
+        await r.audit.record({
+          action: 'payout_adjustment',
+          actorId: ctx.platformStaffId,
+          actorLabel: ctx.platformLabel ?? 'platform',
+          entityTable: 'sub_orders',
+          entityId: input.subOrderId,
+          after: JSON.stringify({ collectedPiastres: input.collectedPiastres }),
+        });
+      });
       return { ok: true as const };
     }),
 
@@ -137,6 +152,34 @@ export const platformRouter = router({
           reference: generateOrderReference((n) => crypto.getRandomValues(new Uint8Array(n)))
             .replace('DY-', 'PO-'),
           statement,
+        });
+
+        /*
+         * A payout is money leaving the platform, so it is the entry doc 04 §8
+         * names first: "fee changes and payout adjustments are auditable".
+         *
+         * The whole statement summary rather than a reference, because the
+         * question somebody asks a year later is not "was a payout run" but
+         * "what was it for and who released it" — and by then the statement
+         * may have been superseded.
+         */
+        await r.audit.record({
+          action: 'payout_approval',
+          actorId: ctx.platformStaffId,
+          actorLabel: ctx.platformLabel ?? 'platform',
+          entityTable: 'payouts',
+          entityId: saved.id,
+          after: JSON.stringify({
+            reference: saved.reference,
+            sellerId: input.sellerId,
+            grossPiastres: statement.gross.minor,
+            commissionPiastres: statement.commission.minor,
+            netPiastres: statement.net.minor,
+            heldGrossPiastres: statement.heldGross.minor,
+            lineCount: statement.lines.length,
+            periodStart: input.periodStart,
+            periodEnd: input.periodEnd,
+          }),
         });
 
         return {

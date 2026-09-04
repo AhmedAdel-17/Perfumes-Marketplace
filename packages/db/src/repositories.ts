@@ -24,6 +24,7 @@ import {
 import * as schema from './schema/index';
 import { contentRepository } from './content-repository';
 import { listingRepository } from './listing-repository';
+import { auditTrail } from './audit-trail';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -672,6 +673,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   payouts: payoutRepository(db),
   content: contentRepository(db),
   listings: listingRepository(db),
+  audit: auditTrail(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */

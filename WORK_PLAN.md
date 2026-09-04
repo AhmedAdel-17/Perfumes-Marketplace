@@ -89,9 +89,13 @@ enters the catalogue is not a marketplace.
       Needs a storage decision (provider, cost, signed uploads) before it can be
       built. This is the last thing standing between the platform and MVP gate 1.
 
-## 6. The audit trail  ⬜
-Nothing writes to `audit_log`. Every platform action, fee change and payout
-adjustment has to land there, and it has to be readable without SQL (gate 6).
+## 6. The audit trail  ◐
+- [x] 6.1 The port, both adapters, and a field-level diff
+- [x] 6.2 Written by the decisions doc 04 §8 names — listing moderation, payout
+      approval, remittance, policy publishing — inside the same transaction
+- [x] 6.3 Proved from both sides: an entry exists after a decision, and a FAILED
+      decision leaves none behind
+- [ ] 6.4 A console screen to read it without SQL (the second half of gate 6)
 
 ## 7. Reviews  ⬜
 Verified purchase only, from delivered orders (gate 5).

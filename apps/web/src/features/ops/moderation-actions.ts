@@ -31,7 +31,7 @@ export async function decideListing(
     await api(
       { role: 'platform', id: session.authUserId },
       null,
-      { staffId: session.staffId, role: session.role },
+      { staffId: session.staffId, role: session.role, label: session.fullName },
     ).listings.decide({ id, to, reason });
 
     revalidatePath('/ops/moderation');
@@ -53,6 +53,6 @@ export async function fetchModerationQueue() {
   return api(
     { role: 'platform', id: session.authUserId },
     null,
-    { staffId: session.staffId, role: session.role },
+    { staffId: session.staffId, role: session.role, label: session.fullName },
   ).listings.queue();
 }

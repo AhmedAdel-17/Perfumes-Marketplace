@@ -40,13 +40,14 @@ const MAX_STOCK = 25;
 const caller = (
   actor: ActorContext,
   sellerId: string | null = null,
-  platform: { staffId: string; role: string } | null = null,
+  platform: { staffId: string; role: string; label?: string } | null = null,
 ) => {
   const ctx: ApiContext = {
     actor,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,
+    platformLabel: platform?.label ?? null,
     uow: new DrizzleUnitOfWork(db, actor),
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     clock: CLOCK,
@@ -61,6 +62,12 @@ beforeAll(async () => {
 
   // Seed as platform so the RLS policies permit it.
   await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+
+  // An operator, because an audited decision records WHO made it and the
+  // column is a foreign key. Without one, every audit case skipped.
+  await pg.query(
+    `INSERT INTO platform_staff (auth_user_id, full_name, phone, role)
+     VALUES ($1,'مشغّلة المنصّة','01000000001','admin')`, [PLATFORM]);
 
   for (const [slug, name, staff] of [
     ['dar-al-ward', 'دار الورد', WARD_STAFF],
@@ -405,6 +412,28 @@ describe('orders.byReference — two factors, neither a password', () => {
 });
 
 describe('input validation — rejected at the boundary, in Arabic', () => {
+  it('reaches the CALLER in Arabic, not as a 500', async () => {
+    /*
+     * The cases below exercise the schemas directly, which is where they were
+     * all written — so nobody had asked what a caller actually receives when
+     * one fails through the router. The answer was a 500 saying "something went
+     * wrong": every Arabic message in this package was being thrown away, and
+     * the customer was told the server had broken when their phone number had a
+     * digit missing.
+     */
+    await expect(
+      caller({ role: 'anon', id: null }).orders.place({
+        contactName: 'أحمد',
+        contactPhone: '12345',
+        address: {
+          governorate: 'cairo', city: 'ن', area: 'ح', street: 'ش', building: '1',
+        },
+        lines: [{ productId: crypto.randomUUID(), quantity: 1 }],
+        paymentMethod: 'cod',
+      } as never),
+    ).rejects.toThrow('رقم هاتف مصري غير صالح');
+  });
+
   it('refuses a non-Egyptian phone number', () => {
     expect(phoneSchema.safeParse('12345').success).toBe(false);
     expect(phoneSchema.safeParse('+201001234567').success).toBe(true);
@@ -769,6 +798,121 @@ describe('the parcel reaches the customer tracking page', () => {
     });
     expect(after?.houses[0]!.state).toBe('dispatched');
     expect(after?.houses[0]!.trackingNumber).toBe('EG44556677');
+  });
+});
+
+/**
+ * The audit trail, written by the decisions doc 04 §8 names.
+ *
+ * The table has existed since the first migration and nothing had ever written
+ * to it — which is worse than not having one, because a schema that promises an
+ * audit trail is read as having one. These are what say it now does.
+ *
+ * Every case reads the trail back through the SAME api the console would, and
+ * asserts on what an auditor would actually need: who, what, and enough of the
+ * before and after to see what moved.
+ */
+describe('the audit trail records who decided what', () => {
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+  const OPERATOR = { staffId: '', role: 'admin', label: 'مشغّلة المنصّة' };
+
+  beforeAll(async () => {
+    const [staff] = await db.select({ id: schema.platformStaff.id })
+      .from(schema.platformStaff).limit(1);
+    OPERATOR.staffId = staff!.id;
+  });
+
+  const trail = async (entityTable: string, entityId: string) =>
+    (await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ entityTable, entityId })));
+
+  it('records a payout, with the numbers that were released', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const result = await ops.platform.runPayout({
+      sellerId: ids['dar-al-ward']!,
+      periodStart: '2026-09-01T00:00:00.000Z',
+      periodEnd: '2026-09-30T00:00:00.000Z',
+    });
+
+    const [entry] = await trail('payouts', result.payoutId);
+    expect(entry, 'a payout wrote no audit entry').toBeDefined();
+    expect(entry!.action).toBe('payout_approval');
+    expect(entry!.actorId).toBe(OPERATOR.staffId);
+
+    // The NAME, captured at the time. An id that later resolves to "unknown
+    // staff member" answers none of the questions an audit exists to answer.
+    expect(entry!.actorLabel).toBe(OPERATOR.label);
+
+    const after = JSON.parse(entry!.after!);
+    expect(after.netPiastres).toBe(result.netPiastres);
+    expect(after.grossPiastres).toBe(result.grossPiastres);
+    expect(after.sellerId).toBe(ids['dar-al-ward']);
+  });
+
+  it('records a listing decision, with the state it moved from and to', async () => {
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    const listing = await ward.listings.create({
+      name: 'عطر للتدقيق',
+      slug: `audit-${Date.now().toString(36)}`,
+      sku: `AUD-${Date.now().toString(36)}`,
+      brandId: (await ward.listings.myBrand())!.id,
+    });
+
+    // Straight to the platform's decision: the point here is the entry, not
+    // the route a house takes to the queue.
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    await ops.listings.decide({ id: listing.id, to: 'archived', reason: null });
+
+    const [entry] = await trail('products', listing.id);
+    expect(entry, 'a moderation decision wrote no audit entry').toBeDefined();
+    expect(entry!.action).toBe('listing_moderation');
+    expect(JSON.parse(entry!.before!)).toEqual({ status: 'draft' });
+    expect(JSON.parse(entry!.after!).status).toBe('archived');
+  });
+
+  it('records who published a policy page', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const page = await ops.content.create({
+      slug: `terms-${Date.now().toString(36)}`, title: 'الشروط',
+    });
+    await ops.content.saveDraft({
+      id: page.id,
+      title: 'الشروط',
+      blocks: [{ kind: 'heading', level: 2, text: 'الشروط' }],
+    });
+    await ops.content.move({ id: page.id, to: 'in_review' });
+    await ops.content.move({ id: page.id, to: 'published' });
+
+    const entries = await trail('content_pages', page.id);
+    expect(entries.length, 'publishing a policy page wrote no audit entry')
+      .toBeGreaterThan(0);
+    expect(entries[0]!.action).toBe('policy_change');
+    expect(entries[0]!.actorLabel).toBe(OPERATOR.label);
+  });
+
+  it('keeps the trail in the same transaction as the decision', async () => {
+    /*
+     * A decision that committed while its audit entry failed is a decision
+     * nobody can account for, and nothing would say so.
+     *
+     * Proved from the other side: a decision that FAILS must leave no entry
+     * behind. Moving a draft straight to `published` is illegal, so the domain
+     * throws before anything is written.
+     */
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    const listing = await ward.listings.create({
+      name: 'عطر مرفوض',
+      slug: `reject-${Date.now().toString(36)}`,
+      sku: `REJ-${Date.now().toString(36)}`,
+      brandId: (await ward.listings.myBrand())!.id,
+    });
+
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    await expect(
+      ops.listings.decide({ id: listing.id, to: 'published', reason: null }),
+    ).rejects.toThrow();
+
+    expect(await trail('products', listing.id)).toEqual([]);
   });
 });
 

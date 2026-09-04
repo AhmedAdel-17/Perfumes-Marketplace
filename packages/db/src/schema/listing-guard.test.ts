@@ -225,12 +225,33 @@ describe('a draft may have no price or size yet, and nothing else may', () => {
        VALUES ($1,$2,'بلا سعر','no-price-2','NUR-N2-50',0,0,'draft') RETURNING id`,
       [ids.seller, ids.brand])).rows[0]!.id;
 
-    // Archived rather than submitted: submitting also trips the completeness
-    // gate from 0001, which would refuse it whether this constraint existed or
-    // not. Archiving reaches this constraint and nothing else.
-    await expect(asActor('seller', OWNER,
-      `UPDATE products SET status='archived' WHERE id=$1`, [id],
+    /*
+     * Suspended, not archived.
+     *
+     * The first version archived it, and 0012 exists because that was wrong:
+     * archiving an unpriced draft is a house changing its mind, and refusing it
+     * left abandoned listings with no way off the list. `draft` and `archived`
+     * are both private; the price is required from the moment the listing is in
+     * front of anyone else.
+     *
+     * Suspended is such a state and is not guarded by the completeness gate, so
+     * it reaches this constraint and nothing else. The seller status guard
+     * refuses it too — hence platform.
+     */
+    await expect(asActor('platform', PLATFORM,
+      `UPDATE products SET status='suspended' WHERE id=$1`, [id],
     )).rejects.toThrow(/products_price_positive/);
+  }));
+
+  it('archives an unpriced draft, because that is a house changing its mind', () => within(async () => {
+    const id = (await asActor<{ id: string }>('seller', OWNER,
+      `INSERT INTO products (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,status)
+       VALUES ($1,$2,'مهجور','abandoned','NUR-A-50',0,0,'draft') RETURNING id`,
+      [ids.seller, ids.brand])).rows[0]!.id;
+
+    const r = await asActor('seller', OWNER,
+      `UPDATE products SET status='archived' WHERE id=$1`, [id]);
+    expect(r.affectedRows).toBe(1);
   }));
 
   it('still refuses a negative price on a draft', () => within(async () => {

@@ -12,6 +12,7 @@ import { Money } from '../value-objects/money';
 import type { ContentPage } from '../content/page';
 import type { ContentRepository, ContentRevision } from '../ports/content-repository';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
+import type { AuditRecord, AuditTrail } from '../ports/audit-trail';
 import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, type TransitionRecord } from '../state-machines/sub-order';
 import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
@@ -140,6 +141,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
   readonly listingImages = new Set<string>();
 
   private listingTick = 0;
+
+  readonly auditRows: AuditRecord[] = [];
 
   /**
    * A distinct instant per write, so `updatedAt` can order a list.
@@ -582,6 +585,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const fixture = this;
     const listingRows = this.listingRows;
     const listingImages = this.listingImages;
+    const auditRows = this.auditRows;
 
     const content: ContentRepository = {
       async list() {
@@ -772,7 +776,27 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
-    return { sellers, customers, products, orders, subOrders, payouts, content, listings };
+    const audit: AuditTrail = {
+      async record(entry) {
+        auditRows.push({
+          ...entry,
+          id: `audit-${auditRows.length + 1}`,
+          occurredAt: fixture.listingClock(),
+        });
+      },
+      async recent(options = {}) {
+        return auditRows
+          .filter((row) => (!options.entityTable || row.entityTable === options.entityTable)
+            && (!options.entityId || row.entityId === options.entityId))
+          .slice()
+          .reverse()
+          .slice(0, options.limit ?? 100);
+      },
+    };
+
+    return {
+      sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
+    };
   }
 }
 

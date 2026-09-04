@@ -265,6 +265,28 @@ export const listingsRouter = router({
           at: ctx.clock.now(),
         });
 
+        /*
+         * Recorded in the SAME transaction as the decision.
+         *
+         * That is the whole reason the audit trail is a repository rather than
+         * a logger: a decision that committed while its audit entry failed is a
+         * decision nobody can account for, and nothing would have said so.
+         *
+         * Doc 04 §8 makes this a gate — "admin actions ... are auditable" — and
+         * the table had existed since the first migration with nothing ever
+         * writing to it, which is worse than not having one: a schema that
+         * promises an audit trail gets read as having one.
+         */
+        await r.audit.record({
+          action: 'listing_moderation',
+          actorId: ctx.platformStaffId,
+          actorLabel: ctx.platformLabel ?? 'platform',
+          entityTable: 'products',
+          entityId: input.id,
+          before: JSON.stringify({ status: listing.state }),
+          after: JSON.stringify({ status: input.to, reason: input.reason ?? null }),
+        });
+
         return { state: input.to };
       });
     }),

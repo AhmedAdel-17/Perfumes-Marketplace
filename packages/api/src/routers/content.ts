@@ -184,6 +184,23 @@ export const contentRouter = router({
         }
 
         /*
+         * Doc 04 §8: "Privacy, terms, seller agreement, return policy ... are
+         * live" is a gate, and those pages live here. Changing what the terms
+         * say is a policy change, so who published which version and when has
+         * to be answerable — the revision itself records the text, and this
+         * records the decision to serve it.
+         */
+        await r.audit.record({
+          action: 'policy_change',
+          actorId: ctx.platformStaffId,
+          actorLabel: ctx.platformLabel ?? 'platform',
+          entityTable: 'content_pages',
+          entityId: input.id,
+          before: JSON.stringify({ state: page.state }),
+          after: JSON.stringify({ state: input.to, slug: page.slug }),
+        });
+
+        /*
          * The moves available FROM THE NEW STATE, answered here.
          *
          * The console needs them the instant a move succeeds, and the

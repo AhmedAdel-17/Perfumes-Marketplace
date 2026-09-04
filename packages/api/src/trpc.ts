@@ -36,6 +36,15 @@ export interface ApiContext {
    */
   readonly platformStaffId: string | null;
   readonly platformRole: string | null;
+  /**
+   * The operator's name, captured for the audit trail.
+   *
+   * Denormalised into every entry rather than joined at read time, because an
+   * id can be revoked, renamed or deleted and an audit entry resolving to
+   * "unknown staff member" two years later answers none of the questions an
+   * audit exists to answer.
+   */
+  readonly platformLabel: string | null;
   /** Already scoped to the actor, so every query runs under the right RLS policies. */
   readonly uow: UnitOfWork;
   /**

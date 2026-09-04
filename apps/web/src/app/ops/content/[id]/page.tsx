@@ -21,7 +21,7 @@ export default async function OpsPageEditor(
   const caller = api(
     { role: 'platform', id: session.authUserId },
     null,
-    { staffId: session.staffId, role: session.role },
+    { staffId: session.staffId, role: session.role, label: session.fullName },
   );
 
   const page = await caller.content.get({ id }).catch(() => null);

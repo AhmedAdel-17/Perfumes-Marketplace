@@ -48,8 +48,40 @@ const asDomainError = (e: unknown): { code: string; message: string } | null => 
   return null;
 };
 
+/**
+ * A validation failure is the boundary WORKING, not something going wrong.
+ *
+ * Every schema in this package carries Arabic messages — "رقم هاتف مصري غير
+ * صالح", "أدخل الاسم" — and they were all being thrown away: a ZodError fell
+ * through to the branch below and became a 500 with "something went wrong".
+ * The caller was told the server had broken when the truth was that their phone
+ * number had a digit missing.
+ *
+ * Nothing noticed because the validation tests exercise the SCHEMAS directly.
+ * Nobody had asked what a caller actually receives when one fails through the
+ * router — and the answer, until now, was nothing useful.
+ *
+ * The first message is used rather than all of them, because tRPC carries a
+ * single string and a screen shows the field errors from `cause` anyway.
+ */
+const asZodError = (error: unknown): { message: string } | null => {
+  if (typeof error !== 'object' || error === null) return null;
+  const issues = (error as { issues?: unknown }).issues;
+  if (!Array.isArray(issues) || issues.length === 0) return null;
+
+  const first = issues[0] as { message?: unknown; path?: unknown };
+  if (typeof first.message !== 'string') return null;
+
+  return { message: first.message };
+};
+
 export const toTRPCError = (error: unknown): TRPCError => {
   if (error instanceof TRPCError) return error;
+
+  const invalid = asZodError(error);
+  if (invalid) {
+    return new TRPCError({ code: 'BAD_REQUEST', message: invalid.message, cause: error });
+  }
 
   const domain = asDomainError(error);
   if (domain) {

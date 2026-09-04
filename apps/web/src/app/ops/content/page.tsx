@@ -18,7 +18,7 @@ export default async function OpsContentPage() {
   const pages = await api(
     { role: 'platform', id: session.authUserId },
     null,
-    { staffId: session.staffId, role: session.role },
+    { staffId: session.staffId, role: session.role, label: session.fullName },
   ).content.list();
 
   return (

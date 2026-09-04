@@ -41,13 +41,14 @@ export function api(
    * `sellerId`: an auth user id and a staff id are different identities, and
    * the one that ends up in a published revision has to be the right one.
    */
-  platform: { staffId: string; role: string } | null = null,
+  platform: { staffId: string; role: string; label?: string } | null = null,
 ): ApiCaller {
   const ctx: ApiContext = {
     actor,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,
+    platformLabel: platform?.label ?? null,
     uow: unitOfWork(actor),
     // The checkout service role. Narrow by construction — see migration 0003.
     checkoutUow: unitOfWork({ role: 'checkout', id: null }),

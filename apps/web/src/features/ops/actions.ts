@@ -127,7 +127,7 @@ async function opsCaller() {
   return api(
     { role: 'platform', id: session.authUserId },
     null,
-    { staffId: session.staffId, role: session.role },
+    { staffId: session.staffId, role: session.role, label: session.fullName },
   );
 }
 
