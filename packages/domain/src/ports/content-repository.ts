@@ -70,4 +70,20 @@ export interface ContentRepository {
 
   /** History, newest first. The console shows it; the public never sees it. */
   revisions(pageId: string): Promise<ContentRevision[]>;
+
+  /**
+   * Load an old revision back into the DRAFT. It does not publish.
+   *
+   * This is the whole reason immutable revisions are worth keeping, and the
+   * separation is deliberate: a "restore" that went straight back onto the site
+   * would let one mis-click undo a deliberate change, in public, with no review
+   * — which is exactly the property publishing exists to prevent. Restoring
+   * puts the old text in front of an editor; publishing it again is a second,
+   * separate act by someone allowed to make it.
+   *
+   * Returns null when the revision does not belong to this page. Silently
+   * restoring another page's content would be a cross-page write dressed as a
+   * convenience.
+   */
+  restore(pageId: string, revisionId: string): Promise<ContentRevision | null>;
 }

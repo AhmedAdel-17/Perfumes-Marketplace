@@ -95,6 +95,22 @@ export const SHIPMENT: PluralForms = {
   other: 'شحنة',
 };
 
+/**
+ * A content block, as counted in the CMS console.
+ *
+ * `few` is the plural (3-10) and `many` is the accusative singular (11-99),
+ * which is the pair everybody gets backwards: "٨ عنصرًا" is wrong and reads to
+ * an Arabic speaker roughly the way "8 element" reads in English.
+ */
+export const BLOCK: PluralForms = {
+  zero: 'لا عناصر',
+  one: 'عنصر',
+  two: 'عنصران',
+  few: 'عناصر',
+  many: 'عنصرًا',
+  other: 'عنصر',
+};
+
 export const REVIEW: PluralForms = {
   zero: 'لا تقييمات',
   one: 'تقييم',

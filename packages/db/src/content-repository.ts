@@ -153,6 +153,30 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
     return toRevision(revision!);
   },
 
+  async restore(pageId, revisionId) {
+    // Both ids in the WHERE clause. Matching the page afterwards in TypeScript
+    // is the version of this that lets one page's history overwrite another's
+    // draft — the same shape as the order-lookup hole this project already
+    // shipped once.
+    const [revision] = await db.select().from(schema.contentRevisions)
+      .where(and(
+        eq(schema.contentRevisions.id, revisionId),
+        eq(schema.contentRevisions.pageId, pageId),
+      ))
+      .limit(1);
+    if (!revision) return null;
+
+    await db.update(schema.contentPages)
+      .set({
+        title: revision.title,
+        draftBlocks: revision.blocks,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.contentPages.id, pageId));
+
+    return toRevision(revision);
+  },
+
   async revisions(pageId) {
     const rows = await db.select().from(schema.contentRevisions)
       .where(eq(schema.contentRevisions.pageId, pageId))

@@ -97,3 +97,25 @@ export async function movePageTo(id: string, to: PageState): Promise<ContentResu
     return { ok: false, message: (error as Error).message };
   }
 }
+
+export async function restoreRevision(
+  id: string, revisionId: string,
+): Promise<ContentResult> {
+  const call = await caller();
+  if (!call) return EXPIRED;
+  try {
+    await call.content.restore({ id, revisionId });
+    /*
+     * Only the console is revalidated, and that is the point.
+     *
+     * Restoring loads an old revision into the DRAFT; the site keeps serving
+     * whatever it was serving. Revalidating the public paths here would be
+     * harmless today and would be the line somebody points at later when
+     * asking why an undo went live.
+     */
+    revalidatePath(`/ops/content/${id}`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: (error as Error).message };
+  }
+}

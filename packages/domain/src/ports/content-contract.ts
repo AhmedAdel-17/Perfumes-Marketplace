@@ -206,6 +206,67 @@ export const contentContract: readonly ContentContractCase[] = [
   },
 
   {
+    name: 'restoring loads an old revision into the draft without publishing it',
+    async run(setup) {
+      const { uow, staffId } = await setup();
+      const page = await uow.transaction((r) => r.content.create({ slug: 'about', title: 'الأولى' }));
+
+      await uow.transaction((r) => r.content.saveDraft(page.id, {
+        title: 'الأولى', blocks: draft('النص الأول'),
+      }));
+      const first = await uow.transaction((r) => r.content.publish(page.id, staffId));
+
+      await uow.transaction((r) => r.content.saveDraft(page.id, {
+        title: 'الثانية', blocks: draft('النص الثاني'),
+      }));
+      await uow.transaction((r) => r.content.publish(page.id, staffId));
+
+      // Restore the first.
+      const restored = await uow.transaction((r) => r.content.restore(page.id, first.id));
+      assert(restored !== null, 'the revision belongs to this page and must restore');
+
+      const after = await uow.transaction((r) => r.content.findById(page.id));
+      assert(
+        JSON.stringify(after!.draftBlocks).includes('النص الأول'),
+        'the draft must hold the restored text',
+      );
+      equal(after!.title, 'الأولى', 'the restored title');
+
+      // And the SITE is untouched — restoring is not publishing.
+      const live = await uow.transaction((r) => r.content.findLive('about'));
+      assert(
+        JSON.stringify(live!.blocks).includes('النص الثاني'),
+        'restoring must not change what the site serves',
+      );
+    },
+  },
+
+  {
+    name: 'a revision from another page cannot be restored',
+    async run(setup) {
+      // A cross-page write dressed as a convenience. Both ids have to match.
+      const { uow, staffId } = await setup();
+      const mine = await uow.transaction((r) => r.content.create({ slug: 'mine', title: 'صفحتي' }));
+      const theirs = await uow.transaction((r) => r.content.create({ slug: 'theirs', title: 'صفحتهم' }));
+
+      await uow.transaction((r) => r.content.saveDraft(theirs.id, {
+        title: 'صفحتهم', blocks: draft('نص غريب'),
+      }));
+      const foreign = await uow.transaction((r) => r.content.publish(theirs.id, staffId));
+
+      equal(
+        await uow.transaction((r) => r.content.restore(mine.id, foreign.id)),
+        null,
+        'restoring another page\'s revision',
+      );
+
+      const after = await uow.transaction((r) => r.content.findById(mine.id));
+      equal(after!.title, 'صفحتي', 'the untouched title');
+      equal(after!.draftBlocks.length, 0, 'the untouched draft');
+    },
+  },
+
+  {
     name: 'an unknown slug is null, not an error',
     async run(setup) {
       const { uow } = await setup();

@@ -672,6 +672,20 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         return revision;
       },
 
+      async restore(pageId, revisionId) {
+        const revision = contentRevisions.get(revisionId);
+        // Belongs to this page, or nothing happens.
+        if (!revision || revision.pageId !== pageId) return null;
+
+        const page = contentPages.get(pageId);
+        if (!page) return null;
+
+        contentPages.set(pageId, {
+          ...page, title: revision.title, draftBlocks: [...revision.blocks],
+        });
+        return revision;
+      },
+
       async revisions(pageId) {
         return [...contentRevisions.values()]
           .filter((r) => r.pageId === pageId)

@@ -93,7 +93,17 @@ export interface AuditTrail {
  * same as not having one.
  */
 export function diffFields<T extends Record<string, unknown>>(
-  before: T, after: Partial<T>,
+  before: T,
+  /*
+   * Every key optional AND nullable, which `Partial<T>` alone is not.
+   *
+   * CLEARING a field is a change — arguably the one most worth recording, since
+   * a value quietly becoming empty is harder to notice later than a value
+   * changing. `Partial<T>` infers its member types from `before`, so a field
+   * that held a string could not be shown becoming null: the type refused to
+   * describe the update, and the test that tried to was committed broken.
+   */
+  after: Partial<{ [K in keyof T]: T[K] | null }>,
 ): { before: string | null; after: string | null } {
   const changed = Object.keys(after).filter(
     (key) => JSON.stringify(after[key]) !== JSON.stringify(before[key]),

@@ -221,12 +221,70 @@ export const contentRouter = router({
   history: platformProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const revisions = await ctx.uow.transaction((r) => r.content.revisions(input.id));
-      return revisions.map((rev) => ({
-        id: rev.id,
-        title: rev.title,
-        publishedAt: rev.publishedAt.toISOString(),
-        blockCount: rev.blocks.length,
-      }));
+      return ctx.uow.transaction(async (r) => {
+        const page = await r.content.findById(input.id);
+        if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+
+        const revisions = await r.content.revisions(input.id);
+        return revisions.map((rev) => ({
+          id: rev.id,
+          title: rev.title,
+          publishedAt: rev.publishedAt.toISOString(),
+          blockCount: rev.blocks.length,
+          // Which one the site is serving right now. Without it the history is
+          // a list of dates and an operator has to infer "current" from the
+          // top row — which is wrong the moment a page is rolled back.
+          isServing: rev.id === page.publishedRevisionId,
+        }));
+      });
+    }),
+
+  /**
+   * The draft, rendered.
+   *
+   * Platform-only, and a separate procedure from `read` rather than a flag on
+   * it — the same reasoning as everywhere else in this router. A signed preview
+   * link would be the other option and it is worse: links get forwarded, and a
+   * link that shows unpublished content is a link that leaks it the first time
+   * someone is helpful.
+   */
+  preview: platformProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const page = await ctx.uow.transaction((r) => r.content.findById(input.id));
+      if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+      return {
+        slug: page.slug,
+        title: page.title,
+        blocks: page.draftBlocks,
+        state: page.state,
+      };
+    }),
+
+  restore: platformProcedure
+    .input(z.object({ id: z.string().uuid(), revisionId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.uow.transaction(async (r) => {
+        const revision = await r.content.restore(input.id, input.revisionId);
+        if (!revision) {
+          // Covers both "no such revision" and "belongs to another page", and
+          // says the same thing for each: a distinction here would tell a
+          // caller which revision ids exist elsewhere.
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'النسخة غير موجودة' });
+        }
+
+        /*
+         * Restoring does NOT publish, and does not move the page's state.
+         *
+         * It loads the old text into the draft and stops. Anything else would
+         * let one press put content back on the site with no review — the
+         * property publishing exists to provide, undone by an undo button.
+         */
+        return {
+          title: revision.title,
+          blocks: revision.blocks,
+          publishedAt: revision.publishedAt.toISOString(),
+        };
+      });
     }),
 });

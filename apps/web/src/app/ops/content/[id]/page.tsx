@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PageEditor } from '@/features/ops/PageEditor';
+import { RevisionHistory } from '@/features/ops/RevisionHistory';
 import { activeOperator } from '@/features/ops/actions';
 import { api } from '@/core/api';
 
@@ -27,6 +28,8 @@ export default async function OpsPageEditor(
   const page = await caller.content.get({ id }).catch(() => null);
   if (!page) notFound();
 
+  const revisions = await caller.content.history({ id });
+
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[760px] lg:px-8">
       <header className="px-5 pb-6 pt-9 lg:px-0">
@@ -36,9 +39,26 @@ export default async function OpsPageEditor(
         >
           ← كل الصفحات
         </a>
-        <h1 className="font-display text-h2 leading-heading lg:text-h1Lg">{page.title}</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <h1 className="font-display text-h2 leading-heading lg:text-h1Lg">{page.title}</h1>
+          {/*
+            The preview is offered ALWAYS, not only once a page is live — an
+            unpublished draft is exactly the thing nobody can otherwise see.
+          */}
+          <a
+            href={`/ops/content/${id}/preview`}
+            target="_blank"
+            rel="noreferrer"
+            className="tappable flex min-h-touch items-center text-caption tracking-label text-brass transition-opacity duration-base ease-out hover:opacity-press"
+          >
+            معاينة المسودة ↗
+          </a>
+        </div>
       </header>
       <PageEditor page={{ ...page, blocks: [...page.blocks] }} />
+      <div className="px-5 lg:px-0">
+        <RevisionHistory pageId={id} revisions={revisions} />
+      </div>
     </main>
   );
 }
