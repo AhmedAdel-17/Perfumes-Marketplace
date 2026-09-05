@@ -145,3 +145,25 @@ Newest last. One line per completed item, with anything the next session must kn
   never run `pnpm seed` without `--fresh` against a database created before the
   migration ledger existed, and PowerShell's `-replace` on a file containing
   Arabic will corrupt the encoding — use python for edits to those files.
+
+- 2026-09-05 — **§4 CMS finished against its own scope.** The three things it
+  was missing are built: the revision history and restore that immutable
+  revisions existed for, a platform-only draft preview through the public
+  renderer, and site-level content — an announcement bar that expires by itself
+  and homepage curation.
+
+  Restoring deliberately does NOT publish; it loads the old text into the draft
+  and stops. Announcements are the one unreviewed content type here, and the
+  reasoning is written into migration 0013: urgency is the point, so the
+  safeguards are a length cap, no markup, attribution, and a required window
+  capped at a season.
+
+  What the CMS still cannot do is IMAGES. The image block renders a visible
+  placeholder because there is no media store — the same decision that blocks
+  MVP gate 1 for listings, and it is Ahmed's to make: provider, cost, signed
+  uploads.
+
+  Also fixed in passing: `diffFields` in the audit trail could not describe a
+  field being cleared, and the test saying so had been committed broken.
+
+  812 tests, 20 audit surfaces, 64 end-to-end. 45 commits.
