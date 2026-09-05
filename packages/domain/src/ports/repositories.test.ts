@@ -13,6 +13,7 @@ import { PlaceOrder } from '../services/place-order';
 import { InMemoryUnitOfWork } from '../testing/in-memory-repositories';
 import { repositoryContract, type ContractWorld } from './repository-contract';
 import { contentContract } from './content-contract';
+import { siteContract } from './site-contract';
 
 const ORDERED_AT = new Date('2026-09-01T21:42:00Z');
 const egp = (v: string) => Money.fromMajorString(v);
@@ -102,6 +103,19 @@ describe('repository contract — in-memory adapter', () => {
   it('runs a meaningful number of cases, so an empty contract cannot pass silently', () => {
     expect(repositoryContract.length).toBeGreaterThanOrEqual(10);
   });
+});
+
+describe('site contract — in-memory adapter', () => {
+  const siteHarness = async () => ({
+    uow: new InMemoryUnitOfWork(),
+    staffId: 'staff-1',
+  });
+
+  for (const testCase of siteContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(siteHarness)).resolves.toBeUndefined();
+    });
+  }
 });
 
 describe('content contract — in-memory adapter', () => {

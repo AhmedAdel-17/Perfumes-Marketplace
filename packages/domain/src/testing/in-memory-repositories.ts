@@ -11,6 +11,8 @@
 import { Money } from '../value-objects/money';
 import type { ContentPage } from '../content/page';
 import type { ContentRepository, ContentRevision } from '../ports/content-repository';
+import type { Curation, SiteRepository } from '../ports/site-repository';
+import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import type { AuditRecord, AuditTrail } from '../ports/audit-trail';
 import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, type TransitionRecord } from '../state-machines/sub-order';
@@ -129,6 +131,12 @@ const cloneStore = (s: Store): Store => ({
 });
 
 export class InMemoryUnitOfWork implements UnitOfWork {
+  private readonly announcements = new Map<string, Announcement>();
+
+  private announcementCounter = 0;
+
+  private siteCuration: Curation = { heroProductId: null, featuredProductIds: [] };
+
   private readonly contentPages = new Map<string, ContentPage>();
 
   private readonly contentRevisions = new Map<string, ContentRevision>();
@@ -808,8 +816,70 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    /*
+     * Site-level content, in memory.
+     *
+     * The window predicate is HALF-OPEN here exactly as it is in SQL and in the
+     * domain's `showing`. Three copies of one boundary rule is three chances to
+     * disagree about the instant a window closes, which is why the contract
+     * runs the same cases against both adapters.
+     */
+    const announcements = this.announcements;
+
+    const site: SiteRepository = {
+      async allAnnouncements() {
+        return [...announcements.values()]
+          .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
+      },
+
+      async currentAnnouncements(now) {
+        return [...announcements.values()]
+          .filter((a) => now.getTime() >= a.startsAt.getTime()
+            && now.getTime() < a.endsAt.getTime())
+          .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
+      },
+
+      async post(input) {
+        fixture.announcementCounter += 1;
+        const announcement: Announcement = {
+          id: `ann-${fixture.announcementCounter}`,
+          message: input.message,
+          href: input.href,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+        };
+        announcements.set(announcement.id, announcement);
+        return announcement;
+      },
+
+      async endAnnouncement(id, at) {
+        const announcement = announcements.get(id);
+        // Only one that has already started and not yet ended. Ending an
+        // unstarted one would put `endsAt` before `startsAt`, which the
+        // database refuses outright.
+        if (!announcement) return false;
+        if (at.getTime() < announcement.startsAt.getTime()) return false;
+        if (at.getTime() >= announcement.endsAt.getTime()) return false;
+
+        announcements.set(id, { ...announcement, endsAt: at });
+        return true;
+      },
+
+      async curation() {
+        return fixture.siteCuration;
+      },
+
+      async setCuration({ heroProductId, featuredProductIds }) {
+        fixture.siteCuration = {
+          heroProductId,
+          featuredProductIds: [...featuredProductIds],
+        };
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
+      site,
     };
   }
 }

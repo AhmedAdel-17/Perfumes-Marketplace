@@ -6,6 +6,7 @@ import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
 import { platformRouter } from './platform';
 import { sellerRouter } from './seller';
+import { siteRouter } from './site';
 
 export const appRouter = router({
   cart: cartRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   orders: ordersRouter,
   platform: platformRouter,
   seller: sellerRouter,
+  site: siteRouter,
 });
 
 export type AppRouter = typeof appRouter;

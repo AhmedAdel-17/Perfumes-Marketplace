@@ -364,6 +364,7 @@ try {
     ['ops-queue', '/ops/queue'],
     ['ops-content', '/ops/content'],
     ['ops-moderation', '/ops/moderation'],
+    ['ops-site', '/ops/site'],
   ];
 
   for (const size of WIDTHS) {

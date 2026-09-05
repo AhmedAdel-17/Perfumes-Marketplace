@@ -127,6 +127,15 @@ describe('no policy is protection in name only', () => {
     // is governance rather than leakage, and the houses are party to these
     // terms. Recorded here so it stays a decision.
     'commission_rule_sets',
+
+    // Which product opens the homepage, and which lead the grid. There is
+    // nothing here that is not already visible the moment anybody loads the
+    // site — the row IS the homepage's arrangement, and the homepage is public.
+    // Note what is deliberately NOT public alongside it: `announcements` has
+    // its own window predicate, because a SCHEDULED notice is a plan, and
+    // "free delivery from Sunday" readable on Thursday is a discount announced
+    // three days early to whoever happened to be looking.
+    'site_curation',
   ]);
 
   it('admits everyone only where the data is genuinely public', () => {

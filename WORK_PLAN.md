@@ -49,7 +49,11 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [x] 4.4 tRPC router with the public read separated from the console by procedure
 - [x] 4.5 Public rendering, editorial route, footer directory
 - [x] 4.6 The console: list, block editor, publish flow
-- [x] 4.7 16 surfaces in the audit, 11 end-to-end tests over the CMS
+- [x] 4.7 20 surfaces in the audit, 19 end-to-end tests over the CMS
+- [x] 4.8 Revision history and restore — the reason immutable revisions exist
+- [x] 4.9 Draft preview, platform-only, through the public renderer
+- [x] 4.10 Announcements: one line, every screen, expires by itself
+- [x] 4.11 Homepage curation: which product opens the site, and what leads the grid
 
 Stack decision recorded in TECH_STACK §11 — built here rather than on Payload,
 with the condition under which that should be reversed stated in advance.

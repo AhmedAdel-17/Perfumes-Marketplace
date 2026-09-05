@@ -1,3 +1,4 @@
+import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { ListingRepository } from './listing-repository';
 import type { ContentRepository } from './content-repository';
@@ -410,6 +411,7 @@ export interface Repositories {
   readonly payouts: PayoutRepository;
   readonly subOrders: SubOrderRepository;
   readonly content: ContentRepository;
+  readonly site: SiteRepository;
   readonly listings: ListingRepository;
   readonly audit: AuditTrail;
 }

@@ -1005,6 +1005,95 @@ try {
     await visitor.close();
   });
 
+  /* ================================================= announcements and curation */
+  group('what changes on every screen without anybody editing a page');
+
+  const notice = `تنبيه اختبار ${Date.now().toString(36)}`;
+
+  await test('nothing is announced until something is posted', async () => {
+    const home = await ops.request.get(`${BASE}/`);
+    assert(!(await home.text()).includes(notice), 'this run has posted nothing yet');
+  });
+
+  await test('a posted notice appears on every screen', async () => {
+    await ops.goto(`${BASE}/ops/site`, { waitUntil: 'networkidle' });
+    await ops.waitForTimeout(1200);
+    await ops.fill('#ann-message', notice);
+    await ops.locator('button', { hasText: 'نشر الإعلان' }).click();
+    await ops.waitForTimeout(3500);
+
+    // EVERY screen, not just the home page — it lives in the masthead, and the
+    // whole point of putting it there was that it cannot be forgotten on the
+    // one page where it mattered.
+    for (const path of ['/', '/cart', '/order', `/p/${inStock[0]}`]) {
+      const response = await ops.request.get(`${BASE}${path}`);
+      assert((await response.text()).includes(notice), `the notice is missing on ${path}`);
+    }
+  });
+
+  await test('a window that has already closed is refused, and says why', async () => {
+    await ops.fill('#ann-message', 'خبر قديم');
+    await ops.fill('#ann-start', '2020-01-01T09:00');
+    await ops.fill('#ann-end', '2020-01-05T09:00');
+    await ops.locator('button', { hasText: 'نشر الإعلان' }).click();
+    await ops.waitForTimeout(2500);
+
+    const objections = await ops.locator('[aria-live="polite"] li').allInnerTexts();
+    assert(objections.length > 0, 'a closed window must be refused');
+    assert(
+      objections.some((text) => text.includes('انتهت')),
+      `the message must say why: ${objections.join(' | ')}`,
+    );
+  });
+
+  await test('stopping one takes it off the site immediately', async () => {
+    await ops.goto(`${BASE}/ops/site`, { waitUntil: 'networkidle' });
+    await ops.waitForTimeout(1200);
+    await ops.locator('button', { hasText: 'إيقاف الآن' }).first().click();
+    await ops.waitForTimeout(3500);
+
+    const home = await ops.request.get(`${BASE}/`);
+    assert(!(await home.text()).includes(notice), 'a stopped notice must come down');
+  });
+
+  await test('it is kept on the record rather than deleted', async () => {
+    // What the site said, and when, is a thing somebody will have to answer
+    // for — most likely the time it said something wrong.
+    const listed = await ops.locator('main').innerText();
+    assert(listed.includes(notice), 'a stopped notice must stay in the list');
+  });
+
+  await test('curating the hero changes what opens the site', async () => {
+    const options = await ops.locator('#hero option').allInnerTexts();
+    assert(options.length > 2, `expected products to curate: ${options.join(' | ')}`);
+
+    // The LAST product, so it is provably not the one the catalogue would have
+    // put first on its own.
+    const last = await ops.locator('#hero option').last().getAttribute('value');
+    await ops.selectOption('#hero', last);
+    await ops.locator('button', { hasText: /^حفظ$/ }).click();
+    await ops.waitForTimeout(3500);
+
+    const name = options.at(-1).split(' — ')[0].trim();
+    const home = await (await ops.request.get(`${BASE}/`)).text();
+    assert(home.includes(name), `the curated hero "${name}" must open the site`);
+  });
+
+  await test('the default is stated, not implied', async () => {
+    // An empty select that silently means "the first one" is a setting nobody
+    // can read back.
+    const first = await ops.locator('#hero option').first().innerText();
+    assert(first.includes('الأول'), `the default option must name itself: "${first}"`);
+  });
+
+  await test('a seller cannot reach the site console', async () => {
+    const context = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const page = await context.newPage();
+    await page.goto(`${BASE}/ops/site`, { waitUntil: 'networkidle' });
+    assert(!page.url().includes('/ops/site'), `reached it unauthenticated: ${page.url()}`);
+    await context.close();
+  });
+
   await test('signing out ends the session for good', async () => {
     const out = ops.locator('button', { hasText: /خروج/ }).first();
     if (await out.count() === 0) return;

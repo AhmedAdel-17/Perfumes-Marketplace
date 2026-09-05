@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BagLink } from '@/features/cart/BagLink';
 import { Monogram } from './Monogram';
+import { AnnouncementBar } from './AnnouncementBar';
 
 /**
  * The masthead, shared by every public route.
@@ -15,8 +16,20 @@ import { Monogram } from './Monogram';
  * in by a strip of flat colour; the blur is what separates it from the content
  * running underneath.
  */
-export function SiteHeader() {
+export async function SiteHeader() {
   return (
+    <>
+    {/*
+      The notice sits ABOVE the sticky bar and scrolls away with the page.
+
+      Sticking it too would cost 40px of every screen forever to something
+      that is only news for a day, and a visitor who has read it once does not
+      need it following them down the page.
+
+      It lives here rather than in each route so it cannot be forgotten on the
+      one page where it mattered — every public surface renders this masthead.
+    */}
+    <AnnouncementBar />
     <header className="sticky top-0 z-40 border-b border-hair/60 bg-noir/[.72] backdrop-blur-xl">
       <div className="mx-auto flex h-[58px] max-w-contentMax items-center justify-between px-5 lg:h-[82px] lg:px-8">
         <Link
@@ -43,5 +56,6 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+    </>
   );
 }

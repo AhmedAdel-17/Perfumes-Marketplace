@@ -23,6 +23,7 @@ import {
 } from '@diyar/domain';
 import * as schema from './schema/index';
 import { contentRepository } from './content-repository';
+import { siteRepository } from './site-repository';
 import { listingRepository } from './listing-repository';
 import { auditTrail } from './audit-trail';
 
@@ -672,6 +673,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   subOrders: subOrderRepository(db),
   payouts: payoutRepository(db),
   content: contentRepository(db),
+  site: siteRepository(db),
   listings: listingRepository(db),
   audit: auditTrail(db),
 });

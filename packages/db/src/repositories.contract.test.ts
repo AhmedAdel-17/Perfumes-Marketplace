@@ -17,6 +17,7 @@ import {
   Address, FixedClock, Money, PlaceOrder,
   repositoryContract, type ContractWorld,
   contentContract, type ContentContractWorld,
+  siteContract, type SiteContractWorld,
 } from '@diyar/domain';
 import * as schema from './schema/index';
 import { DrizzleUnitOfWork, type DiyarDatabase } from './repositories';
@@ -163,6 +164,31 @@ const contentHarness = async (): Promise<ContentContractWorld> => {
     staffId: staff!.id,
   };
 };
+
+/** The same world the content cases use — an operator, and nothing else. */
+const siteHarness = async (): Promise<SiteContractWorld> => {
+  const pg = new PGlite();
+  await applyMigrations(pg);
+  const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
+
+  await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+  const [staff] = await db.insert(schema.platformStaff).values({
+    authUserId: PLATFORM, fullName: 'مشغّلة', phone: '01000000008', role: 'admin',
+  }).returning();
+
+  return {
+    uow: new DrizzleUnitOfWork(db, { role: 'platform', id: PLATFORM }),
+    staffId: staff!.id,
+  };
+};
+
+describe('site contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of siteContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(siteHarness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
 
 describe('content contract — Drizzle + Postgres adapter', () => {
   for (const testCase of contentContract) {

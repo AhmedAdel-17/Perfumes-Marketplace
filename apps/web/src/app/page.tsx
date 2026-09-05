@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listPublishedProducts } from '@/core/catalogue';
+import { api } from '@/core/api';
 import { ProductTile } from '@/features/catalogue/ProductTile';
 import { Flacon } from '@/features/product/Flacon';
 import { SiteHeader } from '@/features/shell/SiteHeader';
@@ -11,7 +12,34 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const products = await listPublishedProducts();
-  const [hero, ...rest] = products;
+  const { heroProductId, featuredProductIds } = await api().site.curation();
+
+  /*
+   * Which product opens the site is a DECISION, and until now it was
+   * `products[0]` — whichever row the database returned first, which is nobody's
+   * decision at all.
+   *
+   * The fall-back is that same behaviour, so a marketplace that has not curated
+   * anything looks exactly as it did. A hero that has since been unpublished
+   * falls back too rather than 404ing the front door: the curation row keeps a
+   * foreign key with ON DELETE SET NULL for deletion, but unpublishing is not
+   * deletion, so the check has to be here as well.
+   */
+  const curated = heroProductId
+    ? products.find((p) => p.id === heroProductId)
+    : undefined;
+  const hero = curated ?? products[0];
+
+  /*
+   * Featured products lead the grid, in the order they were curated, and the
+   * rest follow. Not a separate section: two grids of the same thing is a
+   * layout that asks the visitor to work out the difference, and the answer —
+   * "somebody at the marketplace liked these" — is not worth a heading.
+   */
+  const rank = new Map(featuredProductIds.map((id, index) => [id, index]));
+  const rest = products
+    .filter((p) => p.id !== hero?.id)
+    .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity));
 
   return (
     <>

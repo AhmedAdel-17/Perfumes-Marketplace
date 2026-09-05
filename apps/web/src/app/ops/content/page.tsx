@@ -31,6 +31,12 @@ export default async function OpsContentPage() {
         </div>
         <div className="flex items-center gap-5">
           <a
+            href="/ops/site"
+            className="tappable flex min-h-touch min-w-touch items-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
+          >
+            الموقع
+          </a>
+          <a
             href="/ops/queue"
             className="tappable flex min-h-touch min-w-touch items-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
           >
