@@ -17,7 +17,7 @@ export async function AnnouncementBar() {
   if (!announcement) return null;
 
   const body = (
-    <span className="text-caption leading-relaxed text-brass lg:text-small">
+    <span className="text-caption leading-relaxed text-accent lg:text-small">
       {announcement.message}
     </span>
   );
@@ -28,12 +28,12 @@ export async function AnnouncementBar() {
       // reader mid-sentence, and a shipping notice is not worth interrupting
       // someone for. It is announced when they reach it.
       role="status"
-      className="border-b border-brass/25 bg-brass/[0.07] px-5 py-2.5 text-center"
+      className="border-b border-accent/25 bg-accent/[0.07] px-5 py-2.5 text-center"
     >
       {announcement.href ? (
         <a
           href={announcement.href}
-          className="tappable inline-flex min-h-touch items-center justify-center underline decoration-brass/40 underline-offset-4 transition-colors duration-base ease-out hover:decoration-brass"
+          className="tappable inline-flex min-h-touch items-center justify-center underline decoration-accent/40 underline-offset-4 transition-colors duration-base ease-out hover:decoration-accent"
         >
           {body}
         </a>

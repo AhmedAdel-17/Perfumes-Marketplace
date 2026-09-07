@@ -25,6 +25,13 @@
  *                 whose mouse is across the desk.
  *   LEAKED ENUMS  No raw state or enum values rendered to a customer.
  *
+ * THEMES. Everything below runs against the theme named by `THEME` (default
+ * `dark`). It is a whole run rather than an extra dimension inside one because
+ * the theme is set before the first paint and lives on the document — and
+ * because contrast is the check that actually differs between the two, so a
+ * light run that shares a dark run's session would prove nothing about the
+ * screens it did not reload. `THEME=light pnpm audit` is the second pass.
+ *
  * Findings print grouped by surface and exit non-zero, so this is usable in CI
  * the day CI exists.
  */
@@ -38,6 +45,22 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
 const LOG = process.env.DEV_LOG;
+
+/**
+ * Which theme this run audits.
+ *
+ * Written into localStorage before any document loads, exactly as a returning
+ * visitor's browser would hold it, so the page arrives already in that theme
+ * rather than flipping into it after paint. Auditing contrast on a page mid-flip
+ * measures whichever frame the check happened to catch.
+ */
+const THEME = process.env.THEME === 'light' ? 'light' : 'dark';
+const themed = async (context) => {
+  await context.addInitScript((theme) => {
+    try { localStorage.setItem('diyar-theme', theme); } catch { /* private mode */ }
+  }, THEME);
+  return context;
+};
 
 /**
  * Six widths, each chosen for a reason rather than because it is a round
@@ -274,7 +297,7 @@ const browser = await chromium.launch({ channel: 'chrome' });
 
 try {
   /* --------------------------------------------------------------- public */
-  const anon = await browser.newContext({ locale: 'ar-EG' });
+  const anon = await themed(await browser.newContext({ locale: 'ar-EG' }));
   const page = await anon.newPage();
 
   // A basket, so the cart and checkout have something to audit.
@@ -324,7 +347,7 @@ try {
   }
 
   /* --------------------------------------------------------------- seller */
-  const house = await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } });
+  const house = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const seller = await house.newPage();
   await seller.goto(`${BASE}/seller`, { waitUntil: 'networkidle' });
   await fill(seller, 'رقم الموبايل', '01001112222');
@@ -347,7 +370,7 @@ try {
   }
 
   /* ------------------------------------------------------------------ ops */
-  const opsContext = await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } });
+  const opsContext = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const ops = await opsContext.newPage();
   await ops.goto(`${BASE}/ops`, { waitUntil: 'networkidle' });
   await fill(ops, 'رقم الموبايل', '01000000001');
@@ -423,9 +446,9 @@ for (const f of findings) {
 }
 
 if (findings.length === 0) {
-  console.log('\nNo findings. Every surface, every width.\n');
+  console.log(`\n[${THEME}] No findings. Every surface, every width.\n`);
 } else {
-  console.log(`\n${findings.length} findings across ${bySurface.size} surfaces:\n`);
+  console.log(`\n[${THEME}] ${findings.length} findings across ${bySurface.size} surfaces:\n`);
   for (const [surface, rules] of bySurface) {
     console.log(`  ${surface}`);
     for (const [detail, widths] of rules) {

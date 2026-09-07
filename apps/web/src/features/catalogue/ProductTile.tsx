@@ -22,7 +22,7 @@ import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
 export function ProductTile({ product }: { product: ProductCard }) {
   return (
     <Link href={`/p/${product.slug}`} className="group block focus-visible:outline-none">
-      <div className="relative aspect-[4/5] overflow-hidden bg-noir">
+      <div className="relative aspect-[4/5] overflow-hidden bg-plate">
         <div className="absolute inset-0 bg-[radial-gradient(70%_56%_at_52%_22%,#2A2019_0%,#141010_48%,#070606_88%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(52%_42%_at_52%_20%,rgba(196,160,96,.20),transparent_70%)] opacity-0 transition-opacity duration-slow ease-out group-hover:opacity-100" />
 
@@ -38,18 +38,31 @@ export function ProductTile({ product }: { product: ProductCard }) {
         <div className="absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_44%,transparent_36%,rgba(6,5,5,.60)_100%)]" />
       </div>
 
-      <div className="latin mb-1.5 mt-4 text-micro tracking-label text-brass/90 lg:text-caption">
+      {/*
+        NO ALPHA on the accent here, and the missing `/90` is the whole note.
+
+        Every ink role is tuned to sit just above 4.5:1 on the surfaces it is
+        allowed on, so an opacity applied to one spends a margin that was never
+        there: 90%% of the accent on paper measures 4.08:1. On noir the same
+        utility looked like a refinement and cost nothing visible, which is
+        exactly why it survived — softening an ink is a dark-theme habit that
+        silently breaks the contract in the other direction.
+
+        Soften a role by choosing a quieter role, never by making it
+        transparent.
+      */}
+      <div className="latin mb-1.5 mt-4 text-micro tracking-label text-accent lg:text-caption">
         {product.brandLatin}
       </div>
-      <div className="font-display text-h4 leading-tight transition-colors duration-base ease-out group-hover:text-brass lg:text-h3Lg">
+      <div className="font-display text-h4 leading-tight transition-colors duration-base ease-out group-hover:text-accent lg:text-h3Lg">
         {product.name}
       </div>
-      <div className="mt-1.5 text-caption text-faint lg:text-small">
+      <div className="mt-1.5 text-caption text-ink3 lg:text-small">
         <span className="tnum">{num(product.volumeMl)}</span> مل · {product.familyLabel}
       </div>
       <div className="mt-2.5 text-bodyLg font-semibold">
         <span className="tnum">{formatPrice(product.pricePiastres)}</span>
-        <span className="latin ms-2 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
+        <span className="latin ms-2 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
       </div>
     </Link>
   );

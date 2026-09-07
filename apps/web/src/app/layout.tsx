@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Amiri, Bodoni_Moda, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
-import { color } from '@diyar/tokens';
+import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
 import './globals.css';
 
 /**
@@ -51,17 +51,34 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // The browser chrome matches the page. From the token, so it cannot
-  // drift away from the background it is meant to continue.
-  themeColor: color.noir,
+  // The browser chrome matches the page. From the THEME, so it cannot drift
+  // away from the background it is meant to continue — and the toggle rewrites
+  // it live, because this value is baked at build time and can only ever
+  // describe the default.
+  themeColor: DEFAULT_THEME_COLOR,
   width: 'device-width',
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={`${amiri.variable} ${bodoni.variable} ${plex.variable}`}>
-      <body className="bg-noir text-bone font-sans text-body leading-normal">
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${amiri.variable} ${bodoni.variable} ${plex.variable}`}
+      /*
+        ThemeScript writes `data-theme` onto this element before React hydrates,
+        which is the entire point of it — so the server HTML and the client DOM
+        differ here BY DESIGN and React would otherwise log a mismatch on every
+        page load for a visitor who chose paper. Suppression is scoped to this
+        one element's attributes; children are still checked normally.
+      */
+      suppressHydrationWarning
+    >
+      <body className="bg-ground text-ink font-sans text-body leading-normal">
+        {/* First thing in the document: applies the remembered theme before the
+            page is painted. See ThemeScript for why this cannot be an effect. */}
+        <ThemeScript />
         <CartProvider>{children}</CartProvider>
         {/* Sits above everything, catches no clicks. DESIGN_DOCTRINE §2. */}
         <Grain />

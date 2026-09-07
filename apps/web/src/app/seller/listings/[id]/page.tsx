@@ -26,12 +26,19 @@ export default async function SellerListingPage(
   // would tell a house which listing ids belong to somebody else.
   if (!listing) notFound();
 
+  /*
+    760px was the phone column with margins — a working tool rendered at just
+    over half the monitor it is used on, with every row stretched to reach both
+    of its edges. The console gets the content measure, and the lists inside it
+    get columns so the extra width becomes room rather than distance.
+    DESIGN_DOCTRINE §4b.
+  */
   return (
-    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[760px] lg:px-8">
+    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
       <header className="px-5 pb-6 pt-9 lg:px-0">
         <a
           href="/seller/listings"
-          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
+          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
         >
           ← كل المنتجات
         </a>

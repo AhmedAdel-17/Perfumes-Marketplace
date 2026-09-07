@@ -22,8 +22,15 @@ export default async function SellerListingsPage() {
     caller.listings.myBrand(),
   ]);
 
+  /*
+    760px was the phone column with margins — a working tool rendered at just
+    over half the monitor it is used on, with every row stretched to reach both
+    of its edges. The console gets the content measure, and the lists inside it
+    get columns so the extra width becomes room rather than distance.
+    DESIGN_DOCTRINE §4b.
+  */
   return (
-    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[760px] lg:px-8">
+    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
       <SellerNav current="listings" />
       <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pt-9 lg:text-h1Lg">
         المنتجات

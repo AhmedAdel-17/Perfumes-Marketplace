@@ -4,7 +4,8 @@
  * Apps extend this rather than declaring colours of their own, so a value that
  * is not in the token file cannot be reached through a utility class.
  */
-import { color, fontSize, layout, letterSpacing, lineHeight, motion, noteTier, opacity, radius, scentFamily, space, font } from './index';
+import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, font } from './index';
+import { themeColors } from './theme';
 
 const px = (o: Record<string, number>) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k, `${v}px`]));
@@ -15,7 +16,21 @@ const ms = (o: Record<string, number>) =>
 export const diyarPreset = {
   theme: {
     extend: {
-      colors: { ...color, note: noteTier, family: scentFamily },
+      /*
+        ROLES ONLY.
+
+        `themeColors` maps ground/raised/line/ink/accent to channel-backed CSS
+        variables, so `bg-ground` means "the page" in both themes and there is
+        no `bg-noir` to reach for. The primitives are absent on purpose: a
+        component that could name one would pin itself to a single theme, and
+        it would do so silently — the class compiles, the page renders, and the
+        defect is invisible until somebody switches the toggle.
+
+        `family` is the exception and stays a literal palette. It paints light
+        through glass on a plate that is dark in BOTH themes, so it is physics,
+        not chrome. See the note in theme.ts.
+      */
+      colors: { ...themeColors, family: scentFamily },
       /*
         Real fallback stacks, not a bare generic.
 

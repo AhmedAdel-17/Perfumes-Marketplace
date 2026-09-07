@@ -15,12 +15,18 @@
  * `feTurbulence` renders once into a fixed-position layer, so it does not move
  * with scroll (grain sits on the lens, not on the subject) and costs nothing
  * per frame.
+ *
+ * THE BLEND MODE FLIPS WITH THE THEME, and it has to. `overlay` lifts a dark
+ * field into texture; applied to paper it scatters bright specks across the
+ * sheet and reads as a dirty screen rather than as tooth. On paper the grain
+ * must press IN — `multiply` — which is also what ink on stock actually does.
+ * Same layer, same frequency, opposite direction of light.
  */
 export function Grain() {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-50 h-full w-full opacity-[.035] mix-blend-overlay"
+      className="pointer-events-none fixed inset-0 z-50 h-full w-full opacity-[.035] mix-blend-overlay light:opacity-[.025] light:mix-blend-multiply"
     >
       <filter id="diyar-grain">
         <feTurbulence

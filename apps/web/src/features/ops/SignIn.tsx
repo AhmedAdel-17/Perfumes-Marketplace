@@ -75,7 +75,7 @@ export function OpsSignIn() {
       )}
 
       {error && (
-        <p role="alert" className="mb-5 border border-danger/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-5 border border-danger/50 bg-raised p-4 text-small text-ink">
           {error}
         </p>
       )}
@@ -84,7 +84,7 @@ export function OpsSignIn() {
       {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
     </PrimaryButton>
 
-      <p className="mt-5 text-center text-micro leading-relaxed text-faint">
+      <p className="mt-5 text-center text-micro leading-relaxed text-ink3">
         وضع التطوير: يُطبع الرمز في سجلّ الخادم.
       </p>
     </form>

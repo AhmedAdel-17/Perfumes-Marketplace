@@ -43,6 +43,12 @@ Noir, bone, and brass. That is the palette. Brass is for moments — a price, an
 a single active state. The instant a second accent colour appears, the impression collapses.
 Scent-family and note-tier colours exist for data visualisation only and never for chrome.
 
+**Amended 7 September 2026 — the same three, in two directions.** The product now offers a
+light theme (§7). This does not add a colour: paper, graphite and bronze are ground, ink and
+accent restated for a lit page. The law is unchanged and the count is unchanged. What changed
+is that a component may no longer *name* a colour — it names the JOB, and the theme decides
+the value. See §7.
+
 ### V. Sharp, not soft
 
 `radius: 0–3px`. Nothing is rounded into friendliness. Rounded corners and soft shadows read
@@ -153,7 +159,8 @@ Any one of these, anywhere, breaks the impression:
 - Exclamation marks in copy
 - Inconsistent icon stroke weights (ours is `1.3`, everywhere, always)
 - Inconsistent corner radius across two components
-- A grey lighter than `#8B837A` on noir
+- A grey darker than `#90887F` on noir, or lighter than `#6B635A` on paper (§7)
+- An alpha applied to an ink role — `text-accent/90` measures 4.08:1 on paper (§7)
 - Any hardcoded colour, size or spacing value that bypasses the tokens
 
 ---
@@ -172,6 +179,8 @@ means operationally.
 - [ ] Directional icons flipped; logos and real-world objects **not** flipped
 - [ ] Progress and intensity meters fill from the right — **asserted in a test, not eyeballed** (see the trap below)
 - [ ] Contrast checked against `$contrastNotes`, not assumed
+- [ ] Checked in BOTH themes — `THEME=light` for the audit as well as the default run
+- [ ] Any panel that stays dark on paper carries `data-theme="dark"` AND restates `text-ink`
 - [ ] Transitions use `motion` + `easing` tokens, never inline values
 - [ ] `prefers-reduced-motion` honoured
 - [ ] Renders correctly at 360px width
@@ -333,3 +342,56 @@ icon size in every candidate tested, the app icon uses the device alone.
 
 If the honest answer is "it's fine," it is not finished. Fine is the enemy. The category
 sells on desire, and desire does not survive a misaligned hairline.
+
+
+---
+
+## 7. Two themes, one palette
+
+**Added 7 September 2026, at the founder's request.** Noir is the identity; paper is an
+option the visitor may take. Both are the house.
+
+### The roles
+
+A component names a job, never a value. `bg-ground`, `bg-raised`, `border-line`, `text-ink`,
+`text-ink2`, `text-ink3`, `text-accent`, `bg-accent-surface`, `text-on-accent`, `text-danger`,
+`bg-plate`. `packages/tokens/src/theme.ts` decides what each is worth in each theme, and the
+Tailwind preset exposes **only** roles — `bg-noir` does not compile. That is deliberate and it
+is enforced by a test, because the naming convention alone would not have held: a component
+able to name a primitive pins itself to one theme *silently*, and the defect is invisible until
+somebody switches the toggle on a screen nobody was looking at.
+
+### What does not flip
+
+**The product plate stays dark in both themes.** A flacon is lit in a dark room whichever way
+the page is lit; a bottle on white is a catalogue cut-out. The home hero is the same decision
+at full width, which is why paper mode opens on a black band — that is the composition, not a
+bug. Any panel that must stay dark carries `data-theme="dark"`, which re-scopes every role
+inside it, **and restates `text-ink`** — `color` inherits, so a headline that merely inherits
+arrives in the outer theme's ink.
+
+### Defaults
+
+Dark is the default and the system preference is deliberately **not** read. The HIG would have
+an app follow the system; this is a storefront, and a visitor whose laptop is in light mode
+should not meet a different house than the one on the poster. The choice is offered explicitly
+and remembered. Flipping to system-following is one constant: `DEFAULT_THEME`.
+
+### The rule that will bite next
+
+**Never apply an alpha to an ink role.** Every ink is tuned to sit just above 4.5:1 on the
+surfaces it is allowed on, so `text-accent/90` spends a margin that was never there — it
+measured 4.08:1 on paper. On noir the same utility looked like a refinement and cost nothing
+visible, which is exactly why it survived review. *Soften a role by choosing a quieter role,
+not by making it transparent.*
+
+### The floor runs in opposite directions
+
+On noir, less contrast means **darker**; on paper it means **lighter**. A reviewer carrying the
+dark-theme instinct across will lighten `ink3` to soften it and take it straight through the
+floor. And the floor is set by the lightest surface a label may be printed on — not by the
+page. `faint` was `#8B837A`: 5.3:1 on noir, 4.28:1 on an `l3` panel, passing every assertion
+that existed and failing the moment anything used the third depth step.
+
+Both directions, every ink against every surface, are asserted in `packages/tokens`. The audit
+runs per theme: `THEME=light pnpm --filter @diyar/web audit`.

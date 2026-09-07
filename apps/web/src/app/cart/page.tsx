@@ -22,7 +22,10 @@ export default function CartPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-phoneMax pb-8 lg:max-w-[820px] lg:px-8 lg:pb-[88px]">
+      {/* 820px was the phone column with room to breathe. It is not a desktop
+          layout: two columns need the content measure, and below `lg` this is
+          still the capped phone column it always was. */}
+      <main className="mx-auto max-w-phoneMax pb-8 lg:max-w-contentMax lg:px-8 lg:pb-[88px]">
         <h1 className="px-5 pb-5 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-7 lg:pt-9 lg:text-h1Lg">
           الحقيبة
         </h1>

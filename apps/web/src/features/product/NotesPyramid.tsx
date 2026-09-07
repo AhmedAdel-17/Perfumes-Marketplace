@@ -1,4 +1,3 @@
-import { noteTier } from '@diyar/tokens';
 import { NOTE_ICON } from './note-icons';
 
 /**
@@ -10,12 +9,16 @@ import { NOTE_ICON } from './note-icons';
  * right edge, which is where the orbs sit. Getting that backwards put the spine
  * 350px away from its own nodes once already (DESIGN_DOCTRINE §4a).
  *
- * Driven entirely by product data, and coloured from the tokens.
+ * Driven entirely by product data, and coloured from the THEME rather than from
+ * a palette import: `--c-note-*` is declared once per theme in theme.ts, so the
+ * pyramid restates itself on paper without this file knowing there are two
+ * themes. It holds channels (`194 168 92`), which is what lets the glow below
+ * be written as a real translucent colour.
  */
 const TIERS = [
-  { key: 'top', en: 'TOP', ar: 'القمة', when: 'أول ٣٠ دقيقة', colour: 'var(--note-top)' },
-  { key: 'heart', en: 'HEART', ar: 'القلب', when: 'ساعتان', colour: 'var(--note-heart)' },
-  { key: 'base', en: 'BASE', ar: 'القاعدة', when: 'حتى ٨ ساعات', colour: 'var(--note-base)' },
+  { key: 'top', en: 'TOP', ar: 'القمة', when: 'أول ٣٠ دقيقة', channels: 'var(--c-note-top)' },
+  { key: 'heart', en: 'HEART', ar: 'القلب', when: 'ساعتان', channels: 'var(--c-note-heart)' },
+  { key: 'base', en: 'BASE', ar: 'القاعدة', when: 'حتى ٨ ساعات', channels: 'var(--c-note-base)' },
 ] as const;
 
 export function NotesPyramid({
@@ -24,32 +27,17 @@ export function NotesPyramid({
   const notes: Record<string, string[]> = { top, heart, base };
 
   return (
-    <section
-      className="relative px-5"
-      style={{
-        /*
-          Tier colours as CSS variables so the spine gradient can reference
-          them — read FROM THE TOKENS, not retyped.
-
-          These were three hard-coded hexes, under a header that said "nothing
-          here is hardcoded". The same three values also sat in
-          packages/tokens/src/globals.css, which nothing imported. So the
-          palette lived in three places, tokens.json was the only one anybody
-          edited, and raising `base` to clear its contrast floor changed
-          nothing on screen.
-        */
-        ['--note-top' as string]: noteTier.top,
-        ['--note-heart' as string]: noteTier.heart,
-        ['--note-base' as string]: noteTier.base,
-      }}
-    >
+    <section className="relative px-5">
       <div
         aria-hidden
         className="absolute bottom-[34px] top-2 w-[2px] opacity-[.55]"
         style={{
           insetInlineStart: 'calc(20px + 47px)',
           background:
-            'linear-gradient(to bottom,var(--note-top) 0%,var(--note-top) 18%,var(--note-heart) 44%,var(--note-heart) 58%,var(--note-base) 84%,var(--note-base) 100%)',
+            'linear-gradient(to bottom,' +
+            'rgb(var(--c-note-top)) 0%,rgb(var(--c-note-top)) 18%,' +
+            'rgb(var(--c-note-heart)) 44%,rgb(var(--c-note-heart)) 58%,' +
+            'rgb(var(--c-note-base)) 84%,rgb(var(--c-note-base)) 100%)',
         }}
       />
 
@@ -63,17 +51,21 @@ export function NotesPyramid({
                 <span
                   aria-hidden
                   className="absolute inset-0 rounded-pill"
-                  style={{ background: `radial-gradient(circle,${tier.colour}2E 0%,transparent 68%)` }}
+                  /* `${var}2E` — a hex alpha glued to a var() call — is not a
+                     colour, so this gradient silently produced nothing and the
+                     orbs sat unlit for as long as the component has existed.
+                     Channels are what make a translucent tier expressible. */
+                  style={{ background: `radial-gradient(circle,rgb(${tier.channels} / .18) 0%,transparent 68%)` }}
                 />
                 <span
                   aria-hidden
-                  className="absolute inset-[14px] rounded-pill border border-bone/[.13]"
+                  className="absolute inset-[14px] rounded-pill border border-ink/[.13]"
                 />
-                <span className="relative z-[2]" style={{ color: tier.colour }}>
+                <span className="relative z-[2]" style={{ color: `rgb(${tier.channels})` }}>
                   <Icon />
                 </span>
               </div>
-              <div className="mt-2 text-center text-micro text-faint">{tier.when}</div>
+              <div className="mt-2 text-center text-micro text-ink3">{tier.when}</div>
             </div>
 
             <div className="flex-1 ps-5 pt-3">
@@ -81,9 +73,9 @@ export function NotesPyramid({
                 <span
                   aria-hidden
                   className="block h-[6px] w-[6px] rounded-pill"
-                  style={{ background: tier.colour }}
+                  style={{ background: `rgb(${tier.channels})` }}
                 />
-                <span className="latin text-micro tracking-label" style={{ color: tier.colour }}>
+                <span className="latin text-micro tracking-label" style={{ color: `rgb(${tier.channels})` }}>
                   {tier.en}
                 </span>
               </div>
@@ -100,7 +92,7 @@ export function NotesPyramid({
                 {list.map((note) => (
                   <li
                     key={note}
-                    className="tappable flex h-touch items-center gap-2 border border-hair bg-l1 px-3 text-small"
+                    className="tappable flex h-touch items-center gap-2 border border-line bg-raised px-3 text-small"
                   >
                     {note}
                   </li>

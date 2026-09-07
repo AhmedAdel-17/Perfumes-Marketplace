@@ -16,7 +16,7 @@ export default async function SellerSignInPage() {
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[560px] lg:px-8">
       <div className="px-5 pb-7 pt-9 lg:px-0 lg:pt-[88px]">
-        <div className="latin mb-4 text-micro tracking-label text-brass">FOR HOUSES</div>
+        <div className="latin mb-4 text-micro tracking-label text-accent">FOR HOUSES</div>
         <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">بوّابة الدور</h1>
       </div>
       <SellerSignIn />

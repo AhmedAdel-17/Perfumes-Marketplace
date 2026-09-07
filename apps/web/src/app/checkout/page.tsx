@@ -13,10 +13,15 @@ export default function CheckoutPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-phoneMax lg:max-w-[720px] lg:px-8">
-        <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-8 lg:pt-9 lg:text-h1Lg">
-          إتمام الطلب
-        </h1>
+      {/*
+        The heading belongs to the FORM, not to the page, and that is a
+        correctness fix rather than a refactor. This route renders two different
+        things — a checkout and a confirmation — and a fixed page title meant a
+        customer who had just paid was looking at "إتمام الطلب" above the words
+        "تم استلام طلبك": a heading contradicting the state beneath it, with the
+        real title demoted to an h2 under an h1 that no longer applied.
+      */}
+      <main className="mx-auto max-w-phoneMax lg:max-w-contentMax lg:px-8">
         <CheckoutForm />
       </main>
       <SiteFooter />

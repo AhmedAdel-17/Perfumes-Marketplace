@@ -38,7 +38,7 @@ export function OrderQueue() {
   };
 
   if (queue === null) {
-    return <p className="px-5 py-8 text-small text-faint lg:px-0">…جارٍ التحميل</p>;
+    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ التحميل</p>;
   }
 
   // Three groups, in the order a house works through them: decide, then pack
@@ -51,7 +51,7 @@ export function OrderQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small text-ink">
           {error}
         </p>
       )}
@@ -63,7 +63,7 @@ export function OrderQueue() {
       )}
 
       {queue.length === 0 && (
-        <p className="py-9 text-center text-small leading-relaxed text-faint">
+        <p className="py-9 text-center text-small leading-relaxed text-ink3">
           لا توجد طلبات بعد.
         </p>
       )}
@@ -85,13 +85,25 @@ function Section({
   if (entries.length === 0) return null;
   return (
     <section className="mb-9">
-      <h2 className="mb-4 border-b border-hair pb-3 font-display text-h3 lg:text-h2Lg">
-        {title} <span className="text-faint">·</span>{' '}
-        <span className="tnum text-faint">{num(entries.length)}</span>
+      <h2 className="mb-4 border-b border-line pb-3 font-display text-h3 lg:text-h2Lg">
+        {title} <span className="text-ink3">·</span>{' '}
+        <span className="tnum text-ink3">{num(entries.length)}</span>
       </h2>
-      {entries.map((entry) => (
-        <Row key={entry.id} entry={entry} busy={busyId === entry.id} act={act} stage={stage} />
-      ))}
+      {/*
+        Two columns of cards from `lg`, not one card stretched to 1240px.
+
+        A queue is read top to bottom and acted on one item at a time, so the
+        card has an ideal MEASURE — wide enough for an address, narrow enough
+        that the countdown and the confirm button stay in one glance. Widening
+        the console without this simply moved the button 600px from the order
+        number it belongs to. Two columns keep the measure and halve the
+        scrolling, which is the actual thing an operator gains from a monitor.
+      */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-5">
+        {entries.map((entry) => (
+          <Row key={entry.id} entry={entry} busy={busyId === entry.id} act={act} stage={stage} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -110,15 +122,15 @@ function Row({
   const r = entry.recipient;
 
   return (
-    <article className="mb-4 border border-hair bg-l1 p-4 lg:p-5">
+    <article className="mb-4 border border-line bg-raised p-4 lg:p-5">
       {/*
         The card is read in the order the work happens: how long is left, what
         to put in the box, where it goes. The reference is the least urgent
         thing on it and used to be the most prominent.
       */}
-      <header className="flex items-baseline justify-between gap-3 border-b border-hair pb-3">
+      <header className="flex items-baseline justify-between gap-3 border-b border-line pb-3">
         <Countdown dueAt={entry.confirmDueAt} state={entry.state} />
-        <span className="latin text-micro tracking-label text-faint">{entry.reference}</span>
+        <span className="latin text-micro tracking-label text-ink3">{entry.reference}</span>
       </header>
 
       {/* What goes in the box — the largest thing on the card, because it is
@@ -128,17 +140,17 @@ function Row({
           <li key={item.sku} className="flex items-baseline justify-between gap-3 py-1.5">
             <span className="font-display text-h4">
               {item.name}
-              <span className="ms-2 text-caption text-faint">
+              <span className="ms-2 text-caption text-ink3">
                 <span className="tnum">{num(item.volumeMl)}</span> مل
               </span>
             </span>
             <span className="flex items-baseline gap-2">
               {item.quantity > 1 && (
-                <span className="rounded-sm bg-brass/15 px-2 py-0.5 text-caption text-brass">
+                <span className="rounded-sm bg-accent/15 px-2 py-0.5 text-caption text-accent">
                   <span className="tnum">×{num(item.quantity)}</span>
                 </span>
               )}
-              <span className="latin text-micro tracking-label text-faint">{item.sku}</span>
+              <span className="latin text-micro tracking-label text-ink3">{item.sku}</span>
             </span>
           </li>
         ))}
@@ -153,18 +165,18 @@ function Row({
         customer before dispatch, and the address is read once at the label
         printer.
       */}
-      <div className="mt-4 border-t border-hair pt-4">
+      <div className="mt-4 border-t border-line pt-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <span className="text-bodyLg text-bone">{r.name}</span>
+          <span className="text-bodyLg text-ink">{r.name}</span>
           <a
             href={`tel:${r.phone}`}
-            className="tappable latin tnum flex min-h-touch items-center text-bodyLg text-brass transition-opacity duration-base ease-out hover:opacity-press"
+            className="tappable latin tnum flex min-h-touch items-center text-bodyLg text-accent transition-opacity duration-base ease-out hover:opacity-press"
           >
             {r.phone}
           </a>
         </div>
 
-        <address className="mt-2 text-caption not-italic leading-relaxed text-dim">
+        <address className="mt-2 text-caption not-italic leading-relaxed text-ink2">
           {r.building} {r.street}
           {r.floor && <> · الدور <span className="tnum">{r.floor}</span></>}
           {r.apartment && <> · شقة <span className="tnum">{r.apartment}</span></>}
@@ -173,30 +185,30 @@ function Row({
           {r.landmark && (
             <>
               <br />
-              <span className="text-faint">علامة مميزة: {r.landmark}</span>
+              <span className="text-ink3">علامة مميزة: {r.landmark}</span>
             </>
           )}
         </address>
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-3">
-        <span className="text-caption tracking-label text-faint">{copy.label}</span>
+      <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
+        <span className="text-caption tracking-label text-ink3">{copy.label}</span>
         <span className="text-bodyLg font-semibold">
           <span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span>
-          <span className="latin ms-1.5 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
+          <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
       </div>
 
       {entry.trackingNumber && (
-        <div className="mt-3 flex justify-between border-t border-hair pt-3 text-caption">
-          <span className="text-faint">رقم الشحنة</span>
-          <span className="latin tnum select-all text-bone">{entry.trackingNumber}</span>
+        <div className="mt-3 flex justify-between border-t border-line pt-3 text-caption">
+          <span className="text-ink3">رقم الشحنة</span>
+          <span className="latin tnum select-all text-ink">{entry.trackingNumber}</span>
         </div>
       )}
 
       {stage === 'ship' && (
-        <div className="mt-4 border-t border-hair pt-4">
-          <label className="mb-2 block text-caption tracking-label text-dim" htmlFor={`t-${entry.id}`}>
+        <div className="mt-4 border-t border-line pt-4">
+          <label className="mb-2 block text-caption tracking-label text-ink2" htmlFor={`t-${entry.id}`}>
             رقم الشحنة من شركة الشحن
           </label>
           <div className="flex gap-3">
@@ -206,13 +218,13 @@ function Row({
               onChange={(event) => setTracking(event.target.value)}
               inputMode="text"
               autoComplete="off"
-              className="latin h-control min-w-0 flex-1 rounded-sm border border-hair bg-noir px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+              className="latin h-control min-w-0 flex-1 rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
             />
             <PrimaryButton type="button" disabled={busy || tracking.trim().length < 4} onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))} fill="auto">
       {busy ? '…' : 'تم الشحن'}
     </PrimaryButton>
           </div>
-          <p className="mt-2 text-micro leading-relaxed text-faint">
+          <p className="mt-2 text-micro leading-relaxed text-ink3">
             اكتب الرقم كما هو على البوليصة. سيراه العميل في صفحة التتبّع.
           </p>
         </div>
@@ -227,7 +239,7 @@ function Row({
             type="button"
             disabled={busy}
             onClick={() => setDeclining(true)}
-            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-hair px-6 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-danger hover:text-danger"
+            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-line px-6 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-danger hover:text-danger"
           >
             اعتذار
           </button>
@@ -278,8 +290,8 @@ function DeclineReasons({
   onCancel(): void;
 }) {
   return (
-    <div className="mt-4 border-t border-hair pt-4">
-      <p className="mb-3 text-caption text-dim">اختر سببًا محدّدًا:</p>
+    <div className="mt-4 border-t border-line pt-4">
+      <p className="mb-3 text-caption text-ink2">اختر سببًا محدّدًا:</p>
       <div className="flex flex-wrap gap-2">
         {REASONS.map((reason) => (
           <button
@@ -287,7 +299,7 @@ function DeclineReasons({
             type="button"
             disabled={busy}
             onClick={() => act(entry.id, () => declineSubOrder(entry.id, reason.value))}
-            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-4 text-small text-bone transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
           >
             {reason.label}
           </button>
@@ -296,7 +308,7 @@ function DeclineReasons({
       <button
         type="button"
         onClick={onCancel}
-        className="tappable mt-4 flex min-h-touch items-center text-caption text-faint underline transition-colors duration-base ease-out hover:text-bone"
+        className="tappable mt-4 flex min-h-touch items-center text-caption text-ink3 underline transition-colors duration-base ease-out hover:text-ink"
       >
         رجوع
       </button>
@@ -330,8 +342,8 @@ function Countdown({ dueAt, state }: { dueAt: string | null; state: string }) {
   const tone = overdue
     ? 'text-danger'
     : remaining < 3_600_000
-      ? 'text-brass'
-      : 'text-faint';
+      ? 'text-accent'
+      : 'text-ink3';
 
   return (
     <span className={`flex items-baseline gap-1.5 text-bodyLg ${tone}`}>

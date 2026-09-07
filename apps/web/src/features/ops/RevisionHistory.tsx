@@ -54,9 +54,9 @@ export function RevisionHistory({ pageId, revisions }: {
 
   if (revisions.length === 0) {
     return (
-      <section className="mt-12 border-t border-hair pt-7">
+      <section className="mt-12 border-t border-line pt-7">
         <h2 className="mb-3 font-display text-h4">السجل</h2>
-        <p className="text-small text-faint">لم تُنشر هذه الصفحة بعد.</p>
+        <p className="text-small text-ink3">لم تُنشر هذه الصفحة بعد.</p>
       </section>
     );
   }
@@ -73,19 +73,19 @@ export function RevisionHistory({ pageId, revisions }: {
   });
 
   return (
-    <section className="mt-12 border-t border-hair pt-7">
+    <section className="mt-12 border-t border-line pt-7">
       <h2 className="mb-1 font-display text-h4">السجل</h2>
-      <p className="mb-5 text-caption leading-relaxed text-faint">
+      <p className="mb-5 text-caption leading-relaxed text-ink3">
         الاسترجاع ينقل النسخة إلى المسودة فقط. لا يُنشر شيء حتى تختار النشر.
       </p>
 
-      <ul className="border-t border-hair">
+      <ul className="border-t border-line">
         {revisions.map((revision) => (
-          <li key={revision.id} className="border-b border-hair py-4">
+          <li key={revision.id} className="border-b border-line py-4">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div>
-                <div className="text-body text-bone">{revision.title}</div>
-                <div className="mt-1 text-caption text-faint">
+                <div className="text-body text-ink">{revision.title}</div>
+                <div className="mt-1 text-caption text-ink3">
                   <span className="tnum">{published(revision.publishedAt)}</span>
                   {' · '}
                   {/*
@@ -102,7 +102,7 @@ export function RevisionHistory({ pageId, revisions }: {
                   // Which one the visitor is reading, stated rather than
                   // inferred from position — the top row stops being the live
                   // one the moment anything is rolled back.
-                  <span className="rounded-pill bg-brass/15 px-3 py-1 text-micro tracking-label text-brass">
+                  <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
                     على الموقع الآن
                   </span>
                 )}
@@ -113,14 +113,14 @@ export function RevisionHistory({ pageId, revisions }: {
                       type="button"
                       disabled={pending}
                       onClick={() => restore(revision.id)}
-                      className="tappable flex min-h-touch items-center rounded-sm border border-brass px-4 text-small text-brass transition-opacity duration-base ease-out disabled:opacity-disabled"
+                      className="tappable flex min-h-touch items-center rounded-sm border border-accent px-4 text-small text-accent transition-opacity duration-base ease-out disabled:opacity-disabled"
                     >
                       {pending ? '…' : 'تأكيد الاسترجاع'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirming(null)}
-                      className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-faint transition-colors duration-base ease-out hover:text-bone"
+                      className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-ink"
                     >
                       إلغاء
                     </button>
@@ -133,7 +133,7 @@ export function RevisionHistory({ pageId, revisions }: {
                     // was never a revision — and a single click next to a date
                     // is too easy to hit while reading.
                     onClick={() => { setConfirming(revision.id); setMessage(null); }}
-                    className="tappable flex min-h-touch items-center text-caption tracking-label text-dim transition-colors duration-base ease-out hover:text-brass"
+                    className="tappable flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
                   >
                     استرجاع
                   </button>

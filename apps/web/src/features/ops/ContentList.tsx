@@ -46,33 +46,53 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
   return (
     <div className="px-5 lg:px-0">
       {pages.length === 0 ? (
-        <p className="py-8 text-bodyLg text-dim">لا توجد صفحات بعد.</p>
+        <p className="py-8 text-bodyLg text-ink2">لا توجد صفحات بعد.</p>
       ) : (
-        <ul className="border-t border-hair">
+        /*
+          COLUMNS, not a row pushed to both edges.
+
+          `justify-between` is the correct answer on a phone and the wrong one
+          on a monitor: at 1240px it put the state 480 pixels from the title it
+          describes, with nothing in between, and the eye cannot carry a pair
+          that far apart. A grid gives every field a column, so widening the
+          console adds ROOM rather than distance — which is the difference
+          §4b is about.
+        */
+        <ul className="border-t border-line">
+          {/* A header row is what makes the columns readable as columns. It is
+              presentational, so it is aria-hidden and each cell below still
+              reads as its own labelled fact. */}
+          <li
+            aria-hidden
+            className="hidden border-b border-line py-2 text-micro tracking-label text-ink3 lg:grid lg:grid-cols-[1fr_18ch_11ch_9ch] lg:items-center lg:gap-6"
+          >
+            <span>العنوان</span>
+            <span className="latin">PATH</span>
+            <span>على الموقع</span>
+            <span>الحالة</span>
+          </li>
           {pages.map((page) => (
-            <li key={page.id} className="border-b border-hair">
+            <li key={page.id} className="border-b border-line">
               <a
                 href={`/ops/content/${page.id}`}
-                className="tappable flex min-h-touch flex-wrap items-center justify-between gap-3 py-4 transition-colors duration-base ease-out hover:text-brass"
+                className="tappable flex min-h-touch flex-wrap items-center justify-between gap-3 py-4 transition-colors duration-base ease-out hover:text-accent lg:grid lg:grid-cols-[1fr_18ch_11ch_9ch] lg:items-center lg:gap-6"
               >
+                <span className="font-display text-bodyLg text-ink">{page.title}</span>
+                <span className="latin text-caption text-ink3 lg:truncate">/{page.slug}</span>
+                {/*
+                  LIVE is a different fact from the state, and both are shown.
+                  A page can read "مسودة" and still be on the site — somebody is
+                  editing a published page — and an operator who saw only the
+                  state would think it was down.
+                */}
                 <span>
-                  <span className="font-display text-bodyLg text-bone">{page.title}</span>
-                  <span className="latin ms-3 text-caption text-faint">/{page.slug}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  {/*
-                    LIVE is a different fact from the state, and both are shown.
-                    A page can read "مسودة" and still be on the site — somebody
-                    is editing a published page — and an operator who saw only
-                    the state would think it was down.
-                  */}
                   {page.isLive && (
-                    <span className="rounded-pill bg-brass/15 px-3 py-1 text-micro tracking-label text-brass">
+                    <span className="rounded-sm border border-accent/40 bg-accent/10 px-2 py-1 text-micro tracking-label text-accent">
                       على الموقع
                     </span>
                   )}
-                  <span className="text-caption text-faint">{STATE_LABELS[page.state]}</span>
                 </span>
+                <span className="text-caption text-ink3">{STATE_LABELS[page.state]}</span>
               </a>
             </li>
           ))}
@@ -88,24 +108,24 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
         <h2 className="mb-4 font-display text-h4">صفحة جديدة</h2>
 
         <div className="mb-3">
-          <label htmlFor="new-title" className="mb-1.5 block text-caption tracking-label text-faint">
+          <label htmlFor="new-title" className="mb-1.5 block text-caption tracking-label text-ink3">
             العنوان
           </label>
           <input
             id="new-title" value={title} maxLength={160}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-control w-full rounded-sm border border-hair bg-noir px-3 text-body text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+            className="h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
           />
         </div>
 
         <div className="mb-4">
-          <label htmlFor="new-slug" className="mb-1.5 block text-caption tracking-label text-faint">
+          <label htmlFor="new-slug" className="mb-1.5 block text-caption tracking-label text-ink3">
             المسار — حروف لاتينية صغيرة وشرطات، ولا يمكن تغييره لاحقًا
           </label>
           <input
             id="new-slug" value={slug} maxLength={80} dir="ltr"
             onChange={(e) => setSlug(e.target.value)}
-            className="latin h-control w-full rounded-sm border border-hair bg-noir px-3 text-start text-body text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+            className="latin h-control w-full rounded-sm border border-line bg-ground px-3 text-start text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
           />
         </div>
 

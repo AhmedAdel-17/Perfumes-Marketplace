@@ -53,7 +53,7 @@ export interface QueueRow {
 export function ModerationQueue({ rows }: { rows: QueueRow[] }) {
   if (rows.length === 0) {
     return (
-      <p className="px-5 py-10 text-bodyLg text-dim lg:px-0">
+      <p className="px-5 py-10 text-bodyLg text-ink2 lg:px-0">
         لا توجد منتجات بانتظار المراجعة.
       </p>
     );
@@ -81,7 +81,7 @@ function Entry({ row }: { row: QueueRow }) {
 
   if (decided) {
     return (
-      <li className="border-b border-hair py-5 text-small text-faint">
+      <li className="border-b border-line py-5 text-small text-ink3">
         {row.name} — {decided === 'published' ? 'نُشر' : 'أُعيد إلى الدار'}
       </li>
     );
@@ -98,21 +98,21 @@ function Entry({ row }: { row: QueueRow }) {
   const slow = row.waitingHours !== null && row.waitingHours >= 24;
 
   return (
-    <li className="border-b border-hair py-6">
+    <li className="border-b border-line py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <h2 className="font-display text-h4 text-bone">{row.name}</h2>
-          <p className="mt-1 text-caption text-faint">
+          <h2 className="font-display text-h4 text-ink">{row.name}</h2>
+          <p className="mt-1 text-caption text-ink3">
             {row.brandName} · <span className="tnum">{num(row.volumeMl)}</span> مل
           </p>
         </div>
         <div className="text-end">
-          <div className="text-bodyLg text-bone">
+          <div className="text-bodyLg text-ink">
             <span className="tnum">{formatPrice(row.pricePiastres)}</span>
-            <span className="latin ms-1.5 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
+            <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </div>
           {row.waitingHours !== null && (
-            <div className={`mt-1 text-caption ${late ? 'text-danger' : slow ? 'text-brass' : 'text-faint'}`}>
+            <div className={`mt-1 text-caption ${late ? 'text-danger' : slow ? 'text-accent' : 'text-ink3'}`}>
               انتظر <span className="tnum">{num(row.waitingHours)}</span>{' '}
               {plural(row.waitingHours, HOUR)}
             </div>
@@ -121,10 +121,10 @@ function Entry({ row }: { row: QueueRow }) {
       </div>
 
       {row.claims.length > 0 && (
-        <ul className="mt-4 border-s-2 border-brass/60 ps-4">
+        <ul className="mt-4 border-s-2 border-accent/60 ps-4">
           {row.claims.map((claim, i) => (
-            <li key={i} className="py-1 text-small leading-relaxed text-dim">
-              {CLAIM_LABELS[claim.code]} — <span className="text-faint">«{claim.evidence}»</span>
+            <li key={i} className="py-1 text-small leading-relaxed text-ink2">
+              {CLAIM_LABELS[claim.code]} — <span className="text-ink3">«{claim.evidence}»</span>
             </li>
           ))}
         </ul>
@@ -133,8 +133,8 @@ function Entry({ row }: { row: QueueRow }) {
       {message && <p role="alert" className="mt-4 text-small text-danger">{message}</p>}
 
       {choosing ? (
-        <div className="mt-5 border-t border-hair pt-4">
-          <p className="mb-3 text-caption text-dim">اختر سببًا محدّدًا:</p>
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="mb-3 text-caption text-ink2">اختر سببًا محدّدًا:</p>
           <div className="flex flex-wrap gap-2">
             {MODERATION_REASONS.map((reason) => (
               <button
@@ -142,7 +142,7 @@ function Entry({ row }: { row: QueueRow }) {
                 type="button"
                 disabled={pending}
                 onClick={() => decide(choosing, reason)}
-                className="tappable flex min-h-touch items-center rounded-sm border border-hair px-4 text-small text-bone transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+                className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
               >
                 {REASON_LABELS[reason]}
               </button>
@@ -151,7 +151,7 @@ function Entry({ row }: { row: QueueRow }) {
           <button
             type="button"
             onClick={() => setChoosing(null)}
-            className="tappable mt-4 flex min-h-touch items-center text-caption text-faint underline transition-colors duration-base ease-out hover:text-bone"
+            className="tappable mt-4 flex min-h-touch items-center text-caption text-ink3 underline transition-colors duration-base ease-out hover:text-ink"
           >
             رجوع
           </button>
@@ -168,7 +168,7 @@ function Entry({ row }: { row: QueueRow }) {
             type="button"
             disabled={pending}
             onClick={() => setChoosing('draft')}
-            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-5 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center rounded-sm border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
           >
             إعادة للدار
           </button>

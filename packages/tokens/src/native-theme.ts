@@ -6,11 +6,19 @@
  * anything that needs a raw number rather than a class.
  */
 import { color, easing, fontSize, haptic, letterSpacing, lineHeight, motion, noteTier, opacity, radius, scentFamily, space, TAB_BAR, TOUCH_TARGET, font } from './index';
+import { themes } from './theme';
 
 export const nativeTheme = {
   color,
   noteTier,
   scentFamily,
+  /*
+    The semantic roles, both themes, so the apps resolve a colour by JOB exactly
+    as the web does. A native app that read `color.noir` for its background
+    would be a second decision about what "the page" is, made in another
+    language, and the two would drift the first time either palette moved.
+  */
+  themes,
   font: {
     display: font.display,
     latin: font.displayLatin,

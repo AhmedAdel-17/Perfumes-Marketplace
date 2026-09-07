@@ -50,10 +50,18 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/** Every colour token, flattened to `name -> #hex`. */
+/**
+ * Every colour token, flattened to `name -> #hex`.
+ *
+ * The LIGHT palettes are here for the same reason the dark ones are, and the
+ * risk is higher: they are newer, less familiar, and a value retyped into a
+ * component would be invisible to anyone reviewing in the default theme.
+ */
 const tokenColours: Array<[string, string]> = [
   ...Object.entries(raw.color),
+  ...Object.entries(raw.colorLight),
   ...Object.entries(raw.noteTier),
+  ...Object.entries(raw.noteTierLight),
   ...Object.entries(raw.scentFamily),
 ].filter(([name]) => !name.startsWith('$')) as Array<[string, string]>;
 

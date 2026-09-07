@@ -26,6 +26,15 @@ import { PrimaryHighlight, primarySurface, primarySurfaceStyle } from '@/feature
  * three days. Marketplaces routinely hide this until the payment step and it is
  * the moment they lose the order — not because the total is high but because it
  * changed after the customer had decided.
+ *
+ * DESKTOP IS A DIFFERENT COMPOSITION (DESIGN_DOCTRINE §4b). On a phone the
+ * summary is the last thing you scroll to, because there is nowhere else for it
+ * to be. On a monitor that same stack put the total 900px below the first
+ * product and the price of each line 700px from its own name — a phone column
+ * stretched, which is the specific failure §4b names. From `lg` the bag becomes
+ * two columns: the houses read down the start edge at a comfortable measure,
+ * and the summary sits in a panel that STAYS IN VIEW, so the number the visitor
+ * is deciding about is never off screen while they change what produced it.
  */
 export function CartView() {
   const { entries, hydrated, setQuantity, remove } = useCart();
@@ -46,13 +55,13 @@ export function CartView() {
   }, [entries, hydrated]);
 
   if (!hydrated || (cart === null && !failed)) {
-    return <p className="px-5 py-8 text-small text-faint lg:px-0">…جارٍ الحساب</p>;
+    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ الحساب</p>;
   }
 
   if (failed) {
     return (
       <div className="px-5 py-8 lg:px-0">
-        <p className="text-small leading-relaxed text-dim">
+        <p className="text-small leading-relaxed text-ink2">
           تعذّر حساب الحقيبة. تحقّق من اتصالك ثم أعد المحاولة.
         </p>
       </div>
@@ -65,14 +74,14 @@ export function CartView() {
     return (
       <div className="px-5 py-9 text-center lg:px-0 lg:py-[88px]">
         <p className="font-display text-h3 lg:text-h2Lg">حقيبتك فارغة</p>
-        <p className="mt-3 text-small leading-relaxed text-faint">
+        <p className="mt-3 text-small leading-relaxed text-ink3">
           {/* An empty state that only says "empty" is a dead end; it must offer
               the next step, and the next step is the catalogue. */}
           ابدأ من دور العطور المصرية المختارة.
         </p>
         <Link
           href="/"
-          className="tappable mt-6 inline-block border-b border-brass/50 pb-2 text-bodyLg text-bone transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+          className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
           تصفّح العطور
         </Link>
@@ -86,9 +95,9 @@ export function CartView() {
           the customer put it in the bag, and finding out at the payment step is
           how trust is lost. */}
       {priced.adjustments.length > 0 && (
-        <ul className="mx-5 mb-6 border border-hair bg-l1 p-4 lg:mx-0">
+        <ul className="mx-5 mb-6 border border-line bg-raised p-4 lg:mx-0">
           {priced.adjustments.map((a) => (
-            <li key={`${a.productId}-${a.reason}`} className="text-caption leading-relaxed text-dim">
+            <li key={`${a.productId}-${a.reason}`} className="text-caption leading-relaxed text-ink2">
               {a.reason === 'no_longer_available' && `${a.productName || 'أحد المنتجات'} لم يعد متاحًا وأُزيل من الحقيبة.`}
               {a.reason === 'out_of_stock' && `${a.productName} نفد من المخزون وأُزيل من الحقيبة.`}
               {a.reason === 'quantity_reduced' &&
@@ -105,14 +114,16 @@ export function CartView() {
         </ul>
       )}
 
+      <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px]">
+      <div className="lg:col-span-7">
       {priced.houses.map((house) => (
-        <section key={house.sellerId} className="mb-7 border-t border-hair px-5 pt-5 lg:px-0">
+        <section key={house.sellerId} className="mb-7 border-t border-line px-5 pt-5 lg:px-0">
           <div className="mb-4 flex items-baseline justify-between">
             <div>
-              <div className="latin text-micro tracking-label text-brass">{house.brandLatin}</div>
+              <div className="latin text-micro tracking-label text-accent">{house.brandLatin}</div>
               <div className="mt-1 font-display text-h4">{house.brandName}</div>
             </div>
-            <div className="text-caption text-faint">
+            <div className="text-caption text-ink3">
               {/* The noun agrees with the LAST number in the range, so a 10–11
                   day window reads "١٠ إلى ١١ يومًا" rather than "…أيام". */}
               يصل خلال <span className="tnum">{num(house.etaDaysMin)}</span>–
@@ -123,7 +134,7 @@ export function CartView() {
 
           <ul>
             {house.lines.map((line) => (
-              <li key={line.productId} className="flex gap-4 border-b border-hair/60 py-4 last:border-0">
+              <li key={line.productId} className="flex gap-4 border-b border-line/60 py-4 last:border-0">
                 {/*
                   The flacon is decorative — the product name sits beside it as
                   its own link — but the image is still a LINK, and a link whose
@@ -147,11 +158,11 @@ export function CartView() {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/p/${line.slug}`}
-                    className="tappable font-display text-h4 leading-tight transition-colors duration-base ease-out hover:text-brass"
+                    className="tappable font-display text-h4 leading-tight transition-colors duration-base ease-out hover:text-accent"
                   >
                     {line.name}
                   </Link>
-                  <div className="mt-1 text-caption text-faint">
+                  <div className="mt-1 text-caption text-ink3">
                     <span className="tnum">{num(line.volumeMl)}</span> مل
                   </div>
 
@@ -165,7 +176,7 @@ export function CartView() {
                     />
                     <div className="text-bodyLg font-semibold">
                       <span className="tnum">{formatPrice(line.lineTotalPiastres)}</span>
-                      <span className="latin ms-1.5 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
+                      <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
                     </div>
                   </div>
                 </div>
@@ -173,7 +184,7 @@ export function CartView() {
             ))}
           </ul>
 
-          <div className="mt-3 flex justify-between text-caption text-faint">
+          <div className="mt-3 flex justify-between text-caption text-ink3">
             <span>توصيل هذه الدار</span>
             <span>
               <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
@@ -183,9 +194,17 @@ export function CartView() {
         </section>
       ))}
 
-      {/* The total, with shipping broken out per house above it, so the number
-          at the bottom is never a surprise. */}
-      <section className="border-t border-hair px-5 pt-5 lg:px-0">
+      </div>
+
+      {/*
+        The total, with shipping broken out per house above it, so the number at
+        the bottom is never a surprise.
+
+        `top` clears the sticky masthead plus a hairline of air. Sticking it
+        flush to zero tucks the panel's own top rule under the header, which
+        reads as a rendering fault rather than as a layout.
+      */}
+      <section className="border-t border-line px-5 pt-5 lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:bg-raised lg:px-7 lg:py-7">
         <Row label="المنتجات" piastres={priced.merchandisePiastres} />
         {/* "٢ شحنات" is the very mistake @diyar/i18n exists to prevent — two of
             something takes the DUAL, شحنتان, with no numeral in front of it.
@@ -195,14 +214,14 @@ export function CartView() {
           label={`التوصيل · ${counted(priced.houses.length, SHIPMENT, editorial)}`}
           piastres={priced.shippingPiastres}
         />
-        <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-4">
+        <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
           <span className="font-display text-h4">الإجمالي</span>
           <span className="text-h3 font-semibold lg:text-h2Lg">
             <span className="tnum">{formatPrice(priced.totalPiastres)}</span>
-            <span className="latin ms-2 text-caption tracking-label text-dim">{CURRENCY_LABEL}</span>
+            <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </span>
         </div>
-        <p className="mt-2 text-micro text-faint">
+        <p className="mt-2 text-micro text-ink3">
           {counted(priced.itemCount, PERFUME, editorial)} · الأسعار شاملة الضريبة
         </p>
 
@@ -216,15 +235,16 @@ export function CartView() {
           <PrimaryHighlight />
           متابعة الشراء
         </Link>
-        <p className="mt-3 text-center text-micro text-faint">الدفع عند الاستلام</p>
+        <p className="mt-3 text-center text-micro text-ink3">الدفع عند الاستلام</p>
       </section>
+      </div>
     </div>
   );
 }
 
 function Row({ label, piastres }: { label: string; piastres: number }) {
   return (
-    <div className="flex justify-between py-1.5 text-small text-dim">
+    <div className="flex justify-between py-1.5 text-small text-ink2">
       <span>{label}</span>
       <span>
         <span className="tnum">{formatPrice(piastres)}</span>
@@ -253,7 +273,7 @@ function Stepper({
   label: string;
 }) {
   const base =
-    'tappable flex h-[32px] w-[32px] items-center justify-center rounded-pill border border-hair text-bodyLg text-bone transition-colors duration-base ease-out hover:border-brass hover:text-brass disabled:opacity-disabled disabled:hover:border-hair disabled:hover:text-bone';
+    'tappable flex h-[32px] w-[32px] items-center justify-center rounded-pill border border-line text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled disabled:hover:border-line disabled:hover:text-ink';
 
   return (
     <div className="flex items-center gap-3">

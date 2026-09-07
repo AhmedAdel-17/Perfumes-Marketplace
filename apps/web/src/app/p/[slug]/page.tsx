@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { color } from '@diyar/tokens';
 import { findProductBySlug, listPublishedProducts } from '@/core/catalogue';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
@@ -74,6 +73,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   gradient and the panel goes flat — which is exactly what it
                   did before.
                 */}
+                {/* Dark in both themes, and deliberately NOT scoped with
+                    `data-theme`: nothing inside paints with a colour role — the
+                    stage is literal gradients and the flacon's own glass — while
+                    the fade at its foot must continue the PAGE ground, which on
+                    paper is paper. Scoping the plate would have made that fade
+                    noir and put back the seam it exists to remove. */}
                 <div className="relative h-[408px] overflow-hidden lg:h-[664px] lg:rounded-sm">
                   <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,#2C221A_0%,#16110E_46%,#070606_84%)]" />
                   <div className="absolute inset-0 bg-[radial-gradient(38%_30%_at_50%_10%,rgba(206,168,100,.16),transparent_74%)]" />
@@ -101,12 +106,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <div
                     className="absolute inset-0 lg:hidden"
                     style={{
-                      // Built from the token: this fade exists to continue the
-                      // page background, so if that background ever moves and
-                      // this does not, the seam becomes visible.
+                      // Built from the THEME: this fade exists to continue the
+                      // page background, so if that background ever moves — a
+                      // new palette, the other theme — and this does not, the
+                      // seam becomes visible.
                       backgroundImage:
-                        `linear-gradient(to top,${color.noir} 0px,${color.noir} 44px,` +
-                        `${color.noir}dd 82px,transparent 142px)`,
+                        'linear-gradient(to top,rgb(var(--c-ground)) 0px,rgb(var(--c-ground)) 44px,' +
+                        'rgb(var(--c-ground) / .87) 82px,transparent 142px)',
                     }}
                   />
                 </div>
@@ -119,13 +125,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   which gives the overlaid title of the original design with a
                   single h1 in the document rather than one per breakpoint. */}
               <div className="relative z-10 -mt-[84px] px-5 lg:mt-0 lg:px-0">
-                <div className="latin mb-2 text-caption tracking-label text-brass">
+                <div className="latin mb-2 text-caption tracking-label text-accent">
                   {product.brandLatin}
                 </div>
                 <h1 className="font-display text-h1 leading-[1.1] tracking-tight lg:text-displayLg">
                   {product.name}
                 </h1>
-                <p className="mt-2 text-small text-dim lg:mt-3 lg:text-bodyLg">
+                <p className="mt-2 text-small text-ink2 lg:mt-3 lg:text-bodyLg">
                   <span className="tnum">{num(product.volumeMl)}</span> مل · {product.concentrationLabel}
                 </p>
               </div>
@@ -175,7 +181,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="lg:col-span-5">
               {(product.longevity || product.projection) && (
                 <section className="mt-8 lg:mt-0">
-                  <h2 className="latin mb-4 text-micro tracking-label text-faint">PERFORMANCE</h2>
+                  <h2 className="latin mb-4 text-micro tracking-label text-ink3">PERFORMANCE</h2>
                   {product.longevity && <PerformanceMeter label="الثبات" band={product.longevity} />}
                   {product.projection && <PerformanceMeter label="الانتشار" band={product.projection} />}
                 </section>
@@ -183,10 +189,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
               {/* Brand independence (doc 01 §6): the seller stays visible
                   everywhere. Never flatten houses into anonymous SKUs. */}
-              <section className="mt-8 border border-hair bg-l1 p-4 lg:p-5">
-                <div className="latin mb-2 text-micro tracking-label text-brass">THE HOUSE</div>
+              <section className="mt-8 border border-line bg-raised p-4 lg:p-5">
+                <div className="latin mb-2 text-micro tracking-label text-accent">THE HOUSE</div>
                 <div className="font-display text-h4 lg:text-h3">{product.brandName}</div>
-                <p className="mt-2 text-caption leading-relaxed text-faint lg:text-small">
+                <p className="mt-2 text-caption leading-relaxed text-ink3 lg:text-small">
                   تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
                   <span className="tnum">{num(days)}</span> إلى{' '}
                   <span className="tnum">{num(days + 1)}</span> {plural(days + 1, DAY)}.

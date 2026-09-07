@@ -61,7 +61,27 @@ export default async function Home() {
           would look like a template.
         */}
         {hero && (
-          <section className="relative overflow-hidden border-b border-hair/70">
+          <section
+            /*
+              `text-ink` is restated here and it is NOT redundant.
+
+              `color` INHERITS. The body resolves `text-ink` once, against the
+              root theme, and hands the computed colour down — so a headline
+              that simply inherits arrives graphite even inside a dark scope,
+              because nothing re-read the variable. The scope changes what
+              `--c-ink` means; only an element that actually asks for it gets
+              the new answer. Every dark-scoped panel has to restate its ink.
+            */
+            className="relative overflow-hidden border-b border-line/70 text-ink"
+            /*
+              A lit room, in both themes. The attribute scopes every colour role
+              inside this section to the dark palette — headline, label, rules,
+              accent — so the opening reads the same on paper as it does on
+              noir, and no element inside needs to know there are two themes.
+              See the note on themeBaseStyles in theme.ts.
+            */
+            data-theme="dark"
+          >
             <div className="absolute inset-0 bg-[radial-gradient(64%_78%_at_74%_32%,#2C221A_0%,#15100D_44%,#070606_80%)]" />
             {/* The source. Kept separate from the ground so its warmth can be
                 stronger than the ambient without lifting the black point. */}
@@ -88,7 +108,7 @@ export default async function Home() {
 
               <div className="w-full lg:w-[54%]">
                 <Reveal delay={80}>
-                  <div className="latin mb-5 text-micro tracking-label text-brass lg:mb-7 lg:text-caption">
+                  <div className="latin mb-5 text-micro tracking-label text-accent lg:mb-7 lg:text-caption">
                     CAIRO · ALEXANDRIA · GIZA
                   </div>
                 </Reveal>
@@ -104,12 +124,12 @@ export default async function Home() {
                   <h1 className="font-display text-h1 leading-[1.08] tracking-tight lg:text-displayLg xl:text-displayXl">
                     دور العطور
                     <br />
-                    <span className="text-brass">المصرية</span>
+                    <span className="text-accent">المصرية</span>
                   </h1>
                 </Reveal>
 
                 <Reveal delay={240}>
-                  <p className="mt-5 max-w-proseMax text-small leading-relaxed text-dim lg:mt-7 lg:text-bodyLg">
+                  <p className="mt-5 max-w-proseMax text-small leading-relaxed text-ink2 lg:mt-7 lg:text-bodyLg">
                     {/* Arabic inflects a counted noun six ways — @diyar/i18n → plural.ts. */}
                     {counted(products.length, PERFUME, editorial)} من دور مختارة، بمعلومات
                     موحّدة وتقييمات موثّقة بالشراء.
@@ -119,13 +139,13 @@ export default async function Home() {
                 <Reveal delay={320}>
                   <Link
                     href={`/p/${hero.slug}`}
-                    className="tappable mt-7 inline-flex items-baseline gap-3 border-b border-brass/50 pb-2 text-bodyLg text-bone transition-colors duration-base ease-out hover:border-brass hover:text-brass lg:mt-9"
+                    className="tappable mt-7 inline-flex items-baseline gap-3 border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent lg:mt-9"
                   >
                     <span className="font-display text-h4 lg:text-h3Lg">{hero.name}</span>
-                    <span className="latin text-caption tracking-label text-brass">
+                    <span className="latin text-caption tracking-label text-accent">
                       {hero.brandLatin}
                     </span>
-                    <span className="text-small text-dim">
+                    <span className="text-small text-ink2">
                       <span className="tnum">{formatPrice(hero.pricePiastres)}</span>
                       <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
                     </span>
@@ -143,11 +163,11 @@ export default async function Home() {
           something is given room — a paragraph in a box would say the same words
           and mean nothing.
         */}
-        <Reveal as="section" className="border-b border-hair/70">
+        <Reveal as="section" className="border-b border-line/70">
           <div className="mx-auto max-w-contentMax px-5 py-9 lg:px-8 lg:py-[104px]">
-            <p className="max-w-[860px] font-display text-h3 leading-[1.5] text-bone/90 lg:text-h1Lg lg:leading-[1.45]">
+            <p className="max-w-[860px] font-display text-h3 leading-[1.5] text-ink/90 lg:text-h1Lg lg:leading-[1.45]">
               كل دار تصنع عطرها وتشحنه بنفسها.
-              <span className="text-faint"> نحن نضمن أن ما تقرأه عنه صحيح.</span>
+              <span className="text-ink3"> نحن نضمن أن ما تقرأه عنه صحيح.</span>
             </p>
           </div>
         </Reveal>
@@ -155,9 +175,9 @@ export default async function Home() {
         {/* ------------------------------------------------------------- grid */}
         <section className="mx-auto max-w-contentMax px-5 py-8 lg:px-8 lg:py-[88px]">
           <Reveal>
-            <div className="mb-6 flex items-baseline justify-between border-b border-hair pb-4 lg:mb-9">
+            <div className="mb-6 flex items-baseline justify-between border-b border-line pb-4 lg:mb-9">
               <h2 className="font-display text-h3 lg:text-h2Lg">كل العطور</h2>
-              <span className="text-caption tracking-label text-faint lg:text-small">
+              <span className="text-caption tracking-label text-ink3 lg:text-small">
                 {counted(products.length, PERFUME, editorial)}
               </span>
             </div>
@@ -167,7 +187,7 @@ export default async function Home() {
             /* Day one is a real state, not an edge case: the catalogue is empty
                until the first house clears verification. Saying so plainly beats
                a grid of skeletons that never fill in. */
-            <p className="py-8 text-center text-small leading-relaxed text-faint">
+            <p className="py-8 text-center text-small leading-relaxed text-ink3">
               لم تُنشر أي عطور بعد. الدور الأولى قيد التوثيق.
             </p>
           ) : (
@@ -197,7 +217,7 @@ export default async function Home() {
           )}
 
           {rest.length === 0 && products.length > 0 && (
-            <p className="mt-8 text-caption text-faint">دور جديدة تنضم كل أسبوع.</p>
+            <p className="mt-8 text-caption text-ink3">دور جديدة تنضم كل أسبوع.</p>
           )}
         </section>
       </main>

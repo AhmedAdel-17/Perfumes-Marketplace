@@ -1,5 +1,3 @@
-import { noteTier } from '@diyar/tokens';
-
 /**
  * How the perfume evolves over eight hours.
  *
@@ -10,6 +8,13 @@ import { noteTier } from '@diyar/tokens';
  * with a heavy base renders a different curve from one with a bright opening.
  * Nothing here is a fixed illustration.
  */
+/** Label and theme channels, in pyramid order. One list feeds legend and areas. */
+const TIERS = [
+  ['القمة', 'var(--c-note-top)'],
+  ['القلب', 'var(--c-note-heart)'],
+  ['القاعدة', 'var(--c-note-base)'],
+] as const;
+
 export function EvolutionCurve({
   topCount, heartCount, baseCount,
 }: { topCount: number; heartCount: number; baseCount: number }) {
@@ -27,18 +32,16 @@ export function EvolutionCurve({
   const y = (v: number) => H - v;
 
   return (
-    <section className="mx-5 mt-8 border border-hair bg-l1 p-4 pt-5">
+    <section className="mx-5 mt-8 border border-line bg-raised p-4 pt-5">
       <div className="mb-3 flex gap-4">
-        {/* From the tokens. These were three retyped hexes, and one of them was
+        {/* From the THEME. These were three retyped hexes, one of which was
             still the OLD base colour after that token was raised to clear its
-            contrast floor — a legend disagreeing with the chart it labels. */}
-        {[
-          ['القمة', noteTier.top],
-          ['القلب', noteTier.heart],
-          ['القاعدة', noteTier.base],
-        ].map(([label, colour]) => (
-          <span key={label} className="flex items-center gap-2 text-micro text-faint">
-            <i aria-hidden className="block h-[2px] w-3" style={{ background: colour }} />
+            contrast floor — a legend disagreeing with the chart it labels. The
+            areas below had the same three values a THIRD time, as rgba(), which
+            the hex-only drift guard could not see. */}
+        {TIERS.map(([label, channels]) => (
+          <span key={label} className="flex items-center gap-2 text-micro text-ink3">
+            <i aria-hidden className="block h-[2px] w-3" style={{ background: `rgb(${channels})` }} />
             {label}
           </span>
         ))}
@@ -53,17 +56,17 @@ export function EvolutionCurve({
         {/* Base — lingers longest, so it stretches furthest left (latest). */}
         <path
           d={`M${W} ${H} L${W} ${y(bPeak * 0.3)} C${W * 0.8} ${y(bPeak * 0.75)} ${W * 0.5} ${y(bPeak)} ${W * 0.2} ${y(bPeak * 0.9)} L0 ${y(bPeak * 0.55)} L0 ${H} Z`}
-          fill="rgba(138,104,56,.34)"
+          fill={`rgb(${TIERS[2][1]} / .34)`}
         />
         {/* Heart — peaks in the middle hours. */}
         <path
           d={`M${W} ${H} L${W} ${y(hPeak * 0.2)} C${W * 0.82} ${y(hPeak * 0.9)} ${W * 0.6} ${y(hPeak)} ${W * 0.34} ${y(hPeak * 0.6)} L${W * 0.12} ${H} Z`}
-          fill="rgba(181,105,126,.3)"
+          fill={`rgb(${TIERS[1][1]} / .3)`}
         />
         {/* Top — brightest immediately, gone soonest (rightmost). */}
         <path
           d={`M${W} ${H} L${W} ${y(tPeak)} C${W * 0.9} ${y(tPeak * 0.85)} ${W * 0.78} ${y(tPeak * 0.35)} ${W * 0.6} ${H} Z`}
-          fill="rgba(194,168,92,.34)"
+          fill={`rgb(${TIERS[0][1]} / .34)`}
         />
       </svg>
 
@@ -77,7 +80,7 @@ export function EvolutionCurve({
         opening notes — a chart that actively misinforms, which is worse than no
         chart at all.
       */}
-      <div className="mt-2 flex justify-between text-micro text-faint">
+      <div className="mt-2 flex justify-between text-micro text-ink3">
         <span>الرشّة</span>
         <span className="tnum">2h</span>
         <span className="tnum">4h</span>

@@ -104,16 +104,22 @@ export function CheckoutForm() {
   if (result?.ok) return <Confirmation result={result} />;
 
   if (!hydrated || cart === null) {
-    return <p className="px-5 py-8 text-small text-faint lg:px-0">…جارٍ التحضير</p>;
+    return (
+      <>
+        <Heading />
+        <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ التحضير</p>
+      </>
+    );
   }
 
   if (cart.isEmpty) {
     return (
       <div className="px-5 py-9 text-center lg:px-0">
+        <Heading />
         <p className="font-display text-h3">حقيبتك فارغة</p>
         <Link
           href="/"
-          className="tappable mt-6 inline-block border-b border-brass/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+          className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
           تصفّح العطور
         </Link>
@@ -124,18 +130,38 @@ export function CheckoutForm() {
 
 
   return (
-    <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
+    /*
+      Two columns from `lg`, and the reason is not that the screen is wide.
+
+      Stacked, the summary sat 1,700px below the top of the form: the visitor
+      confirmed an amount they had last seen on the previous page. "No hidden
+      costs" (doc 04 gate 2) is not only about disclosing a figure, it is about
+      the figure being IN VIEW at the moment of the decision. So the summary
+      becomes a panel that follows the form down, and the confirm button lives
+      inside it, next to the number it commits to.
+
+      Below `lg` nothing changes: on a phone there is one column and the
+      summary sits immediately above the button, which is the same guarantee
+      expressed the only way a phone can.
+    */
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="px-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px] lg:px-0"
+    >
+      <Heading />
       {result && !result.ok && (
-        <div role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small leading-relaxed text-bone">
+        <div role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small leading-relaxed text-ink lg:col-span-12">
           {result.message}
           {result.reason === 'cart_changed' && (
-            <Link href="/cart" className="tappable mt-3 block text-brass underline">
+            <Link href="/cart" className="tappable mt-3 block text-accent underline">
               راجع الحقيبة
             </Link>
           )}
         </div>
       )}
 
+      <div className="lg:col-span-7">
       <section className="mb-8">
         <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">بيانات التواصل</h2>
         <Field
@@ -185,35 +211,58 @@ export function CheckoutForm() {
           it is a real launch method — not a placeholder. Card and wallet appear
           here when Paymob is connected.
         */}
-        <div className="border border-hair bg-l1 p-4">
+        <div className="border border-line bg-raised p-4">
           <div className="text-bodyLg">الدفع عند الاستلام</div>
-          <p className="mt-2 text-caption leading-relaxed text-faint">
+          <p className="mt-2 text-caption leading-relaxed text-ink3">
             تدفع نقدًا للمندوب عند تسليم الشحنة. كل دار تشحن طلبها بنفسها.
           </p>
         </div>
       </section>
+      </div>
 
-      <Summary cart={cart} />
+      <div className="lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:border-line lg:bg-raised lg:p-7">
+        <Summary cart={cart} />
 
-      <PrimaryButton type="submit" disabled={submitting} fill="full">
-      {submitting ? '…جارٍ تأكيد الطلب' : 'تأكيد الطلب'}
-    </PrimaryButton>
+        <PrimaryButton type="submit" disabled={submitting} fill="full">
+          {submitting ? '…جارٍ تأكيد الطلب' : 'تأكيد الطلب'}
+        </PrimaryButton>
 
-      <p className="mt-3 pb-8 text-center text-micro leading-relaxed text-faint">
-        بتأكيد الطلب فأنت توافق على شروط البيع وسياسة الإرجاع.
-      </p>
+        <p className="mt-3 pb-8 text-center text-micro leading-relaxed text-ink3 lg:pb-0">
+          بتأكيد الطلب فأنت توافق على شروط البيع وسياسة الإرجاع.
+        </p>
+      </div>
     </form>
+  );
+}
+
+/**
+ * The page's one heading, rendered by whichever branch is on screen.
+ *
+ * Every state this route can be in — loading, empty bag, the form, an error —
+ * needs a level-1 heading, and a route that renders none in two of its four
+ * states is a page a screen-reader user cannot orient in. Keeping it in one
+ * component is also what stops the four copies drifting apart.
+ */
+function Heading() {
+  return (
+    <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:col-span-12 lg:px-0 lg:pb-8 lg:pt-9 lg:text-h1Lg">
+      إتمام الطلب
+    </h1>
   );
 }
 
 function Summary({ cart }: { cart: PricedCartResult }) {
   return (
-    <section className="border-t border-hair pt-5">
+    // The rule separates the summary from the form on a phone. Inside the
+    // desktop panel the panel's own border already does that job, and two
+    // lines 1px apart is the kind of detail the doctrine calls a misaligned
+    // hairline.
+    <section className="border-t border-line pt-5 lg:border-t-0 lg:pt-0">
       {cart.houses.map((house) => (
-        <div key={house.sellerId} className="mb-3 flex justify-between text-small text-dim">
+        <div key={house.sellerId} className="mb-3 flex justify-between text-small text-ink2">
           <span>
             {house.brandName}
-            <span className="text-faint">
+            <span className="text-ink3">
               {' · '}
               <span className="tnum">{num(house.etaDaysMin)}</span>–
               <span className="tnum">{num(house.etaDaysMax)}</span>{' '}
@@ -237,15 +286,15 @@ function Summary({ cart }: { cart: PricedCartResult }) {
         the entire reason the bag is grouped by house; dropping it here undoes
         that one screen before the money.
       */}
-      <div className="mt-4 border-t border-hair pt-4">
-        <div className="flex justify-between py-1 text-small text-dim">
+      <div className="mt-4 border-t border-line pt-4">
+        <div className="flex justify-between py-1 text-small text-ink2">
           <span>المنتجات</span>
           <span>
             <span className="tnum">{formatPrice(cart.merchandisePiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </span>
         </div>
-        <div className="flex justify-between py-1 text-small text-dim">
+        <div className="flex justify-between py-1 text-small text-ink2">
           <span>التوصيل · {counted(cart.houses.length, SHIPMENT, editorial)}</span>
           <span>
             <span className="tnum">{formatPrice(cart.shippingPiastres)}</span>
@@ -254,11 +303,11 @@ function Summary({ cart }: { cart: PricedCartResult }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-4">
+      <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
         <span className="font-display text-h4">الإجمالي</span>
         <span className="text-h3 font-semibold lg:text-h2Lg">
           <span className="tnum">{formatPrice(cart.totalPiastres)}</span>
-          <span className="latin ms-2 text-caption tracking-label text-dim">{CURRENCY_LABEL}</span>
+          <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
       </div>
     </section>
@@ -267,11 +316,15 @@ function Summary({ cart }: { cart: PricedCartResult }) {
 
 function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true }> }) {
   return (
-    <div className="px-5 py-9 lg:px-0 lg:py-[72px]">
-      <div className="latin mb-4 text-micro tracking-label text-brass">ORDER CONFIRMED</div>
-      <h2 className="font-display text-h1 leading-heading lg:text-h1Lg">تم استلام طلبك</h2>
+    // Capped at the prose measure. The page frame is the full content width so
+    // the checkout can hold two columns; a confirmation is one short column of
+    // reading and stretching it to 1240px would be the opposite mistake to the
+    // one §4b describes, made on the same page.
+    <div className="max-w-proseMax px-5 py-9 lg:px-0 lg:py-[72px]">
+      <div className="latin mb-4 text-micro tracking-label text-accent">ORDER CONFIRMED</div>
+      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">تم استلام طلبك</h1>
 
-      <p className="mt-5 max-w-proseMax text-small leading-relaxed text-dim lg:text-bodyLg">
+      <p className="mt-5 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
         {result.houseCount > 1
           ? 'كل دار ستؤكّد طلبها وتشحنه بنفسها، لذا قد تصل الشحنات في أيام مختلفة.'
           : 'ستؤكّد الدار طلبها وتجهّزه للشحن.'}
@@ -282,25 +335,25 @@ function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true
         customer will read down a phone line, and its alphabet is chosen so no
         character can be misheard.
       */}
-      <div className="mt-7 border border-hair bg-l1 p-5">
-        <div className="text-caption tracking-label text-faint">رقم الطلب</div>
-        <div className="latin mt-2 select-all text-h2 tracking-[3px] text-brass lg:text-h1Lg">
+      <div className="mt-7 border border-line bg-raised p-5">
+        <div className="text-caption tracking-label text-ink3">رقم الطلب</div>
+        <div className="latin mt-2 select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
           {result.reference}
         </div>
-        <p className="mt-3 text-caption leading-relaxed text-faint">
+        <p className="mt-3 text-caption leading-relaxed text-ink3">
           احتفظ به لمتابعة الطلب. ستحتاج إليه مع رقم موبايلك.
         </p>
       </div>
 
-      <dl className="mt-6 border-t border-hair pt-5">
-        <div className="flex justify-between py-1.5 text-small text-dim">
+      <dl className="mt-6 border-t border-line pt-5">
+        <div className="flex justify-between py-1.5 text-small text-ink2">
           <dt>الإجمالي عند الاستلام</dt>
           <dd>
             <span className="tnum">{formatPrice(result.totalPiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </dd>
         </div>
-        <div className="flex justify-between py-1.5 text-small text-dim">
+        <div className="flex justify-between py-1.5 text-small text-ink2">
           <dt>الوصول المتوقّع</dt>
           <dd>
             <span className="tnum">{num(result.etaDaysMin)}</span>–
@@ -313,13 +366,13 @@ function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true
       <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
         <Link
           href="/order"
-          className="tappable border-b border-brass/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+          className="tappable border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
           تتبّع الطلب
         </Link>
         <Link
           href="/"
-          className="tappable border-b border-hair pb-2 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+          className="tappable border-b border-line pb-2 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
           متابعة التصفّح
         </Link>

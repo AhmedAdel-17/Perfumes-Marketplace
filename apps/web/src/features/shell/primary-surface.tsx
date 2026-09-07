@@ -49,7 +49,7 @@ const SURFACE = [
  */
 export const primarySurface = [
   'relative flex h-control items-center justify-center overflow-hidden rounded-sm',
-  'text-bodyLg font-medium tracking-[1.2px] text-noir',
+  'text-bodyLg font-medium tracking-[1.2px] text-on-accent',
   'transition-[filter,opacity] duration-base ease-out',
   'hover:brightness-110 active:opacity-press',
   'disabled:opacity-disabled disabled:brightness-75',

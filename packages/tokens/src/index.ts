@@ -13,8 +13,15 @@ const strip = <T extends Record<string, unknown>>(o: T): Record<string, never> =
 
 export const tokens = raw;
 
+/**
+ * Primitive palettes. These are VALUES, not roles — a component never names one.
+ * `theme.ts` assembles them into the roles the interface actually speaks in, and
+ * the Tailwind preset exposes only those roles, so `bg-noir` cannot be written.
+ */
 export const color = raw.color;
+export const colorLight = raw.colorLight;
 export const noteTier = raw.noteTier;
+export const noteTierLight = raw.noteTierLight;
 export const scentFamily = raw.scentFamily;
 export const font = strip(raw.font) as unknown as { display: string; displayLatin: string; body: string };
 export const fontSize = strip(raw.fontSize) as unknown as Record<string, number>;
@@ -48,6 +55,7 @@ export const layout = {
 export const MIN_READING_SIZE = 11;
 
 export * from './glass';
+export * from './theme';
 
 export type ColorName = keyof typeof raw.color;
 export type SpaceStep = keyof typeof raw.space;

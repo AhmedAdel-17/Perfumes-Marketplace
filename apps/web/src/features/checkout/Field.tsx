@@ -61,9 +61,9 @@ export function Field({
 
   return (
     <div className="mb-5">
-      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-dim">
+      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-ink2">
         {label}
-        {!required && <span className="text-faint"> — اختياري</span>}
+        {!required && <span className="text-ink3"> — اختياري</span>}
       </label>
 
       <input
@@ -83,10 +83,10 @@ export function Field({
         // 52px, the control height — a 40px input is the single most common
         // reason a checkout feels cheap on a phone.
         className={[
-          'h-control w-full rounded-sm border bg-l1 px-4 text-bodyLg text-bone',
+          'h-control w-full rounded-sm border bg-raised px-4 text-bodyLg text-ink',
           'transition-colors duration-base ease-out',
-          'placeholder:text-faint focus:outline-none focus-visible:border-brass',
-          error ? 'border-danger' : 'border-hair focus:border-dim',
+          'placeholder:text-ink3 focus:outline-none focus-visible:border-accent',
+          error ? 'border-danger' : 'border-line focus:border-ink2',
         ].join(' ')}
       />
 
@@ -95,7 +95,7 @@ export function Field({
           {error}
         </p>
       ) : hint ? (
-        <p id={hintId} className="mt-2 text-caption text-faint">
+        <p id={hintId} className="mt-2 text-caption text-ink3">
           {hint}
         </p>
       ) : null}
@@ -118,17 +118,17 @@ export function SelectField({
   const id = useId();
   return (
     <div className="mb-5">
-      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-dim">
+      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-ink2">
         {label}
       </label>
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-control w-full rounded-sm border border-hair bg-l1 px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+        className="h-control w-full rounded-sm border border-line bg-raised px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-l1 text-bone">
+          <option key={option.value} value={option.value} className="bg-raised text-ink">
             {option.label}
           </option>
         ))}

@@ -40,7 +40,7 @@ export function OrderLookup() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
-      <p className="mb-7 max-w-proseMax text-small leading-relaxed text-dim lg:text-bodyLg">
+      <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
         اكتب رقم الطلب ورقم الموبايل الذي طلبت به.
       </p>
 
@@ -54,7 +54,7 @@ export function OrderLookup() {
       />
 
       {searched && !order && (
-        <p role="alert" className="mb-5 border border-hair bg-l1 p-4 text-small leading-relaxed text-dim">
+        <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-ink2">
           لا يوجد طلب مطابق. تأكّد من رقم الطلب ورقم الموبايل.
         </p>
       )}
@@ -74,12 +74,12 @@ function OrderDetail({
 }) {
   return (
     <div className="px-5 lg:px-0">
-      <div className="border border-hair bg-l1 p-5">
-        <div className="text-caption tracking-label text-faint">رقم الطلب</div>
-        <div className="latin mt-2 select-all text-h3 tracking-[3px] text-brass lg:text-h2Lg">
+      <div className="border border-line bg-raised p-5">
+        <div className="text-caption tracking-label text-ink3">رقم الطلب</div>
+        <div className="latin mt-2 select-all text-h3 tracking-[3px] text-accent lg:text-h2Lg">
           {order.reference}
         </div>
-        <div className="mt-3 text-caption text-faint">
+        <div className="mt-3 text-caption text-ink3">
           باسم {order.contactName} · الدفع عند الاستلام
         </div>
       </div>
@@ -98,7 +98,7 @@ function OrderDetail({
         const position = journeyIndex(house.state);
 
         return (
-          <section key={house.reference} className="mt-7 border-t border-hair pt-6">
+          <section key={house.reference} className="mt-7 border-t border-line pt-6">
             <div className="flex items-baseline justify-between">
               <h2 className="font-display text-h4 lg:text-h3">{house.brandName}</h2>
               <span
@@ -106,14 +106,14 @@ function OrderDetail({
                   'rounded-pill px-3 py-1 text-micro tracking-label',
                   copy.terminal && house.state !== 'delivered'
                     ? 'bg-danger/15 text-danger'
-                    : 'bg-brass/15 text-brass',
+                    : 'bg-accent/15 text-accent',
                 ].join(' ')}
               >
                 {copy.label}
               </span>
             </div>
 
-            <p className="mt-2 text-small leading-relaxed text-dim">{copy.detail}</p>
+            <p className="mt-2 text-small leading-relaxed text-ink2">{copy.detail}</p>
 
             {position !== null && (
               <ol className="mt-5 flex gap-1.5" aria-label="مراحل الطلب">
@@ -123,7 +123,7 @@ function OrderDetail({
                     aria-current={index === position ? 'step' : undefined}
                     className={[
                       'h-[3px] flex-1 rounded-pill transition-colors duration-slow ease-out',
-                      index <= position ? 'bg-brass' : 'bg-hair',
+                      index <= position ? 'bg-accent' : 'bg-line',
                     ].join(' ')}
                   >
                     <span className="sr-only">{stateCopy(step).label}</span>
@@ -133,11 +133,11 @@ function OrderDetail({
             )}
 
             {house.trackingNumber && (
-              <div className="mt-4 flex items-baseline justify-between border-t border-hair pt-3">
-                <span className="text-caption text-faint">رقم الشحنة</span>
+              <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
+                <span className="text-caption text-ink3">رقم الشحنة</span>
                 {/* Selectable, because the customer will paste it into the
                     courier's own tracking page. */}
-                <span className="latin tnum select-all text-small text-bone">
+                <span className="latin tnum select-all text-small text-ink">
                   {house.trackingNumber}
                 </span>
               </div>
@@ -145,11 +145,11 @@ function OrderDetail({
 
             <ul className="mt-5">
               {house.items.map((item) => (
-                <li key={item.name} className="flex justify-between py-1.5 text-small text-dim">
+                <li key={item.name} className="flex justify-between py-1.5 text-small text-ink2">
                   <span>
                     {item.name}
                     {item.quantity > 1 && (
-                      <span className="text-faint"> × <span className="tnum">{num(item.quantity)}</span></span>
+                      <span className="text-ink3"> × <span className="tnum">{num(item.quantity)}</span></span>
                     )}
                   </span>
                   <span>
@@ -158,7 +158,7 @@ function OrderDetail({
                   </span>
                 </li>
               ))}
-              <li className="flex justify-between py-1.5 text-caption text-faint">
+              <li className="flex justify-between py-1.5 text-caption text-ink3">
                 <span>التوصيل</span>
                 <span>
                   <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
@@ -170,18 +170,18 @@ function OrderDetail({
         );
       })}
 
-      <div className="mt-7 flex items-baseline justify-between border-t border-hair pt-5">
+      <div className="mt-7 flex items-baseline justify-between border-t border-line pt-5">
         <span className="font-display text-h4">الإجمالي عند الاستلام</span>
         <span className="text-h3 font-semibold lg:text-h2Lg">
           <span className="tnum">{formatPrice(order.totalPiastres)}</span>
-          <span className="latin ms-2 text-caption tracking-label text-dim">{CURRENCY_LABEL}</span>
+          <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
       </div>
 
       <button
         type="button"
         onClick={onBack}
-        className="tappable mt-8 border-b border-brass/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+        className="tappable mt-8 border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
       >
         تتبّع طلب آخر
       </button>

@@ -77,7 +77,7 @@ export function SellerSignIn() {
     <form onSubmit={step === 'phone' ? submitPhone : submitCode} noValidate className="px-5 lg:px-0">
       {step === 'phone' ? (
         <>
-          <p className="mb-7 max-w-proseMax text-small leading-relaxed text-dim lg:text-bodyLg">
+          <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
             سجّل الدخول برقم موبايل الدار المسجّل لدينا.
           </p>
           <Field
@@ -87,7 +87,7 @@ export function SellerSignIn() {
         </>
       ) : (
         <>
-          <p className="mb-7 max-w-proseMax text-small leading-relaxed text-dim lg:text-bodyLg">
+          <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
             أرسلنا رمزًا مكوّنًا من <span className="tnum">٦</span> أرقام إلى{' '}
             <span className="tnum latin">{phone}</span>.
           </p>
@@ -98,7 +98,7 @@ export function SellerSignIn() {
           <button
             type="button"
             onClick={() => { setStep('phone'); setCode(''); setError(null); }}
-            className="tappable mb-6 text-caption text-dim underline transition-colors duration-base ease-out hover:text-brass"
+            className="tappable mb-6 text-caption text-ink2 underline transition-colors duration-base ease-out hover:text-accent"
           >
             تغيير الرقم
           </button>
@@ -106,7 +106,7 @@ export function SellerSignIn() {
       )}
 
       {error && (
-        <p role="alert" className="mb-5 border border-danger/50 bg-l1 p-4 text-small leading-relaxed text-bone">
+        <p role="alert" className="mb-5 border border-danger/50 bg-raised p-4 text-small leading-relaxed text-ink">
           {error}
         </p>
       )}
@@ -121,7 +121,7 @@ export function SellerSignIn() {
         disappears with the stub because it is rendered from the same flag the
         production guard reads.
       */}
-      <p className="mt-5 text-center text-micro leading-relaxed text-faint">
+      <p className="mt-5 text-center text-micro leading-relaxed text-ink3">
         وضع التطوير: يُطبع الرمز في سجلّ الخادم بدل إرساله برسالة.
       </p>
     </form>

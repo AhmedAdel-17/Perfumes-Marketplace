@@ -134,9 +134,9 @@ const CLAIM_LABELS: Record<ClaimFinding['code'], string> = {
 /* ------------------------------------------------------------------ atoms */
 
 const control = [
-  'h-control w-full rounded-sm border border-hair bg-noir px-3 text-body text-bone',
+  'h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink',
   'transition-colors duration-base ease-out',
-  'focus:border-dim focus:outline-none focus-visible:border-brass',
+  'focus:border-ink2 focus:outline-none focus-visible:border-accent',
 ].join(' ');
 
 function Row({ label, htmlFor, hint, children }: {
@@ -144,11 +144,11 @@ function Row({ label, htmlFor, hint, children }: {
 }) {
   return (
     <div className="mb-4">
-      <label htmlFor={htmlFor} className="mb-1.5 block text-caption tracking-label text-faint">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-caption tracking-label text-ink3">
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1.5 text-micro leading-relaxed text-faint">{hint}</p>}
+      {hint && <p className="mt-1.5 text-micro leading-relaxed text-ink3">{hint}</p>}
     </div>
   );
 }
@@ -187,7 +187,7 @@ function Toggles<T extends string>({
   const chosen = new Set(values ?? []);
   return (
     <fieldset className="mb-4">
-      <legend className="mb-2 text-caption tracking-label text-faint">{label}</legend>
+      <legend className="mb-2 text-caption tracking-label text-ink3">{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = chosen.has(option);
@@ -203,8 +203,8 @@ function Toggles<T extends string>({
                 'tappable flex min-h-touch items-center rounded-sm border px-4 text-small',
                 'transition-colors duration-base ease-out',
                 on
-                  ? 'border-brass bg-brass/10 text-brass'
-                  : 'border-hair text-dim hover:border-dim hover:text-bone',
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-line text-ink2 hover:border-ink2 hover:text-ink',
               ].join(' ')}
             >
               {labels[option]}
@@ -230,7 +230,7 @@ function Notes({ id, label, value, onChange }: {
         onChange={(e) => onChange(
           e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
         )}
-        className="min-h-touch w-full rounded-sm border border-hair bg-noir px-3 py-3 text-body leading-relaxed text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+        className="min-h-touch w-full rounded-sm border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
       />
     </Row>
   );
@@ -256,7 +256,7 @@ function Money({ id, label, piastres, onChange, hint }: {
           }}
           className={`${control} tnum`}
         />
-        <span className="latin text-caption tracking-label text-faint">{CURRENCY_LABEL}</span>
+        <span className="latin text-caption tracking-label text-ink3">{CURRENCY_LABEL}</span>
       </div>
     </Row>
   );
@@ -284,8 +284,8 @@ function Count({ id, label, value, onChange, hint }: {
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-9 border-t border-hair pt-6">
-      <h2 className="mb-5 font-display text-h4 text-bone">{title}</h2>
+    <section className="mb-9 border-t border-line pt-6">
+      <h2 className="mb-5 font-display text-h4 text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -371,17 +371,17 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
   return (
     <div className="px-5 lg:px-0">
-      <div className="mb-7 flex flex-wrap items-center gap-3 border-b border-hair pb-5">
-        <span className="rounded-pill bg-brass/15 px-3 py-1 text-micro tracking-label text-brass">
+      <div className="mb-7 flex flex-wrap items-center gap-3 border-b border-line pb-5">
+        <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
           {STATE_LABELS[state]}
         </span>
-        {listing.slug && <span className="latin text-caption text-faint">/p/{listing.slug}</span>}
+        {listing.slug && <span className="latin text-caption text-ink3">/p/{listing.slug}</span>}
         {state === 'published' && (
           <a
             href={`/p/${listing.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-brass"
+            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent"
           >
             عرض في المتجر ↗
           </a>
@@ -389,7 +389,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       </div>
 
       {readOnly && (
-        <p className="mb-7 border-s-2 border-brass/60 ps-4 text-small leading-relaxed text-dim">
+        <p className="mb-7 border-s-2 border-accent/60 ps-4 text-small leading-relaxed text-ink2">
           {state === 'pending_moderation'
             ? 'المنتج قيد المراجعة. اسحبه من المراجعة إذا أردت تعديله.'
             : 'المنتج مؤرشف. أعِده إلى المسودة للتعديل.'}
@@ -488,7 +488,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             <textarea
               id="f-defect" rows={3} value={String(draft.defectRoute ?? '')} maxLength={500}
               onChange={(e) => set('defectRoute', e.target.value)}
-              className="min-h-touch w-full rounded-sm border border-hair bg-noir px-3 py-3 text-body leading-relaxed text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+              className="min-h-touch w-full rounded-sm border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
             />
           </Row>
         </Group>
@@ -498,33 +498,33 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {claims.length > 0 && (
         <ul
-          className={`mb-6 border-s-2 ps-4 ${refused ? 'border-danger/60' : 'border-brass/60'}`}
+          className={`mb-6 border-s-2 ps-4 ${refused ? 'border-danger/60' : 'border-accent/60'}`}
           aria-live="polite"
         >
           {claims.map((claim, i) => (
-            <li key={i} className={`py-1.5 text-small leading-relaxed ${refused ? 'text-danger' : 'text-dim'}`}>
+            <li key={i} className={`py-1.5 text-small leading-relaxed ${refused ? 'text-danger' : 'text-ink2'}`}>
               {CLAIM_LABELS[claim.code]}
               {/* The matched words, quoted. "A prohibited claim" tells a house
                   nothing about which sentence to change. */}
-              <span className="text-faint"> — «{claim.evidence}»</span>
+              <span className="text-ink3"> — «{claim.evidence}»</span>
             </li>
           ))}
         </ul>
       )}
 
       {gaps.length > 0 && (
-        <div className="mb-6 border-s-2 border-hair ps-4">
-          <p className="mb-2 text-caption tracking-label text-faint">
+        <div className="mb-6 border-s-2 border-line ps-4">
+          <p className="mb-2 text-caption tracking-label text-ink3">
             ناقص قبل الإرسال · <span className="tnum">{gaps.length}</span>
           </p>
-          <p className="text-small leading-relaxed text-dim">
+          <p className="text-small leading-relaxed text-ink2">
             {gaps.map((gap) => FIELD_LABELS[gap.field] ?? gap.field).join(' · ')}
           </p>
         </div>
       )}
 
       {!listing.primaryImage && (
-        <p className="mb-6 border-s-2 border-hair ps-4 text-small leading-relaxed text-dim">
+        <p className="mb-6 border-s-2 border-line ps-4 text-small leading-relaxed text-ink2">
           الصورة الرئيسية تُضاف من فريق المنصّة حاليًا. المنتج لا يُنشر بدونها.
         </p>
       )}
@@ -533,7 +533,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {/* ----------------------------------------------------------- actions */}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-hair pt-6">
+      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
         {!readOnly && (
           <PrimaryButton type="button" fill="auto" disabled={pending} onClick={save}>
             {pending ? '…' : saved ? 'تم الحفظ' : 'حفظ'}
@@ -548,7 +548,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
               type="button"
               disabled={pending || (to === 'pending_moderation' && (gaps.length > 0 || refused))}
               onClick={() => move(to)}
-              className="tappable flex min-h-touch items-center rounded-sm border border-hair px-5 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-brass hover:text-brass disabled:opacity-disabled"
+              className="tappable flex min-h-touch items-center rounded-sm border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
             >
               {MOVE_LABELS[to]}
             </button>

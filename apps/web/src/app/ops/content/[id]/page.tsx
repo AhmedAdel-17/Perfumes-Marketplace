@@ -30,12 +30,19 @@ export default async function OpsPageEditor(
 
   const revisions = await caller.content.history({ id });
 
+  /*
+    760px was the phone column with margins — a working tool rendered at just
+    over half the monitor it is used on, with every row stretched to reach both
+    of its edges. The console gets the content measure, and the lists inside it
+    get columns so the extra width becomes room rather than distance.
+    DESIGN_DOCTRINE §4b.
+  */
   return (
-    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[760px] lg:px-8">
+    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
       <header className="px-5 pb-6 pt-9 lg:px-0">
         <a
           href="/ops/content"
-          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
+          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
         >
           ← كل الصفحات
         </a>
@@ -49,7 +56,7 @@ export default async function OpsPageEditor(
             href={`/ops/content/${id}/preview`}
             target="_blank"
             rel="noreferrer"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-brass transition-opacity duration-base ease-out hover:opacity-press"
+            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent transition-opacity duration-base ease-out hover:opacity-press"
           >
             معاينة المسودة ↗
           </a>

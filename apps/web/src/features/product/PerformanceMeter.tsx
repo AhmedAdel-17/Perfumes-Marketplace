@@ -17,16 +17,16 @@ export function PerformanceMeter({
   return (
     <div className="mb-4">
       <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-small text-dim">{label}</span>
-        <span className="latin text-micro tracking-label text-brass">{band.en}</span>
+        <span className="text-small text-ink2">{label}</span>
+        <span className="latin text-micro tracking-label text-accent">{band.en}</span>
       </div>
-      <div className="relative h-[2px] bg-hair">
+      <div className="relative h-[2px] bg-line">
         <div
-          className="absolute inset-block-0 bg-brass"
+          className="absolute inset-block-0 bg-accent"
           style={{ insetInlineStart: 0, width: `${band.fill}%`, top: 0, bottom: 0 }}
         />
       </div>
-      <div className="mt-2 text-micro text-faint">{band.source}</div>
+      <div className="mt-2 text-micro text-ink3">{band.source}</div>
     </div>
   );
 }

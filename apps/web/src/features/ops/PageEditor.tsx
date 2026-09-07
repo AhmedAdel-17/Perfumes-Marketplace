@@ -74,7 +74,7 @@ function objectionText(objection: PublishObjection): string {
 
 function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-caption tracking-label text-faint">
+    <label htmlFor={htmlFor} className="mb-1.5 block text-caption tracking-label text-ink3">
       {children}
     </label>
   );
@@ -90,16 +90,16 @@ function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor: stri
  * the one people use for hours at a time.
  */
 const inputClass = [
-  'h-control w-full rounded-sm border border-hair bg-noir px-3 text-body text-bone',
+  'h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink',
   'transition-colors duration-base ease-out',
-  'focus:border-dim focus:outline-none focus-visible:border-brass',
+  'focus:border-ink2 focus:outline-none focus-visible:border-accent',
 ].join(' ');
 
 /** A textarea sizes by rows, so it takes the same look without the fixed height. */
 const areaClass = [
-  'min-h-touch w-full rounded-sm border border-hair bg-noir px-3 py-3 text-body text-bone',
+  'min-h-touch w-full rounded-sm border border-line bg-ground px-3 py-3 text-body text-ink',
   'transition-colors duration-base ease-out leading-relaxed',
-  'focus:border-dim focus:outline-none focus-visible:border-brass',
+  'focus:border-ink2 focus:outline-none focus-visible:border-accent',
 ].join(' ');
 
 function Text({
@@ -240,7 +240,7 @@ function BlockFields({
                 onClick={() => onChange({
                   ...block, items: block.items.filter((_, j) => j !== i),
                 })}
-                className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-faint transition-colors duration-base ease-out hover:text-danger"
+                className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-danger"
               >
                 حذف
               </button>
@@ -250,7 +250,7 @@ function BlockFields({
             type="button"
             disabled={block.items.length >= LIMITS.noteItems}
             onClick={() => onChange({ ...block, items: [...block.items, { term: '' }] })}
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-brass transition-opacity duration-base ease-out disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent transition-opacity duration-base ease-out disabled:opacity-disabled"
           >
             + سطر
           </button>
@@ -282,7 +282,7 @@ function BlockFields({
       );
 
     case 'divider':
-      return <p className="text-caption text-faint">فاصل بصري، بلا محتوى.</p>;
+      return <p className="text-caption text-ink3">فاصل بصري، بلا محتوى.</p>;
 
     case 'call_to_action':
       return (
@@ -396,11 +396,11 @@ export function PageEditor({ page }: {
 
   return (
     <div className="px-5 lg:px-0">
-      <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-hair pb-5">
-        <span className="rounded-pill bg-brass/15 px-3 py-1 text-micro tracking-label text-brass">
+      <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-line pb-5">
+        <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
           {STATE_LABELS[state]}
         </span>
-        <span className="latin text-caption text-faint">/{page.slug}</span>
+        <span className="latin text-caption text-ink3">/{page.slug}</span>
         {/*
           A way to SEE the page. An editor working blind on a block list has no
           way to tell whether what they wrote reads well, and asking them to
@@ -414,7 +414,7 @@ export function PageEditor({ page }: {
             href={`/${page.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-brass transition-opacity duration-base ease-out hover:opacity-press"
+            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent transition-opacity duration-base ease-out hover:opacity-press"
           >
             عرض الصفحة ↗
           </a>
@@ -427,9 +427,9 @@ export function PageEditor({ page }: {
       {/* ------------------------------------------------------- the blocks */}
       <ol className="mt-7">
         {blocks.map((block, index) => (
-          <li key={index} className="mb-4 border border-hair bg-l1 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3 border-b border-hair pb-3">
-              <span className="text-caption tracking-label text-dim">
+          <li key={index} className="mb-4 border border-line bg-raised p-4">
+            <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
+              <span className="text-caption tracking-label text-ink2">
                 <span className="tnum latin">{index + 1}</span> · {KIND_LABELS[block.kind]}
               </span>
               <div className="flex items-center gap-1">
@@ -437,7 +437,7 @@ export function PageEditor({ page }: {
                   type="button" aria-label={`تحريك العنصر ${index + 1} لأعلى`}
                   disabled={index === 0}
                   onClick={() => move(index, -1)}
-                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-faint transition-colors duration-base ease-out hover:text-brass disabled:opacity-disabled"
+                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled"
                 >
                   ↑
                 </button>
@@ -445,14 +445,14 @@ export function PageEditor({ page }: {
                   type="button" aria-label={`تحريك العنصر ${index + 1} لأسفل`}
                   disabled={index === blocks.length - 1}
                   onClick={() => move(index, 1)}
-                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-faint transition-colors duration-base ease-out hover:text-brass disabled:opacity-disabled"
+                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled"
                 >
                   ↓
                 </button>
                 <button
                   type="button" aria-label={`حذف العنصر ${index + 1}`}
                   onClick={() => edit(blocks.filter((_, i) => i !== index))}
-                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-faint transition-colors duration-base ease-out hover:text-danger"
+                  className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-danger"
                 >
                   حذف
                 </button>
@@ -464,14 +464,14 @@ export function PageEditor({ page }: {
       </ol>
 
       {/* --------------------------------------------------------- adding */}
-      <div className="flex flex-wrap gap-2 border-t border-hair pt-5">
+      <div className="flex flex-wrap gap-2 border-t border-line pt-5">
         {BLOCK_KINDS.map((kind) => (
           <button
             key={kind}
             type="button"
             disabled={blocks.length >= LIMITS.blocksPerPage}
             onClick={() => edit([...blocks, emptyBlock(kind)])}
-            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-4 text-small text-bone transition-colors duration-base ease-out hover:border-brass hover:text-brass disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
           >
             + {KIND_LABELS[kind]}
           </button>
@@ -494,7 +494,7 @@ export function PageEditor({ page }: {
       )}
 
       {/* --------------------------------------------------------- actions */}
-      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-hair pt-6">
+      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-line pt-6">
         <PrimaryButton type="button" disabled={pending} onClick={save} fill="auto">
           {pending ? '…' : saved ? 'تم الحفظ' : 'حفظ المسودة'}
         </PrimaryButton>
@@ -505,7 +505,7 @@ export function PageEditor({ page }: {
             type="button"
             disabled={pending}
             onClick={() => go(to)}
-            className="tappable flex min-h-touch items-center rounded-sm border border-hair px-5 text-bodyLg text-dim transition-colors duration-base ease-out hover:border-brass hover:text-brass disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center rounded-sm border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
           >
             {MOVE_LABELS[to]}
           </button>

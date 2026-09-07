@@ -50,8 +50,8 @@ export default async function PreviewPage(
         confusion runs in the dangerous direction: someone sees their change,
         believes it shipped, and stops.
       */}
-      <div className="sticky top-0 z-10 border-b border-brass/40 bg-brass/10 px-5 py-2.5 text-center">
-        <span className="text-caption tracking-label text-brass">
+      <div className="sticky top-0 z-10 border-b border-accent/40 bg-accent/10 px-5 py-2.5 text-center">
+        <span className="text-caption tracking-label text-accent">
           معاينة المسودة — غير منشورة
         </span>
       </div>
@@ -67,7 +67,7 @@ export default async function PreviewPage(
 
         <a
           href={`/ops/content/${id}`}
-          className="tappable mt-10 flex min-h-touch items-center border-t border-hair pt-6 text-caption tracking-label text-faint transition-colors duration-base ease-out hover:text-brass"
+          className="tappable mt-10 flex min-h-touch items-center border-t border-line pt-6 text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
         >
           ← العودة إلى التحرير
         </a>

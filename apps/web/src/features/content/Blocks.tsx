@@ -33,13 +33,13 @@ function Heading({ block }: { block: HeadingBlock }) {
   // a sub-section. The domain refuses to publish a document that starts at 3.
   if (block.level === 2) {
     return (
-      <h2 className="mt-11 font-display text-h3 leading-heading text-bone lg:mt-14 lg:text-h2Lg">
+      <h2 className="mt-11 font-display text-h3 leading-heading text-ink lg:mt-14 lg:text-h2Lg">
         {block.text}
       </h2>
     );
   }
   return (
-    <h3 className="mt-8 font-display text-h4 leading-heading text-bone lg:mt-10 lg:text-h3">
+    <h3 className="mt-8 font-display text-h4 leading-heading text-ink lg:mt-10 lg:text-h3">
       {block.text}
     </h3>
   );
@@ -50,7 +50,7 @@ function Passage({ block }: { block: PassageBlock }) {
     <>
       {paragraphs(block.text).map((p, i) => (
         // eslint-disable-next-line react/no-array-index-key
-        <p key={i} className="mt-5 text-bodyLg leading-relaxed text-dim">
+        <p key={i} className="mt-5 text-bodyLg leading-relaxed text-ink2">
           {p}
         </p>
       ))}
@@ -68,12 +68,12 @@ function PullQuote({ block }: { block: PullQuoteBlock }) {
    * the day it stopped being.
    */
   return (
-    <figure className="mt-10 border-s-2 border-brass/60 ps-6 lg:mt-12 lg:ps-8">
-      <blockquote className="font-display text-h4 leading-heading text-bone lg:text-h3">
+    <figure className="mt-10 border-s-2 border-accent/60 ps-6 lg:mt-12 lg:ps-8">
+      <blockquote className="font-display text-h4 leading-heading text-ink lg:text-h3">
         {block.text}
       </blockquote>
       {block.attribution && (
-        <figcaption className="mt-3 text-caption tracking-label text-faint">
+        <figcaption className="mt-3 text-caption tracking-label text-ink3">
           {block.attribution}
         </figcaption>
       )}
@@ -83,11 +83,11 @@ function PullQuote({ block }: { block: PullQuoteBlock }) {
 
 function NoteList({ block }: { block: NoteListBlock }) {
   return (
-    <dl className="mt-8 border-t border-hair">
+    <dl className="mt-8 border-t border-line">
       {block.items.map((item) => (
         <div
           key={item.term}
-          className="flex flex-col gap-1 border-b border-hair py-4 sm:flex-row sm:gap-6"
+          className="flex flex-col gap-1 border-b border-line py-4 sm:flex-row sm:gap-6"
         >
           {/*
             110px, not 180.
@@ -98,11 +98,11 @@ function NoteList({ block }: { block: NoteListBlock }) {
             row, which reads as two unrelated columns rather than a definition.
             Wide enough that the longest term here does not wrap, and no wider.
           */}
-          <dt className="font-display text-bodyLg text-bone sm:w-[110px] sm:shrink-0">
+          <dt className="font-display text-bodyLg text-ink sm:w-[110px] sm:shrink-0">
             {item.term}
           </dt>
           {item.detail && (
-            <dd className="text-small leading-relaxed text-dim">{item.detail}</dd>
+            <dd className="text-small leading-relaxed text-ink2">{item.detail}</dd>
           )}
         </div>
       ))}
@@ -124,14 +124,14 @@ function ContentImage({ block }: { block: ImageBlock }) {
   return (
     <figure className="mt-10">
       <div
-        className="flex aspect-[3/2] w-full items-center justify-center border border-hair bg-l1"
+        className="flex aspect-[3/2] w-full items-center justify-center border border-line bg-raised"
         role="img"
         aria-label={block.alt}
       >
-        <span className="text-micro tracking-label text-faint">صورة</span>
+        <span className="text-micro tracking-label text-ink3">صورة</span>
       </div>
       {block.caption && (
-        <figcaption className="mt-3 text-caption text-faint">{block.caption}</figcaption>
+        <figcaption className="mt-3 text-caption text-ink3">{block.caption}</figcaption>
       )}
     </figure>
   );
@@ -140,7 +140,7 @@ function ContentImage({ block }: { block: ImageBlock }) {
 function Divider() {
   // Decorative: it separates, it does not say anything, so it is hidden from a
   // screen reader rather than announced as a horizontal rule.
-  return <hr className="mx-auto mt-12 w-16 border-0 border-t border-brass/40" aria-hidden />;
+  return <hr className="mx-auto mt-12 w-16 border-0 border-t border-accent/40" aria-hidden />;
 }
 
 function CallToAction({ block }: { block: CallToActionBlock }) {
@@ -148,7 +148,7 @@ function CallToAction({ block }: { block: CallToActionBlock }) {
     <div className="mt-10">
       <a
         href={block.href}
-        className="tappable inline-flex min-h-touch items-center border-b border-brass/50 pb-2 text-bodyLg text-bone transition-colors duration-base ease-out hover:border-brass hover:text-brass"
+        className="tappable inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
       >
         {block.label}
       </a>

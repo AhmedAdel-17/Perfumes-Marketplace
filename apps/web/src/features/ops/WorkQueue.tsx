@@ -42,7 +42,7 @@ export function OpsWorkQueue() {
   };
 
   if (queue === null) {
-    return <p className="px-5 py-8 text-small text-faint lg:px-0">…جارٍ التحميل</p>;
+    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ التحميل</p>;
   }
 
   const awaitingDelivery = queue.filter((e) => e.needs === 'delivery');
@@ -51,13 +51,13 @@ export function OpsWorkQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-danger/50 bg-l1 p-4 text-small text-bone">
+        <p role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small text-ink">
           {error}
         </p>
       )}
 
       {awaitingDelivery.length === 0 && awaitingCash.length === 0 && (
-        <p className="py-9 text-center text-small leading-relaxed text-faint">
+        <p className="py-9 text-center text-small leading-relaxed text-ink3">
           لا شيء ينتظر إجراءً. كل الشحنات محدّثة.
         </p>
       )}
@@ -86,10 +86,10 @@ export function OpsWorkQueue() {
  * screen that shouts about all of them shouts about none.
  */
 function Waiting({ since }: { since: string | null }) {
-  if (!since) return <span className="text-caption text-faint">—</span>;
+  if (!since) return <span className="text-caption text-ink3">—</span>;
 
   const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
-  const tone = days >= 7 ? 'text-danger' : days >= 3 ? 'text-brass' : 'text-faint';
+  const tone = days >= 7 ? 'text-danger' : days >= 3 ? 'text-accent' : 'text-ink3';
 
   return (
     <span className={`text-caption tracking-label ${tone}`}>
@@ -108,11 +108,22 @@ function Group({
   if (entries.length === 0) return null;
   return (
     <section className="mb-9">
-      <h2 className="mb-4 border-b border-hair pb-3 font-display text-h3 lg:text-h2Lg">
-        {title} <span className="tnum text-faint">{num(entries.length)}</span>
+      <h2 className="mb-4 border-b border-line pb-3 font-display text-h3 lg:text-h2Lg">
+        {title} <span className="tnum text-ink3">{num(entries.length)}</span>
       </h2>
+      {/*
+        Two columns of cards from `lg`, not one card stretched to 1240px.
+
+        A queue is read top to bottom and acted on one item at a time, so the
+        card has an ideal MEASURE — wide enough for an address, narrow enough
+        that the countdown and the confirm button stay in one glance. Widening
+        the console without this simply moved the button 600px from the order
+        number it belongs to. Two columns keep the measure and halve the
+        scrolling, which is the actual thing an operator gains from a monitor.
+      */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-5">
       {entries.map((entry) => (
-        <article key={entry.id} className="mb-4 border border-hair bg-l1 p-4 lg:p-5">
+        <article key={entry.id} className="mb-4 border border-line bg-raised p-4 lg:p-5">
           <div className="flex items-baseline justify-between gap-3">
             {/* How long it has been waiting, first.
                 
@@ -122,24 +133,25 @@ function Group({
                 chasing and the first does not, and without this the screen
                 gives no way to tell them apart. */}
             <Waiting since={entry.dispatchedAt ?? entry.deliveredAt} />
-            <span className="latin text-micro tracking-label text-faint">{entry.reference}</span>
+            <span className="latin text-micro tracking-label text-ink3">{entry.reference}</span>
           </div>
-          <div className="mt-1 text-caption text-faint">{entry.brandName}</div>
+          <div className="mt-1 text-caption text-ink3">{entry.brandName}</div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-small text-dim">{entry.recipientName}</span>
+            <span className="text-small text-ink2">{entry.recipientName}</span>
             <span className="text-bodyLg font-semibold">
               <span className="tnum">{formatPrice(entry.totalPiastres)}</span>
-              <span className="latin ms-1.5 text-micro tracking-label text-dim">{CURRENCY_LABEL}</span>
+              <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
             </span>
           </div>
           {entry.trackingNumber && (
-            <div className="mt-2 text-caption text-faint">
+            <div className="mt-2 text-caption text-ink3">
               شحنة <span className="latin tnum select-all">{entry.trackingNumber}</span>
             </div>
           )}
           <div className="mt-4">{children(entry)}</div>
         </article>
       ))}
+      </div>
     </section>
   );
 }
@@ -165,7 +177,7 @@ function RemitForm({
 
   return (
     <div>
-      <label className="mb-2 block text-caption tracking-label text-dim" htmlFor={`r-${entry.id}`}>
+      <label className="mb-2 block text-caption tracking-label text-ink2" htmlFor={`r-${entry.id}`}>
         المبلغ المحصّل بالجنيه
       </label>
       <div className="flex gap-3">
@@ -175,13 +187,13 @@ function RemitForm({
           onChange={(event) => setAmount(event.target.value)}
           inputMode="decimal"
           autoComplete="off"
-          className="tnum h-control min-w-0 flex-1 rounded-sm border border-hair bg-noir px-4 text-bodyLg text-bone transition-colors duration-base ease-out focus:border-dim focus:outline-none focus-visible:border-brass"
+          className="tnum h-control min-w-0 flex-1 rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
         />
         <PrimaryButton type="button" disabled={busy || !valid} onClick={() => act(entry.id, () => opsRecordRemittance(entry.id, piastres))} fill="auto">
       {busy ? '…' : 'تسجيل'}
     </PrimaryButton>
       </div>
-      <p className="mt-2 text-micro leading-relaxed text-faint">
+      <p className="mt-2 text-micro leading-relaxed text-ink3">
         المتوقّع <span className="tnum">{formatPrice(entry.totalPiastres)}</span>{' '}
         {CURRENCY_LABEL}. اكتب ما وصل فعلًا.
       </p>

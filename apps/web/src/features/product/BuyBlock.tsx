@@ -26,9 +26,9 @@ export function BuyBlock({
     <div>
       <div className={variant === 'bar' ? 'text-h4 font-semibold' : 'text-h3 font-semibold lg:text-h2Lg'}>
         <span className="tnum">{formatPrice(pricePiastres)}</span>
-        <span className="latin ms-2 text-caption tracking-label text-dim">{CURRENCY_LABEL}</span>
+        <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
       </div>
-      <div className="mt-1 text-micro text-faint lg:text-caption">
+      <div className="mt-1 text-micro text-ink3 lg:text-caption">
         {inStock ? 'متاح الآن' : 'غير متاح حاليًا'}
       </div>
     </div>
@@ -45,7 +45,7 @@ export function BuyBlock({
 
   if (variant === 'bar') {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hair bg-noir lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ground lg:hidden">
         <div className="mx-auto flex max-w-phoneMax items-center gap-3 px-5 py-3">
           <div className="flex-none">{price}</div>
           {button}
@@ -55,7 +55,7 @@ export function BuyBlock({
   }
 
   return (
-    <div className="hidden border-y border-hair py-6 lg:block">
+    <div className="hidden border-y border-line py-6 lg:block">
       {price}
       <div className="mt-5">{button}</div>
     </div>
