@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { findProductBySlug, listPublishedProducts } from '@/core/catalogue';
@@ -191,7 +192,27 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   everywhere. Never flatten houses into anonymous SKUs. */}
               <section className="mt-8 border border-line bg-raised p-4 lg:p-5">
                 <div className="latin mb-2 text-micro tracking-label text-accent">THE HOUSE</div>
-                <div className="font-display text-h4 lg:text-h3">{product.brandName}</div>
+                {/*
+                  A LINK, at last.
+
+                  The house's name has been on this page since the first
+                  version, as text, going nowhere — on a marketplace whose whole
+                  argument is that the maker is named. The block is what a
+                  customer presses when they have decided they like a house and
+                  want to see what else it makes, and until now that was a dead
+                  end with a heading that said THE HOUSE.
+                */}
+                <Link
+                  href={`/house/${product.houseSlug}`}
+                  className="tappable group inline-flex min-h-touch items-baseline gap-3"
+                >
+                  <span className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3">
+                    {product.brandName}
+                  </span>
+                  <span className="text-caption text-ink3 transition-colors duration-base ease-out group-hover:text-accent">
+                    كل عطورها ←
+                  </span>
+                </Link>
                 <p className="mt-2 text-caption leading-relaxed text-ink3 lg:text-small">
                   تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
                   <span className="tnum">{num(days)}</span> إلى{' '}

@@ -30,6 +30,19 @@ export async function SiteFooter() {
         >
           تتبّع طلب
         </a>
+        {/* The houses directory. Fixed rather than content-managed: it is a
+            section of the site, not a page somebody publishes, and an editor
+            archiving it by accident would hide every maker on the marketplace. */}
+        <a
+          href="/houses"
+          // `min-w-touch` as well as min-h. "الدور" is two narrow glyphs — 34px
+          // — so the target passed on height and failed on width, which is the
+          // same fault the sign-out control had. A target has TWO dimensions
+          // and enforcing one of them is enforcing neither.
+          className="tappable inline-flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+        >
+          الدور
+        </a>
         {pages.map((page) => (
           <a
             key={page.slug}

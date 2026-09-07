@@ -167,6 +167,10 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESERVED_SLUGS = new Set([
   'cart', 'checkout', 'order', 'orders', 'p', 'seller', 'ops', 'api', 'search',
   'account', 'admin', 'assets', 'static',
+  // The house storefronts. A page published at /house would shadow the whole
+  // section, and the failure would look like the shop breaking rather than
+  // like a bad slug.
+  'house', 'houses',
 ]);
 
 export function isUsableSlug(slug: string): boolean {

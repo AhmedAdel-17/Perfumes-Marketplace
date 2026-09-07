@@ -38,6 +38,13 @@ const pgArray = (items: readonly string[]): string => {
 const houses = [
   {
     slug: 'maison-nour',
+    bio: 'دار عطور صغيرة في وسط القاهرة، تصنع بكميات محدودة وتوقّع كل زجاجة باسمها.',
+    story: 'بدأت الدار في شقة فوق سوق العطارين، بثلاث زجاجات ومفكّرة.\n\nما زالت كل تركيبة تُخلط يدويًا وتُترك أسابيع قبل أن تُعبّأ. هذا سبب قِلّة ما نعرضه، وسبب أننا نعرف من صنع كل زجاجة.',
+    foundedYear: 2019,
+    /* Every house ships its own parcels, so coverage genuinely differs.
+       Stated on the house page, before a customer reaches an address
+       field that would refuse them. */
+    serves: ['cairo', 'giza', 'qalyubia'],
     phone: '01001112222',
     name: 'ميزون نور',
     nameEn: 'Maison Nour',
@@ -68,6 +75,13 @@ const houses = [
   },
   {
     slug: 'dar-al-ward',
+    bio: 'من الإسكندرية. عطور تميل إلى الخفّة، تُصنع على مقربة من الميناء.',
+    story: 'الرطوبة والملح يغيّران طريقة عمل العطر، وقد تعلّمنا ذلك على الساحل قبل أن نقرأه في كتاب.\n\nنعمل بموادّ تتحمّل الحرارة، ونختبر كل تركيبة في صيف المدينة قبل عرضها.',
+    foundedYear: 2021,
+    /* Every house ships its own parcels, so coverage genuinely differs.
+       Stated on the house page, before a customer reaches an address
+       field that would refuse them. */
+    serves: ['alexandria', 'beheira', 'matrouh', 'cairo'],
     phone: '01113334444',
     name: 'دار الورد',
     nameEn: 'Dar Al Ward',
@@ -98,6 +112,13 @@ const houses = [
   },
   {
     slug: 'atelier-siwa',
+    bio: 'أتيليه بين سيوة والجيزة، متخصّص في الزيوت الصحراوية والبخور.',
+    story: 'المواد تأتي من الواحة: التمر، الزيتون، ونخيل سيوة الذي أخذ اسمه أحد عطورنا.\n\nنشتري مباشرة من مزارعين نعرفهم بالاسم، ونذكر مصدر كل مادة في صفحة العطر.',
+    foundedYear: 2020,
+    /* Every house ships its own parcels, so coverage genuinely differs.
+       Stated on the house page, before a customer reaches an address
+       field that would refuse them. */
+    serves: ['giza', 'cairo', 'matrouh'],
     phone: '01225556666',
     name: 'أتيليه سيوة',
     nameEn: 'Atelier Siwa',
@@ -151,9 +172,19 @@ async function main() {
 
   for (const house of houses) {
     const s = await pg.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, city, status)
-       VALUES ($1,$2,$3,$4,$5,'applied') RETURNING id`,
-      [house.name, house.owner, house.phone, house.slug, house.city],
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, city, status,
+         bio, story, founded_year, service_governorates)
+       VALUES ($1,$2,$3,$4,$5,'applied',$6,$7,$8,$9::governorate[]) RETURNING id`,
+      [
+        house.name, house.owner, house.phone, house.slug, house.city,
+        // The house's own words. These columns have existed since migration
+        // 0000 and nothing has ever written to them, so the storefront had
+        // nothing to show but a name.
+        // A Postgres array LITERAL, not a JS array: the driver flattens an
+        // array parameter to a bare comma list, which the server then refuses
+        // as a malformed array. Braces are the wire format.
+        house.bio, house.story, house.foundedYear, `{${house.serves.join(',')}}`,
+      ],
     );
     const sellerId = s.rows[0]!.id;
 

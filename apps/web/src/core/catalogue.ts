@@ -1,6 +1,6 @@
 import 'server-only';
 import { unitOfWork } from './db';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { schema } from '@diyar/db';
 import { database } from './db';
 
@@ -127,6 +127,115 @@ export async function findProductBySlug(slug: string): Promise<ProductDetail | n
     fulfilmentHours: row.p.fulfilmentHours,
     inStock: row.p.stock > 0,
   };
+}
+
+/**
+ * A house, and everything it sells.
+ *
+ * The marketplace's whole proposition is that these are named, independent
+ * Egyptian houses rather than anonymous stock — and until this existed, a
+ * customer could read a house's NAME and nothing else. `bio`, `story`,
+ * `founded_year`, `city` and `service_governorates` have been on the sellers
+ * table since the first migration, unread by anybody.
+ */
+export interface HouseDetail {
+  slug: string;
+  /** The trading name, in Arabic. */
+  name: string;
+  /** Latin, for the wordmark line. Falls back to the brand's Arabic name. */
+  latin: string;
+  bio: string | null;
+  story: string | null;
+  foundedYear: number | null;
+  city: string | null;
+  /** Where it delivers. Empty means it has not said, not that it delivers nowhere. */
+  serviceGovernorates: string[];
+  products: ProductCard[];
+}
+
+export async function findHouseBySlug(slug: string): Promise<HouseDetail | null> {
+  const db = database();
+
+  const [house] = await db
+    .select({ s: schema.sellers })
+    .from(schema.sellers)
+    .where(eq(schema.sellers.slug, slug))
+    .limit(1);
+
+  /*
+   * `live` only.
+   *
+   * A house that has applied, or been suspended, has no shopfront — the same
+   * rule the catalogue read already applies to its listings. Returning null
+   * rather than an empty page means a suspended house 404s instead of
+   * presenting an empty, confusing storefront that looks like a bug.
+   */
+  if (!house || house.s.status !== 'live') return null;
+
+  const rows = await db
+    .select({ p: schema.products, brandEn: schema.brands.nameEn, brandName: schema.brands.name })
+    .from(schema.products)
+    .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
+    .where(and(
+      eq(schema.products.sellerId, house.s.id),
+      eq(schema.products.status, 'published'),
+    ));
+
+  const [brand] = await db
+    .select({ name: schema.brands.name, nameEn: schema.brands.nameEn })
+    .from(schema.brands)
+    .where(eq(schema.brands.sellerId, house.s.id))
+    .limit(1);
+
+  return {
+    slug: house.s.slug,
+    name: house.s.tradingName,
+    latin: (brand?.nameEn ?? brand?.name ?? house.s.tradingName).toUpperCase(),
+    bio: house.s.bio,
+    story: house.s.story,
+    foundedYear: house.s.foundedYear,
+    city: house.s.city,
+    serviceGovernorates: house.s.serviceGovernorates ?? [],
+    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase())),
+  };
+}
+
+/** Every live house that has something to sell — for the directory. */
+export async function listHouses(): Promise<Array<{ slug: string; name: string; latin: string; city: string | null; count: number }>> {
+  const db = database();
+  const rows = await db
+    .select({
+      slug: schema.sellers.slug,
+      name: schema.sellers.tradingName,
+      city: schema.sellers.city,
+      brandName: schema.brands.name,
+      brandEn: schema.brands.nameEn,
+      productId: schema.products.id,
+    })
+    .from(schema.sellers)
+    .innerJoin(schema.products, eq(schema.products.sellerId, schema.sellers.id))
+    .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
+    .where(and(
+      eq(schema.sellers.status, 'live'),
+      eq(schema.products.status, 'published'),
+    ));
+
+  // Grouped here rather than in SQL: the join is small, and a GROUP BY with a
+  // brand name in it would need an aggregate that picks an arbitrary brand.
+  const byHouse = new Map<string, { slug: string; name: string; latin: string; city: string | null; count: number }>();
+  for (const row of rows) {
+    const existing = byHouse.get(row.slug);
+    if (existing) { existing.count += 1; continue; }
+    byHouse.set(row.slug, {
+      slug: row.slug,
+      name: row.name,
+      latin: (row.brandEn ?? row.brandName).toUpperCase(),
+      city: row.city,
+      count: 1,
+    });
+  }
+
+  return [...byHouse.values()].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 }
 
 export { unitOfWork };

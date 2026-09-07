@@ -275,6 +275,78 @@ try {
     assert(await shopper.locator('a[href="/"]').count() > 0, 'and must offer the catalogue');
   });
 
+  /* ================================================================ houses */
+  group('the house is a destination, not a label on a bottle');
+
+  await test('the product page links to the house that made it', async () => {
+    /*
+     * The marketplace's whole argument is that the maker is named. The name has
+     * been on this page since the first version, as text, going nowhere — so a
+     * customer who liked a house had no way to see what else it makes.
+     */
+    await shopper.goto(`${BASE}/p/${inStock[0]}`, { waitUntil: 'networkidle' });
+    const link = shopper.locator('a[href^="/house/"]').first();
+    assert(await link.count() > 0, 'the house block must be a link');
+
+    await link.click();
+    await shopper.waitForURL('**/house/**', { timeout: 15_000 });
+    assert(shopper.url().includes('/house/'), `did not reach a house: ${shopper.url()}`);
+  });
+
+  await test('a house shows its own words, not just its name', async () => {
+    const text = await shopper.locator('main').innerText();
+    assert(text.includes('الحكاية'), 'a house with a story must show it');
+    assert(text.includes('العطور'), 'and the perfumes it makes');
+    // `bio`, `story`, `founded_year`, `city` and `service_governorates` have
+    // been on the sellers table since migration 0000, read by nobody.
+    assert(text.includes('يوصّل إلى'), 'and where it delivers');
+  });
+
+  await test('the perfumes on a house page belong to that house', async () => {
+    // A storefront that shows the whole catalogue is not a storefront.
+    const latin = (await shopper.locator('main').innerText()).match(/[A-Z][A-Z ]{3,}/g) ?? [];
+    const tiles = await shopper.locator('a[href^="/p/"]').count();
+    assert(tiles > 0, 'a live house must show at least one perfume');
+    assert(latin.length > 0, 'the house wordmark must render');
+  });
+
+  await test('a house that does not exist is a 404, not an empty shop', async () => {
+    const response = await shopper.request.get(`${BASE}/house/no-such-house`);
+    equal(response.status(), 404, 'the status for an unknown house');
+  });
+
+  await test('the directory lists every house, and reaches them', async () => {
+    await shopper.goto(`${BASE}/houses`, { waitUntil: 'networkidle' });
+    const links = await shopper.locator('a[href^="/house/"]').count();
+    assert(links >= 2, `expected the seeded houses, saw ${links}`);
+  });
+
+  await test('the directory is reachable from every screen', async () => {
+    // In the footer, so "who is on here?" has an answer from anywhere.
+    await shopper.goto(`${BASE}/cart`, { waitUntil: 'networkidle' });
+    const footer = await shopper.locator('footer').innerText();
+    assert(footer.includes('الدور'), `the footer must link the houses: ${footer.slice(0, 120)}`);
+  });
+
+  await test('a page that is not there is answered in Arabic', async () => {
+    /*
+     * There was no `not-found.tsx` at all, so every 404 rendered Next's
+     * built-in page: English, left-to-right, on a white ground. On an
+     * Arabic-first site that is the loudest possible statement that the
+     * interface is a framework wearing a brand.
+     */
+    const response = await shopper.request.get(`${BASE}/definitely-not-a-page`);
+    equal(response.status(), 404, 'the status');
+
+    await shopper.goto(`${BASE}/definitely-not-a-page`, { waitUntil: 'networkidle' });
+    const text = await shopper.locator('main').innerText();
+    assert(text.includes('الصفحة غير موجودة'), `the 404 must be in Arabic: ${text.slice(0, 80)}`);
+    assert(
+      await shopper.locator('a[href="/"]').count() > 0,
+      'and must offer the way back rather than an apology',
+    );
+  });
+
   /* ------------------------------------------------------------- checkout */
   group('checkout refuses what it should, and only that');
 

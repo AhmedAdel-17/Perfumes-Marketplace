@@ -336,6 +336,13 @@ try {
     // a deploy — so it needs the audit more than the fixed screens do.
     ['content-about', '/about'],
     ['content-care', '/care'],
+    // The house storefronts and the directory. A house page is the one
+    // customer screen whose content is written by a SELLER rather than by
+    // us, which is exactly where a heading order or a contrast breaks.
+    ['houses', '/houses'],
+    ['house', '/house/maison-nour'],
+    // The page a visitor meets when something has already gone wrong.
+    ['not-found', '/nothing-here'],
   ];
 
   for (const size of WIDTHS) {
