@@ -167,3 +167,40 @@ Newest last. One line per completed item, with anything the next session must kn
   field being cleared, and the test saying so had been committed broken.
 
   812 tests, 20 audit surfaces, 64 end-to-end. 45 commits.
+
+- 2026-09-07 — **Design review of all twelve surfaces, plus light mode.** Report:
+  https://claude.ai/code/artifact/6c01fafe-361e-4960-b621-2b6c006ce137
+
+  The §4b trap had been fixed on the home page and nowhere else. Nine of twelve
+  surfaces drew a phone column on a 1440px monitor — the operating tools worst of
+  all, with the seller queue a 664px column 6,555px tall and the confirm button
+  521px from the order number it belonged to. Cart and checkout are two columns
+  with a sticky summary now (the total is finally in view at the moment of the
+  decision, which is what gate 2 actually asks for); the consoles have the content
+  measure and their lists have COLUMNS, so width is room rather than distance.
+
+  Light mode is built as a ROLE layer, not a second stylesheet: components name
+  the job (`bg-ground`, `text-ink`, `text-accent`), theme.ts decides the value per
+  theme, and the preset exposes only roles so `bg-noir` no longer compiles. The
+  product plate stays dark in both — `data-theme` scopes roles on any element, so
+  the hero is one attribute. Doctrine amended: law IV and a new §7.
+
+  Found while doing it, all fixed: the ops console had four hand-written
+  navigations and the queue offered no route to any other screen; the confirmation
+  page's h1 contradicted the page beneath it; the notes pyramid's orb glow was
+  `var(--note-top)2E`, which is not a colour, so the orbs have never been lit;
+  `faint` cleared the floor on the page and failed it on an l3 panel;
+  `text-accent/90` measured 4.08:1 on paper.
+
+  **Never apply an alpha to an ink role.** Every ink sits just above 4.5:1 by
+  construction, so an opacity spends a margin that was never there — and on noir
+  it looks like a refinement and costs nothing visible, which is why it survives
+  review. The audit now takes `THEME`; run it twice.
+
+  Both themes: no findings, 20 surfaces, six widths. 812 tests green.
+
+  **Open and Ahmed's to decide:** the media store (still gate 1, and it is now
+  also why every product in the grid is the same bottle), and whether the palette
+  stays noir/brass — the report proposes three alternatives and recommends
+  keeping it. **Open and design's to draw:** the operating tools have never had a
+  type scale of their own; they wear the storefront's 52px display headline.
