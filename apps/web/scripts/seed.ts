@@ -1,3 +1,4 @@
+import { foldArabic } from '@diyar/domain';
 import { applyMigrations } from '@diyar/db/migrate';
 /**
  * Seed a local database with real content.
@@ -216,13 +217,15 @@ async function main() {
            concentration, form, gender_positioning, scent_family,
            notes_top, notes_heart, notes_base,
            seasons, occasions, day_night, projection_band, longevity_band, performance_source,
-           responsible_party_name, return_eligibility, defect_route, fulfilment_hours, status)
+           responsible_party_name, return_eligibility, defect_route, fulfilment_hours, status,
+           search_text)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,
            $9::concentration,'spray',$10::gender_positioning,$11::scent_family,
            $12,$13,$14,
            $15::season[],$16::occasion[],$17::day_night,$18::projection_band,$19::longevity_band,
            $20::performance_source,
-           $21,'sealed_only','يُستلم المنتج من العميل ويُفحص خلال ٤٨ ساعة',48,'draft')
+           $21,'sealed_only','يُستلم المنتج من العميل ويُفحص خلال ٤٨ ساعة',48,'draft',
+           $22)
          RETURNING id`,
         [
           sellerId, brandId, p.name, p.slug, p.sku, p.price, p.volume, p.stock,
@@ -230,6 +233,16 @@ async function main() {
           pgArray(p.top), pgArray(p.heart), pgArray(p.base),
           pgArray(p.seasons), pgArray(p.occasions), p.dayNight, p.projection, p.longevity, p.source,
           house.name,
+          // The folded, searchable form — through the DOMAIN's function, the
+          // same one a query goes through. A seed that folded it any other way
+          // would produce a catalogue that only looks searchable.
+          // The house's LATIN wordmark is in here too. It is what a customer
+          // reads on the bottle and on the tile, so "maison" has to find
+          // MAISON NOUR — the fold lowercases Latin for exactly this.
+          foldArabic([
+            p.name, p.sku, house.name, house.nameEn,
+            ...p.top, ...p.heart, ...p.base,
+          ].join(' ')),
         ],
       );
       const productId = created.rows[0]!.id;

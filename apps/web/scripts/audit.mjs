@@ -339,6 +339,11 @@ try {
     // The house storefronts and the directory. A house page is the one
     // customer screen whose content is written by a SELLER rather than by
     // us, which is exactly where a heading order or a contrast breaks.
+    // Search, empty and filtered. The filtered one is where the chips, the
+    // number fields and the select all render at once — every control on
+    // the screen, in the state a customer actually leaves it in.
+    ['search', '/search'],
+    ['search-filtered', '/search?family=amber&stock=1&sort=price_asc'],
     ['houses', '/houses'],
     ['house', '/house/maison-nour'],
     // The page a visitor meets when something has already gone wrong.

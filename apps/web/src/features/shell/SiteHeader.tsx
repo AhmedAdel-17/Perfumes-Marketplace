@@ -33,6 +33,12 @@ export async function SiteHeader() {
     <AnnouncementBar />
     <header className="sticky top-0 z-40 border-b border-line/60 bg-ground/[.72] backdrop-blur-xl">
       <div className="mx-auto flex h-[58px] max-w-contentMax items-center justify-between px-5 lg:h-[82px] lg:px-8">
+        {/*
+          DESIGN_DOCTRINE law I is subtraction, and the note below says links
+          appear here as they become real. Search is now real: the route exists,
+          it works without JavaScript, and it is the control a customer reaches
+          for once a catalogue stops fitting on one screen.
+        */}
         <Link
           href="/"
           aria-label="ديار — الصفحة الرئيسية"
@@ -53,6 +59,22 @@ export async function SiteHeader() {
           <span className="hidden text-caption tracking-label text-ink3 lg:block">
             دور العطور المصرية
           </span>
+          {/*
+            The route existed and nothing pointed at it, which is the same as
+            not having built it. A search screen a customer cannot reach is a
+            URL, not a feature.
+
+            A LINK rather than an expanding search field: a field in the
+            masthead costs the row width it needs on every screen and every
+            page, and the screen it leads to has a better one. Law I is
+            subtraction.
+          */}
+          <Link
+            href="/search"
+            className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+          >
+            ابحث
+          </Link>
           {/*
             From `sm` only, and the footer carries it below that.
 

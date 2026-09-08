@@ -275,6 +275,132 @@ try {
     assert(await shopper.locator('a[href="/"]').count() > 0, 'and must offer the catalogue');
   });
 
+  /* ================================================================ search */
+  group('finding a perfume, in the language people actually type');
+
+  await test('the catalogue is reachable from the masthead', async () => {
+    // The route existed and nothing pointed at it, which is the same as not
+    // having built it.
+    await shopper.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+    const entry = shopper.locator('header a[href="/search"]').first();
+    assert(await entry.count() > 0, 'the masthead must offer search');
+  });
+
+  await test('an unfiltered search shows the whole catalogue', async () => {
+    await shopper.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+    const tiles = await shopper.locator('a[href^="/p/"]').count();
+    assert(tiles >= 3, `expected the seeded catalogue, saw ${tiles}`);
+  });
+
+  await test('ARABIC SPELLING VARIANTS find the same perfume', async () => {
+    /*
+     * The case the whole search was built for, and the one invisible to
+     * anybody testing in Latin.
+     *
+     * ليل القاهرة is stored with a taa marbuta. A customer typing the ordinary
+     * quick spelling — a plain haa — must land on it, or they conclude the shop
+     * does not stock it rather than that the search is naive.
+     */
+    const counts = [];
+    for (const spelling of ['ليل القاهرة', 'ليل القاهره', 'ليل القاهرة ']) {
+      await shopper.goto(`${BASE}/search?q=${encodeURIComponent(spelling)}`,
+        { waitUntil: 'networkidle' });
+      counts.push(await shopper.locator('a[href^="/p/"]').count());
+    }
+    assert(counts[0] > 0, 'the exact spelling must find it');
+    equal(counts[1], counts[0], 'the plain-haa spelling');
+    equal(counts[2], counts[0], 'trailing whitespace');
+  });
+
+  await test('a Latin house wordmark is searchable in lower case', async () => {
+    // It is what a customer reads on the bottle and on the tile.
+    await shopper.goto(`${BASE}/search?q=maison`, { waitUntil: 'networkidle' });
+    assert(await shopper.locator('a[href^="/p/"]').count() > 0, 'maison must find MAISON NOUR');
+  });
+
+  await test('two words narrow, they do not widen', async () => {
+    // Matching either term would return the whole amber section and bury what
+    // was actually asked for.
+    await shopper.goto(`${BASE}/search?q=${encodeURIComponent('ليل سيوة')}`,
+      { waitUntil: 'networkidle' });
+    equal(await shopper.locator('a[href^="/p/"]').count(), 0, 'results for two unrelated words');
+  });
+
+  await test('a search with no match offers the way out', async () => {
+    const text = await shopper.locator('main').innerText();
+    assert(text.includes('لا يوجد عطر مطابق'), 'it must say so plainly');
+    assert(
+      await shopper.locator('a[href="/search"]').count() > 0,
+      'and offer the whole catalogue rather than a dead end',
+    );
+  });
+
+  await test('every filter narrows, and the URL carries it', async () => {
+    const all = await (async () => {
+      await shopper.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+      return shopper.locator('a[href^="/p/"]').count();
+    })();
+
+    for (const [label, search] of [
+      ['family', '?family=amber'],
+      ['price ceiling', '?max=300'],
+      ['in stock', '?stock=1'],
+      ['house', '?house=atelier-siwa'],
+    ]) {
+      await shopper.goto(`${BASE}/search${search}`, { waitUntil: 'networkidle' });
+      const narrowed = await shopper.locator('a[href^="/p/"]').count();
+      assert(narrowed < all, `the ${label} filter did not narrow anything`);
+    }
+  });
+
+  await test('a filter is a PAGE — shareable, and survives a reload', async () => {
+    /*
+     * The whole reason the query lives in the URL. A filter held in component
+     * state is gone on reload and breaks the back button, and a customer who
+     * narrows down, opens a bottle and presses back lands on the unfiltered
+     * catalogue and has to do it again.
+     */
+    const url = `${BASE}/search?family=amber&sort=price_asc`;
+    await shopper.goto(url, { waitUntil: 'networkidle' });
+    const before = await shopper.locator('a[href^="/p/"]').count();
+
+    await shopper.reload({ waitUntil: 'networkidle' });
+    equal(await shopper.locator('a[href^="/p/"]').count(), before, 'results after a reload');
+
+    // And the controls come back set, not blank.
+    const pressed = await shopper.locator('[aria-pressed="true"]').count();
+    assert(pressed > 0, 'the filter chips must show as active after a reload');
+  });
+
+  await test('pressing back leaves the search rather than unwinding it', async () => {
+    // Every control uses `replace`, so a customer who ticked four boxes presses
+    // back once — not four times through their own filtering.
+    await shopper.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+    await shopper.goto(`${BASE}/search?family=amber`, { waitUntil: 'networkidle' });
+    await shopper.locator('button[aria-pressed]').first().click();
+    await shopper.waitForTimeout(1500);
+
+    await shopper.goBack({ waitUntil: 'networkidle' });
+    assert(!shopper.url().includes('/search'), `back stayed inside search: ${shopper.url()}`);
+  });
+
+  await test('a hand-edited URL cannot widen the catalogue', async () => {
+    // A filter must narrow or do nothing — never reach the database as an
+    // unknown enum, and never return more than the unfiltered page.
+    await shopper.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+    const all = await shopper.locator('a[href^="/p/"]').count();
+
+    for (const bad of ['?family=vanilla-latte', "?house='; DROP TABLE products; --", '?sort=free']) {
+      const response = await shopper.request.get(`${BASE}/search${bad}`);
+      equal(response.status(), 200, `status for ${bad}`);
+      await shopper.goto(`${BASE}/search${bad}`, { waitUntil: 'networkidle' });
+      assert(
+        await shopper.locator('a[href^="/p/"]').count() <= all,
+        `${bad} returned more than the unfiltered catalogue`,
+      );
+    }
+  });
+
   /* ================================================================ houses */
   group('the house is a destination, not a label on a bottle');
 

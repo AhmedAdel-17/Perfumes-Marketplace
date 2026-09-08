@@ -1,7 +1,8 @@
 import 'server-only';
 import { unitOfWork } from './db';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, like, sql } from 'drizzle-orm';
 import { schema } from '@diyar/db';
+import { queryTerms, type CatalogueQuery } from '@diyar/domain';
 import { database } from './db';
 
 /**
@@ -236,6 +237,97 @@ export async function listHouses(): Promise<Array<{ slug: string; name: string; 
   }
 
   return [...byHouse.values()].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+}
+
+/**
+ * The catalogue, narrowed.
+ *
+ * Every filter is applied in SQL rather than fetched-then-filtered. With three
+ * products the difference is invisible and with three hundred it is the whole
+ * page — and the version that reads everything first is the version nobody
+ * rewrites until it is already slow in front of customers.
+ *
+ * The text match compares the customer's folded query against the folded
+ * `search_text` column. Both sides went through the SAME function, which is the
+ * only reason ليل القاهره finds ليل القاهرة. See `arabic-search.ts`.
+ */
+export interface SearchResult {
+  products: ProductCard[];
+  /** Every live house with something published, for the filter panel. */
+  houses: Array<{ slug: string; name: string }>;
+  total: number;
+}
+
+export async function searchCatalogue(query: CatalogueQuery): Promise<SearchResult> {
+  const db = database();
+
+  const conditions = [eq(schema.products.status, 'published')];
+
+  for (const term of queryTerms(query)) {
+    // AND across terms: two words is a customer narrowing down, and matching
+    // either would return the whole amber section and bury what they asked for.
+    conditions.push(like(schema.products.searchText, `%${term}%`));
+  }
+
+  if (query.families.length > 0) {
+    conditions.push(inArray(schema.products.scentFamily, [...query.families]));
+  }
+
+  if (query.inStockOnly) conditions.push(gt(schema.products.stock, 0));
+
+  /*
+   * Price compares against what the customer would PAY.
+   *
+   * `promo_price_piastres` when there is one, otherwise the list price — the
+   * same expression the product card renders. Filtering on the list price while
+   * showing the promotional one puts a bottle marked 400 outside a "under 500"
+   * filter, and the customer is looking straight at the number that says it
+   * should be there.
+   */
+  const payable = sql`coalesce(${schema.products.promoPricePiastres}, ${schema.products.pricePiastres})`;
+  if (query.minEgp !== null) conditions.push(sql`${payable} >= ${query.minEgp * 100}`);
+  if (query.maxEgp !== null) conditions.push(sql`${payable} <= ${query.maxEgp * 100}`);
+
+  if (query.houses.length > 0) {
+    conditions.push(inArray(schema.sellers.slug, [...query.houses]));
+  }
+
+  const order = query.sort === 'price_asc' ? asc(payable)
+    : query.sort === 'price_desc' ? desc(payable)
+      : desc(schema.products.createdAt);
+
+  const rows = await db
+    .select({ p: schema.products, brandEn: schema.brands.nameEn, brandName: schema.brands.name })
+    .from(schema.products)
+    .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
+    .innerJoin(schema.sellers, eq(schema.sellers.id, schema.products.sellerId))
+    .where(and(...conditions, eq(schema.sellers.status, 'live')))
+    .orderBy(order);
+
+  /*
+   * The house list is NOT filtered by the current query.
+   *
+   * A filter panel that only offers what the current results contain is a panel
+   * that traps you: pick one house and every other house vanishes from the
+   * list, so there is no way to switch to another without clearing everything
+   * first. The options are what the catalogue holds; the results are what the
+   * query returns.
+   */
+  const houseRows = await db
+    .selectDistinct({ slug: schema.sellers.slug, name: schema.sellers.tradingName })
+    .from(schema.sellers)
+    .innerJoin(schema.products, eq(schema.products.sellerId, schema.sellers.id))
+    .where(and(
+      eq(schema.sellers.status, 'live'),
+      eq(schema.products.status, 'published'),
+    ))
+    .orderBy(asc(schema.sellers.tradingName));
+
+  return {
+    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase())),
+    houses: houseRows,
+    total: rows.length,
+  };
 }
 
 export { unitOfWork };

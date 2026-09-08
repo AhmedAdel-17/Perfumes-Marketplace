@@ -94,6 +94,9 @@ export const products = pgTable('products', {
   moderatedBy: uuid('moderated_by'),
 
   publishedAt: timestamp('published_at', { withTimezone: true }),
+  /** The folded, searchable form of this listing's text. Written by the
+   *  repository through the domain's `foldArabic`, never by hand. */
+  searchText: text('search_text').default('').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [

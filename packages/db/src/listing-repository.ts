@@ -6,6 +6,7 @@
  * apply — this file is not a way around either.
  */
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { foldArabic } from '@diyar/domain';
 import type {
   ListingDraft, ListingRecord, ListingRepository, ListingState,
   ModerationReason, QueuedListing,
@@ -120,6 +121,13 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
 
   async create(sellerId, input) {
     const [row] = await db.insert(schema.products).values({
+      // Folded on write, through the DOMAIN's function — the same one a search
+      // query goes through. Two things prepared by one rule can be compared;
+      // two things prepared by two copies of a rule eventually cannot.
+      //
+      // A new listing has no notes and no name worth searching yet; `update`
+      // recomputes the whole thing, brand included, on every save.
+      searchText: foldArabic(`${input.name} ${input.sku}`),
       sellerId,
       brandId: input.brandId,
       name: input.name,
@@ -136,8 +144,46 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
   },
 
   async update(id, sellerId, input) {
+    /*
+     * The searchable text is recomputed on EVERY update, not only when the name
+     * changes.
+     *
+     * Working out whether this particular edit touched a field that feeds the
+     * fold is a condition that will be wrong the first time somebody adds a
+     * field to it — and the failure is silent: the listing simply stops being
+     * findable under its new name, which nobody notices until a seller asks why
+     * their perfume has disappeared.
+     */
+    const [current] = await db.select({
+      name: schema.products.name, sku: schema.products.sku,
+      notesTop: schema.products.notesTop, notesHeart: schema.products.notesHeart,
+      notesBase: schema.products.notesBase,
+    }).from(schema.products).where(eq(schema.products.id, id)).limit(1);
+
+    /*
+     * The house's names go in too — both scripts.
+     *
+     * A customer searching a house name expects its perfumes, and the wordmark
+     * they read on the tile is the Latin one. Costing one extra select on a
+     * write path that runs when a seller saves a listing is the cheap side of
+     * that trade; the expensive side is a search that cannot find a house.
+     */
+    const [brand] = await db.select({
+      name: schema.brands.name, nameEn: schema.brands.nameEn,
+    }).from(schema.brands)
+      .innerJoin(schema.products, eq(schema.products.brandId, schema.brands.id))
+      .where(eq(schema.products.id, id))
+      .limit(1);
+
+    const next = { ...current, ...input };
+    const searchText = foldArabic([
+      next?.name ?? '', next?.sku ?? '',
+      brand?.name ?? '', brand?.nameEn ?? '',
+      ...(next?.notesTop ?? []), ...(next?.notesHeart ?? []), ...(next?.notesBase ?? []),
+    ].join(' '));
+
     await db.update(schema.products)
-      .set(writableColumns(input))
+      .set({ ...writableColumns(input), searchText })
       .where(and(eq(schema.products.id, id), eq(schema.products.sellerId, sellerId)));
   },
 
