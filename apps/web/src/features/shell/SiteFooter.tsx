@@ -43,6 +43,29 @@ export async function SiteFooter() {
         >
           الدور
         </a>
+        {/*
+          A way to reach a person, on every screen.
+
+          Fixed rather than content-managed, for the reason the houses link is:
+          it is a section of the site, not a page somebody publishes, and an
+          editor archiving it by accident would leave the marketplace with no
+          contact route at all.
+        */}
+        <a
+          href="/support"
+          className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+        >
+          تواصل معنا
+        </a>
+        {/* The recruiting route. A marketplace of independent houses that has
+            no way to become one is a marketplace with a fixed number of
+            houses. */}
+        <a
+          href="/apply"
+          className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+        >
+          انضم كدار
+        </a>
         {pages.map((page) => (
           <a
             key={page.slug}

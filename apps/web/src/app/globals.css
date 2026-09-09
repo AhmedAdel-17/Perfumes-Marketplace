@@ -6,6 +6,32 @@
   html {
     /* Arabic-first, RTL-native. CLAUDE.md §14. */
     direction: rtl;
+
+    /*
+      The masthead is STICKY, so anything scrolled to lands underneath it.
+
+      That covers three things a person actually does: following an in-page
+      link (`/p/slug#reviews` from the moderation queue lands on the heading,
+      or would land on the header covering it), tabbing to a control near the
+      top of the viewport, and any `scrollIntoView` the browser performs on its
+      own. In every case the element is reachable, focused, and hidden — and on
+      a touch screen, untappable.
+
+      Found by a browser test that could not click a radio button because the
+      header intercepted the pointer, which is the same fault a customer meets
+      as "I pressed it and nothing happened".
+
+      The values are the masthead's own heights (58px, 82px from `lg`) plus a
+      little air, so the thing scrolled to arrives below it rather than against
+      it.
+    */
+    scroll-padding-top: 74px;
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      scroll-padding-top: 98px;
+    }
   }
 
   /*

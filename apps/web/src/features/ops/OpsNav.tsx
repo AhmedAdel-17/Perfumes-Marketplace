@@ -22,6 +22,10 @@ import { signOutOps } from './actions';
 const DESTINATIONS = [
   { key: 'queue', href: '/ops/queue', label: 'قائمة التشغيل' },
   { key: 'moderation', href: '/ops/moderation', label: 'مراجعة المنتجات' },
+  { key: 'reviews', href: '/ops/reviews', label: 'التقييمات' },
+  { key: 'returns', href: '/ops/returns', label: 'الإرجاع' },
+  { key: 'support', href: '/ops/support', label: 'الرسائل' },
+  { key: 'houses', href: '/ops/houses', label: 'الدور' },
   { key: 'content', href: '/ops/content', label: 'المحتوى' },
   { key: 'site', href: '/ops/site', label: 'الموقع' },
 ] as const;

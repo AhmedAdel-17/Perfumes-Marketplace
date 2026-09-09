@@ -8,6 +8,7 @@ import { PerformanceMeter } from '@/features/product/PerformanceMeter';
 import { Flacon } from '@/features/product/Flacon';
 import { BuyBlock } from '@/features/product/BuyBlock';
 import { ProductTile } from '@/features/catalogue/ProductTile';
+import { ProductReviews } from '@/features/reviews/ProductReviews';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
@@ -221,6 +222,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </section>
             </div>
           </div>
+
+          {/*
+            ------------------------------------------------------- reviews
+
+            Above the suggestions from other houses, deliberately. A customer
+            reading reviews is still deciding about THIS bottle; putting four
+            other perfumes between them and that decision is an invitation to
+            stop deciding.
+          */}
+          <ProductReviews productId={product.id} productName={product.name} />
 
           {/* -------------------------------------------------------- others */}
           {others.length > 0 && (

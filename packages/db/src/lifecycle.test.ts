@@ -249,8 +249,8 @@ describe('fulfilment — the state machine holds on both sides', () => {
     await db.query(
       `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
          rating_scent,rating_longevity,rating_projection,rating_value,
-         rating_packaging,rating_description_accuracy)
-       VALUES ($1,$2,$3,$4,5,4,4,5,5,5)`,
+         rating_packaging,rating_description_accuracy,author_label)
+       VALUES ($1,$2,$3,$4,5,4,4,5,5,5,'أحمد ع.')`,
       [ids[WARD + ':sub'], li.id, li.p, ids.customer]);
     const n = await db.query<{ c: number }>(`SELECT count(*)::int c FROM reviews`);
     expect(n.rows[0]!.c).toBe(1);

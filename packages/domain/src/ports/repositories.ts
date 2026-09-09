@@ -1,6 +1,10 @@
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { ListingRepository } from './listing-repository';
+import type { ReviewRepository } from './review-repository';
+import type { ReturnRepository } from './return-repository';
+import type { SupportRepository } from './support-repository';
+import type { ApplicationRepository } from './application-repository';
 import type { ContentRepository } from './content-repository';
 /**
  * Repository ports.
@@ -413,6 +417,10 @@ export interface Repositories {
   readonly content: ContentRepository;
   readonly site: SiteRepository;
   readonly listings: ListingRepository;
+  readonly reviews: ReviewRepository;
+  readonly returns: ReturnRepository;
+  readonly support: SupportRepository;
+  readonly applications: ApplicationRepository;
   readonly audit: AuditTrail;
 }
 

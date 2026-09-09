@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { consoleOtpSender, type SellerSession } from '@diyar/api';
+import { consoleOtpSender, type SellerSession, consume, rateLimitMessage } from '@diyar/api';
 import { api } from '@/core/api';
 import { database } from '@/core/db';
 import { schema } from '@diyar/db';
@@ -34,6 +34,20 @@ export async function requestSellerCode(phone: string): Promise<RequestCodeResul
 
   if (!/^(?:\+20|0)1[0125]\d{8}$/.test(trimmed)) {
     return { ok: false, message: 'رقم موبايل مصري غير صحيح' };
+  }
+
+  /*
+   * Before a single code is issued.
+   *
+   * Every one-time code costs money and makes somebody's phone buzz, and
+   * nothing here had a limit — so a script could ring a seller's number all
+   * night for free. Counted on the ATTEMPT, because this function deliberately
+   * returns the same answer whether or not the number belongs to an account,
+   * and counting only real sends would make the difference observable.
+   */
+  const verdict = consume('otp', trimmed);
+  if (!verdict.allowed) {
+    return { ok: false, message: rateLimitMessage(verdict.retryAfterSeconds) };
   }
 
   const [staff] = await database()

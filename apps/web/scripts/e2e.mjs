@@ -1043,6 +1043,455 @@ try {
     equal(leaked.length, 0, `raw enums on screen: ${leaked.join(', ')}`);
   });
 
+  /* =============================================================== reviews */
+  group('the promise on the homepage, kept');
+
+  /*
+   * The seeded delivered order. Two houses, one of them already reviewed.
+   *
+   * Reviewing needs an order that actually arrived, and nothing a browser can
+   * do produces one — a seller confirms and dispatches, an operator marks it
+   * delivered. So the fixture is the seed's, and these tests drive the screens
+   * a customer and a moderator actually touch.
+   */
+  let supportReference = '';
+  const REVIEW_REF = 'DY-CDFHJKMN';
+  const REVIEW_PHONE = '01000000123';
+
+  /*
+   * Its own visitor.
+   *
+   * `shopperContext` is closed at the end of the keyboard group, and the
+   * moderation half of this group needs the OPERATOR page, which is not signed
+   * in until the ops group above. So this section sits after both and brings
+   * its own customer — which is also more honest: the person who reviews a
+   * perfume is a returning visitor, not the same session that just bought one.
+   */
+  const reviewerContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+  const reviewer = await reviewerContext.newPage();
+
+  const openSeededOrder = async () => {
+    await reviewer.goto(`${BASE}/order`, { waitUntil: 'networkidle' });
+    await fill(reviewer, 'رقم الطلب', REVIEW_REF);
+    await fill(reviewer, 'رقم الموبايل', REVIEW_PHONE);
+    await reviewer.locator('button[type="submit"]').click();
+    await reviewer.waitForTimeout(2500);
+  };
+
+  await test('a reviewed perfume shows its rating, and a MASKED byline', async () => {
+    await reviewer.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+    const text = await reviewer.locator('#reviews').innerText();
+
+    assert(text.includes('التقييمات'), 'the section must be on the page');
+    assert(text.includes('شراء موثّق'), 'and must say the review came from a purchase');
+    // The homepage promises purchase-verified ratings. This is the screen that
+    // makes that sentence true rather than decorative.
+    assert(text.includes('ليلى م.'), 'the byline must be a given name and an initial');
+    assert(!text.includes('محمود'), 'the customer’s full name leaked onto a public page');
+  });
+
+  await test('an unreviewed perfume says so, and never rates itself ZERO', async () => {
+    // "٠٫٠ من ٥" on a perfume nobody has reviewed is a page that has libelled
+    // the house whose bottle it is.
+    await reviewer.goto(`${BASE}/p/nakhil`, { waitUntil: 'networkidle' });
+    const text = await reviewer.locator('#reviews').innerText();
+
+    assert(text.includes('لم يكتب أحد'), 'it must say nobody has written yet');
+    assert(!/\b0(\.0)?\s*(من|\/)/.test(text), `an unreviewed perfume was scored: ${text}`);
+    assert(!text.includes('٠٫٠'), 'an unreviewed perfume was scored in Arabic numerals');
+  });
+
+  await test('the six dimensions are shown separately, not averaged away', async () => {
+    // A house can be excellent at perfume and careless about its own listing.
+    // `مطابقة الوصف` is the dimension that says so, and an overall score alone
+    // hides exactly the signal moderation can act on.
+    await reviewer.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+    const text = await reviewer.locator('#reviews').innerText();
+    for (const dimension of ['الرائحة', 'الثبات', 'الانتشار', 'مقابل السعر', 'التغليف', 'مطابقة الوصف']) {
+      assert(text.includes(dimension), `the ${dimension} dimension is missing`);
+    }
+  });
+
+  await test('tracking an arrived order offers a review, and marks what is done', async () => {
+    await openSeededOrder();
+    const panel = await reviewer.locator('main').innerText();
+    assert(panel.includes('قيّم ما وصلك'), 'a delivered order must offer to be reviewed');
+    assert(panel.includes('تم التقييم'), 'the already-reviewed line must say so');
+    assert(panel.includes('اكتب تقييمك'), 'and the other line must still be offered');
+  });
+
+  await test('an order still in transit is offered NO review form', async () => {
+    // Offering a form the database will refuse is worse than offering none: the
+    // customer writes three paragraphs and then meets an error.
+    await reviewer.goto(`${BASE}/order`, { waitUntil: 'networkidle' });
+    await fill(reviewer, 'رقم الطلب', reference);
+    await fill(reviewer, 'رقم الموبايل', '01011112222');
+    await reviewer.locator('button[type="submit"]').click();
+    await reviewer.waitForTimeout(2500);
+
+    const text = await reviewer.locator('main').innerText();
+    assert(text.includes(reference), 'the order must be found');
+    assert(!text.includes('قيّم ما وصلك'), 'a parcel on a van cannot be reviewed');
+  });
+
+  await test('the form REFUSES to submit until all six are answered', async () => {
+    await openSeededOrder();
+    await reviewer.locator('button', { hasText: 'اكتب تقييمك' }).first().click();
+    await reviewer.waitForTimeout(500);
+
+    const submit = reviewer.locator('form button[type="submit"]', { hasText: 'أرسل التقييم' }).first();
+    assert(await submit.isDisabled(), 'a half-answered review must not be submittable');
+
+    // And the screen SAYS why. A greyed-out button with no explanation is the
+    // commonest way a form traps somebody who scrolled past one question.
+    assert(
+      (await reviewer.locator('main').innerText()).includes('باقي'),
+      'it must name what is still missing',
+    );
+  });
+
+  await test('a review written on the tracking screen reaches the product page', async () => {
+    await openSeededOrder();
+    await reviewer.locator('button', { hasText: 'اكتب تقييمك' }).first().click();
+    await reviewer.waitForTimeout(500);
+
+    // Five stars on every dimension, chosen through the real radio inputs.
+    // Western digits: a score is a VALUE, and the numeral rule sends data to
+    // Western while editorial prose keeps Arabic-Indic.
+    for (const dimension of ['الرائحة', 'الثبات', 'الانتشار', 'مقابل السعر', 'التغليف', 'مطابقة الوصف']) {
+      await reviewer.locator(`label:has-text("${dimension}: 5")`).first().click();
+    }
+
+    const marker = 'زجاجة وصلت سليمة والرائحة قريبة من الوصف';
+    await reviewer.locator('textarea').first().fill(marker);
+
+    const submit = reviewer.locator('form button[type="submit"]', { hasText: 'أرسل التقييم' }).first();
+    assert(!(await submit.isDisabled()), 'a complete review must be submittable');
+    await submit.click();
+    await reviewer.waitForTimeout(3000);
+
+    // The line flips without a reload — the screen already knows.
+    const after = await reviewer.locator('main').innerText();
+    assert(!after.includes('اكتب تقييمك'), 'both lines should now be reviewed');
+
+    await reviewer.goto(`${BASE}/p/ward-al-taif`, { waitUntil: 'networkidle' });
+    const product = await reviewer.locator('#reviews').innerText();
+    assert(product.includes(marker), 'the review did not reach the product page');
+    assert(product.includes('ليلى م.'), 'and it must carry the masked byline');
+  });
+
+  await test('the same purchase cannot be reviewed a second time', async () => {
+    await openSeededOrder();
+    const text = await reviewer.locator('main').innerText();
+    // Both lines are done now, so there is nothing left to open.
+    assert(!text.includes('اكتب تقييمك'), 'a reviewed purchase must not be offered again');
+  });
+
+  await test('a moderator can hide a review, and cannot do it silently', async () => {
+    await ops.goto(`${BASE}/ops/reviews`, { waitUntil: 'networkidle' });
+    const text = await ops.locator('main').innerText();
+    assert(text.includes('التقييمات'), 'the queue must render');
+    assert(text.includes('ليلى م.'), 'and must show the reviews');
+
+    /*
+     * The SEEDED review specifically, found by its own words.
+     *
+     * The queue is newest-first, and by this point the suite has written a
+     * review of its own — so `.first()` hid that one and the assertion below
+     * then looked at a product whose review was never touched.
+     */
+    const seeded = ops.locator('li').filter({ hasText: 'عطر قريب، لا يملأ غرفة' }).first();
+
+    // The reason is required by the router, the domain and the repository's
+    // WHERE clause. On the screen it is what stops the button working.
+    const hide = seeded.locator('button', { hasText: 'إخفاء' }).first();
+    assert(await hide.isDisabled(), 'hiding must require a written reason');
+
+    await seeded.locator('input[type="text"]').first().fill('لغة مسيئة — اختبار');
+    await ops.waitForTimeout(300);
+    assert(!(await hide.isDisabled()), 'with a reason, it must be possible');
+    await hide.click();
+    await ops.waitForTimeout(3000);
+
+    assert(
+      (await ops.locator('main').innerText()).includes('لغة مسيئة — اختبار'),
+      'the reason must be shown against the hidden review',
+    );
+  });
+
+  await test('a hidden review leaves the shopfront but NOT the record', async () => {
+    const queue = await ops.locator('main').innerText();
+    // Doc 04 §3: nothing deletes a review. The row keeps its text and gains a
+    // note naming who removed it.
+    assert(queue.includes('مخفي'), 'the queue must still hold it');
+
+    await reviewer.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+    const product = await reviewer.locator('#reviews').innerText();
+    assert(!product.includes('عطر قريب، لا يملأ غرفة'), 'a hidden review is still on the shopfront');
+  });
+
+  await test('and a moderator can put it back', async () => {
+    await ops.goto(`${BASE}/ops/reviews`, { waitUntil: 'networkidle' });
+    await ops.locator('button', { hasText: 'إعادة إظهاره' }).first().click();
+    await ops.waitForTimeout(3000);
+
+    await reviewer.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+    assert(
+      (await reviewer.locator('#reviews').innerText()).includes('عطر قريب، لا يملأ غرفة'),
+      'restoring did not put the review back',
+    );
+  });
+
+  /* =============================================================== returns */
+  group('the returns policy, with a way to act on it');
+
+  /*
+   * The house that packed the returned bottle, signed in specifically.
+   *
+   * The seller session above belongs to whichever house happened to be holding
+   * work, which is the right fixture for the queue tests and the wrong one
+   * here: the seeded delivered order's first line belongs to ميزون نور, and a
+   * return lands in THAT house's queue. Reusing the other session would make
+   * this pass or fail on the order the sign-in loop happened to try.
+   */
+  const NOUR = '01001112222';
+  const houseContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+  const house = await houseContext.newPage();
+  await signIn(house, '/seller', NOUR, '/seller/orders');
+
+  await test('a delivered order offers a return, and says how long is left', async () => {
+    await openSeededOrder();
+    const text = await reviewer.locator('main').innerText();
+    assert(text.includes('إرجاع منتج'), 'a delivered order must offer a return');
+    assert(text.includes('اطلب الإرجاع'), 'and a way to start one');
+  });
+
+  await test('the reasons offered are the LISTING’S, not a fixed list', async () => {
+    await openSeededOrder();
+    await reviewer.locator('button', { hasText: 'اطلب الإرجاع' }).first().click();
+    await reviewer.waitForTimeout(600);
+
+    const form = await reviewer.locator('form').filter({ hasText: 'ما المشكلة؟' }).first().innerText();
+    // A fault is permitted whatever the listing says — Egypt's Consumer
+    // Protection Law 181/2018 gives a remedy no seller policy waives.
+    assert(form.includes('به عيب صناعة'), 'a defect must always be offered');
+    assert(form.includes('وصل مكسورًا أو تالفًا'), 'damage in transit must always be offered');
+    // And the seed's listing is `sealed_only`, which permits a change of mind.
+    assert(form.includes('غيّرت رأيي'), 'this listing permits a change of mind');
+    // The consequence is stated with the choice, not after it.
+    assert(form.includes('الشحن على حسابك'), 'a change of mind must say who pays');
+  });
+
+  await test('the form REFUSES to send without a reason and a sentence', async () => {
+    const submit = reviewer.locator('form button[type="submit"]', { hasText: 'أرسل طلب الإرجاع' }).first();
+    assert(await submit.isDisabled(), 'an empty return request must not be submittable');
+
+    // The LABEL, as a person does. The input is 16px and the label covers it
+    // on purpose — that is what gives the control a 44px target.
+    await reviewer.locator('label').filter({ hasText: 'به عيب صناعة' }).first().click();
+    await reviewer.waitForTimeout(300);
+    // Still refused: somebody has to collect and inspect the bottle, and a bare
+    // reason code tells the house nothing it can act on.
+    assert(await submit.isDisabled(), 'a reason with no explanation must not be submittable');
+  });
+
+  await test('a return reaches the house, and the customer sees its state', async () => {
+    const submit = reviewer.locator('form button[type="submit"]', { hasText: 'أرسل طلب الإرجاع' }).first();
+    await reviewer.locator('form textarea').first().fill('البخّاخ لا يعمل من أول استخدام.');
+    await reviewer.waitForTimeout(300);
+    assert(!(await submit.isDisabled()), 'a complete request must be submittable');
+    await submit.click();
+    await reviewer.waitForTimeout(3000);
+
+    const after = await reviewer.locator('main').innerText();
+    assert(after.includes('بانتظار ردّ الدار'), `the customer must see the state: ${after.slice(0, 400)}`);
+  });
+
+  await test('the house sees it, and can answer it', async () => {
+    // The bug this catches: 0002 gave sellers a READ policy on returns and
+    // nothing else, so every button here matched zero rows and reported a
+    // stale state — a permissions fault wearing a concurrency fault's message.
+    await house.goto(`${BASE}/seller/returns`, { waitUntil: 'networkidle' });
+    const text = await house.locator('main').innerText();
+    assert(text.includes('البخّاخ لا يعمل'), `the house must see the request: ${text.slice(0, 300)}`);
+    assert(text.includes('التكلفة على الدار'), 'and who the platform says bears the cost');
+
+    await house.locator('button', { hasText: 'وافق على الإرجاع' }).first().click();
+    await house.waitForTimeout(3000);
+    assert(
+      (await house.locator('main').innerText()).includes('في الطريق إلينا'),
+      'approving must move the return on',
+    );
+  });
+
+  await test('the house CANNOT refund; the platform can, and only after receipt', async () => {
+    // A BUTTON, not the words. The screen tells the house in prose that the
+    // platform handles the refund — which contains the same phrase, and an
+    // assertion on the text passed judgement on the explanation instead of on
+    // the control.
+    equal(
+      await house.locator('button', { hasText: 'ردّ المبلغ' }).count(), 0,
+      'a house must not be offered a refund control',
+    );
+
+    await ops.goto(`${BASE}/ops/returns`, { waitUntil: 'networkidle' });
+    const before = await ops.locator('main').innerText();
+    // The bottle has not come back yet, so no amount field is offered. The
+    // domain refuses `refunded` from anywhere but `received`.
+    assert(!before.includes('المبلغ'), 'a refund amount must not be offered before receipt');
+  });
+
+  /* =============================================================== support */
+  group('a way to reach a person');
+
+  await test('the contact form is reachable from every screen', async () => {
+    await reviewer.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+    assert(
+      await reviewer.locator('footer a[href="/support"]').count() > 0,
+      'a marketplace with no contact route is a marketplace nobody can complain to',
+    );
+  });
+
+  await test('a question can be asked with NO order number', async () => {
+    // Somebody deciding whether to buy is exactly who this exists for.
+    await reviewer.goto(`${BASE}/support`, { waitUntil: 'networkidle' });
+    await reviewer.locator('label').filter({ hasText: 'سؤال عن عطر' }).first().click();
+    await fill(reviewer, 'الاسم', 'سلمى أحمد');
+    await fill(reviewer, 'رقم الموبايل', '01099990001');
+    await fill(reviewer, 'العنوان', 'هل تشحنون لأسوان؟');
+    await reviewer.locator('textarea').first().fill('أفكّر في الطلب لكن لم أجد أسوان في القائمة.');
+
+    await reviewer.locator('button[type="submit"]', { hasText: 'أرسل' }).first().click();
+    await reviewer.waitForTimeout(3000);
+
+    const text = await reviewer.locator('main').innerText();
+    const reference = text.match(/DS-[A-Z0-9]{8}/)?.[0];
+    assert(reference, `no ticket reference was shown: ${text.slice(0, 300)}`);
+    // DS, not DY — so somebody quoting it at the tracking form is told plainly
+    // that it is not an order number.
+    assert(reference.startsWith('DS-'), `a ticket reference must not look like an order: ${reference}`);
+    supportReference = reference;
+  });
+
+  await test('the ticket reaches the operator, at the priority the CATEGORY set', async () => {
+    await ops.goto(`${BASE}/ops/support`, { waitUntil: 'networkidle' });
+    const text = await ops.locator('main').innerText();
+    assert(text.includes('هل تشحنون لأسوان؟'), 'the ticket must reach the queue');
+    assert(text.includes('لم يُردّ عليها بعد'), 'and say that nobody has answered yet');
+  });
+
+  await test('what the operator writes is what the customer reads', async () => {
+    await ops.locator('input[type="text"]').first().fill('نشحن لأسوان خلال ٤ أيام عمل.');
+    await ops.locator('button', { hasText: 'احفظ' }).first().click();
+    await ops.waitForTimeout(3000);
+
+    await reviewer.goto(`${BASE}/support`, { waitUntil: 'networkidle' });
+    await fill(reviewer, 'رقم الرسالة', supportReference);
+    // The LOOKUP form's phone, named for what it is for. Two forms on one page
+    // both need a number, and `fill` takes the first label that matches — which
+    // is how this test filled the contact form and passed for months of nothing.
+    await fill(reviewer, 'رقم الموبايل الذي أرسلت به', '01099990001');
+    await reviewer.locator('button[type="submit"]', { hasText: 'ابحث' }).first().click();
+    await reviewer.waitForTimeout(2500);
+
+    assert(
+      (await reviewer.locator('main').innerText()).includes('نشحن لأسوان خلال ٤ أيام عمل.'),
+      'the operator’s reply must reach the person who asked',
+    );
+  });
+
+  await test('a WRONG phone finds nothing, and says the same thing', async () => {
+    await reviewer.goto(`${BASE}/support`, { waitUntil: 'networkidle' });
+    await fill(reviewer, 'رقم الرسالة', supportReference);
+    await fill(reviewer, 'رقم الموبايل الذي أرسلت به', '01099998888');
+    await reviewer.locator('button[type="submit"]', { hasText: 'ابحث' }).first().click();
+    await reviewer.waitForTimeout(2500);
+
+    assert(
+      (await reviewer.locator('main').innerText()).includes('لا توجد رسالة مطابقة'),
+      'a wrong phone must disclose nothing',
+    );
+  });
+
+  /* ============================================================ applying */
+  group('a house can join without anybody typing SQL');
+
+  await test('the application form is reachable, and states the terms first', async () => {
+    await reviewer.goto(`${BASE}/apply`, { waitUntil: 'networkidle' });
+    const text = await reviewer.locator('main').innerText();
+    // A page that collects a maker's details and only then explains what
+    // joining costs them collected them under false pretences.
+    assert(text.includes('لا رسوم انضمام'), 'the terms must be stated before the form');
+    assert(text.includes('ثمانية بنود'), 'and what the review actually is');
+  });
+
+  await test('the storefront address is shown AS IT IS TYPED', async () => {
+    // It is permanent and it goes on the packaging. A maker who only discovers
+    // what it became after approval has been given something they did not choose.
+    await fill(reviewer, 'الاسم بالحروف اللاتينية', 'Bayt Al Attar');
+    await reviewer.waitForTimeout(500);
+    assert(
+      (await reviewer.locator('main').innerText()).includes('bayt-al-attar'),
+      'the applicant must see the address their wordmark produces',
+    );
+  });
+
+  await test('an application is recorded, and lands in the intake queue', async () => {
+    await fill(reviewer, 'اسم الدار', 'بيت العطّار');
+    await fill(reviewer, 'اسم المسؤول', 'منى صلاح');
+    await fill(reviewer, 'رقم الموبايل', '01099990002');
+    await fill(reviewer, 'المدينة', 'الإسكندرية');
+    await reviewer.locator('textarea').first().fill(
+      'دار صغيرة في الإسكندرية نصنع بالزيوت المحلية منذ ٢٠٢٠، نحو مئة زجاجة في الشهر ونعبّئ بأنفسنا.',
+    );
+
+    await reviewer.locator('button[type="submit"]', { hasText: 'أرسل الطلب' }).first().click();
+    await reviewer.waitForTimeout(3500);
+
+    assert(
+      (await reviewer.locator('main').innerText()).includes('وصلنا طلبك'),
+      'the applicant must be told the application arrived',
+    );
+
+    await ops.goto(`${BASE}/ops/houses`, { waitUntil: 'networkidle' });
+    const queue = await ops.locator('main').innerText();
+    assert(queue.includes('بيت العطّار'), `the application must reach the queue: ${queue.slice(0, 300)}`);
+    // Western digits: this is an INTERNAL surface, and the numeral rule splits
+    // editorial (Arabic-Indic) from data (Western). A console counting "٠ من ٨"
+    // would be the rule applied to the wrong side.
+    assert(queue.includes('0 من 8'), `the checklist must start at nothing: ${queue.slice(0, 300)}`);
+  });
+
+  await test('an unvetted house CANNOT be made live', async () => {
+    /*
+     * Not the console's guarantee. Migration 0001's trigger refuses the
+     * transition unless all eight controls have passed, so the button is
+     * offered on purpose — an operator learns the rule from a message naming
+     * the missing controls rather than from a grey button.
+     */
+    await ops.locator('button', { hasText: 'اجعلها مباشرة' }).first().click();
+    await ops.waitForTimeout(3000);
+
+    const text = await ops.locator('main').innerText();
+    assert(!text.includes('تبيع الآن'), 'an unvetted house reached the shopfront');
+    // The DATABASE refuses it — 0001's trigger — and the router translates that
+    // refusal into a sentence naming the count. Before that translation existed
+    // the operator was told "something went wrong" on the one screen where the
+    // reason is the whole point.
+    assert(
+      text.includes('اكتمال بنود المراجعة'),
+      `the refusal must name what is missing: ${text.slice(0, 600)}`,
+    );
+
+    // And it is still not visible to a visitor.
+    const response = await reviewer.request.get(`${BASE}/house/bayt-al-attar`);
+    equal(response.status(), 404, 'an unvetted house must not have a storefront');
+  });
+
+  await houseContext.close();
+
+  await reviewerContext.close();
+
   /* ================================================================ the CMS */
   group('editorial content, from an empty page to the shopfront');
 

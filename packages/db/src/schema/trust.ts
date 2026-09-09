@@ -30,6 +30,14 @@ export const reviews = pgTable('reviews', {
   ratingDescriptionAccuracy: integer('rating_description_accuracy').notNull(),
 
   body: text('body'),
+  /**
+   * The byline, masked and SNAPSHOTTED at write time (migration 0016).
+   *
+   * Never the full name. Reading a review joins nothing, which is what lets an
+   * anonymous visitor read one at all — `customers` has no public policy, and
+   * must not have one.
+   */
+  authorLabel: text('author_label').notNull(),
   /** Doc 06 §10: reviews disclose incentives, samples or promotional consideration. */
   incentiveDisclosed: boolean('incentive_disclosed').default(false).notNull(),
 

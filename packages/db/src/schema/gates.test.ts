@@ -7,21 +7,24 @@
  *
  * A rule enforced only in the UI is not enforced, so every assertion here is a
  * write the database must REFUSE.
+ *
+ * EVERY MIGRATION, not the two that first wrote these gates. The file used to
+ * apply 0000 and 0001 only, which meant it asserted acceptance gate 5 against a
+ * trigger function that 0015 has since replaced — the assertions passed and the
+ * code they described was no longer the code that runs. A test pinned to an old
+ * snapshot of the schema stops being a test of the schema.
+ *
+ * It writes as a platform operator because 0002 turns RLS on with FORCE, which
+ * binds the table owner too; without an actor every seeding write here would be
+ * refused for a reason that has nothing to do with the gate being tested.
  */
 import { PGlite } from '@electric-sql/pglite';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { applyMigrations } from '../migrate';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let db: PGlite;
 
-const MIGRATIONS = join(import.meta.dirname, '../../migrations');
-
-/** Drizzle separates statements with its own marker; PGlite runs them in one go. */
-const runSql = async (file: string) => {
-  const sql = readFileSync(join(MIGRATIONS, file), 'utf8').replace(/--> statement-breakpoint/g, '');
-  await db.exec(sql);
-};
+const PLATFORM = '99999999-9999-9999-9999-999999999999';
 
 /** Expect a write to be refused, and return the message so we can assert on it. */
 const refuses = async (fn: () => Promise<unknown>): Promise<string> => {
@@ -39,8 +42,8 @@ let customerId: string;
 
 beforeAll(async () => {
   db = new PGlite();
-  await runSql('0000_initial.sql');
-  await runSql('0001_constraints.sql');
+  await applyMigrations(db);
+  await db.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
   const seller = await db.query<{ id: string }>(
     `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug)
@@ -248,8 +251,14 @@ describe('sub-orders — the state machine is enforced in the database too', () 
       [customerId],
     );
     const s = await db.query<{ id: string }>(
-      `INSERT INTO sub_orders (order_id, seller_id, reference, merchandise_piastres, shipping_piastres)
-       VALUES ($1, $2, 'DY-' || substr(gen_random_uuid()::text,1,8) || '-A', 38000, 4500) RETURNING id`,
+      // The delivery details are NOT NULL since 0004: a house cannot read the
+      // parent order, so what it needs to ship lives on its own row. The
+      // fixture predated that migration and had never been told.
+      `INSERT INTO sub_orders (order_id, seller_id, reference, merchandise_piastres, shipping_piastres,
+         delivery_fulfilled_by, recipient_name, recipient_phone,
+         governorate, city, area, street, building)
+       VALUES ($1, $2, 'DY-' || substr(gen_random_uuid()::text,1,8) || '-A', 38000, 4500,
+         'seller', 'أحمد', '01009998877', 'cairo', 'مدينة نصر', 'السابع', 'عباس', '14') RETURNING id`,
       [o.rows[0]!.id, sellerId],
     );
     return s.rows[0]!.id;
@@ -296,8 +305,14 @@ describe('acceptance gate 5 — only a delivered sub-order can produce a review'
       [customerId],
     );
     const s = await db.query<{ id: string }>(
-      `INSERT INTO sub_orders (order_id, seller_id, reference, merchandise_piastres, shipping_piastres)
-       VALUES ($1, $2, 'DY-' || substr(gen_random_uuid()::text,1,8) || '-A', 38000, 4500) RETURNING id`,
+      // The delivery details are NOT NULL since 0004: a house cannot read the
+      // parent order, so what it needs to ship lives on its own row. The
+      // fixture predated that migration and had never been told.
+      `INSERT INTO sub_orders (order_id, seller_id, reference, merchandise_piastres, shipping_piastres,
+         delivery_fulfilled_by, recipient_name, recipient_phone,
+         governorate, city, area, street, building)
+       VALUES ($1, $2, 'DY-' || substr(gen_random_uuid()::text,1,8) || '-A', 38000, 4500,
+         'seller', 'أحمد', '01009998877', 'cairo', 'مدينة نصر', 'السابع', 'عباس', '14') RETURNING id`,
       [o.rows[0]!.id, sellerId],
     );
     const p = await db.query<{ id: string }>(
@@ -328,8 +343,8 @@ describe('acceptance gate 5 — only a delivered sub-order can produce a review'
     db.query(
       `INSERT INTO reviews (sub_order_id, line_item_id, product_id, customer_id,
          rating_scent, rating_longevity, rating_projection, rating_value,
-         rating_packaging, rating_description_accuracy)
-       VALUES ($1, $2, $3, $4, 5, 4, 4, 5, 5, 4)`,
+         rating_packaging, rating_description_accuracy, author_label)
+       VALUES ($1, $2, $3, $4, 5, 4, 4, 5, 5, 4,'أحمد ع.')`,
       [ctx.subOrderId, ctx.lineItemId, ctx.productId, customerId],
     );
 
@@ -363,8 +378,8 @@ describe('acceptance gate 5 — only a delivered sub-order can produce a review'
       db.query(
         `INSERT INTO reviews (sub_order_id, line_item_id, product_id, customer_id,
            rating_scent, rating_longevity, rating_projection, rating_value,
-           rating_packaging, rating_description_accuracy)
-         VALUES ($1, $2, $3, $4, 9, 4, 4, 5, 5, 4)`,
+           rating_packaging, rating_description_accuracy, author_label)
+         VALUES ($1, $2, $3, $4, 9, 4, 4, 5, 5, 4,'أحمد ع.')`,
         [ctx.subOrderId, ctx.lineItemId, ctx.productId, customerId],
       ),
     );

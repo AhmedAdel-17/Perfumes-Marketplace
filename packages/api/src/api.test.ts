@@ -50,6 +50,8 @@ const caller = (
     platformLabel: platform?.label ?? null,
     uow: new DrizzleUnitOfWork(db, actor),
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
+    aftercareUow: new DrizzleUnitOfWork(db, { role: 'aftercare', id: null }),
+    intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);
@@ -798,6 +800,285 @@ describe('the parcel reaches the customer tracking page', () => {
     });
     expect(after?.houses[0]!.state).toBe('dispatched');
     expect(after?.houses[0]!.trackingNumber).toBe('EG44556677');
+  });
+});
+
+/**
+ * Reviews, through the whole stack.
+ *
+ * The homepage has promised "تقييمات موثّقة بالشراء" since the first version of
+ * this site. These are what make that a fact rather than a claim: an order is
+ * placed, confirmed, dispatched and delivered through the real routers, and
+ * only then can anything be written about it.
+ *
+ * Every refusal below is checked from the OUTSIDE, through the router a browser
+ * would reach, because that is where a mistake would actually be exploitable.
+ */
+describe('reviews — only what you received, and only once', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+  const OPERATOR = { staffId: '', role: 'admin', label: 'مشغّلة المنصّة' };
+
+  beforeAll(async () => {
+    const [staff] = await db.select({ id: schema.platformStaff.id })
+      .from(schema.platformStaff).limit(1);
+    OPERATOR.staffId = staff!.id;
+  });
+
+  /** Place, confirm, dispatch and deliver — through the real routers. */
+  const deliveredOrder = async (phone: string, name = 'ليلى محمود حسن') => {
+    const anon = caller(ANON);
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+
+    const placed = await anon.orders.place({
+      contactName: name,
+      contactPhone: phone,
+      address: {
+        governorate: 'cairo', city: 'الزمالك', area: 'الجزيرة',
+        street: 'شارع 26 يوليو', building: '11',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const row = (await nour.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await nour.seller.confirm({ subOrderId: row.id });
+    await nour.seller.dispatch({ subOrderId: row.id, trackingNumber: `EG-${phone.slice(-6)}` });
+    await ops.platform.markDelivered({ subOrderId: row.id });
+
+    return { reference: placed.reference, phone };
+  };
+
+  it('offers nothing until the parcel has actually arrived', async () => {
+    const anon = caller(ANON);
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+
+    const placed = await anon.orders.place({
+      contactName: 'سلمى',
+      contactPhone: '01155550001',
+      address: {
+        governorate: 'cairo', city: 'الزمالك', area: 'الجزيرة',
+        street: 'شارع 26 يوليو', building: '11',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    // Placed, not delivered.
+    expect(await anon.reviews.reviewable({
+      reference: placed.reference, phone: '01155550001',
+    })).toEqual([]);
+
+    // Even after dispatch. A parcel on a van has not been smelled.
+    const row = (await nour.seller.queue()).find((r) => r.reference.startsWith(placed.reference))!;
+    await nour.seller.confirm({ subOrderId: row.id });
+    await nour.seller.dispatch({ subOrderId: row.id, trackingNumber: 'EG-55550001' });
+    expect(await anon.reviews.reviewable({
+      reference: placed.reference, phone: '01155550001',
+    })).toEqual([]);
+  });
+
+  it('a delivered purchase can be reviewed, and appears on the product', async () => {
+    const anon = caller(ANON);
+    const order = await deliveredOrder('01155550002');
+
+    const [line] = await anon.reviews.reviewable(order);
+    expect(line).toBeDefined();
+    expect(line!.reviewed).toBe(false);
+
+    await anon.reviews.submit({
+      ...order,
+      lineItemId: line!.lineItemId,
+      ratings: {
+        scent: 5, longevity: 4, projection: 3,
+        value: 5, packaging: 5, descriptionAccuracy: 2,
+      },
+      body: 'الوصف بالغ في الانتشار قليلًا.',
+      incentiveDisclosed: false,
+    });
+
+    const page = await anon.reviews.forProduct({ productId: line!.productId });
+    const mine = page.reviews.find((r) => r.body === 'الوصف بالغ في الانتشار قليلًا.');
+    expect(mine).toBeDefined();
+
+    // The byline is masked by the domain, in whichever adapter answered.
+    expect(mine!.authorName).toBe('ليلى م.');
+    expect(mine!.authorName).not.toContain('حسن');
+  });
+
+  it('the WRONG PHONE cannot review, and says nothing about why', async () => {
+    const anon = caller(ANON);
+    const order = await deliveredOrder('01155550003');
+    const [line] = await anon.reviews.reviewable(order);
+
+    // A valid Egyptian number that did not place this order.
+    expect(await anon.reviews.reviewable({
+      reference: order.reference, phone: '01155559999',
+    })).toEqual([]);
+
+    await expect(anon.reviews.submit({
+      reference: order.reference,
+      phone: '01155559999',
+      lineItemId: line!.lineItemId,
+      ratings: {
+        scent: 1, longevity: 1, projection: 1, value: 1, packaging: 1, descriptionAccuracy: 1,
+      },
+      body: 'مزيّف',
+      incentiveDisclosed: false,
+    })).rejects.toThrow('لا يمكن تقييم هذا المنتج الآن');
+  });
+
+  it('SOMEBODY ELSE’S line item cannot be reviewed with your own order', async () => {
+    /*
+     * The case the repository's INSERT ... SELECT exists for. Nothing about
+     * identity comes from the request except the line item, and a line item
+     * belonging to another order matches no row — so there is no comparison
+     * here that a refactor could quietly drop, which is how order lookup came
+     * to accept any phone the first time it was written.
+     */
+    const anon = caller(ANON);
+    const mine = await deliveredOrder('01155550004');
+    const theirs = await deliveredOrder('01155550005');
+
+    const [theirLine] = await anon.reviews.reviewable(theirs);
+
+    await expect(anon.reviews.submit({
+      ...mine,
+      lineItemId: theirLine!.lineItemId,
+      ratings: {
+        scent: 1, longevity: 1, projection: 1, value: 1, packaging: 1, descriptionAccuracy: 1,
+      },
+      body: null,
+      incentiveDisclosed: false,
+    })).rejects.toThrow();
+
+    // And it is still reviewable by the person who actually bought it.
+    const after = await anon.reviews.reviewable(theirs);
+    expect(after.find((l) => l.lineItemId === theirLine!.lineItemId)!.reviewed).toBe(false);
+  });
+
+  it('the same purchase cannot be reviewed twice', async () => {
+    const anon = caller(ANON);
+    const order = await deliveredOrder('01155550006');
+    const [line] = await anon.reviews.reviewable(order);
+
+    const write = (body: string) => anon.reviews.submit({
+      ...order,
+      lineItemId: line!.lineItemId,
+      ratings: {
+        scent: 4, longevity: 4, projection: 4, value: 4, packaging: 4, descriptionAccuracy: 4,
+      },
+      body,
+      incentiveDisclosed: false,
+    });
+
+    await write('الأول');
+    await expect(write('الثاني')).rejects.toThrow();
+
+    // The first one survives. A second attempt must not overwrite it.
+    const page = await anon.reviews.forProduct({ productId: line!.productId });
+    expect(page.reviews.some((r) => r.body === 'الأول')).toBe(true);
+    expect(page.reviews.some((r) => r.body === 'الثاني')).toBe(false);
+  });
+
+  it('refuses a half star and a rating off the scale, in Arabic', async () => {
+    const anon = caller(ANON);
+    const order = await deliveredOrder('01155550007');
+    const [line] = await anon.reviews.reviewable(order);
+
+    const submit = (ratings: Record<string, number>) => anon.reviews.submit({
+      ...order,
+      lineItemId: line!.lineItemId,
+      ratings: ratings as never,
+      body: null,
+      incentiveDisclosed: false,
+    });
+
+    await expect(submit({
+      scent: 4.5, longevity: 4, projection: 4, value: 4, packaging: 4, descriptionAccuracy: 4,
+    })).rejects.toThrow();
+    await expect(submit({
+      scent: 9, longevity: 4, projection: 4, value: 4, packaging: 4, descriptionAccuracy: 4,
+    })).rejects.toThrow();
+
+    // Refused at the boundary, so nothing reached the table.
+    const page = await anon.reviews.forProduct({ productId: line!.productId });
+    expect(page.reviews.every((r) => r.ratings.scent <= 5)).toBe(true);
+  });
+
+  it('an unreviewed perfume summarises to NOTHING, not to zero', async () => {
+    const anon = caller(ANON);
+    // The other house's listing, which nothing in this suite reviews.
+    const page = await anon.reviews.forProduct({ productId: ids['dar-al-ward:product']! });
+    expect(page.summary.count).toBe(0);
+    expect(page.summary.overall).toBeNull();
+  });
+
+  it('hiding removes it from the shopfront, records who and why, and can be undone', async () => {
+    const anon = caller(ANON);
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const order = await deliveredOrder('01155550008');
+    const [line] = await anon.reviews.reviewable(order);
+
+    const marker = 'نص مسيء للاختبار';
+    await anon.reviews.submit({
+      ...order,
+      lineItemId: line!.lineItemId,
+      ratings: {
+        scent: 1, longevity: 1, projection: 1, value: 1, packaging: 1, descriptionAccuracy: 1,
+      },
+      body: marker,
+      incentiveDisclosed: false,
+    });
+
+    const queued = (await ops.reviews.queue()).find((r) => r.body === marker)!;
+    expect(queued).toBeDefined();
+
+    await ops.reviews.hide({ id: queued.id, note: 'لغة مسيئة' });
+
+    // Gone from the public page.
+    const page = await anon.reviews.forProduct({ productId: line!.productId });
+    expect(page.reviews.some((r) => r.body === marker)).toBe(false);
+
+    // Still in the record, with the reason and a note of who removed it.
+    const stillThere = (await ops.reviews.queue()).find((r) => r.id === queued.id)!;
+    expect(stillThere.body).toBe(marker);
+    expect(stillThere.moderationNote).toBe('لغة مسيئة');
+    expect(stillThere.hiddenAt).not.toBeNull();
+
+    // And in the audit trail, in the same transaction as the decision. Read
+    // through the repository, as the other audit cases here do — there is no
+    // console procedure for reading the trail yet.
+    const [entry] = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ entityTable: 'reviews', entityId: queued.id }));
+    expect(entry, 'hiding a review wrote no audit entry').toBeDefined();
+    expect(entry!.action).toBe('review_moderation');
+    expect(entry!.actorLabel).toBe('مشغّلة المنصّة');
+    expect(JSON.parse(entry!.after!).note).toBe('لغة مسيئة');
+
+    // Reversible, because a moderator can be wrong too.
+    await ops.reviews.restore({ id: queued.id });
+    const restored = await anon.reviews.forProduct({ productId: line!.productId });
+    expect(restored.reviews.some((r) => r.body === marker)).toBe(true);
+  });
+
+  it('refuses to hide anything without a written reason', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const any = (await ops.reviews.queue())[0]!;
+    // The note is the only thing separating moderation from suppression.
+    await expect(ops.reviews.hide({ id: any.id, note: '   ' })).rejects.toThrow();
+  });
+
+  it('a HOUSE cannot moderate a review, or read the queue', async () => {
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const any = (await ops.reviews.queue())[0]!;
+
+    // Doc 04 §3: brands cannot delete or privately suppress negative reviews.
+    await expect(nour.reviews.queue()).rejects.toThrow();
+    await expect(nour.reviews.hide({ id: any.id, note: 'لا يعجبني' })).rejects.toThrow();
+    await expect(nour.reviews.restore({ id: any.id })).rejects.toThrow();
   });
 });
 

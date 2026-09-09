@@ -52,6 +52,11 @@ export function api(
     uow: unitOfWork(actor),
     // The checkout service role. Narrow by construction — see migration 0003.
     checkoutUow: unitOfWork({ role: 'checkout', id: null }),
+    // The aftercare service role. Narrow by construction — see 0015.
+    aftercareUow: unitOfWork({ role: 'aftercare', id: null }),
+    // The intake service role. It can create an application and nothing
+    // else — see 0018.
+    intakeUow: unitOfWork({ role: 'intake', id: null }),
     clock: systemClock,
   };
   return appRouter.createCaller(ctx);

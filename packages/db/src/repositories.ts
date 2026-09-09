@@ -25,6 +25,10 @@ import * as schema from './schema/index';
 import { contentRepository } from './content-repository';
 import { siteRepository } from './site-repository';
 import { listingRepository } from './listing-repository';
+import { reviewRepository } from './review-repository';
+import { returnRepository } from './return-repository';
+import { supportRepository } from './support-repository';
+import { applicationRepository } from './application-repository';
 import { auditTrail } from './audit-trail';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
@@ -675,6 +679,10 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   content: contentRepository(db),
   site: siteRepository(db),
   listings: listingRepository(db),
+  reviews: reviewRepository(db),
+  returns: returnRepository(db),
+  support: supportRepository(db),
+  applications: applicationRepository(db),
   audit: auditTrail(db),
 });
 
@@ -685,7 +693,12 @@ export interface ActorContext {
    * order-placement transaction, after the router has validated the request,
    * and it can create an order and read back what it just wrote. See 0003.
    */
-  readonly role: 'anon' | 'customer' | 'seller' | 'platform' | 'checkout';
+  /**
+   * `checkout` and `aftercare` are SERVICE roles, not user roles. Each is set
+   * only inside one server-side transaction, after the router has validated
+   * the request, and neither is reachable from a browser. See 0003 and 0015.
+   */
+  readonly role: 'anon' | 'customer' | 'seller' | 'platform' | 'checkout' | 'aftercare' | 'intake';
   /** The Supabase auth user id. Null for anonymous traffic. */
   readonly id: string | null;
 }

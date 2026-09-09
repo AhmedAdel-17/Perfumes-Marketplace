@@ -110,6 +110,17 @@ export const supportTickets = pgTable('support_tickets', {
   status: ticketStatus('status').default('open').notNull(),
   category: text('category').notNull(),
   subject: text('subject').notNull(),
+  /** What the person actually wrote. Added in 0017 — see the note there. */
+  message: text('message').notNull(),
+  /**
+   * How to reach them back.
+   *
+   * On the ticket rather than resolved through `customers`, because the whole
+   * product is built around guests and a question is not a purchase.
+   * `customerId` above is filled in only when the phone already belongs to one.
+   */
+  contactName: text('contact_name').notNull(),
+  contactPhone: text('contact_phone').notNull(),
   ownerId: uuid('owner_id'),
   nextAction: text('next_action'),
   resolutionCode: text('resolution_code'),

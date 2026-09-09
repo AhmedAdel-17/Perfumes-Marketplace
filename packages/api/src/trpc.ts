@@ -62,6 +62,32 @@ export interface ApiContext {
    * order and read back what it just wrote.
    */
   readonly checkoutUow: UnitOfWork;
+  /**
+   * A Unit of Work running as the `aftercare` SERVICE role (migration 0015).
+   *
+   * Everything that happens after the parcel arrives — a review, a return
+   * request, a support ticket — is written by a customer with no account, and
+   * every customer policy in 0002 is keyed on an authenticated
+   * `app.customer_id()` that a guest does not have. Without this the homepage's
+   * promise of purchase-verified ratings is unkeepable.
+   *
+   * On the CONTEXT rather than constructed inside a router, for the reason
+   * `checkoutUow` is: an elevation improvised at the point of use is an
+   * elevation nobody reviews. Here it is visible at the composition root, and
+   * `aftercare` can still only read the order graph and append a review, a
+   * return or a ticket.
+   */
+  readonly aftercareUow: UnitOfWork;
+  /**
+   * A Unit of Work running as the `intake` SERVICE role (migration 0018).
+   *
+   * A house applying to join is not a customer and not yet a seller, so no
+   * existing role can create the row. `intake` may insert a seller with
+   * `status = 'applied'` and nothing else — the restriction is in the policy's
+   * WITH CHECK, so this path cannot produce a live house whatever the router
+   * does.
+   */
+  readonly intakeUow: UnitOfWork;
   readonly clock: Clock;
 }
 

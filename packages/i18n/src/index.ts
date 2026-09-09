@@ -8,6 +8,10 @@ export * from './numerals';
 export * from './plural';
 export * from './governorates';
 export * from './states';
+export * from './reviews';
+export * from './returns';
+export * from './support';
+export * from './verification';
 export { ar, type Dictionary } from './ar';
 
 import { ar, type Dictionary } from './ar';

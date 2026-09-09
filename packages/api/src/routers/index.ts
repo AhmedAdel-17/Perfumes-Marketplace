@@ -1,22 +1,30 @@
 import { router } from '../trpc';
+import { applicationsRouter } from './applications';
 import { cartRouter } from './cart';
 import { catalogueRouter } from './catalogue';
 import { contentRouter } from './content';
 import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
 import { platformRouter } from './platform';
+import { returnsRouter } from './returns';
+import { reviewsRouter } from './reviews';
 import { sellerRouter } from './seller';
 import { siteRouter } from './site';
+import { supportRouter } from './support';
 
 export const appRouter = router({
+  applications: applicationsRouter,
   cart: cartRouter,
   catalogue: catalogueRouter,
   content: contentRouter,
   listings: listingsRouter,
   orders: ordersRouter,
   platform: platformRouter,
+  returns: returnsRouter,
+  reviews: reviewsRouter,
   seller: sellerRouter,
   site: siteRouter,
+  support: supportRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -298,8 +298,9 @@ describe('reviews — a house cannot suppress criticism', () => {
       `SELECT id FROM order_line_items WHERE sub_order_id=$1`, [ids.ahmedWardSub]);
     await db.query(
       `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
-         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy)
-       VALUES ($1,$2,$3,$4,2,2,1,2,3,1)`,
+         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy,
+         author_label)
+       VALUES ($1,$2,$3,$4,2,2,1,2,3,1,'أحمد ع.')`,
       [ids.ahmedWardSub, li.rows[0]!.id, ids.wardProduct, ids.ahmed]);
 
     // the house tries to delete the bad review
@@ -322,6 +323,317 @@ describe('the audit trail is platform-only', () => {
       const r = await asActor(role, id, `SELECT * FROM audit_log`);
       expect(r.rows, role).toHaveLength(0);
     }
+  }));
+});
+
+/*
+ * The aftercare service role (migration 0015).
+ *
+ * Its whole justification is NARROWNESS: it exists because a guest has no
+ * `app.customer_id()` and therefore cannot write the review, return or ticket
+ * that guest checkout implies. The comment at the top of 0015 makes a list of
+ * claims about what it cannot reach, and a comment making claims about a
+ * security boundary is the exact thing this suite exists to stop being taken on
+ * trust.
+ */
+describe('the aftercare role can do its one job, and nothing beside it', () => {
+  const AFTERCARE = 'aftercare';
+
+  it('can read the order graph it needs to identify a purchase', () => within(async () => {
+    const r = await asActor(AFTERCARE, null,
+      `SELECT o.id FROM orders o
+       JOIN sub_orders s ON s.order_id = o.id
+       JOIN order_line_items li ON li.sub_order_id = s.id
+       WHERE o.id = $1`, [ids.ahmedOrder]);
+    expect(r.rows.length).toBeGreaterThan(0);
+  }));
+
+  it('can append a review for a DELIVERED purchase', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    for (const st of ['awaiting_seller', 'confirmed', 'dispatched', 'delivered']) {
+      await db.query(`UPDATE sub_orders SET state=$2 WHERE id=$1`, [ids.ahmedWardSub, st]);
+    }
+    const li = await db.query<{ id: string }>(
+      `SELECT id FROM order_line_items WHERE sub_order_id=$1`, [ids.ahmedWardSub]);
+
+    const written = await asActor(AFTERCARE, null,
+      `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
+         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy,
+         author_label)
+       VALUES ($1,$2,$3,$4,5,4,4,5,5,3,'أحمد ع.') RETURNING id`,
+      [ids.ahmedWardSub, li.rows[0]!.id, ids.wardProduct, ids.ahmed]);
+
+    // RETURNING needs the SELECT policy too — the trap 0003 documents and 0015
+    // repeats. Without it the write succeeds and reports nothing.
+    expect(written.rows).toHaveLength(1);
+  }));
+
+  it('CANNOT attribute a review to somebody who did not buy the bottle', () => within(async () => {
+    /*
+     * The half RLS cannot enforce.
+     *
+     * `aftercare` IS the authority when it writes, so no policy can ask whether
+     * this is the right customer's review. 0015's trigger asks instead — which
+     * means a router bug cannot publish a stranger's name under a purchase they
+     * never made.
+     */
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    for (const st of ['awaiting_seller', 'confirmed', 'dispatched', 'delivered']) {
+      await db.query(`UPDATE sub_orders SET state=$2 WHERE id=$1`, [ids.ahmedWardSub, st]);
+    }
+    const li = await db.query<{ id: string }>(
+      `SELECT id FROM order_line_items WHERE sub_order_id=$1`, [ids.ahmedWardSub]);
+
+    await expect(asActor(AFTERCARE, null,
+      `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
+         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy,
+         author_label)
+       VALUES ($1,$2,$3,$4,1,1,1,1,1,1,'أحمد ع.')`,
+      // Salma did not place this order.
+      [ids.ahmedWardSub, li.rows[0]!.id, ids.wardProduct, ids.salma])).rejects.toThrow();
+  }));
+
+  it('CANNOT review a purchase that has not been delivered', () => within(async () => {
+    // The same sub-order the case above delivers, left where the fixture put
+    // it: `placed`. Every case here runs inside a rollback, so the walk to
+    // delivered in the previous test never happened as far as this one is
+    // concerned — which is the point of the wrapper.
+    const li = await db.query<{ id: string }>(
+      `SELECT id FROM order_line_items WHERE sub_order_id=$1`, [ids.ahmedWardSub]);
+
+    await expect(asActor(AFTERCARE, null,
+      `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
+         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy,
+         author_label)
+       VALUES ($1,$2,$3,$4,5,5,5,5,5,5,'أحمد ع.')`,
+      [ids.ahmedWardSub, li.rows[0]!.id, ids.wardProduct, ids.ahmed])).rejects.toThrow();
+  }));
+
+  it('CANNOT edit or delete a review once written', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    for (const st of ['awaiting_seller', 'confirmed', 'dispatched', 'delivered']) {
+      await db.query(`UPDATE sub_orders SET state=$2 WHERE id=$1`, [ids.ahmedWardSub, st]);
+    }
+    const li = await db.query<{ id: string }>(
+      `SELECT id FROM order_line_items WHERE sub_order_id=$1`, [ids.ahmedWardSub]);
+    await db.query(
+      `INSERT INTO reviews (sub_order_id,line_item_id,product_id,customer_id,
+         rating_scent,rating_longevity,rating_projection,rating_value,rating_packaging,rating_description_accuracy,
+         author_label)
+       VALUES ($1,$2,$3,$4,2,2,2,2,2,2,'أحمد ع.')`,
+      [ids.ahmedWardSub, li.rows[0]!.id, ids.wardProduct, ids.ahmed]);
+
+    // The absence of an UPDATE and a DELETE policy IS the policy. A review is a
+    // statement somebody made on a date; rewriting one afterwards is a
+    // different feature, and deleting one is what doc 04 §3 forbids outright.
+    const edited = await asActor(AFTERCARE, null,
+      `UPDATE reviews SET body = 'مكتوب لاحقًا' RETURNING id`);
+    expect(edited.rows).toHaveLength(0);
+
+    const deleted = await asActor(AFTERCARE, null, `DELETE FROM reviews RETURNING id`);
+    expect(deleted.rows).toHaveLength(0);
+  }));
+
+  it('CANNOT reach money, verifications, staff or content', () => within(async () => {
+    // Every claim 0015's header makes about what this role cannot touch,
+    // executed rather than asserted in a comment.
+    for (const table of [
+      'payouts', 'payout_lines', 'adjustments', 'commission_overrides',
+      'seller_verifications', 'seller_staff', 'platform_staff',
+      'content_pages', 'content_revisions', 'audit_log', 'attribution_touches',
+    ]) {
+      const r = await asActor(AFTERCARE, null, `SELECT * FROM ${table}`);
+      expect(r.rows, table).toHaveLength(0);
+    }
+  }));
+
+  it('CANNOT change an order, a sub-order or a listing', () => within(async () => {
+    // It reads the order graph to identify a purchase. Reading is all it does:
+    // a role that could move a sub-order could mark somebody's parcel
+    // delivered and then review it.
+    for (const statement of [
+      `UPDATE orders SET contact_name = 'مزيّف' RETURNING id`,
+      `UPDATE sub_orders SET state = 'delivered' RETURNING id`,
+      `UPDATE products SET price_piastres = 1 RETURNING id`,
+      `DELETE FROM order_line_items RETURNING id`,
+    ]) {
+      const r = await asActor(AFTERCARE, null, statement).catch(() => ({ rows: [] }));
+      expect(r.rows, statement).toHaveLength(0);
+    }
+  }));
+
+  it('CANNOT approve its own return request', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const asked = await db.query<{ id: string }>(
+      `INSERT INTO returns (sub_order_id, reason) VALUES ($1,'changed_mind') RETURNING id`,
+      [ids.ahmedWardSub]);
+
+    // Asking is the customer's act. Approving one, allocating who bears the
+    // cost and setting a refund are not — a customer who could UPDATE this row
+    // could approve their own refund.
+    const approved = await asActor(AFTERCARE, null,
+      `UPDATE returns SET status='approved', refund_piastres=100000 WHERE id=$1 RETURNING id`,
+      [asked.rows[0]!.id]);
+    expect(approved.rows).toHaveLength(0);
+  }));
+});
+
+/*
+ * The intake service role (migration 0018).
+ *
+ * Its one job is to let a house apply, and its whole justification is that it
+ * cannot do anything else. The header of 0018 makes that claim; these are what
+ * make it checkable.
+ */
+describe('the intake role can create an application, and only an application', () => {
+  const INTAKE = 'intake';
+
+  it('can create a house that has APPLIED', () => within(async () => {
+    const created = await asActor(INTAKE, null,
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
+       VALUES ('دار جديدة','مالكة','01005550001','dar-jadida','applied') RETURNING id`);
+    expect(created.rows).toHaveLength(1);
+  }));
+
+  it('CANNOT create a house that is already live', () => within(async () => {
+    /*
+     * The guarantee the whole migration exists for, and it is in the policy's
+     * WITH CHECK rather than in the router — so a bug, an injected parameter or
+     * a future refactor cannot use this path to put an unvetted house on the
+     * shopfront.
+     */
+    for (const status of ['live', 'approved', 'under_review']) {
+      const attempt = await asActor(INTAKE, null,
+        `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
+         VALUES ('تسلل','مالك','01005550002','sneaky-' || $1, $1::seller_status) RETURNING id`,
+        [status]).catch(() => ({ rows: [] }));
+      expect(attempt.rows, status).toHaveLength(0);
+    }
+  }));
+
+  it('CANNOT promote an application it just made', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const seller = await db.query<{ id: string }>(
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
+       VALUES ('دار منتظرة','مالك','01005550003','dar-waiting','applied') RETURNING id`);
+
+    // No UPDATE policy at all. An applicant cannot edit their application after
+    // sending it either, which is deliberate: what an operator reviews has to
+    // be what was submitted.
+    const promoted = await asActor(INTAKE, null,
+      `UPDATE sellers SET status='live' WHERE id=$1 RETURNING id`, [seller.rows[0]!.id]);
+    expect(promoted.rows).toHaveLength(0);
+  }));
+
+  it('sees live houses only because the PUBLIC policy admits everybody', () => within(async () => {
+    /*
+     * Not a hole in this role — a property of the whole design, recorded here
+     * because an earlier comment in 0018 claimed the opposite and this case is
+     * what disproved it.
+     *
+     * RLS policies are PERMISSIVE and OR'd, so `public_read_live_sellers` from
+     * 0002 admits every role to any house that is trading. Postgres has no
+     * column-level row security, so `contact_phone` rides along on that row for
+     * anonymous traffic too. What protects it is that no public read path
+     * selects it, which `sellers-contact-columns.test.ts` asserts.
+     */
+    const live = await asActor(INTAKE, null, `SELECT id FROM sellers WHERE status = 'live'`);
+    const alsoAnon = await asActor('anon', null, `SELECT id FROM sellers WHERE status = 'live'`);
+    expect(live.rows.length, 'intake sees exactly what anon sees, and no more')
+      .toBe(alsoAnon.rows.length);
+
+    // What IS narrower: it cannot see a house that has been suspended or turned
+    // away, which the public policy does not admit either.
+    const hidden = await asActor(INTAKE, null,
+      `SELECT id FROM sellers WHERE status IN ('suspended','terminated')`);
+    expect(hidden.rows).toHaveLength(0);
+  }));
+
+  it('CANNOT mark its own verification controls as passed', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const seller = await db.query<{ id: string }>(
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
+       VALUES ('دار تتحقق','مالك','01005550004','dar-verify','applied') RETURNING id`);
+
+    // The eight controls are seeded by 0001's trigger, which the intake role
+    // needs INSERT for. It gets nothing else — it cannot read them and cannot
+    // approve them.
+    const approved = await asActor(INTAKE, null,
+      `UPDATE seller_verifications SET status='approved' WHERE seller_id=$1 RETURNING id`,
+      [seller.rows[0]!.id]);
+    expect(approved.rows).toHaveLength(0);
+
+    const read = await asActor(INTAKE, null,
+      `SELECT id FROM seller_verifications WHERE seller_id=$1`, [seller.rows[0]!.id]);
+    expect(read.rows).toHaveLength(0);
+  }));
+
+  it('CANNOT reach orders, payouts or customers', () => within(async () => {
+    for (const table of ['orders', 'customers', 'payouts', 'sub_orders', 'reviews', 'audit_log']) {
+      const r = await asActor(INTAKE, null, `SELECT * FROM ${table}`);
+      expect(r.rows, table).toHaveLength(0);
+    }
+  }));
+});
+
+/*
+ * A house acting on its own returns (migration 0019).
+ *
+ * 0002 gave sellers a read policy and nothing else, so every decision button on
+ * the returns queue matched zero rows and reported a stale state — a
+ * permissions bug wearing a concurrency bug's error message.
+ */
+describe('a house works its own returns, and cannot touch the money', () => {
+  it('can move a return through the physical part of its life', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const asked = await db.query<{ id: string }>(
+      `INSERT INTO returns (sub_order_id, reason) VALUES ($1,'defective') RETURNING id`,
+      [ids.ahmedWardSub]);
+
+    const moved = await asActor('seller', ids.wardOwner,
+      `UPDATE returns SET status='approved' WHERE id=$1 RETURNING id`, [asked.rows[0]!.id]);
+    expect(moved.rows, 'a house must be able to answer a return').toHaveLength(1);
+  }));
+
+  it('CANNOT set the refund on its own return', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const asked = await db.query<{ id: string }>(
+      `INSERT INTO returns (sub_order_id, reason) VALUES ($1,'defective') RETURNING id`,
+      [ids.ahmedWardSub]);
+
+    /*
+     * RLS binds rows; this is a rule about COLUMNS, so it is a trigger. A house
+     * that could write its own refund could close a case without paying
+     * anybody — and could equally write a refund of zero.
+     */
+    await expect(asActor('seller', ids.wardOwner,
+      `UPDATE returns SET refund_piastres = 1 WHERE id=$1 RETURNING id`,
+      [asked.rows[0]!.id])).rejects.toThrow();
+  }));
+
+  it('CANNOT reallocate who bears the cost', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const asked = await db.query<{ id: string }>(
+      `INSERT INTO returns (sub_order_id, reason, cost_bearer)
+       VALUES ($1,'defective','seller') RETURNING id`,
+      [ids.ahmedWardSub]);
+
+    // Doc 06 §7 makes cost allocation follow the reason. A house moving it to
+    // `customer` is the house awarding itself the outcome of the dispute.
+    await expect(asActor('seller', ids.wardOwner,
+      `UPDATE returns SET cost_bearer='customer' WHERE id=$1 RETURNING id`,
+      [asked.rows[0]!.id])).rejects.toThrow();
+  }));
+
+  it('CANNOT touch another house’s return', () => within(async () => {
+    await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
+    const asked = await db.query<{ id: string }>(
+      `INSERT INTO returns (sub_order_id, reason) VALUES ($1,'defective') RETURNING id`,
+      [ids.ahmedNourSub]);
+
+    const stolen = await asActor('seller', ids.wardOwner,
+      `UPDATE returns SET status='declined' WHERE id=$1 RETURNING id`, [asked.rows[0]!.id]);
+    expect(stolen.rows).toHaveLength(0);
   }));
 });
 

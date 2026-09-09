@@ -171,6 +171,10 @@ const RESERVED_SLUGS = new Set([
   // section, and the failure would look like the shop breaking rather than
   // like a bad slug.
   'house', 'houses',
+  // The contact route. Fixed, linked from every screen, and not something an
+  // editor should be able to shadow — a page published at /support would take
+  // the marketplace's only contact form off the site.
+  'support', 'apply',
 ]);
 
 export function isUsableSlug(slug: string): boolean {

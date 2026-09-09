@@ -42,6 +42,10 @@ export const sellers = pgTable('sellers', {
   payoutReserveDays: integer('payout_reserve_days').default(7).notNull(),
   disputeWindowDays: integer('dispute_window_days').default(7).notNull(),
 
+  /** What the applicant wrote about their house, in their own words (0018). */
+  applicationNote: text('application_note'),
+  appliedAt: timestamp('applied_at', { withTimezone: true }),
+
   approvedAt: timestamp('approved_at', { withTimezone: true }),
   liveAt: timestamp('live_at', { withTimezone: true }),
   suspendedAt: timestamp('suspended_at', { withTimezone: true }),

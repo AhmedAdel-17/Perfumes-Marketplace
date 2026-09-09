@@ -15,6 +15,24 @@ import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import type { AuditRecord, AuditTrail } from '../ports/audit-trail';
+import type {
+  ModeratedReview, PublishedReview, ReviewRepository, ReviewableLine,
+} from '../ports/review-repository';
+import type {
+  ReturnRecord, ReturnRepository, ReturnableLine,
+} from '../ports/return-repository';
+import type { SupportRepository, TicketRecord } from '../ports/support-repository';
+import {
+  VERIFICATION_CONTROLS,
+  type ApplicationRecord, type ApplicationRepository,
+  type VerificationControl, type VerificationRecord, type VerificationStatus,
+} from '../ports/application-repository';
+import type {
+  CostBearer, ReturnEligibility, ReturnReason, ReturnState,
+} from '../trust/return-request';
+import {
+  publicAuthorName, summarise, type Ratings, type ReviewSummary,
+} from '../trust/review';
 import { SubOrderLifecycle, type Actor, type ReasonCode, type SubOrderState, type TransitionRecord } from '../state-machines/sub-order';
 import { InvalidTransition } from '../errors/index';
 import type { DraftOrder } from '../services/place-order';
@@ -40,6 +58,15 @@ interface OrderRow {
 }
 
 interface SubOrderLineRow {
+  /**
+   * A line item is a THING, not a position in an array.
+   *
+   * A review, a return and a support ticket all point at one, and until this
+   * existed the only way to name a line was "the second one in that sub-order"
+   * — which changes meaning the moment anything is reordered.
+   */
+  id: string;
+  productId: string;
   name: string;
   brandName: string;
   sku: string;
@@ -102,8 +129,64 @@ const toSummary = (p: PayoutRow) => ({
   paidAt: null,
 });
 
+/** A review row, as the table stores it. */
+interface ReviewRow {
+  id: string;
+  lineItemId: string;
+  subOrderId: string;
+  productId: string;
+  customerId: string;
+  ratings: Ratings;
+  body: string | null;
+  /** Masked and snapshotted at write time — migration 0016. */
+  authorLabel: string;
+  incentiveDisclosed: boolean;
+  createdAt: Date;
+  hiddenAt: Date | null;
+  moderationNote: string | null;
+  moderatedBy: string | null;
+  moderatedAt: Date | null;
+}
+
+/** A return row, as the table stores it. */
+interface ReturnRow {
+  id: string;
+  subOrderId: string;
+  lineItemId: string | null;
+  state: ReturnState;
+  reason: ReturnReason;
+  customerNote: string | null;
+  costBearer: CostBearer;
+  refundMinor: number | null;
+  decidedBy: string | null;
+  decidedAt: Date | null;
+  requestedAt: Date;
+  closedAt: Date | null;
+}
+
+/**
+ * A ticket row, mutable.
+ *
+ * `TicketRecord` is readonly all the way down, which is right for something
+ * crossing the port boundary and wrong for the store behind it — the fake has
+ * to be able to move a status the way an UPDATE does.
+ */
+type TicketRow = {
+  -readonly [K in keyof TicketRecord]: TicketRecord[K];
+} & { ownerId: string | null; orderId: string | null };
+
+/** An application, and the eight controls seeded alongside it. */
+interface ApplicationRow {
+  record: ApplicationRecord;
+  controls: Map<VerificationControl, VerificationRecord>;
+}
+
 interface Store {
   sellers: Map<string, SellerRecord>;
+  applications: Map<string, ApplicationRow>;
+  reviews: Map<string, ReviewRow>;
+  returns: Map<string, ReturnRow>;
+  tickets: Map<string, TicketRow>;
   payouts: Map<string, PayoutRow>;
   customers: Map<string, CustomerRecord>;
   products: Map<string, ProductRecord>;
@@ -114,13 +197,24 @@ interface Store {
 }
 
 const emptyStore = (): Store => ({
-  sellers: new Map(), customers: new Map(), payouts: new Map(),
+  sellers: new Map(), customers: new Map(), payouts: new Map(), reviews: new Map(),
+  returns: new Map(), tickets: new Map(), applications: new Map(),
   products: new Map(), orders: new Map(),
   subOrders: new Map(), transitions: [], seq: 0,
 });
 
+/** How many of the eight have passed. */
+const countApproved = (row: ApplicationRow): number =>
+  [...row.controls.values()].filter((c) => c.status === 'approved').length;
+
 const cloneStore = (s: Store): Store => ({
   sellers: new Map(s.sellers),
+  reviews: new Map([...s.reviews].map(([k, v]) => [k, { ...v }])),
+  returns: new Map([...s.returns].map(([k, v]) => [k, { ...v }])),
+  tickets: new Map([...s.tickets].map(([k, v]) => [k, { ...v }])),
+  applications: new Map([...s.applications].map(([k, v]) => [k, {
+    record: { ...v.record }, controls: new Map(v.controls),
+  }])),
   customers: new Map(s.customers),
   payouts: new Map(s.payouts),
   products: new Map(s.products),
@@ -173,6 +267,27 @@ export class InMemoryUnitOfWork implements UnitOfWork {
 
   addProduct(record: ProductRecord): void {
     this.store.products.set(record.id, record);
+  }
+
+  /**
+   * A listing's returns policy.
+   *
+   * A fixture map rather than a field on `ProductRecord`, because the policy is
+   * a catalogue detail that only the return path reads — putting it on the
+   * shared record would make every existing fixture in the repository carry a
+   * field none of them are about.
+   */
+  readonly returnEligibility = new Map<string, ReturnEligibility>();
+
+  setReturnEligibility(productId: string, value: ReturnEligibility): void {
+    this.returnEligibility.set(productId, value);
+  }
+
+  /** Rename a customer. For the contract case that proves a byline is frozen. */
+  renameCustomer(id: string, fullName: string): void {
+    const row = this.store.customers.get(id);
+    if (!row) throw new Error(`Unknown customer ${id}`);
+    this.store.customers.set(id, { ...row, fullName });
   }
 
   /** Courier remittance. Delivery alone does not put cash in our hands. */
@@ -330,6 +445,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             placedAt: draft.placedAt,
             confirmDueAt: sub.confirmDueAt,
             lines: sub.lineItems.map((li) => ({
+              id: `line-${++s.seq}`,
+              productId: li.productId,
               name: li.productName,
               brandName: li.brandName,
               sku: li.sku,
@@ -877,9 +994,479 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    /*
+     * ---------------------------------------------------------------- reviews
+     *
+     * The authorisation shape mirrors the SQL one exactly: everything except
+     * the line item is derived from the store, starting at the two factors.
+     * Nothing here compares a value the caller supplied against one it read.
+     */
+    const reviews: ReviewRepository = {
+      async listReviewable({ reference, phone }) {
+        const s = store();
+        const order = [...s.orders.values()].find(
+          (o) => o.reference === reference && o.contactPhone === phone,
+        );
+        if (!order) return [];
+
+        const out: ReviewableLine[] = [];
+        for (const subId of order.subOrderIds) {
+          const sub = s.subOrders.get(subId);
+          // Only what actually arrived. The database's trigger would refuse an
+          // insert against anything else, and offering a form the database
+          // will reject is worse than offering none.
+          if (!sub || sub.state !== 'delivered') continue;
+
+          for (const line of sub.lines) {
+            const product = s.products.get(line.productId);
+            out.push({
+              lineItemId: line.id,
+              productId: line.productId,
+              productSlug: product?.slug ?? '',
+              productName: line.name,
+              brandName: line.brandName,
+              volumeMl: line.volumeMl,
+              reviewed: [...s.reviews.values()].some((r) => r.lineItemId === line.id),
+            });
+          }
+        }
+        return out;
+      },
+
+      async record({ reference, phone, lineItemId, ratings, body, incentiveDisclosed, now }) {
+        const s = store();
+        const order = [...s.orders.values()].find(
+          (o) => o.reference === reference && o.contactPhone === phone,
+        );
+        if (!order) return null;
+
+        for (const subId of order.subOrderIds) {
+          const sub = s.subOrders.get(subId);
+          if (!sub || sub.state !== 'delivered') continue;
+
+          const line = sub.lines.find((l) => l.id === lineItemId);
+          if (!line) continue;
+          // One review per purchase — the unique index on `line_item_id`.
+          if ([...s.reviews.values()].some((r) => r.lineItemId === line.id)) return null;
+
+          const id = `review-${++s.seq}`;
+          s.reviews.set(id, {
+            id,
+            lineItemId: line.id,
+            subOrderId: sub.id,
+            productId: line.productId,
+            customerId: order.customerId,
+            ratings,
+            body: body === null ? null : body.trim() || null,
+            // The DOMAIN's rule, applied once, at write. Both adapters store
+            // the masked form rather than masking on every read — see 0016.
+            authorLabel: publicAuthorName(
+              s.customers.get(order.customerId)?.fullName ?? null,
+            ),
+            incentiveDisclosed,
+            createdAt: now,
+            hiddenAt: null,
+            moderationNote: null,
+            moderatedBy: null,
+            moderatedAt: null,
+          });
+          return { id, productSlug: s.products.get(line.productId)?.slug ?? '' };
+        }
+        return null;
+      },
+
+      async summaryFor(productId) {
+        const visible = [...store().reviews.values()]
+          .filter((r) => r.productId === productId && r.hiddenAt === null);
+        return summarise(visible.map((r) => r.ratings));
+      },
+
+      async summariesFor(productIds) {
+        const wanted = new Set(productIds);
+        const grouped = new Map<string, Ratings[]>();
+        for (const row of store().reviews.values()) {
+          if (row.hiddenAt !== null || !wanted.has(row.productId)) continue;
+          const bucket = grouped.get(row.productId) ?? [];
+          bucket.push(row.ratings);
+          grouped.set(row.productId, bucket);
+        }
+        // Absent rather than present-with-zero: the caller substitutes the
+        // value that means "nobody has said yet".
+        const out = new Map<string, ReviewSummary>();
+        for (const [id, ratings] of grouped) out.set(id, summarise(ratings));
+        return out;
+      },
+
+      async listForProduct({ productId, limit }) {
+        const s = store();
+        return [...s.reviews.values()]
+          .filter((r) => r.productId === productId && r.hiddenAt === null)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, limit)
+          .map((r): PublishedReview => ({
+            id: r.id,
+            ratings: r.ratings,
+            body: r.body,
+            authorName: r.authorLabel,
+            createdAt: r.createdAt,
+          }));
+      },
+
+      async listForModeration({ limit }) {
+        const s = store();
+        return [...s.reviews.values()]
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, limit)
+          .map((r): ModeratedReview => {
+            const product = s.products.get(r.productId);
+            const line = [...s.subOrders.values()]
+              .flatMap((sub) => sub.lines)
+              .find((l) => l.id === r.lineItemId);
+            return {
+              id: r.id,
+              ratings: r.ratings,
+              body: r.body,
+              authorName: r.authorLabel,
+              createdAt: r.createdAt,
+              productId: r.productId,
+              productSlug: product?.slug ?? '',
+              productName: line?.name ?? product?.name ?? '',
+              brandName: line?.brandName ?? '',
+              hiddenAt: r.hiddenAt,
+              moderationNote: r.moderationNote,
+            };
+          });
+      },
+
+      async hide({ id, note, moderatorId, now }) {
+        const row = store().reviews.get(id);
+        if (!row || row.hiddenAt !== null) return false;
+        row.hiddenAt = now;
+        row.moderationNote = note;
+        row.moderatedBy = moderatorId;
+        row.moderatedAt = now;
+        return true;
+      },
+
+      async restore({ id, moderatorId, now }) {
+        const row = store().reviews.get(id);
+        if (!row || row.hiddenAt === null) return false;
+        row.hiddenAt = null;
+        // The note stays. It is the record of a decision that was made and then
+        // reversed, and erasing it would leave the reversal unexplained too.
+        row.moderatedBy = moderatorId;
+        row.moderatedAt = now;
+        return true;
+      },
+    };
+
+    /*
+     * ---------------------------------------------------------------- returns
+     *
+     * Same authorisation shape as reviews: the two factors reach the order, the
+     * line item names one bottle, and everything else is derived. What differs
+     * is that a return is JUDGED elsewhere — this returns the facts and the
+     * domain rules on them.
+     */
+    const eligibilityOf = (productId: string): ReturnEligibility | null =>
+      fixture.returnEligibility.get(productId) ?? null;
+
+    const orderFor = (reference: string, phone: string) =>
+      [...store().orders.values()].find(
+        (o) => o.reference === reference && o.contactPhone === phone,
+      );
+
+    const toReturnRecord = (row: ReturnRow): ReturnRecord => {
+      const s = store();
+      const sub = s.subOrders.get(row.subOrderId)!;
+      const line = row.lineItemId === null
+        ? undefined
+        : sub.lines.find((l) => l.id === row.lineItemId);
+      return {
+        id: row.id,
+        subOrderId: row.subOrderId,
+        subOrderReference: sub.reference,
+        sellerId: sub.sellerId,
+        brandName: s.sellers.get(sub.sellerId)?.tradingName ?? '',
+        lineItemId: row.lineItemId,
+        productName: line?.name ?? null,
+        state: row.state,
+        reason: row.reason,
+        customerNote: row.customerNote,
+        costBearer: row.costBearer,
+        refund: row.refundMinor === null ? null : Money.fromMinor(row.refundMinor),
+        requestedAt: row.requestedAt,
+        decidedAt: row.decidedAt,
+        closedAt: row.closedAt,
+      };
+    };
+
+    const returns: ReturnRepository = {
+      async listReturnable({ reference, phone }) {
+        const s = store();
+        const order = orderFor(reference, phone);
+        if (!order) return [];
+
+        const out: ReturnableLine[] = [];
+        for (const subId of order.subOrderIds) {
+          const sub = s.subOrders.get(subId);
+          if (!sub) continue;
+
+          for (const line of sub.lines) {
+            out.push({
+              lineItemId: line.id,
+              subOrderId: sub.id,
+              subOrderReference: sub.reference,
+              productName: line.name,
+              brandName: line.brandName,
+              volumeMl: line.volumeMl,
+              quantity: line.quantity,
+              unitPrice: Money.fromMinor(line.unitPriceMinor),
+              // Null until it arrives. "Not here yet" is a different answer
+              // from "not yours", and the screen has to say which.
+              deliveredAt: sub.state === 'delivered' ? sub.deliveredAt ?? null : null,
+              eligibility: eligibilityOf(line.productId),
+              alreadyRequested: [...s.returns.values()].some(
+                (r) => r.lineItemId === line.id,
+              ),
+            });
+          }
+        }
+        return out;
+      },
+
+      async request({ reference, phone, lineItemId, reason, note, costBearer, now }) {
+        const s = store();
+        const order = orderFor(reference, phone);
+        if (!order) return null;
+
+        for (const subId of order.subOrderIds) {
+          const sub = s.subOrders.get(subId);
+          if (!sub) continue;
+          const line = sub.lines.find((l) => l.id === lineItemId);
+          if (!line) continue;
+          if ([...s.returns.values()].some((r) => r.lineItemId === line.id)) return null;
+
+          const id = `return-${++s.seq}`;
+          s.returns.set(id, {
+            id,
+            subOrderId: sub.id,
+            lineItemId: line.id,
+            state: 'requested',
+            reason,
+            customerNote: note.trim() || null,
+            costBearer,
+            refundMinor: null,
+            decidedBy: null,
+            decidedAt: null,
+            requestedAt: now,
+            closedAt: null,
+          });
+          return { id };
+        }
+        return null;
+      },
+
+      async listForOrder({ reference, phone }) {
+        const s = store();
+        const order = orderFor(reference, phone);
+        if (!order) return [];
+        const owned = new Set(order.subOrderIds);
+        return [...s.returns.values()]
+          .filter((r) => owned.has(r.subOrderId))
+          .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
+          .map(toReturnRecord);
+      },
+
+      async listForSeller(sellerId) {
+        const s = store();
+        return [...s.returns.values()]
+          .filter((r) => s.subOrders.get(r.subOrderId)?.sellerId === sellerId)
+          .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
+          .map(toReturnRecord);
+      },
+
+      async listAll({ limit }) {
+        return [...store().returns.values()]
+          .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
+          .slice(0, limit)
+          .map(toReturnRecord);
+      },
+
+      async findById(id) {
+        const row = store().returns.get(id);
+        return row ? toReturnRecord(row) : null;
+      },
+
+      async move({ id, expectedFrom, to, decidedBy, costBearer, refundPiastres, now }) {
+        const row = store().returns.get(id);
+        // Conditional on the state the caller decided against. Two operators
+        // clicking at once must not both succeed.
+        if (!row || row.state !== expectedFrom) return false;
+
+        row.state = to;
+        row.decidedBy = decidedBy;
+        row.decidedAt = now;
+        if (costBearer !== undefined) row.costBearer = costBearer;
+        if (refundPiastres !== undefined) row.refundMinor = refundPiastres;
+        if (to === 'closed') row.closedAt = now;
+        return true;
+      },
+    };
+
+    /*
+     * ---------------------------------------------------------------- support
+     *
+     * The order link is resolved against the caller's own phone here too. A
+     * reference typed into a public form is a claim about somebody else's order
+     * until it is checked.
+     */
+    const support: SupportRepository = {
+      async open(input) {
+        const s = store();
+        const id = `ticket-${++s.seq}`;
+        const order = input.orderReference === null ? undefined : [...s.orders.values()].find(
+          (o) => o.reference === input.orderReference && o.contactPhone === input.contactPhone,
+        );
+
+        const record: TicketRecord = {
+          id,
+          reference: input.reference,
+          category: input.category,
+          subject: input.subject.trim(),
+          message: input.message.trim(),
+          contactName: input.contactName.trim(),
+          contactPhone: input.contactPhone,
+          priority: input.priority,
+          status: 'open',
+          // Null when the reference belongs to somebody else. The ticket is
+          // still opened — a mistyped order number should still reach a human.
+          orderReference: order?.reference ?? null,
+          nextAction: null,
+          createdAt: input.now,
+          firstResponseAt: null,
+          resolvedAt: null,
+        };
+        s.tickets.set(id, { ...record, ownerId: null, orderId: order?.id ?? null });
+        return record;
+      },
+
+      async find({ reference, phone }) {
+        const row = [...store().tickets.values()].find(
+          (t) => t.reference === reference && t.contactPhone === phone,
+        );
+        return row ? { ...row } : null;
+      },
+
+      async listOpen({ limit }) {
+        return [...store().tickets.values()]
+          .filter((t) => t.status === 'open' || t.status === 'waiting')
+          // Priority, then oldest. Sorted by arrival, this morning's P1 sits
+          // behind twelve questions from last week.
+          .sort((a, b) => (a.priority === b.priority
+            ? a.createdAt.getTime() - b.createdAt.getTime()
+            : a.priority.localeCompare(b.priority)))
+          .slice(0, limit)
+          .map((t) => ({ ...t }));
+      },
+
+      async listAll({ limit }) {
+        return [...store().tickets.values()]
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, limit)
+          .map((t) => ({ ...t }));
+      },
+
+      async update({ id, status, nextAction, ownerId, now }) {
+        const row = store().tickets.get(id);
+        if (!row) return false;
+
+        row.status = status;
+        row.nextAction = nextAction;
+        row.ownerId = ownerId;
+        if (status === 'resolved' || status === 'closed') row.resolvedAt = now;
+        // Stamped once. A field overwritten on every update measures the last
+        // touch, which always looks excellent.
+        if (row.firstResponseAt === null) row.firstResponseAt = now;
+        return true;
+      },
+    };
+
+    /*
+     * ----------------------------------------------------------- applications
+     *
+     * The eight controls are created with the application, mirroring the
+     * trigger in migration 0001 — "6 of 8" has to be a count of rows that
+     * exist, not a calculation over rows that might not.
+     */
+    const applications: ApplicationRepository = {
+      async apply(input) {
+        const s = store();
+        // The slug is the storefront address and it is unique. Two houses
+        // choosing one wordmark is ordinary, not exceptional.
+        const taken = [...s.applications.values()].some((a) => a.record.slug === input.slug)
+          || [...s.sellers.values()].some((seller) => seller.slug === input.slug);
+        if (taken) return null;
+
+        const id = `application-${++s.seq}`;
+        s.applications.set(id, {
+          record: {
+            id,
+            tradingName: input.tradingName.trim(),
+            slug: input.slug,
+            ownerName: input.ownerName.trim(),
+            contactPhone: input.contactPhone,
+            contactEmail: input.contactEmail?.trim() || null,
+            city: input.city.trim(),
+            status: 'applied',
+            applicationNote: input.note.trim(),
+            appliedAt: input.now,
+            approvedControls: 0,
+          },
+          controls: new Map(VERIFICATION_CONTROLS.map((control) => [control, {
+            control, status: 'pending' as VerificationStatus, notes: null, reviewedAt: null,
+          }])),
+        });
+        return { id, slug: input.slug };
+      },
+
+      async listApplications() {
+        return [...store().applications.values()]
+          .filter((a) => ['applied', 'under_review', 'approved'].includes(a.record.status))
+          // Oldest first. The applicant who has waited three weeks is the one
+          // most likely to give up, and newest-first hides them.
+          .sort((a, b) => (a.record.appliedAt?.getTime() ?? 0) - (b.record.appliedAt?.getTime() ?? 0))
+          .map((a) => ({ ...a.record, approvedControls: countApproved(a) }));
+      },
+
+      async findApplication(id) {
+        const row = store().applications.get(id);
+        return row ? { ...row.record, approvedControls: countApproved(row) } : null;
+      },
+
+      async verifications(sellerId) {
+        const row = store().applications.get(sellerId);
+        return row ? [...row.controls.values()] : [];
+      },
+
+      async setVerification({ sellerId, control, status, notes, now }) {
+        const row = store().applications.get(sellerId);
+        if (!row || !row.controls.has(control)) return false;
+        row.controls.set(control, { control, status, notes, reviewedAt: now });
+        return true;
+      },
+
+      async setStatus({ id, status }) {
+        const row = store().applications.get(id);
+        if (!row) return false;
+        row.record = { ...row.record, status };
+        return true;
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
-      site,
+      site, reviews, returns, support, applications,
     };
   }
 }

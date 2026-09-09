@@ -146,7 +146,19 @@ function Row({
             </span>
             <span className="flex items-baseline gap-2">
               {item.quantity > 1 && (
-                <span className="rounded-sm bg-accent/15 px-2 py-0.5 text-caption text-accent">
+                /*
+                  `text-ink`, not `text-accent`.
+                
+                  Brass on a 15% brass tint is 4.32:1 in the paper theme at
+                  10.5px — under the 4.5 floor. It had never been caught because
+                  the badge only renders when a line has more than one bottle,
+                  and no fixture had produced one until a seeded order did.
+                
+                  This is the number that tells a house HOW MANY to pack. It
+                  should be the most legible thing on the row, not the least;
+                  the tint still says "quantity" on its own.
+                */
+                <span className="rounded-sm bg-accent/15 px-2 py-0.5 text-caption text-ink">
                   <span className="tnum">×{num(item.quantity)}</span>
                 </span>
               )}

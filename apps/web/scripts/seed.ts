@@ -1,4 +1,6 @@
-import { foldArabic } from '@diyar/domain';
+import {
+  foldArabic, publicAuthorName, REFERENCE_ALPHABET, REFERENCE_PREFIX,
+} from '@diyar/domain';
 import { applyMigrations } from '@diyar/db/migrate';
 /**
  * Seed a local database with real content.
@@ -164,6 +166,16 @@ async function main() {
 
   await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
+  /*
+   * Migrations have already run by this point, and that ORDER is why `pnpm dev`
+   * runs this script before starting the server.
+   *
+   * The dev server opens PGlite and never migrates it, so a developer who
+   * pulled a new migration and ran `next dev` got a database one migration
+   * behind and a 500 naming a column that does not exist — with nothing
+   * anywhere saying a migration was pending. Seeding is idempotent, so making
+   * it part of `dev` costs a second and removes the whole class of confusion.
+   */
   const existing = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products`);
   if (existing.rows[0]!.n > 0) {
     console.log(`\n· ${existing.rows[0]!.n} products already present — nothing to do`);
@@ -300,6 +312,149 @@ async function main() {
         { kind: 'call_to_action', label: 'تصفّح العطور', href: '/' },
       ],
     },
+    /*
+     * The three legal pages.
+     *
+     * THE CMS COULD PUBLISH THESE FROM THE DAY IT WAS BUILT, and nobody had
+     * written them — so the site had a returns policy on every product page, a
+     * line at checkout saying "by confirming you agree to the terms of sale",
+     * and no terms of sale anywhere. A link to a document that does not exist
+     * is worse than no link: it is a claim that the document exists.
+     *
+     * They are written to be READ, not to be survived. Egypt's Consumer
+     * Protection Law 181/2018 requires the material terms to be clear and in
+     * Arabic, and a page of untranslated boilerplate satisfies neither the law
+     * nor the person trying to work out whether they can send a bottle back.
+     *
+     * THEY ARE NOT A LAWYER'S REVIEW. Every number in them matches what the
+     * code actually enforces — fourteen days for a change of mind, thirty for a
+     * fault, the phone as the identity, cash on delivery only — so they are
+     * true today. A lawyer still has to read them before launch, and the two
+     * places most likely to need changing are the limitation of liability and
+     * the data-retention period, both of which are marked.
+     */
+    {
+      slug: 'terms',
+      title: 'شروط البيع',
+      blocks: [
+        { kind: 'passage', text: 'هذه الشروط تحكم الشراء من ديار. اقرأها قبل أن تطلب؛ بتأكيد الطلب فأنت توافق عليها.\n\nآخر تحديث: سبتمبر ٢٠٢٦.' },
+
+        { kind: 'heading', level: 2, text: 'من يبيع لك' },
+        { kind: 'passage', text: 'ديار سوق، لا مصنع ولا مستورد. كل عطر تشتريه تبيعه دار مستقلّة تضع اسمها على الزجاجة، وهي المسؤولة عن المنتج وعن تجهيزه وشحنه.\n\nدور ديار أن تعرض، وتحصّل الثمن، وتفصل في النزاع حين يقع. اسم الدار مذكور على صفحة كل عطر وفي كل طلب.' },
+
+        { kind: 'heading', level: 2, text: 'الأسعار والدفع' },
+        { kind: 'note_list', items: [
+          { term: 'العملة', detail: 'كل الأسعار بالجنيه المصري وشاملة ضريبة القيمة المضافة.' },
+          { term: 'التوصيل', detail: 'يُحسب لكل دار على حدة، ويظهر في الحقيبة قبل التأكيد. الطلب من دارين يعني شحنتين ومصروف شحن مرّتين.' },
+          { term: 'الدفع', detail: 'الدفع عند الاستلام فقط في الوقت الحالي. لا نطلب بيانات بطاقة ولا نحفظها.' },
+          { term: 'السعر الملزم', detail: 'السعر الملزم هو الظاهر في صفحة تأكيد الطلب. إن اختلف عن سعر رأيته قبلها، نعرض عليك الفرق ولا نُتمّ الطلب دون موافقتك.' },
+        ] },
+
+        { kind: 'heading', level: 2, text: 'التجهيز والتسليم' },
+        { kind: 'passage', text: 'تؤكّد الدار الطلب خلال المدة المذكورة على صفحتها، ثم تجهّزه وتسلّمه لشركة الشحن. تصلك رسالة برقم الشحنة عند الخروج.\n\nمواعيد التسليم تقديرية لا وعدًا تعاقديًا: الشحن داخل مصر يتأثر بالأعياد وبالزحام وبعنوان ناقص. إن تأخّر طلبك عن المدة المذكورة بأكثر من ثلاثة أيام عمل، تواصل معنا ونتابعه بدلًا منك.' },
+
+        { kind: 'heading', level: 2, text: 'الإلغاء والإرجاع' },
+        { kind: 'passage', text: 'يمكنك إلغاء الطلب قبل خروجه من الدار دون أي رسوم. بعد الشحن تنطبق سياسة الإرجاع.' },
+        { kind: 'call_to_action', label: 'اقرأ سياسة الإرجاع', href: '/returns' },
+
+        { kind: 'heading', level: 2, text: 'ما لا نبيعه' },
+        { kind: 'passage', text: 'لا نعرض عطورًا تُقدَّم على أنها تقليد أو نسخة من دار أخرى، ولا نسمح بادّعاء وكالة أو ترخيص لا تملكه الدار. كل منتج يمرّ على مراجعة قبل النشر، والادّعاء المخالف يُرفض ويُسحب المنتج.' },
+
+        { kind: 'heading', level: 2, text: 'التقييمات' },
+        { kind: 'passage', text: 'لا يكتب تقييمًا إلا من استلم المنتج فعلًا من خلال ديار. لا نشتري تقييمات ولا نحذف تقييمًا لأنه سيّئ. نخفي ما فيه إساءة أو بيانات شخصية أو محتوى مخالف للقانون، ونسجّل سبب الإخفاء.' },
+
+        { kind: 'heading', level: 2, text: 'حدود المسؤولية' },
+        { kind: 'passage', text: 'مسؤوليتنا عن أي طلب لا تتجاوز المبلغ المدفوع فيه. هذا لا يمسّ حقوقك المقرّرة في قانون حماية المستهلك رقم ١٨١ لسنة ٢٠١٨، ولا يُعفي أحدًا من مسؤولية الغش أو الإضرار الجسيم.\n\nالعطر مادة تُلامس الجلد. اختبر أي عطر جديد على مساحة صغيرة أولًا، ولا تستخدمه على جلد متهيّج. إن ظهر رد فعل تحسّسي، أوقف الاستخدام وراجع طبيبًا.' },
+
+        { kind: 'heading', level: 2, text: 'القانون والاختصاص' },
+        { kind: 'passage', text: 'تخضع هذه الشروط للقانون المصري، وتختص محاكم القاهرة بأي نزاع بشأنها.' },
+
+        { kind: 'divider' },
+        { kind: 'passage', text: 'لأي سؤال عن هذه الشروط، اكتب لنا.' },
+        { kind: 'call_to_action', label: 'تواصل معنا', href: '/support' },
+      ],
+    },
+    {
+      slug: 'returns',
+      title: 'سياسة الإرجاع',
+      blocks: [
+        { kind: 'passage', text: 'العطر منتج يُلامس الجلد، وزجاجة فُتحت لا تعود للمخزون. لذلك سياستنا مبنيّة على فرق واحد واضح: هل المشكلة عيب أم تغيير رأي؟' },
+
+        { kind: 'heading', level: 2, text: 'إن كان هناك عيب' },
+        { kind: 'passage', text: 'العيب يُقبل دائمًا، مهما كانت سياسة الدار، ولا شيء في هذه الصفحة يسقط هذا الحق. لديك ٣٠ يومًا من الاستلام لتطلب الإرجاع في هذه الحالات:' },
+        { kind: 'note_list', items: [
+          { term: 'وصل مكسورًا أو تالفًا', detail: 'صوّر العبوة كما وصلت إن أمكن. التكلفة على شركة الشحن.' },
+          { term: 'وصل منتج غير الذي طلبته', detail: 'التكلفة على الدار، والشحن مجانًا في الاتجاهين.' },
+          { term: 'لا يطابق الوصف المكتوب', detail: 'التكلفة على الدار. المقصود اختلاف حقيقي في الحجم أو التركيز أو المكوّنات، لا اختلاف الذوق.' },
+          { term: 'به عيب صناعة', detail: 'بخّاخ لا يعمل، تسريب، أو رائحة تغيّرت. التكلفة على الدار.' },
+        ] },
+
+        { kind: 'heading', level: 2, text: 'إن غيّرت رأيك' },
+        { kind: 'passage', text: 'لديك ١٤ يومًا من الاستلام، وهي المدة المقرّرة في البيع عن بُعد. شرطان:\n\nأن تكون العبوة مغلقة بختمها الأصلي ولم تُفتح، وأن تسمح سياسة الدار بذلك — وهي مذكورة على صفحة كل عطر قبل الشراء.\n\nفي هذه الحالة مصروف الشحن في الاتجاهين على العميل، ويُخصم من المبلغ المردود.' },
+
+        { kind: 'heading', level: 2, text: 'كيف يتم الإرجاع' },
+        { kind: 'note_list', items: [
+          { term: 'اطلب', detail: 'من صفحة تتبّع الطلب: اكتب رقم الطلب ورقم الموبايل، ثم اختر المنتج والسبب.' },
+          { term: 'انتظر ردّ الدار', detail: 'الدار تراجع الطلب وتوافق أو ترفض مع ذكر السبب.' },
+          { term: 'سلّم العبوة', detail: 'نرتّب استلامها منك. ضعها كما وصلتك بقدر الإمكان.' },
+          { term: 'الفحص', detail: 'تُفحص العبوة خلال ٤٨ ساعة من وصولها.' },
+          { term: 'ردّ المبلغ', detail: 'خلال ٧ أيام عمل من الفحص. لا يُردّ أي مبلغ قبل وصول العبوة إلينا.' },
+        ] },
+
+        { kind: 'pull_quote', text: 'لا نردّ مبلغًا على وعد. العبوة تصل، وتُفحص، ثم يُردّ المبلغ.', attribution: 'من سياسة ديار' },
+
+        { kind: 'heading', level: 2, text: 'ما لا يُقبل' },
+        { kind: 'note_list', items: [
+          { term: 'زجاجة مفتوحة لتغيير الرأي', detail: 'لا يمكن إعادة بيعها، ولا إعادتها للمخزون.' },
+          { term: 'بعد انتهاء المدة', detail: '١٤ يومًا لتغيير الرأي، و٣٠ يومًا للعيب، من تاريخ الاستلام.' },
+          { term: 'ضرر بعد الاستلام', detail: 'كسر أو تلف حدث عندك بعد التسليم.' },
+        ] },
+
+        { kind: 'divider' },
+        { kind: 'call_to_action', label: 'ابدأ من صفحة تتبّع الطلب', href: '/order' },
+      ],
+    },
+    {
+      slug: 'privacy',
+      title: 'الخصوصية',
+      blocks: [
+        { kind: 'passage', text: 'هذه الصفحة تشرح ما نجمعه عنك، ولماذا، ومن يراه، وكيف تطلب حذفه. مكتوبة لتُقرأ، لا لتُتجاوَز.\n\nآخر تحديث: سبتمبر ٢٠٢٦.' },
+
+        { kind: 'heading', level: 2, text: 'ما نجمعه' },
+        { kind: 'note_list', items: [
+          { term: 'رقم الموبايل', detail: 'هو هويّتك عندنا. به يُفتح طلبك، وبه تتابعه، وبه نتصل عند التسليم.' },
+          { term: 'الاسم والعنوان', detail: 'لتوصيل الطلب فقط. تُنسخ على الشحنة لتصل للدار وشركة الشحن.' },
+          { term: 'محتوى طلبك', detail: 'ما اشتريته وكم دفعت. مطلوب للفاتورة وللمحاسبة وللإرجاع.' },
+          { term: 'ما تكتبه لنا', detail: 'رسائل الدعم وطلبات الإرجاع والتقييمات.' },
+        ] },
+        { kind: 'passage', text: 'لا نجمع بيانات بطاقات، لأن الدفع عند الاستلام. لا نطلب رقمًا قوميًا ولا تاريخ ميلاد ولا صورة.' },
+
+        { kind: 'heading', level: 2, text: 'من يرى ماذا' },
+        { kind: 'note_list', items: [
+          { term: 'الدار', detail: 'ترى ما اشتريته منها هي، واسمك وعنوانك ورقمك لتوصيله. لا ترى ما اشتريته من دار أخرى، ولا سجلّ طلباتك.' },
+          { term: 'شركة الشحن', detail: 'ترى الاسم والعنوان والرقم والمبلغ المطلوب تحصيله.' },
+          { term: 'فريق ديار', detail: 'يرى ما يلزم لحل مشكلتك، وكل اطّلاع إداري مقيّد في سجل.' },
+          { term: 'أي جهة أخرى', detail: 'لا. لا نبيع بياناتك ولا نؤجّرها ولا نشاركها للإعلان.' },
+        ] },
+
+        { kind: 'heading', level: 2, text: 'التقييمات' },
+        { kind: 'passage', text: 'يظهر مع تقييمك اسمك الأول وحرف واحد من الاسم الثاني — «ليلى م.» — ولا يظهر رقمك ولا عنوانك ولا ما اشتريته غيره.' },
+
+        { kind: 'heading', level: 2, text: 'كم نحتفظ بها' },
+        { kind: 'passage', text: 'بيانات الطلبات تُحفظ سبع سنوات، وهي المدة التي يلزمنا القانون التجاري والضريبي بحفظ الدفاتر خلالها.\n\nرسائل الدعم تُحفظ سنتين. سجلات التصفّح المجهولة تُحفظ ثلاثة عشر شهرًا.' },
+
+        { kind: 'heading', level: 2, text: 'حقوقك' },
+        { kind: 'passage', text: 'يمكنك أن تطلب نسخة من بياناتك، أو تصحيحها، أو حذفها. نردّ خلال ٣٠ يومًا.\n\nما لا نستطيع حذفه هو ما يلزمنا القانون بحفظه: فاتورة طلب تمّ فعلًا تبقى في الدفاتر حتى تنتهي مدّتها القانونية. نحذف كل ما عداه.' },
+        { kind: 'call_to_action', label: 'اطلب بياناتك أو حذفها', href: '/support' },
+
+        { kind: 'heading', level: 2, text: 'الأمان' },
+        { kind: 'passage', text: 'الوصول للبيانات مقيّد بالدور: كل دار ترى صفوفها هي فقط، والقيد مطبَّق في قاعدة البيانات نفسها لا في واجهة الاستخدام. الاتصال بالموقع مشفّر بالكامل.' },
+
+        { kind: 'divider' },
+        { kind: 'passage', text: 'لأي سؤال عن خصوصيتك، أو لتقديم شكوى، اكتب لنا وسنردّ عليك.' },
+        { kind: 'call_to_action', label: 'تواصل معنا', href: '/support' },
+      ],
+    },
     {
       slug: 'care',
       title: 'العناية بالعطر',
@@ -336,6 +491,137 @@ async function main() {
       [pageId, revisionId]);
   }
   console.log(`\u00b7 published ${pages.length} content pages`);
+
+  /*
+   * A DELIVERED order, and the reviews it produced.
+   *
+   * Without this the review screens are correct and empty, which is the state
+   * every reviews feature is in on the day it ships and the state in which
+   * nobody notices it is broken. It also gives the end-to-end suite something
+   * real to open: reviewing requires an order reference, a matching phone and
+   * a sub-order that actually arrived, and none of those can be faked from the
+   * browser.
+   *
+   * The sub-order is WALKED through the state machine one legal step at a time
+   * rather than inserted as `delivered`. The trigger in 0001 only guards
+   * UPDATE, so the shortcut would work — and would seed an order that could
+   * not exist, on top of which every assertion about reviews would be resting.
+   */
+  const REVIEWER_PHONE = '01000000123';
+  /*
+   * A reference the ALPHABET actually contains.
+   *
+   * `DY-SEEDREV1` read nicely and could not exist: S, E and 1 are all excluded
+   * from `REFERENCE_ALPHABET` — S pairs with 5, E is a vowel, 1 pairs with I
+   * and L — so `normaliseOrderReference` refused it and the seeded order was
+   * unreachable from the tracking screen. The review it produced still showed
+   * on the product page, which is why it looked like it worked.
+   *
+   * Built from the domain's own alphabet rather than typed out, so a fixture
+   * cannot drift from the rule again.
+   */
+  const REVIEW_ORDER_REF = `${REFERENCE_PREFIX}-${REFERENCE_ALPHABET.slice(0, 8)}`;
+
+  const customerId = (await pg.query<{ id: string }>(
+    `INSERT INTO customers (phone, full_name) VALUES ($1, $2)
+     ON CONFLICT (phone) DO UPDATE SET full_name = EXCLUDED.full_name
+     RETURNING id`,
+    [REVIEWER_PHONE, 'ليلى محمود حسن'])).rows[0]!.id;
+
+  // Two published perfumes from two different houses, so the seeded order is a
+  // multi-house one — the shape this marketplace actually produces.
+  const bought = (await pg.query<{
+    id: string; seller_id: string; name: string; sku: string;
+    volume_ml: number; price_piastres: number; brand: string;
+  }>(
+    `SELECT p.id, p.seller_id, p.name, p.sku, p.volume_ml, p.price_piastres, b.name AS brand
+     FROM products p JOIN brands b ON b.id = p.brand_id
+     WHERE p.status = 'published'
+     ORDER BY p.created_at
+     LIMIT 2`)).rows;
+
+  if (bought.length === 2) {
+    const merchandise = bought.reduce((sum, row) => sum + row.price_piastres, 0);
+    const SHIPPING = 5_000;
+
+    const orderId = (await pg.query<{ id: string }>(
+      `INSERT INTO orders (
+         reference, customer_id, contact_phone, contact_name,
+         governorate, city, area, street, building,
+         source, merchandise_piastres, shipping_piastres, total_piastres,
+         payment_method, payment_state)
+       VALUES ($1,$2,$3,$4,'cairo','مدينة نصر','الحي السابع','شارع عباس العقاد','14',
+         'unknown',$5,$6,$7,'cod','pending')
+       RETURNING id`,
+      [REVIEW_ORDER_REF, customerId, REVIEWER_PHONE, 'ليلى محمود حسن',
+        merchandise, SHIPPING * bought.length, merchandise + SHIPPING * bought.length],
+    )).rows[0]!.id;
+
+    const lineIds: string[] = [];
+    for (const [index, row] of bought.entries()) {
+      const subOrderId = (await pg.query<{ id: string }>(
+        `INSERT INTO sub_orders (
+           order_id, seller_id, reference, merchandise_piastres, shipping_piastres,
+           recipient_name, recipient_phone, governorate, city, area, street, building,
+           delivery_fulfilled_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'cairo','مدينة نصر','الحي السابع','شارع عباس العقاد','14',
+           'seller')
+         RETURNING id`,
+        [orderId, row.seller_id, `${REVIEW_ORDER_REF}-${index + 1}`,
+          row.price_piastres, SHIPPING, 'ليلى محمود حسن', REVIEWER_PHONE],
+      )).rows[0]!.id;
+
+      lineIds.push((await pg.query<{ id: string }>(
+        `INSERT INTO order_line_items (
+           sub_order_id, product_id, product_name, brand_name, sku, volume_ml,
+           quantity, unit_price_piastres, line_piastres,
+           commission_source, commission_bps, commission_rule_set_version, commission_piastres)
+         VALUES ($1,$2,$3,$4,$5,$6,1,$7,$7,'unknown',500,1,0)
+         RETURNING id`,
+        [subOrderId, row.id, row.name, row.brand, row.sku, row.volume_ml, row.price_piastres],
+      )).rows[0]!.id);
+
+      // One legal step at a time. See the note above.
+      for (const state of ['awaiting_seller', 'confirmed', 'dispatched', 'delivered']) {
+        await pg.query(`UPDATE sub_orders SET state = $2::sub_order_state WHERE id = $1`,
+          [subOrderId, state]);
+      }
+      await pg.query(`UPDATE sub_orders SET delivered_at = now() WHERE id = $1`, [subOrderId]);
+    }
+
+    /*
+     * One review, not two.
+     *
+     * The second line stays unreviewed on purpose: the tracking screen has two
+     * states to show — "قيّم" and "تم التقييم" — and a fixture that reviews
+     * everything renders only one of them.
+     *
+     * The scores are deliberately uneven, and the low one is on مطابقة الوصف.
+     * A seed where every dimension is 5 makes the six-bar block look like
+     * decoration; the whole reason it exists is that a house can be excellent
+     * at perfume and careless about its own listing.
+     */
+    await pg.query(
+      `INSERT INTO reviews (
+         sub_order_id, line_item_id, product_id, customer_id,
+         rating_scent, rating_longevity, rating_projection,
+         rating_value, rating_packaging, rating_description_accuracy, body, author_label)
+       SELECT li.sub_order_id, li.id, li.product_id, $2, 5, 4, 3, 5, 5, 2, $3,
+         -- Masked and frozen at write time, exactly as the repository writes
+         -- it. A seed that stored the full name would put a customer's legal
+         -- name on a public page.
+         $4
+       FROM order_line_items li WHERE li.id = $1
+       ON CONFLICT (line_item_id) DO NOTHING`,
+      [lineIds[0]!, customerId,
+        'الرائحة أجمل مما توقّعت، والثبات محترم على الملابس أكثر من الجلد. '
+        + 'الوصف في الصفحة بالغ في الانتشار قليلًا: هو عطر قريب، لا يملأ غرفة.',
+        publicAuthorName('ليلى محمود حسن')],
+    );
+
+    console.log('\u00b7 seeded a delivered order with one review');
+    console.log(`  Track it at /order — ${REVIEW_ORDER_REF} / ${REVIEWER_PHONE}`);
+  }
 
   const count = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products WHERE status='published'`);
   console.log(`\n✓ seeded ${count.rows[0]!.n} published products across ${houses.length} houses`);

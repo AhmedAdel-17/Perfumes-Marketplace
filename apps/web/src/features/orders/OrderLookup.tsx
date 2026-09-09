@@ -7,6 +7,8 @@ import {
 import { Field } from '@/features/checkout/Field';
 import { lookupOrder, type OrderLookupResult } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { ReviewPanel } from '@/features/reviews/ReviewPanel';
+import { ReturnPanel } from '@/features/returns/ReturnPanel';
 
 /**
  * Order tracking, without an account.
@@ -36,7 +38,18 @@ export function OrderLookup() {
     setSearching(false);
   };
 
-  if (order) return <OrderDetail order={order} onBack={() => { setOrder(null); setSearched(false); }} />;
+  if (order) {
+    return (
+      <OrderDetail
+        order={order}
+        // The phone travels down with the order rather than being re-asked.
+        // Reviewing and returning need both factors, and a second form on the
+        // screen that just proved the first one is a form people abandon.
+        phone={phone}
+        onBack={() => { setOrder(null); setSearched(false); }}
+      />
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
@@ -67,9 +80,10 @@ export function OrderLookup() {
 }
 
 function OrderDetail({
-  order, onBack,
+  order, phone, onBack,
 }: {
   order: NonNullable<OrderLookupResult>;
+  phone: string;
   onBack(): void;
 }) {
   return (
@@ -177,6 +191,14 @@ function OrderDetail({
           <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
       </div>
+
+      {/*
+        Everything that happens AFTER the parcel arrives, under the order it is
+        about. Each renders nothing until it has something to offer, so an order
+        still in transit shows neither.
+      */}
+      <ReviewPanel reference={order.reference} phone={phone} />
+      <ReturnPanel reference={order.reference} phone={phone} />
 
       <button
         type="button"

@@ -110,7 +110,10 @@ function percentageClaims(normalised: string): ClaimFinding[] {
     // formulation; a percentage beside "identical" is a claim about somebody
     // else's product.
     const from = Math.max(0, match.index - 40);
-    const window = normalised.slice(from, match.index + match[0].length + 40);
+    // `nearby`, not `window`: this package must not so much as name a DOM
+    // global, and a reader scanning for framework leakage should not have to
+    // stop and work out that this one is a local.
+    const nearby = normalised.slice(from, match.index + match[0].length + 40);
 
     /*
      * Whole words on BOTH lists.
@@ -121,11 +124,11 @@ function percentageClaims(normalised: string): ClaimFinding[] {
      * concentration and contain a common word, and a rule that blocks honest
      * sellers is a rule they route around.
      */
-    if (SIMILARITY_WORDS.some((word) => containsWord(window, word))
-      || DESIGNER_HOUSES.some((house) => containsWord(window, house))) {
+    if (SIMILARITY_WORDS.some((word) => containsWord(nearby, word))
+      || DESIGNER_HOUSES.some((house) => containsWord(nearby, house))) {
       findings.push({
         code: 'similarity_percentage',
-        evidence: window.trim(),
+        evidence: nearby.trim(),
         severity: 'refused',
       });
     }

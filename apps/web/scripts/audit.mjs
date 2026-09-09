@@ -164,9 +164,18 @@ async function auditPage(page, surface, width) {
   const structural = await page.evaluate(() => {
     const rendered = (e) => e.getClientRects().length > 0;
 
-    /** Hit area including an expanded ::after, which is the real target. */
+    /**
+     * Hit area including an expanded ::after, and the LABEL that wraps it.
+     *
+     * A 16px radio inside a 44px label has a 44px target: pressing anywhere in
+     * the label activates the input, which is what WCAG 2.5.8 measures and what
+     * a thumb actually meets. Measuring the input alone reported every radio on
+     * the site as too small and would have been "fixed" by making the dots
+     * enormous — a real regression driven by a wrong measurement.
+     */
     const hit = (e) => {
-      const b = e.getBoundingClientRect();
+      const wrapper = e.closest('label');
+      const b = (wrapper ?? e).getBoundingClientRect();
       const a = getComputedStyle(e, '::after');
       let gx = 0, gy = 0;
       if (a.content && a.content !== 'none' && a.position === 'absolute') {
@@ -289,7 +298,37 @@ async function auditPage(page, surface, width) {
     }));
 
   for (const v of axe.violations) {
-    record(surface, width, `axe:${v.id}`, `${v.impact} — ${v.nodes.length} node(s): ${v.help}`);
+    /*
+     * The NODE, not the count.
+     *
+     * This used to report "serious — 1 node(s): Elements must meet minimum
+     * color contrast ratio thresholds" and stop, which sends whoever reads it
+     * hunting through a page for an element the tool already had in its hand.
+     * The end-to-end harness had the same fault — it printed line one of a
+     * failure and threw the diagnostic away — and it cost a debugging session
+     * both times.
+     *
+     * Up to three nodes: enough to see whether it is one element or a pattern,
+     * short of pasting a page of markup into a summary.
+     */
+    const where = v.nodes.slice(0, 3).map((n) => {
+      const target = Array.isArray(n.target) ? n.target.join(' ') : String(n.target);
+      // axe puts the measured colours in the failure summary. For contrast that
+      // IS the answer, so it is carried through rather than summarised away.
+      const why = (n.failureSummary ?? '')
+        .split(String.fromCharCode(10))
+        .map((line) => line.trim())
+        .filter((line) => /contrast|ratio|colou?r|expected/i.test(line))
+        .join(' ');
+      return why ? `${target} — ${why}` : target;
+    }).join(' | ');
+
+    record(
+      surface,
+      width,
+      `axe:${v.id}`,
+      `${v.impact} — ${v.help}${where ? ` @ ${where}` : ''}`,
+    );
   }
 }
 
@@ -344,6 +383,19 @@ try {
     // the screen, in the state a customer actually leaves it in.
     ['search', '/search'],
     ['search-filtered', '/search?family=amber&stock=1&sort=price_asc'],
+    // A product page WITH reviews and one without: the empty state has its
+    // own copy and its own contrast, and it is the state most perfumes are
+    // in for the first months.
+    ['product-reviewed', '/p/layl-al-qahira'],
+    ['product-unreviewed', '/p/nakhil'],
+    // The two public forms nobody could reach before: a way to ask a
+    // question, and a way for a house to join. Both are indexable, so both
+    // are met by people who have never seen the site.
+    ['support', '/support'],
+    ['apply', '/apply'],
+    ['legal-terms', '/terms'],
+    ['legal-returns', '/returns'],
+    ['legal-privacy', '/privacy'],
     ['houses', '/houses'],
     ['house', '/house/maison-nour'],
     // The page a visitor meets when something has already gone wrong.

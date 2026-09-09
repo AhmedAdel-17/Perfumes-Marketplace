@@ -1,5 +1,6 @@
 export * from './trpc';
 export * from './validation';
+export * from './rate-limit';
 export * from './errors';
 export * from './shipping';
 export * from './providers/ports';

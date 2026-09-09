@@ -9,6 +9,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/*
+ * Rendered per request, not baked at build time.
+ *
+ * The footer reads the LIVE editorial pages, so a statically prerendered screen
+ * freezes that list into the bundle — publishing or archiving a page would then
+ * update the footer everywhere except here. Worse, `next build` renders it
+ * against whatever database the BUILD MACHINE has, which in this repo is a
+ * developer's local PGlite: a production bundle carrying a developer's content.
+ *
+ * Nothing on this screen benefits from prerendering — it is personal,
+ * interactive, and never the same twice.
+ */
+export const dynamic = 'force-dynamic';
+
 export default function CheckoutPage() {
   return (
     <>

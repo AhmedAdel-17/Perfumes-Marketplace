@@ -13,3 +13,4 @@ export * from './repositories';
  * Nothing at request time runs a migration, so the tooling is reachable at
  * `@diyar/db/migrate` and stays out of the application bundle entirely.
  */
+export * from './connect';

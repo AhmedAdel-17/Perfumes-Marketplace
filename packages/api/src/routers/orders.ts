@@ -17,6 +17,7 @@ import { publicProcedure, router } from '../trpc';
 import { flatRateShipping } from '../shipping';
 import { cashOnDelivery } from '../providers/stubs';
 import { phoneSchema } from '../validation';
+import { consume, rateLimitMessage } from '../rate-limit';
 
 const addressSchema = z.object({
   governorate: z.enum(GOVERNORATES),
@@ -31,6 +32,23 @@ const addressSchema = z.object({
   // phoning. A cost control wearing a UX costume.
   landmark: z.string().max(200).optional(),
 });
+/**
+ * Rate limit, keyed on the phone.
+ *
+ * Counted before anything is written, and counted whether or not the write
+ * succeeds — see `rate-limit.ts` for why that matters on paths that
+ * deliberately return the same answer to a valid and an invalid caller.
+ */
+const limit = (name: Parameters<typeof consume>[0], key: string): void => {
+  const verdict = consume(name, key);
+  if (!verdict.allowed) {
+    throw new TRPCError({
+      code: 'TOO_MANY_REQUESTS',
+      message: rateLimitMessage(verdict.retryAfterSeconds),
+    });
+  }
+};
+
 
 export const ordersRouter = router({
   /**
@@ -68,6 +86,10 @@ export const ordersRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Before the address is even parsed. A limiter that runs after the work
+      // is a limiter that still does the work.
+      limit('order', input.contactPhone);
+
       const address = Address.create(input.address);
 
       return ctx.checkoutUow.transaction(async (repos) => {
