@@ -72,10 +72,17 @@ against, and is not one of the four assignable roles):
 | Act on returns (agree, mark received) | ✓ | ✓ | ✓ | ✓ | see only |
 | Create, edit and submit listings; upload photos | ✓ | ✓ | ✓ | — | — |
 | Change price and stock on a live listing | ✓ | ✓ | ✓ | stock only | — |
-| See payouts and statements (money) | ✓ | ✓ | — | — | — |
+| See payouts and statements (money) — **its own house only** | ✓ | ✓ | ✓ *(confirmed 15 Sep)* | — | — |
 | Answer customer questions about the house's orders | ✓ | ✓ | ✓ | — | ✓ |
 | Edit the house profile | ✓ | ✓ | — | — | — |
 | Add and remove staff | ✓ | ✓ (not the owner) | — | — | — |
+
+**Confirmed 15 Sep 2026:** a house's manager sees that house's money and no other house's;
+the platform admin sees every house's money (already true — payouts and `/ops/insights`
+are platform screens). **Still open:** whether the support role gives a house its own
+customer inbox, or stays view-only with every question routed through the platform (the
+one-support-route principle, CLAUDE.md §2). Until answered, the platform inbox stays the
+only one.
 
 ## Legal review required before implementing
 
