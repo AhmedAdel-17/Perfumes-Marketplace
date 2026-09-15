@@ -212,6 +212,44 @@ describe('cart.price — anonymous, and priced from the database every time', ()
       lines: [{ productId: 'not-a-uuid', quantity: 1 }],
     })).rejects.toThrow();
   });
+
+  it('shows no photograph for a primary row that never came through verification', async () => {
+    // The seeded primary is 'p.jpg' with no facts — the shape rows had before
+    // the upload flow. It satisfies the publish trigger; it is not a picture.
+    const cart = await caller(ANON).cart.price({
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+    });
+    expect(cart.houses[0]!.lines[0]!.photo).toBeNull();
+  });
+
+  it('gives a visitor the public address of a verified primary photograph', async () => {
+    // Priced as ANON on purpose: the snapshot reads `product_media` in the
+    // visitor's own transaction, so this also proves row-level security lets
+    // anonymous traffic see a published product's photograph. A policy that
+    // did not would not fail — the left join would quietly return no picture.
+    const productId = ids['maison-nour:product']!;
+    const key = `products/${productId}/${'a'.repeat(24)}.jpg`;
+
+    await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+    await pg.query(
+      `UPDATE product_media SET storage_path=$2, content_type='image/jpeg', byte_size=180000, width=1000, height=1250
+       WHERE product_id=$1 AND is_primary`, [productId, key]);
+    await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
+
+    try {
+      const cart = await caller(ANON).cart.price({ lines: [{ productId, quantity: 1 }] });
+      expect(cart.houses[0]!.lines[0]!.photo).toEqual({
+        url: MEDIA.publicUrl(key), alt: 'زجاجة', width: 1000, height: 1250,
+      });
+    } finally {
+      // Put the seed back: later cases in this file read this product.
+      await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+      await pg.query(
+        `UPDATE product_media SET storage_path='p.jpg', content_type=NULL, byte_size=NULL, width=NULL, height=NULL
+         WHERE product_id=$1 AND is_primary`, [productId]);
+      await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
+    }
+  });
 });
 
 describe('orders.place — the total is decided here, not by the client', () => {

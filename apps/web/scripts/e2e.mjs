@@ -1996,7 +1996,7 @@ try {
       'with a primary photograph, the listing must stop asking for one');
   });
 
-  await test('a live perfume shows its photograph in the shop', async () => {
+  await test('a live perfume shows its photograph in the shop, and in the bag', async () => {
     await sellerOnListings();
     const live = seller.locator('a[href^="/seller/listings/"]', { hasText: 'منشور' }).first();
     assert(await live.count() > 0, 'the signed-in house must have a published listing');
@@ -2029,6 +2029,17 @@ try {
       equal(served.status(), 200, 'the optimised photograph response');
       assert((served.headers()['content-type'] ?? '').startsWith('image/'),
         `the optimiser returned ${served.headers()['content-type']}`);
+
+      // The bag reads the photograph through a different path — the cart
+      // snapshot, priced in the visitor's own transaction — so the shop
+      // showing it proves nothing about the bag.
+      const added = await addToBag(page, shopLink.replace(/^\/p\//, ''));
+      assert(added, 'the published listing must be in stock to reach the bag');
+      await page.goto(`${BASE}/cart`, { waitUntil: 'networkidle' });
+      const inBag = page.locator(`main li a[aria-label] img[alt="${alt}"]`).first();
+      await inBag.waitFor({ state: 'visible', timeout: 20_000 });
+      const bagSrc = await inBag.getAttribute('src');
+      assert(bagSrc && bagSrc.includes('/_next/image'), `the bag must show the photograph, not the flacon: ${bagSrc}`);
     } finally {
       await shopper.close();
     }

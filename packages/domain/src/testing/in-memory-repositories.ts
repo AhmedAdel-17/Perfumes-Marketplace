@@ -352,6 +352,9 @@ export class InMemoryUnitOfWork implements UnitOfWork {
 
   private repositories(): Repositories {
     const store = () => this.store;
+    // Up here rather than beside the photo repository, because the cart
+    // snapshot reads it too.
+    const photoRows = this.photoRows;
 
     const sellers: SellerRepository = {
       async brandsFor(sellerId) {
@@ -419,6 +422,10 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             // stand-in that always answers `true` here would let the contract
             // test pass while the real query was wrong.
             const seller = s.sellers.get(p.sellerId);
+            // The Postgres adapter's join condition, as a filter: primary AND
+            // verified. A primary with no facts is not a photograph.
+            const primary = [...photoRows.values()].find((row) =>
+              row.productId === p.id && row.isPrimary && row.contentType !== null);
             return {
               productId: p.id,
               sellerId: p.sellerId,
@@ -434,6 +441,14 @@ export class InMemoryUnitOfWork implements UnitOfWork {
               isPublished: p.status === 'published',
               isHouseLive: seller?.status === 'live',
               fulfilmentHours: 48,
+              primaryPhoto: primary
+                ? {
+                  storageKey: primary.storageKey,
+                  alt: primary.alt,
+                  width: primary.width!,
+                  height: primary.height!,
+                }
+                : null,
             };
           });
       },
@@ -766,7 +781,6 @@ export class InMemoryUnitOfWork implements UnitOfWork {
      */
     const fixture = this;
     const listingRows = this.listingRows;
-    const photoRows = this.photoRows;
     const auditRows = this.auditRows;
 
     const content: ContentRepository = {

@@ -102,8 +102,10 @@ enters the catalogue is not a marketplace.
             rule shared by the form, the manager and every endpoint
       - [x] 5.7.5a Product tiles, the product page, the house page and search render
             the verified primary photograph (the flacon until there is one)
-      - [ ] 5.7.5b The bag shows the photograph too — its snapshot comes through the
-            cart port, so both adapters and the cart contract gain the field
+      - [x] 5.7.5b The bag shows the photograph too — its snapshot comes through the
+            cart port, so both adapters and the cart contract gain the field. Read
+            in the same query as the price; follows a change of primary (a mutation
+            to either adapter's join fails the contract case)
       - [ ] 5.7.6 The CMS image block renders from the same store
       - [x] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 

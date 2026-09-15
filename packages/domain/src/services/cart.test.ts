@@ -30,6 +30,7 @@ const product = (over: Partial<CatalogueSnapshot> = {}): CatalogueSnapshot => ({
   isPublished: true,
   isHouseLive: true,
   fulfilmentHours: 48,
+  primaryPhoto: null,
   ...over,
 });
 
@@ -218,5 +219,22 @@ describe('CartPricer — the shipping port', () => {
     );
     expect(cart.houses.map((h) => [h.etaDaysMin, h.etaDaysMax])).toEqual([[2, 3], [4, 6]]);
     expect(cart.shipping.minor).toBe(12_500);
+  });
+
+  it('carries each line its own photograph, or none, and prices the same either way', () => {
+    // The bag shows the bottle the customer chose. A photograph that attached to
+    // the wrong line — or went missing when grouping by house — would show them
+    // somebody else's perfume beside their price.
+    const photo = { storageKey: 'products/p1/aaaaaaaaaaaaaaaaaaaaaaaa.jpg', alt: 'زجاجة', width: 1000, height: 1250 };
+    const cart = pricer.price(
+      [{ productId: 'p1', quantity: 1 }, { productId: 'p2', quantity: 1 }],
+      [product({ primaryPhoto: photo }), product({ productId: 'p2', sellerId: 's2' })],
+    );
+
+    const lines = cart.houses.flatMap((h) => h.lines);
+    expect(lines.find((l) => l.productId === 'p1')?.photo).toEqual(photo);
+    expect(lines.find((l) => l.productId === 'p2')?.photo).toBeNull();
+    // A photograph is presentation. Nothing about the money may depend on it.
+    expect(cart.merchandise.minor).toBe(90_000);
   });
 });

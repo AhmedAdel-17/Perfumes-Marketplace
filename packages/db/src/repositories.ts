@@ -10,7 +10,7 @@
  * Typed against Drizzle's driver-agnostic `PgDatabase`, so the same code serves
  * PGlite in tests and postgres-js in production. Nothing here is driver-specific.
  */
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
   Money, SubOrderLifecycle, InvalidTransition,
@@ -157,10 +157,24 @@ const productRepository = (db: Executor): ProductRepository => ({
         brandName: schema.brands.name,
         brandEn: schema.brands.nameEn,
         sellerStatus: schema.sellers.status,
+        photoKey: schema.productMedia.storagePath,
+        photoAlt: schema.productMedia.altText,
+        photoWidth: schema.productMedia.width,
+        photoHeight: schema.productMedia.height,
       })
       .from(schema.products)
       .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
       .innerJoin(schema.sellers, eq(schema.sellers.id, schema.products.sellerId))
+      // In the SAME read as the price, so a bag line cannot show one moment's
+      // photograph beside another moment's price. A left join, because a line
+      // without a photograph is still a line; at most one row joins, because
+      // `product_media_one_primary` allows one primary per product. Verified
+      // rows only (0021) — the storefront's rule.
+      .leftJoin(schema.productMedia, and(
+        eq(schema.productMedia.productId, schema.products.id),
+        eq(schema.productMedia.isPrimary, true),
+        isNotNull(schema.productMedia.contentType),
+      ))
       .where(inArray(schema.products.id, [...productIds]));
 
     return rows.map((r) => ({
@@ -182,6 +196,11 @@ const productRepository = (db: Executor): ProductRepository => ({
       isPublished: r.p.status === 'published',
       isHouseLive: r.sellerStatus === 'live',
       fulfilmentHours: r.p.fulfilmentHours,
+      // All four facts or none, by 0021's CHECK — so a key with a null width
+      // is not a state this can meet.
+      primaryPhoto: r.photoKey === null
+        ? null
+        : { storageKey: r.photoKey, alt: r.photoAlt!, width: r.photoWidth!, height: r.photoHeight! },
     }));
   },
 });

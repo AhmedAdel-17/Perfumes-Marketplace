@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 import { Flacon } from '@/features/product/Flacon';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
 import {
   counted, CURRENCY_LABEL, DAY, editorial, formatPrice, PERFUME, plural, SHIPMENT,
   data as num,
@@ -136,23 +137,30 @@ export function CartView() {
             {house.lines.map((line) => (
               <li key={line.productId} className="flex gap-4 border-b border-line/60 py-4 last:border-0">
                 {/*
-                  The flacon is decorative — the product name sits beside it as
-                  its own link — but the image is still a LINK, and a link whose
-                  only content is an aria-hidden SVG announces itself as
-                  nothing. Two links to one place is fine; an unnamed one is
-                  not.
+                  The picture is decorative — the product name sits beside it as
+                  its own link — but it is still a LINK, and a link whose only
+                  content is an aria-hidden SVG announces itself as nothing. Two
+                  links to one place is fine; an unnamed one is not.
+
+                  The house's photograph when it has a verified one, the flacon
+                  until then: the same rule as the tile the customer added it
+                  from, so the bottle in the bag is the bottle they chose.
                 */}
                 <Link
                   href={`/p/${line.slug}`}
                   aria-label={line.name}
                   className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,#2A2019,#131010_52%,#070606)]"
                 >
-                  <Flacon
-                    family={line.scentFamily}
-                    house={line.brandLatin}
-                    uid={`bag-${line.productId}`}
-                    className="absolute inset-0 h-full w-full px-[14%] py-[5%]"
-                  />
+                  {line.photo ? (
+                    <ProductPhoto photo={line.photo} sizes="84px" />
+                  ) : (
+                    <Flacon
+                      family={line.scentFamily}
+                      house={line.brandLatin}
+                      uid={`bag-${line.productId}`}
+                      className="absolute inset-0 h-full w-full px-[14%] py-[5%]"
+                    />
+                  )}
                 </Link>
 
                 <div className="min-w-0 flex-1">

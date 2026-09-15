@@ -62,6 +62,15 @@ export const cartRouter = router({
             unitPricePiastres: l.unitPrice.minor,
             lineTotalPiastres: l.lineTotal.minor,
             maxQuantity: l.maxQuantity,
+            // The key becomes a URL here, at the edge, where the store is known.
+            photo: l.photo
+              ? {
+                url: ctx.media.publicUrl(l.photo.storageKey),
+                alt: l.photo.alt,
+                width: l.photo.width,
+                height: l.photo.height,
+              }
+              : null,
           })),
         })),
         merchandisePiastres: cart.merchandise.minor,

@@ -27,7 +27,7 @@
  * customer sees in the cart is structurally what they will be charged.
  */
 import { Money, sumMoney } from '../value-objects/money';
-import type { CatalogueSnapshot } from '../ports/repositories';
+import type { CartPhoto, CatalogueSnapshot } from '../ports/repositories';
 import { InvalidMoney } from '../errors/index';
 
 /** What the browser sends: identity and intent, never money. */
@@ -74,6 +74,8 @@ export interface PricedCartLine {
   readonly lineTotal: Money;
   /** How many more of this the customer could still add. */
   readonly maxQuantity: number;
+  /** Carried from the snapshot unchanged; pricing never looks at it. */
+  readonly photo: CartPhoto | null;
 }
 
 /** One house, one parcel, one delivery charge. */
@@ -200,6 +202,7 @@ export class CartPricer {
         unitPrice: item.unitPrice,
         lineTotal: item.unitPrice.times(quantity),
         maxQuantity: cap,
+        photo: item.primaryPhoto,
       };
 
       const bucket = grouped.get(item.sellerId);

@@ -182,4 +182,29 @@ export const photoContract: readonly PhotoContractCase[] = [
       equal(await w.uow.transaction((r) => r.listings.hasPrimaryImage(w.wardProductId)), false, 'after');
     },
   },
+
+  {
+    name: 'the cart snapshot carries the primary photograph, follows a change of primary, and is null without one',
+    async run(setup) {
+      const w = await setup();
+      const snapshotPhoto = async () => {
+        const [row] = await w.uow.transaction((r) => r.products.snapshotForCart([w.wardProductId]));
+        assert(row !== undefined, 'the ward product must resolve');
+        return row!.primaryPhoto;
+      };
+
+      equal(await snapshotPhoto(), null, 'no photograph yet');
+
+      const a = await add(w, w.wardProductId, { width: 1200, height: 1500 });
+      const b = await add(w, w.wardProductId);
+      equal(await snapshotPhoto(), {
+        storageKey: a.storageKey, alt: a.alt, width: 1200, height: 1500,
+      }, 'the primary, with its facts');
+
+      // The case a join on "any photograph" or "the first by position" would
+      // get right by accident above, and wrong here.
+      await w.uow.transaction((r) => r.photos.makePrimary(b.id, w.wardProductId));
+      equal((await snapshotPhoto())?.storageKey ?? null, b.storageKey, 'follows the new primary');
+    },
+  },
 ];

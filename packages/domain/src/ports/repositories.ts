@@ -62,6 +62,20 @@ export interface ProductRecord {
  * stop selling instantly, and a cart priced from the listing alone would keep
  * taking money for it.
  */
+/**
+ * A product's verified primary photograph, as the cart carries it.
+ *
+ * A storage KEY, never a URL: which store the photograph lives in is the API's
+ * business, and a domain type holding a URL would hand a CDN hostname to every
+ * layer that touches a cart line.
+ */
+export interface CartPhoto {
+  readonly storageKey: string;
+  readonly alt: string;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface CatalogueSnapshot {
   readonly productId: string;
   readonly sellerId: string;
@@ -77,6 +91,12 @@ export interface CatalogueSnapshot {
   readonly isPublished: boolean;
   readonly isHouseLive: boolean;
   readonly fulfilmentHours: number;
+  /**
+   * The primary photograph, when it came through the verified upload flow.
+   * Null otherwise — including a primary row with no facts (0021) — and the bag
+   * draws the flacon, exactly as the product tile does.
+   */
+  readonly primaryPhoto: CartPhoto | null;
 }
 
 export interface PersistedOrder {
