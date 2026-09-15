@@ -13,16 +13,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@trpc/server": "^11.0.0-rc.660",
-    "zod": "^3.24.1",
-    "@diyar/domain": "workspace:*",
     "@diyar/db": "workspace:*",
-    "@diyar/i18n": "workspace:*"
+    "@diyar/domain": "workspace:*",
+    "@diyar/i18n": "workspace:*",
+    "@trpc/server": "^11.0.0-rc.660",
+    "aws4fetch": "1.0.20",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "vitest": "^2.1.8",
-    "typescript": "^5.7.2",
     "@electric-sql/pglite": "^0.5.8",
-    "drizzle-orm": "^0.38.3"
+    "drizzle-orm": "^0.38.3",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

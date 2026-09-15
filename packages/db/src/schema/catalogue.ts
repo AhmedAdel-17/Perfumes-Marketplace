@@ -12,6 +12,7 @@
  *    migrations/0001_constraints.sql. "No listing publishes with missing
  *    required fields" is a constraint, not a convention.
  */
+import { sql } from 'drizzle-orm';
 import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { sellers } from './sellers';
 import {
@@ -116,8 +117,20 @@ export const productMedia = pgTable('product_media', {
   isPrimary: boolean('is_primary').default(false).notNull(),
   /** Required catalogue field: the seller confirms it owns the image. */
   ownershipConfirmed: boolean('ownership_confirmed').default(false).notNull(),
+  /**
+   * What the file IS, read from its own header by the server after upload
+   * (migration 0021). All four or none: none marks a row that did not come
+   * through the verified upload flow, which the shop does not render as a photo.
+   */
+  contentType: text('content_type'),
+  byteSize: integer('byte_size'),
+  width: integer('width'),
+  height: integer('height'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [index('product_media_product_idx').on(t.productId)]);
+}, (t) => [
+  index('product_media_product_idx').on(t.productId),
+  uniqueIndex('product_media_one_primary').on(t.productId).where(sql`is_primary`),
+]);
 
 /** Append-only. Doc 06 §4: material changes create an auditable revision. */
 export const productRevisions = pgTable('product_revisions', {

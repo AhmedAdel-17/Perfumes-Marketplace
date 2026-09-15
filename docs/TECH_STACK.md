@@ -59,6 +59,16 @@ Cloudflare network the DNS already uses, which has an edge location in Cairo. Su
 Storage's main advantage — policies tied to Supabase Auth — does not apply here: sessions are
 this application's own signed cookies, not Supabase Auth.
 
+**The one dependency it adds: `aws4fetch`** (15 Sep 2026). *What it does:* signs S3-API
+requests and presigned URLs with AWS Signature V4, which R2 requires. *What it replaces:*
+writing that signing by hand — cryptographic canonicalisation is exactly the code that
+passes every test and then fails on one header in production. *Size:* ~65 KB unpacked,
+zero dependencies, runs on Node and the edge. *Maintenance:* MIT, last release 2024 against
+a signing specification that has not changed in a decade; used in Cloudflare's own R2
+examples. *Rejected alternative:* `@aws-sdk/client-s3` + `s3-request-presigner` — correct,
+but megabytes of dependency tree for four operations. *Cost of removal:* one adapter file
+(`packages/api/src/providers/r2-media.ts`); nothing else imports it.
+
 **What it does not decide.** Resizing. Originals live in R2; whether variants come from
 Next.js image optimisation or Cloudflare image transformations is a deployment decision,
 made against real traffic, behind the same `MediaStore` port.

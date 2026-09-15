@@ -7,4 +7,5 @@ export * from './providers/ports';
 export * from './providers/stubs';
 export * from './providers/session';
 export * from './providers/courier';
+export * from './providers/media';
 export * from './routers/index';

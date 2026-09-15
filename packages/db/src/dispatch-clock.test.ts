@@ -161,6 +161,7 @@ describe('0020 — the house’s dispatch hours are snapshotted onto every sub-o
 describe('0020 — orders confirmed before the fix get the clock they should have had', () => {
   let db: PGlite;
   let before: string;
+  let through0020: string;
 
   beforeAll(async () => {
     /*
@@ -175,6 +176,16 @@ describe('0020 — orders confirmed before the fix get the clock they should hav
     for (const file of migrationFiles().filter((f) => f < '0020')) {
       copyFileSync(join(MIGRATIONS_DIR, file), join(before, file));
     }
+    /*
+     * The second step stops AT 0020 too, rather than pointing at the live
+     * directory. This test proves one migration; the first version applied the
+     * real directory and broke the day 0021 was written, asserting on a
+     * migration it had nothing to say about.
+     */
+    through0020 = mkdtempSync(join(tmpdir(), 'diyar-0020-'));
+    for (const file of migrationFiles().filter((f) => f <= '0020_dispatch_clock.sql')) {
+      copyFileSync(join(MIGRATIONS_DIR, file), join(through0020, file));
+    }
     db = new PGlite();
     await applyMigrations(db, { dir: before });
   }, 120_000);
@@ -182,6 +193,7 @@ describe('0020 — orders confirmed before the fix get the clock they should hav
   afterAll(async () => {
     await db?.close();
     rmSync(before, { recursive: true, force: true });
+    rmSync(through0020, { recursive: true, force: true });
   });
 
   it('backfills the snapshot and the deadline, and leaves unconfirmed orders without one', async () => {
@@ -192,7 +204,7 @@ describe('0020 — orders confirmed before the fix get the clock they should hav
     await confirm(db, confirmed, '2026-09-10T08:00:00Z');
     const waiting = await subOrder(db, w);
 
-    const applied = await applyMigrations(db);
+    const applied = await applyMigrations(db, { dir: through0020 });
     expect(applied, 'only 0020 should run over the old schema').toEqual(['0020_dispatch_clock.sql']);
 
     await db.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);

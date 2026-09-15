@@ -34,6 +34,7 @@ export * from './catalogue/vocabularies';
 export * from './catalogue/claims';
 export * from './catalogue/listing';
 export * from './catalogue/completeness';
+export * from './catalogue/media';
 export * from './trust/review';
 export * from './trust/return-request';
 export * from './trust/support';
