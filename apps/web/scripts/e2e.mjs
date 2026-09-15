@@ -1312,6 +1312,53 @@ try {
     await page.close();
   });
 
+  /* ----------------------------------------------------- the owner's report */
+
+  await test('the owner sees money, the funnel and the SLA without database work', async () => {
+    // Gate 8. By this point the suite has placed, confirmed, declined,
+    // dispatched and delivered real orders, so every section has something in it.
+    await ops.goto(`${BASE}/ops/insights`, { waitUntil: 'networkidle' });
+    const text = await ops.locator('main').innerText();
+
+    for (const heading of ['المال', 'مسار الطلبات', 'التزام الدور', 'مدخلات هامش المساهمة']) {
+      assert(text.includes(heading), `the report must have its "${heading}" section`);
+    }
+    assert(text.includes('سُلّمت ولم تُستحق بعد'), 'held GMV must sit beside GMV, never be left out');
+    assert(text.includes('ميزون نور') || text.includes('دار الورد'), 'the SLA table must name the houses');
+  });
+
+  await test('an unrecorded cost is said in words — never shown as zero', async () => {
+    const text = await ops.locator('main').innerText();
+    assert(text.includes('لم يُسجَّل بعد'), 'payment cost is not recorded, and the screen must say so');
+    assert(text.includes('تكلفة الدفع والتحصيل'), 'the unrecorded input must still be listed');
+  });
+
+  await test('the report leaks no codes, no NaN and no Arabic-Indic digits', async () => {
+    const text = await ops.locator('main').innerText();
+    const leaked = ['organic_search', 'not_recorded', 'count_only', 'payment_cost', 'out_of_stock', 'NaN', 'undefined']
+      .filter((token) => text.includes(token));
+    equal(leaked.length, 0, `raw values on the owner's screen: ${leaked.join(', ')}`);
+    assert(!/[٠-٩]/.test(text), 'an operating tool uses Western digits throughout');
+  });
+
+  await test('the period is a URL, and changing it keeps the screen whole', async () => {
+    await ops.locator('nav[aria-label="الفترة"] a', { hasText: 'اليوم' }).click();
+    await ops.waitForURL('**/ops/insights?days=1', { timeout: 20_000 });
+    const text = await ops.locator('main').innerText();
+    assert(text.includes('المال') && text.includes('بتوقيت القاهرة'), 'the one-day report must render');
+  });
+
+  await test('the owner’s report is closed to a signed-out visitor and to a house', async () => {
+    const page = await browser.newPage();
+    await page.goto(`${BASE}/ops/insights`, { waitUntil: 'networkidle' });
+    assert(!page.url().includes('/ops/insights'), `reached the owner report unauthenticated: ${page.url()}`);
+    await page.close();
+
+    // A house's session is a different cookie entirely; it must not open this.
+    await seller.goto(`${BASE}/ops/insights`, { waitUntil: 'networkidle' });
+    assert(!seller.url().includes('/ops/insights'), `a house reached the owner report: ${seller.url()}`);
+  });
+
   /* =============================================================== returns */
   group('the returns policy, with a way to act on it');
 

@@ -1314,6 +1314,64 @@ describe('the audit trail can be read without database work', () => {
   });
 });
 
+/**
+ * The owner's report through the procedure a browser reaches — gate 8.
+ *
+ * The figures themselves are proved in `insights/owner-metrics.test.ts`, and
+ * the facts behind them in the owner-report contract. What is proved here is
+ * the door: who may open it, and what shape comes out of it.
+ */
+describe('the owner’s report', () => {
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+  const ADMIN = { staffId: '', role: 'admin', label: 'مشغّلة المنصّة' };
+
+  beforeAll(async () => {
+    const [staff] = await db.select({ id: schema.platformStaff.id })
+      .from(schema.platformStaff).limit(1);
+    ADMIN.staffId = staff!.id;
+  });
+
+  it('an admin reads the last 30 days by default, every section present', async () => {
+    const report = await caller(PLATFORM_ACTOR, null, ADMIN).insights.owner({});
+
+    expect(report.days).toBe(30);
+    expect(new Date(report.from).getTime()).toBeLessThan(new Date(report.to).getTime());
+    expect(Array.isArray(report.sla)).toBe(true);
+    expect(report.contributionInputs.map((i) => i.key)).toContain('payment_cost');
+    expect(report.funnel).toHaveProperty('exits.refused');
+  });
+
+  it('serialises an unrecorded cost with NO amount — the API never invents a zero', async () => {
+    const report = await caller(PLATFORM_ACTOR, null, ADMIN).insights.owner({ days: 7 });
+    const payment = report.contributionInputs.find((i) => i.key === 'payment_cost')!;
+    expect(payment.status).toBe('not_recorded');
+    expect(payment.amountPiastres).toBeNull();
+  });
+
+  it('an operator who is not an admin is refused — margins are not every operator’s business', async () => {
+    const operator = { ...ADMIN, role: 'operator' };
+    await expect(caller(PLATFORM_ACTOR, null, operator).insights.owner({}))
+      .rejects.toThrow(/لإدارة المنصّة فقط/);
+  });
+
+  it('a house cannot read it', async () => {
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    await expect(ward.insights.owner({})).rejects.toThrow();
+  });
+
+  it('nobody signed out can read it', async () => {
+    await expect(caller({ role: 'anon', id: null }).insights.owner({})).rejects.toThrow();
+  });
+
+  it('refuses a period it does not offer', async () => {
+    // Four periods, all whole Cairo days. An arbitrary span would be a report
+    // nobody could reproduce from the screen.
+    await expect(
+      caller(PLATFORM_ACTOR, null, ADMIN).insights.owner({ days: 5 as unknown as 7 }),
+    ).rejects.toThrow();
+  });
+});
+
 describe('the money loop — order to payout, against a real Postgres', () => {
   const ANON: ActorContext = { role: 'anon', id: null };
   const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };

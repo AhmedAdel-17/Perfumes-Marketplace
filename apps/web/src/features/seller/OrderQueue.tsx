@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, stateCopy, internal as num } from '@diyar/i18n';
+import {
+  CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, REASON_CODE_AR, stateCopy, internal as num,
+} from '@diyar/i18n';
 import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { REJECTION_REASONS } from '@diyar/domain';
@@ -288,12 +290,7 @@ function Row({
  * a reason gains a code with no wording, or keeps wording for a code that no
  * longer exists. The list cannot drift again without failing the typecheck.
  */
-const REASON_LABELS: Record<(typeof REJECTION_REASONS)[number], string> = {
-  out_of_stock: 'نفد المخزون',
-  pricing_error: 'خطأ في السعر',
-  area_not_served: 'لا نوصّل إلى هذه المنطقة',
-  suspected_fraud: 'اشتباه في الطلب',
-};
+const REASON_LABELS: Record<(typeof REJECTION_REASONS)[number], string> = REASON_CODE_AR;
 
 const REASONS = REJECTION_REASONS.map((value) => ({ value, label: REASON_LABELS[value] }));
 

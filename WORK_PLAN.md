@@ -119,10 +119,13 @@ Funnel, seller SLA, contribution inputs — without touching the database (gate 
       was shown a dispatch deadline. Migration 0020 snapshots the house's dispatch hours
       onto the sub-order; confirmation starts the clock; both adapters, contract cases,
       and the seller queue's countdown.
-- [ ] 9.3 Owner metrics computed in the domain from the same classifiers the payout run
-      uses — one definition, two screens
-- [ ] 9.4 The owner screen: post-order funnel with exits by reason, SLA per house,
-      contribution inputs with their status
+- [x] 9.3 Owner metrics computed in the domain from the same classifiers the payout run
+      uses — one definition, two screens. `classifyForSettlement` is now the ONLY
+      definition of "earned"; a parity test holds the report to the payout builder
+      to the piastre, and was shown to fail when the rule is broken
+- [x] 9.4 The owner screen (`/ops/insights`, admins only): money beside held money,
+      the funnel with exits by reason, SLA per house, refusals by governorate, source
+      mix, and contribution inputs with their status
 - [ ] 9.5 Pre-order funnel — **blocked on A-1** (lawful basis for guest browsing events)
 
 Then the roadmap's Phase 2, and the mobile apps.
@@ -242,3 +245,33 @@ Newest last. One line per completed item, with anything the next session must kn
   Operational: a second e2e run on the same server fails at sign-in — the OTP
   limiter working as designed — and a persistent dev database makes the review
   tests fail on their second run. For a clean run: `seed -- --fresh`, restart.
+
+- 2026-09-15 — **§9.3–9.4 done: gate 8 is met for everything the system records.**
+  The owner report is a pure projection (`buildOwnerReport`) over one read port,
+  proved against both adapters. Five decisions worth knowing:
+
+  * "Completed" is the payout's own classifier, moved out of `SettlementService`
+    so both call one function; `listForSettlement` and the report share one row
+    mapping too, where "cash in hand" now means ANY shipment remitted (it depended
+    on row order when a sub-order had two).
+  * The confirmation SLA measures ANSWERING in time. The first draft of the
+    definitions counted a prompt decline as late, which would teach houses to sit
+    on orders they cannot fill; corrected before a line of it was built.
+  * Periods are Cairo calendar days found, not computed: Egypt's daylight saving
+    means +2 or +3, and one April day has no midnight. Two mutations (fixed +2,
+    fixed +3) each fail the tests.
+  * Rates cross the API as numerator and denominator; an unrecorded cost has no
+    amount at all. No contribution margin is shown — four of eight terms is not a
+    margin — until A-2 is decided.
+  * Admin-only: take rate and revenue are not every operator's business.
+
+  The audit found one real defect on the new screen: a wide table's scroll box was
+  not keyboard-reachable at phone width. Fixed (focusable, named region). Layout
+  tokens are now exposed as `min-w-*` as well as `max-w-*`, so a table floor is a
+  token rather than a retyped pixel value.
+
+  Tests: domain 596, api 229, db 287, i18n 50, tokens 110. e2e 119/119 on a fresh
+  database. Audit clean in both themes, every surface, every width.
+
+  **Still blocked, and not mine:** 5.7 media (gate 1), 9.5 the pre-order funnel
+  (A-1), a contribution margin (A-2).

@@ -481,6 +481,9 @@ try {
     ['ops-houses', '/ops/houses'],
     // The audit trail: read all day by the person answering "who did this".
     ['ops-audit', '/ops/audit'],
+    // The owner's report: the widest tables in the product, which is exactly
+    // where a phone-width page scrolls sideways if a table is not contained.
+    ['ops-insights', '/ops/insights'],
   ];
 
   for (const size of WIDTHS) {

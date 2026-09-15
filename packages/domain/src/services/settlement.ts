@@ -24,12 +24,14 @@ import { Money, sumMoney, type BasisPoints } from '../value-objects/money';
 import { CommissionPolicy, type OrderSource } from '../policies/commission';
 import { SubOrderLifecycle, type SubOrderState } from '../state-machines/sub-order';
 import type { Clock } from '../ports/clock';
+import { classifyForSettlement, type HoldReason, type LineOutcome } from './settlement-classify';
 
-export type HoldReason =
-  | 'within_reserve_period'
-  | 'cash_not_remitted'
-  | 'payment_not_captured'
-  | 'return_window_open';
+/*
+ * The classification itself lives in `settlement-classify.ts`, shared with the
+ * owner's report — one definition of "earned" for a payout and a dashboard.
+ * Re-exported here so every existing import of these names keeps working.
+ */
+export type { HoldReason, LineOutcome } from './settlement-classify';
 
 /**
  * Who books and pays the courier — and therefore who receives the delivery fee.
@@ -73,8 +75,6 @@ export interface SettlementInput {
   readonly disputeWindowDays: number;
 }
 
-export type LineOutcome = 'earned' | 'reversed' | 'excluded' | 'held';
-
 export interface StatementLine {
   readonly subOrderId: string;
   readonly reference: string;
@@ -113,52 +113,9 @@ const addDays = (d: Date, days: number): Date => new Date(d.getTime() + days * 8
 export class SettlementService {
   constructor(private readonly clock: Clock) {}
 
-  private classify(s: SettlementSubOrder, periodEnd: Date, reserveDays: number): {
-    outcome: LineOutcome;
-    holdReason?: HoldReason;
-    explanation: string;
-  } {
-    // Nothing was ever sold: no gross, no fee, no cost to the house.
-    if (['placed', 'awaiting_seller', 'confirmed', 'dispatched'].includes(s.state)) {
-      return { outcome: 'excluded', explanation: 'الطلب لم يكتمل بعد — لا يدخل هذا الكشف' };
-    }
-    if (s.state === 'rejected') {
-      return { outcome: 'excluded', explanation: 'اعتذرت الدار — لا عمولة ولا مستحقات' };
-    }
-    if (s.state === 'cancelled') {
-      return { outcome: 'excluded', explanation: 'أُلغي الطلب — لا عمولة ولا مستحقات' };
-    }
-    if (s.state === 'refused') {
-      // Refused at the door: no sale, so no commission. Shipping cost is a real
-      // loss but is allocated through an adjustment, never silently netted here.
-      return { outcome: 'excluded', explanation: 'رُفض الاستلام — لا عمولة؛ تكلفة الشحن تُسوّى بقيد منفصل' };
-    }
-    if (s.state === 'returned') {
-      return { outcome: 'reversed', explanation: 'مُرتجع — تُعكس قيمة الطلب وتُردّ العمولة بالكامل' };
-    }
-
-    // Delivered. Eligible only if the money is real and the reserve has passed.
-    if (!s.cashInHand) {
-      return {
-        outcome: 'held',
-        holdReason: 'cash_not_remitted',
-        explanation: 'سُلّم — بانتظار تحويل شركة الشحن للمبلغ',
-      };
-    }
-    const releaseAt = addDays(s.deliveredAt ?? periodEnd, reserveDays);
-    if (releaseAt > periodEnd) {
-      return {
-        outcome: 'held',
-        holdReason: 'within_reserve_period',
-        explanation: 'سُلّم — ما زال داخل فترة الإرجاع',
-      };
-    }
-    return { outcome: 'earned', explanation: 'مكتمل — مستحق' };
-  }
-
   build(input: SettlementInput): PayoutStatement {
     const lines: StatementLine[] = input.subOrders.map((s) => {
-      const { outcome, holdReason, explanation } = this.classify(
+      const { outcome, holdReason, explanation } = classifyForSettlement(
         s,
         input.periodEnd,
         input.reserveDays,

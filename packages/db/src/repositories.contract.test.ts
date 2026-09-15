@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   Address, FixedClock, Money, PlaceOrder,
   repositoryContract, type ContractWorld,
+  ownerReportContract,
   contentContract, type ContentContractWorld,
   siteContract, type SiteContractWorld,
 } from '@diyar/domain';
@@ -134,6 +135,22 @@ afterAll(async () => { await client?.close(); });
 
 describe('repository contract — Drizzle + Postgres adapter', () => {
   for (const testCase of repositoryContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(harness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
+
+/*
+ * The owner report's facts, over the same world — and through RLS as the
+ * platform, which is the only role that may read across every house.
+ *
+ * This is the half that matters: `respondedAt` and `exitReason` come from the
+ * transition log here, and "cash in hand" from shipment rows, none of which the
+ * in-memory adapter has to reconstruct.
+ */
+describe('owner report contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of ownerReportContract) {
     it(testCase.name, async () => {
       await expect(testCase.run(harness)).resolves.toBeUndefined();
     }, 60_000);

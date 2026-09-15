@@ -113,6 +113,18 @@ describe('one source of truth — web and native cannot drift', () => {
     expect(diyarPreset.theme.extend.transitionDuration.base).toBe('420ms');
   });
 
+  it('layout widths are reachable as a MINIMUM as well as a maximum', () => {
+    /*
+     * The layout tokens were exposed only as `max-w-*`, so a table that must not
+     * be squeezed narrower than a readable measure had no token to ask for, and
+     * five screens reached for an arbitrary `min-w-[…px]` instead — the exact
+     * "number retyped in every route" the layout tokens exist to stop.
+     */
+    const { maxWidth, minWidth } = diyarPreset.theme.extend;
+    expect(minWidth).toEqual(maxWidth);
+    expect(minWidth.proseMax).toBe('620px');
+  });
+
   it('opacity tokens survive into both', () => {
     expect(nativeTheme.opacity.veil).toBe(opacity.veil);
     expect(diyarPreset.theme.extend.opacity.veil).toBe(String(opacity.veil));

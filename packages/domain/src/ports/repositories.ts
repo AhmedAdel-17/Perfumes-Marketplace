@@ -1,5 +1,6 @@
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
+import type { OwnerReportRepository } from './owner-report-repository';
 import type { ListingRepository } from './listing-repository';
 import type { ReviewRepository } from './review-repository';
 import type { ReturnRepository } from './return-repository';
@@ -427,6 +428,8 @@ export interface Repositories {
   readonly support: SupportRepository;
   readonly applications: ApplicationRepository;
   readonly audit: AuditTrail;
+  /** Platform-only by nature: the facts behind the owner's report, across every house. */
+  readonly ownerReport: OwnerReportRepository;
 }
 
 /**

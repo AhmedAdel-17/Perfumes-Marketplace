@@ -15,6 +15,8 @@ import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import { newestFirst, type AuditRecord, type AuditTrail } from '../ports/audit-trail';
+import type { OwnerReportRepository } from '../ports/owner-report-repository';
+import type { OwnerReportSubOrder } from '../insights/owner-metrics';
 import type {
   ModeratedReview, PublishedReview, ReviewRepository, ReviewableLine,
 } from '../ports/review-repository';
@@ -54,6 +56,8 @@ interface OrderRow {
   reference: string;
   source: PersistedOrder['source'];
   totalMinor: number;
+  /** The order-level discount, as the database stores it on `orders`. */
+  discountMinor: number;
   subOrderIds: string[];
 }
 
@@ -198,7 +202,13 @@ interface Store {
   products: Map<string, ProductRecord>;
   orders: Map<string, OrderRow>;
   subOrders: Map<string, SubOrderRow>;
-  transitions: TransitionRecord[];
+  /**
+   * The append-only log, keyed to its sub-order as `sub_order_transitions` is.
+   *
+   * It held bare records with no sub-order id, so nothing could ask when a
+   * particular order was answered — which the owner report must.
+   */
+  transitions: Array<TransitionRecord & { subOrderId: string }>;
   seq: number;
 }
 
@@ -484,6 +494,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           reference: draft.reference,
           source: draft.source,
           totalMinor: draft.total.minor,
+          discountMinor: draft.discount.minor,
           subOrderIds,
         });
 
@@ -654,7 +665,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         }
         if (to === 'dispatched') row.dispatchedAt = record.at;
         if (to === 'delivered') row.deliveredAt = record.at;
-        s.transitions.push({ ...record, from, to, actor, reason });
+        s.transitions.push({ ...record, from, to, actor, reason, subOrderId: id });
       },
 
       async recordRemittance({ subOrderId, remittedAt }) {
@@ -1502,9 +1513,75 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    /*
+     * The owner report's facts, in memory.
+     *
+     * The same shape the Postgres adapter reads out of five tables: the cohort
+     * of orders placed in the period, each sub-order with what a payout would
+     * need, the first confirm-or-decline from the log as the ANSWER, and the
+     * reason on the move into a terminal state. It judges nothing — that is
+     * `buildOwnerReport`'s job, on both sides of the contract.
+     */
+    const ownerReport: OwnerReportRepository = {
+      async facts({ from, to }) {
+        const s = store();
+        const inPeriod = (d: Date) => d.getTime() >= from.getTime() && d.getTime() < to.getTime();
+        const exits = new Set(['rejected', 'cancelled', 'refused', 'returned']);
+
+        const cohort = [...s.orders.values()].filter((o) => inPeriod(o.placedAt));
+        const orderIds = new Set(cohort.map((o) => o.id));
+        const subs = [...s.subOrders.values()].filter((so) => orderIds.has(so.orderId));
+        const subIds = new Set(subs.map((so) => so.id));
+
+        const rows: OwnerReportSubOrder[] = subs.map((so) => {
+          const log = s.transitions.filter((t) => t.subOrderId === so.id);
+          const answers = log
+            .filter((t) => t.to === 'confirmed' || t.to === 'rejected')
+            .map((t) => t.at.getTime());
+          const intoExit = exits.has(so.state) ? log.filter((t) => t.to === so.state) : [];
+          const exit = intoExit[intoExit.length - 1];
+
+          return {
+            id: so.id,
+            reference: so.reference,
+            state: so.state,
+            merchandise: Money.fromMinor(so.merchandiseMinor),
+            shipping: Money.fromMinor(so.shippingMinor),
+            commissionSource: so.commissionSource,
+            commissionBps: so.commissionBps,
+            ...(so.deliveredAt ? { deliveredAt: so.deliveredAt } : {}),
+            cashInHand: so.codRemitted,
+            deliveryFulfilledBy: so.deliveryFulfilledBy,
+            orderId: so.orderId,
+            sellerId: so.sellerId,
+            governorate: so.delivery.governorate,
+            placedAt: so.placedAt,
+            confirmDueAt: so.confirmDueAt,
+            respondedAt: answers.length > 0 ? new Date(Math.min(...answers)) : null,
+            confirmedAt: so.confirmedAt ?? null,
+            dispatchDueAt: so.dispatchDueAt,
+            dispatchedAt: so.dispatchedAt ?? null,
+            exitReason: exit?.reason ?? null,
+            reserveDays: s.sellers.get(so.sellerId)?.payoutReserveDays ?? 0,
+          };
+        });
+
+        const refunds = [...s.returns.values()]
+          .filter((r) => subIds.has(r.subOrderId) && r.costBearer === 'platform')
+          .reduce((sum, r) => sum + (r.refundMinor ?? 0), 0);
+
+        return {
+          subOrders: rows,
+          platformRefunds: Money.fromMinor(refunds),
+          ticketCount: [...s.tickets.values()].filter((t) => inPeriod(t.createdAt)).length,
+          discounts: Money.fromMinor(cohort.reduce((sum, o) => sum + o.discountMinor, 0)),
+        };
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
-      site, reviews, returns, support, applications,
+      site, reviews, returns, support, applications, ownerReport,
     };
   }
 }

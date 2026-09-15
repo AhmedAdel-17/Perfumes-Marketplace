@@ -145,6 +145,14 @@ is a different number wearing the margin's name.
 
 ## 5. What the owner's screen shows, and refuses to
 
+**Where:** `/ops/insights`, in the operations console. **Who:** platform staff with the
+`admin` role only. Platform revenue and take rate are the business's own margin; an
+operator working the delivery queue needs neither, and least privilege (CLAUDE.md §8)
+is not suspended for internal staff. An operator who opens it is told why in a sentence.
+
+**Periods:** today, 7, 30 or 90 Cairo days. A fixed list rather than a date picker, so
+any figure an owner quotes can be reproduced by someone else from the same screen.
+
 **Shows:** the post-order funnel with exits by reason; the SLA table per house; every
 contribution input with its status; GMV beside held GMV and take rate; source mix.
 

@@ -59,6 +59,10 @@ export const diyarPreset = {
       // Layout widths come from tokens too, so 'how wide is a page' is one
       // decision made once rather than a number retyped in every route.
       maxWidth: px(layout),
+      // And as a floor. A wide table must not be squeezed below a readable
+      // measure, and without this the only way to say so was a hand-typed
+      // `min-w-[…px]` — a layout width retyped per screen after all.
+      minWidth: px(layout),
       borderRadius: px(radius),
       opacity: Object.fromEntries(Object.entries(opacity).map(([k, v]) => [k, String(v)])),
       transitionDuration: ms(motion),

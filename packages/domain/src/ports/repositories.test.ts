@@ -12,6 +12,7 @@ import { FixedClock } from './clock';
 import { PlaceOrder } from '../services/place-order';
 import { InMemoryUnitOfWork } from '../testing/in-memory-repositories';
 import { repositoryContract, type ContractWorld } from './repository-contract';
+import { ownerReportContract } from './owner-report-contract';
 import { contentContract } from './content-contract';
 import { siteContract } from './site-contract';
 
@@ -102,6 +103,25 @@ describe('repository contract — in-memory adapter', () => {
 
   it('runs a meaningful number of cases, so an empty contract cannot pass silently', () => {
     expect(repositoryContract.length).toBeGreaterThanOrEqual(10);
+  });
+});
+
+/*
+ * The owner report's facts, over the SAME world as the repository contract.
+ *
+ * Reused rather than rebuilt: the report reads exactly the orders this harness
+ * places, and a second fixture would be a second place for the two houses'
+ * terms to drift apart from the ones the order cases depend on.
+ */
+describe('owner report contract — in-memory adapter', () => {
+  for (const testCase of ownerReportContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(harness)).resolves.toBeUndefined();
+    });
+  }
+
+  it('runs a meaningful number of cases', () => {
+    expect(ownerReportContract.length).toBeGreaterThanOrEqual(6);
   });
 });
 

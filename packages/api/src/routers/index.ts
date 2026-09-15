@@ -4,6 +4,7 @@ import { auditRouter } from './audit';
 import { cartRouter } from './cart';
 import { catalogueRouter } from './catalogue';
 import { contentRouter } from './content';
+import { insightsRouter } from './insights';
 import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
 import { platformRouter } from './platform';
@@ -19,6 +20,7 @@ export const appRouter = router({
   cart: cartRouter,
   catalogue: catalogueRouter,
   content: contentRouter,
+  insights: insightsRouter,
   listings: listingsRouter,
   orders: ordersRouter,
   platform: platformRouter,

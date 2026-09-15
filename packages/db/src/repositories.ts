@@ -30,6 +30,7 @@ import { returnRepository } from './return-repository';
 import { supportRepository } from './support-repository';
 import { applicationRepository } from './application-repository';
 import { auditTrail } from './audit-trail';
+import { ownerReportRepository, settlementFacts } from './owner-report-repository';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -542,58 +543,18 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
   },
 
   async listForSettlement(sellerId) {
-    // Two plain queries stitched in memory, rather than correlated subqueries.
-    // The first attempt inlined `SELECT commission_bps ... WHERE sub_order_id =`
-    // into the select list; the correlation did not resolve and every rate came
-    // back null, which the contract caught as "the snapshotted rate must be
-    // carried through". Two readable queries beat one clever one on a money path.
     const subs = await db.select().from(schema.subOrders)
       .where(eq(schema.subOrders.sellerId, sellerId));
     if (subs.length === 0) return [];
 
-    const ids = subs.map((s) => s.id);
-
-    const lines = await db
-      .select({
-        subOrderId: schema.orderLineItems.subOrderId,
-        source: schema.orderLineItems.commissionSource,
-        bps: schema.orderLineItems.commissionBps,
-      })
-      .from(schema.orderLineItems)
-      .where(inArray(schema.orderLineItems.subOrderId, ids));
-
-    // PlaceOrder assigns ONE snapshot per sub-order, so any line carries it.
-    const snapshotBySub = new Map(lines.map((l) => [l.subOrderId, l]));
-
-    // Cash in hand means the courier has actually remitted (COD) — not merely
-    // that the parcel was delivered. Doc 03 §10: never pay a house faster than
-    // we have been paid. Inferring this from delivered_at would pay out money
-    // we do not yet hold.
-    const shipments = await db
-      .select({
-        subOrderId: schema.shipments.subOrderId,
-        remittedAt: schema.shipments.codRemittedAt,
-      })
-      .from(schema.shipments)
-      .where(inArray(schema.shipments.subOrderId, ids));
-
-    const remitted = new Map(shipments.map((s) => [s.subOrderId, s.remittedAt !== null]));
-
-    return subs.map((r): SettlementSubOrder => {
-      const snap = snapshotBySub.get(r.id);
-      return {
-        id: r.id,
-        reference: r.reference,
-        state: r.state,
-        merchandise: Money.fromMinor(r.merchandisePiastres),
-        shipping: Money.fromMinor(r.shippingPiastres),
-        commissionSource: (snap?.source ?? 'unknown') as OrderSource,
-        commissionBps: snap?.bps ?? 0,
-        deliveryFulfilledBy: r.deliveryFulfilledBy,
-        ...(r.deliveredAt ? { deliveredAt: r.deliveredAt } : {}),
-        cashInHand: remitted.get(r.id) ?? false,
-      };
-    });
+    /*
+     * The commission snapshot and the remittance are read by the helper the
+     * owner report uses as well, so a payout and the owner's dashboard cannot
+     * disagree about what has been earned. See `settlementFacts` for why "cash
+     * in hand" means ANY shipment remitted.
+     */
+    const facts = await settlementFacts(db, subs);
+    return subs.map((r) => facts.get(r.id)!);
   },
 });
 
@@ -698,6 +659,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   support: supportRepository(db),
   applications: applicationRepository(db),
   audit: auditTrail(db),
+  ownerReport: ownerReportRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */
