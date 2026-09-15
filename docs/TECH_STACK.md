@@ -44,11 +44,24 @@ Two separate store listings, not one binary. They share packages, not an app.
 | Schema + migrations | **Drizzle** | Typed SQL, migrations in git. Not an ORM — nothing hidden. |
 | Seller data isolation | **Postgres RLS** | Enforced by the database, not app code |
 | Auth | Supabase Auth, phone-OTP primary | Phone is the primary customer identifier |
-| File storage | Supabase Storage | Product images, KYC documents |
+| File storage | **Cloudflare R2** *(amended 15 Sep 2026, founder decision M-1; was Supabase Storage)* | Product images and content images in a public-read bucket behind a Cloudflare custom domain; KYC documents in a SEPARATE private bucket, reachable only through short-lived signed links. See the note below the table |
 | Realtime | Supabase Realtime | Live seller order queue |
 | Background jobs | `pg_boss` + `pg_cron` | SLA clocks, courier polling, payout runs. In-database; no extra vendor. |
 | Internal API | tRPC | End-to-end types from database to mobile screen |
 | Webhook API | REST route handlers + Zod | Paymob, Bosta, WhatsApp |
+
+**Why R2 rather than Supabase Storage (M-1).** A perfume marketplace is image-heavy and
+read-mostly: every product page, grid and house page is mostly photographs, served many
+times each. R2 charges nothing for egress, where Supabase Storage (and S3 behind CloudFront)
+bill every gigabyte served — the one cost that grows with success. R2 speaks the S3 API, so
+uploads are ordinary presigned PUTs and the adapter is replaceable. It sits behind the
+Cloudflare network the DNS already uses, which has an edge location in Cairo. Supabase
+Storage's main advantage — policies tied to Supabase Auth — does not apply here: sessions are
+this application's own signed cookies, not Supabase Auth.
+
+**What it does not decide.** Resizing. Originals live in R2; whether variants come from
+Next.js image optimisation or Cloudflare image transformations is a deployment decision,
+made against real traffic, behind the same `MediaStore` port.
 
 ---
 

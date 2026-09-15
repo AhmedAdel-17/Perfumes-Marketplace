@@ -88,10 +88,19 @@ enters the catalogue is not a marketplace.
 - [x] 5.4 Prohibited-claim controls: refused outright, or flagged for a person
 - [x] 5.5 Stock and price editable on a live listing (the audit trail is §6)
 - [x] 5.6 Domain tests, database guards, 19 surfaces in the audit
-- [ ] 5.7 **BLOCKED — media.** A listing cannot publish without a primary image
-      whose ownership is confirmed, and there is no way for a house to add one.
-      Needs a storage decision (provider, cost, signed uploads) before it can be
-      built. This is the last thing standing between the platform and MVP gate 1.
+- [ ] 5.7 **Media — UNBLOCKED 15 Sep 2026 (M-1: Cloudflare R2).** A listing cannot
+      publish without a primary image whose ownership is confirmed, and no house can
+      add one. The schema (`product_media`) and the publish trigger already exist.
+      - [ ] 5.7.1 `MediaStore` port: presign an upload, verify what arrived, public URL
+      - [ ] 5.7.2 Adapters: R2 (S3 API, presigned PUT) and a local-disk store for
+            development, refused in production by `assertProductionSafe`
+      - [ ] 5.7.3 Upload flow: the browser uploads straight to storage; the server
+            checks type, size and dimensions of what ARRIVED before writing a row
+      - [ ] 5.7.4 The seller's photo manager: add, order, choose primary, alt text,
+            ownership confirmation — and the listing gap closes
+      - [ ] 5.7.5 Product, grid, house page and bag render real photographs
+      - [ ] 5.7.6 The CMS image block renders from the same store
+      - [ ] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 
 ## 6. The audit trail  ◐
 - [x] 6.1 The port, both adapters, and a field-level diff

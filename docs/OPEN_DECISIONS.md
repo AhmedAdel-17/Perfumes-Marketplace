@@ -48,12 +48,34 @@ From `docs/ANALYTICS_DEFINITIONS.md` §6 and the seller-portal review. None bloc
 the MVP screens being built; each blocks a specific number or permission being
 honest.
 
-| # | Decision | Owner | Blocks |
+| # | Decision | Status | Blocks |
 |---|---|---|---|
-| A-1 | **Lawful basis and retention for guest browsing events** (product views, bag adds) under PDPL 151/2020 | Counsel + business founder | The pre-order half of the funnel. `analytics_events` exists; nothing may write it until this is answered |
-| A-2 | **How payment and courier costs enter the system** — provider reports, or a monthly figure entered by an admin | Business founder (with D-5) | Showing a contribution margin at all. Until then the screen shows each input's status, not a margin |
-| A-3 | **Whether a support ticket is costed, and at what rate** | Business founder | Variable support as money rather than a count |
-| S-1 | **What `manager` and `viewer` seller staff may do.** The database makes money, the house profile and staff management owner-only (tested). Every other role can currently confirm, decline and dispatch orders exactly like an owner. Doc 04 says staff have "limited permissions" but never defines the matrix | Business founder, with seller interviews | Per-role enforcement, and the staff-management screen owners do not yet have |
+| A-1 | **Guest browsing events** (product views, bag adds) | **DECIDED 15 Sep 2026 — record them.** Founder decision. Engineering position: first-party only, anonymous id, no third-party trackers, no personal data in the event | Unblocks the pre-order funnel (WORK_PLAN 9.5) |
+| A-2 | **How payment and courier costs enter the system** | **METHOD DECIDED 15 Sep 2026 — the platform admin enters them through the dashboard.** Build deferred by the founder to the stage before deployment | A contribution margin. Until built, the screen shows each input's status, not a margin |
+| A-3 | **Whether a support ticket is costed** | **Open — recommendation: do not cost tickets.** See the note below | Nothing today; the report shows tickets as a count |
+| S-1 | **Seller staff roles** | **ROLES DECIDED 15 Sep 2026: manager, admin, operations, support** (to be revised later). The permission for each role is **proposed below, awaiting confirmation** | Per-role enforcement and the staff-management screen |
+| M-1 | **Media store for product photos** | **DECIDED 15 Sep 2026 — Cloudflare R2.** Amends TECH_STACK (was Supabase Storage); reasoning recorded there | Unblocks WORK_PLAN 5.7 and MVP gate 1 |
+
+**A-3 — why a ticket was ever "costed".** Doc 03 §4 lists *variable support* as a term of
+contribution margin. That term is only real if support cost rises with every ticket — an
+outsourced agent paid per conversation. If support is done by salaried staff, it is a fixed
+cost: it does not belong in a per-order margin at all, and giving each ticket a price would
+invent a number. Recommendation: keep tickets as a count, and revisit only if support is ever
+outsourced per ticket.
+
+**S-1 — proposed permissions** (the owner is the account holder the house was verified
+against, and is not one of the four assignable roles):
+
+| Can… | Owner | Admin | Manager | Operations | Support |
+|---|---|---|---|---|---|
+| Confirm, decline and ship orders | ✓ | ✓ | ✓ | ✓ | see only |
+| Act on returns (agree, mark received) | ✓ | ✓ | ✓ | ✓ | see only |
+| Create, edit and submit listings; upload photos | ✓ | ✓ | ✓ | — | — |
+| Change price and stock on a live listing | ✓ | ✓ | ✓ | stock only | — |
+| See payouts and statements (money) | ✓ | ✓ | — | — | — |
+| Answer customer questions about the house's orders | ✓ | ✓ | ✓ | — | ✓ |
+| Edit the house profile | ✓ | ✓ | — | — | — |
+| Add and remove staff | ✓ | ✓ (not the owner) | — | — | — |
 
 ## Legal review required before implementing
 
