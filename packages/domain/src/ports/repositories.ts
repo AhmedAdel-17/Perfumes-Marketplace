@@ -1,6 +1,7 @@
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { OwnerReportRepository } from './owner-report-repository';
+import type { PhotoRepository } from './photo-repository';
 import type { ListingRepository } from './listing-repository';
 import type { ReviewRepository } from './review-repository';
 import type { ReturnRepository } from './return-repository';
@@ -430,6 +431,8 @@ export interface Repositories {
   readonly audit: AuditTrail;
   /** Platform-only by nature: the facts behind the owner's report, across every house. */
   readonly ownerReport: OwnerReportRepository;
+  /** A product's photographs. House scoping is checked by the caller and by RLS. */
+  readonly photos: PhotoRepository;
 }
 
 /**

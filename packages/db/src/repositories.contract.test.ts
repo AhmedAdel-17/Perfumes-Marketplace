@@ -17,6 +17,7 @@ import {
   Address, FixedClock, Money, PlaceOrder,
   repositoryContract, type ContractWorld,
   ownerReportContract,
+  photoContract,
   contentContract, type ContentContractWorld,
   siteContract, type SiteContractWorld,
 } from '@diyar/domain';
@@ -151,6 +152,20 @@ describe('repository contract — Drizzle + Postgres adapter', () => {
  */
 describe('owner report contract — Drizzle + Postgres adapter', () => {
   for (const testCase of ownerReportContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(harness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
+
+/*
+ * Photographs, through RLS as the platform, over the same world. The one-primary
+ * index from 0021 is only real here — the in-memory adapter has to keep the
+ * promise by construction — so this is where the ordering of "clear the old
+ * primary, then set the new one" is actually proved.
+ */
+describe('photo contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of photoContract) {
     it(testCase.name, async () => {
       await expect(testCase.run(harness)).resolves.toBeUndefined();
     }, 60_000);

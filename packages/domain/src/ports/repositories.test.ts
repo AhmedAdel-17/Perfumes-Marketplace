@@ -13,6 +13,7 @@ import { PlaceOrder } from '../services/place-order';
 import { InMemoryUnitOfWork } from '../testing/in-memory-repositories';
 import { repositoryContract, type ContractWorld } from './repository-contract';
 import { ownerReportContract } from './owner-report-contract';
+import { photoContract } from './photo-contract';
 import { contentContract } from './content-contract';
 import { siteContract } from './site-contract';
 
@@ -122,6 +123,18 @@ describe('owner report contract — in-memory adapter', () => {
 
   it('runs a meaningful number of cases', () => {
     expect(ownerReportContract.length).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe('photo contract — in-memory adapter', () => {
+  for (const testCase of photoContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(harness)).resolves.toBeUndefined();
+    });
+  }
+
+  it('runs a meaningful number of cases', () => {
+    expect(photoContract.length).toBeGreaterThanOrEqual(8);
   });
 });
 

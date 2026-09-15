@@ -14,6 +14,7 @@ import type { ContentRepository, ContentRevision } from '../ports/content-reposi
 import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
+import type { PhotoRepository, StoredPhoto } from '../ports/photo-repository';
 import { newestFirst, type AuditRecord, type AuditTrail } from '../ports/audit-trail';
 import type { OwnerReportRepository } from '../ports/owner-report-repository';
 import type { OwnerReportSubOrder } from '../insights/owner-metrics';
@@ -191,6 +192,9 @@ interface ApplicationRow {
   controls: Map<VerificationControl, VerificationRecord>;
 }
 
+/** A mutable photograph row, with an insertion sequence for stable ordering. */
+type PhotoRow = { -readonly [K in keyof StoredPhoto]: StoredPhoto[K] } & { seq: number };
+
 interface Store {
   sellers: Map<string, SellerRecord>;
   applications: Map<string, ApplicationRow>;
@@ -255,8 +259,22 @@ export class InMemoryUnitOfWork implements UnitOfWork {
 
   private readonly listingRows = new Map<string, ListingRecord>();
 
-  /** Which listings have a usable primary image. Set by tests that need one. */
-  readonly listingImages = new Set<string>();
+  /**
+   * A product's photographs, as `product_media` rows.
+   *
+   * This replaced a bare set of "listings with a usable primary image" that tests
+   * were meant to fill by hand and none did. With real rows, `hasPrimaryImage`
+   * applies the publish trigger's own rule, and the photo contract holds this
+   * adapter to the Postgres one.
+   */
+  readonly photoRows = new Map<string, PhotoRow>();
+
+  private photoSeq = 0;
+
+  nextPhotoSeq(): number {
+    this.photoSeq += 1;
+    return this.photoSeq;
+  }
 
   private listingTick = 0;
 
@@ -748,7 +766,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
      */
     const fixture = this;
     const listingRows = this.listingRows;
-    const listingImages = this.listingImages;
+    const photoRows = this.photoRows;
     const auditRows = this.auditRows;
 
     const content: ContentRepository = {
@@ -928,7 +946,9 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
 
       async hasPrimaryImage(id) {
-        return listingImages.has(id);
+        // The rule migration 0001's publish trigger applies, word for word.
+        return [...photoRows.values()].some((p) => p.productId === id
+          && p.isPrimary && p.ownershipConfirmed && p.alt.trim() !== '');
       },
 
       async moderationQueue() {
@@ -1579,9 +1599,80 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    /*
+     * Photographs, in memory — the same promises the Drizzle adapter keeps with
+     * a partial unique index: first photograph primary, exactly one primary,
+     * removing a primary promotes the next by position.
+     */
+    const orderedPhotos = (productId: string) => [...photoRows.values()]
+      .filter((p) => p.productId === productId)
+      .sort((a, b) => a.position - b.position || a.seq - b.seq);
+
+    const toStoredPhoto = ({ seq: _seq, ...photo }: PhotoRow): StoredPhoto => ({ ...photo });
+
+    const photos: PhotoRepository = {
+      async listForProduct(productId) {
+        return orderedPhotos(productId).map(toStoredPhoto);
+      },
+
+      async add(productId, photo) {
+        const existing = orderedPhotos(productId);
+        const seq = fixture.nextPhotoSeq();
+        const row: PhotoRow = {
+          id: `photo-${seq}`,
+          productId,
+          storageKey: photo.storageKey,
+          alt: photo.alt.trim(),
+          position: existing.length === 0 ? 0 : Math.max(...existing.map((p) => p.position)) + 1,
+          isPrimary: !existing.some((p) => p.isPrimary),
+          ownershipConfirmed: photo.ownershipConfirmed,
+          contentType: photo.contentType,
+          byteSize: photo.byteSize,
+          width: photo.width,
+          height: photo.height,
+          seq,
+        };
+        photoRows.set(row.id, row);
+        return toStoredPhoto(row);
+      },
+
+      async describe(photoId, productId, input) {
+        const row = photoRows.get(photoId);
+        if (!row || row.productId !== productId) return false;
+        row.alt = input.alt.trim();
+        row.ownershipConfirmed = input.ownershipConfirmed;
+        return true;
+      },
+
+      async makePrimary(photoId, productId) {
+        const row = photoRows.get(photoId);
+        if (!row || row.productId !== productId) return false;
+        for (const p of orderedPhotos(productId)) p.isPrimary = p.id === photoId;
+        return true;
+      },
+
+      async reorder(productId, orderedIds) {
+        for (const [position, id] of orderedIds.entries()) {
+          const row = photoRows.get(id);
+          if (row && row.productId === productId) row.position = position;
+        }
+      },
+
+      async remove(photoId, productId) {
+        const row = photoRows.get(photoId);
+        if (!row || row.productId !== productId) return null;
+        photoRows.delete(photoId);
+        if (row.isPrimary) {
+          const [next] = orderedPhotos(productId);
+          if (next) next.isPrimary = true;
+        }
+        return toStoredPhoto(row);
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
-      site, reviews, returns, support, applications, ownerReport,
+      site, reviews, returns, support, applications, ownerReport, photos,
     };
   }
 }
