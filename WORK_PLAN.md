@@ -65,16 +65,16 @@ with the condition under which that should be reversed stated in advance.
 Doc 04 §8 lists eight acceptance gates for the MVP. Four are met. The rest are
 the work, in the order below — chosen by what blocks the others, not by size.
 
-| Gate (doc 04 §8) | State |
+| Gate (doc 04 §8) | State (updated 15 September 2026) |
 |---|---|
-| Seller approved, publishes a product, receives an attributed order, sees a statement | **partial** — orders, attribution and statements work; a house cannot list a product |
+| Seller approved, publishes a product, receives an attributed order, sees a statement | **blocked on media (5.7)** — approval, listing, moderation, attribution and statements all work; a listing cannot publish without a primary image, and there is no media store |
 | Customer understands shipping and completes COD checkout | ✅ |
-| Split order produces correct seller tasks and customer tracking | ✅ |
-| Cancelled, refused, returned, failed-payment states reconcile | **partial** — the machine is complete and tested; refused and returned have no screen |
-| Only delivered orders create verified-purchase reviews | **not started** |
-| Admin actions, fee changes and payout adjustments are auditable | **partial** — the table exists; nothing writes to it |
-| Privacy, terms, seller agreement, return policy, prohibited products | **partial** — the CMS can carry them; the prohibited-product control does not exist |
-| Owner sees funnel, seller SLA and contribution without database work | **not started** |
+| Split order produces correct seller tasks and customer tracking | ✅ — and since 0020, a dispatch deadline per house |
+| Cancelled, refused, returned, failed-payment states reconcile | ✅ — returns requested, decided and refunded through screens; refunds audited |
+| Only delivered orders create verified-purchase reviews | ✅ — enforced in the domain, the router and a database trigger |
+| Admin actions, fee changes and payout adjustments are auditable | ✅ — written in the decision's own transaction; readable at `/ops/audit` |
+| Privacy, terms, seller agreement, return policy, prohibited products | **partial** — pages published through the CMS, prohibited-claim controls live; **pending counsel** on the wording, and the PDPL export/delete process is on the legal-review list before it may be built |
+| Owner sees funnel, seller SLA and contribution without database work | ✅ for everything recorded — `/ops/insights`. Pre-order funnel blocked on A-1; a contribution margin on A-2 |
 
 ## 5. The seller's catalogue  ⬜
 
