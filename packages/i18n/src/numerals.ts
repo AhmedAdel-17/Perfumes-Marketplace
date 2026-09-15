@@ -129,3 +129,26 @@ export const internal = (n: number, group = true): string =>
 
 export const data = (n: number, group = true): string =>
   formatNumber(n, { context: 'data', group });
+
+/**
+ * A date on an operating tool: Arabic month names, Western digits.
+ *
+ * WHY THIS EXISTS. `toLocaleDateString('ar-EG')` renders Arabic-Indic digits,
+ * and three console screens called it directly — so the support queue, the
+ * review queue and the applications board printed ٢٠٢٦ while every other
+ * number on the same row obeyed `internal()`. Nothing failed; the rule was
+ * simply decided somewhere other than this module, which is the one thing the
+ * header says must not happen.
+ *
+ * The `-u-nu-latn` extension asks Intl for Latin digits inside the Arabic
+ * locale, so the month is still a word an operator reads and the day is still
+ * a number they can compare against a bank statement.
+ */
+export function internalDate(when: string | Date, options: { time?: boolean } = {}): string {
+  return new Date(when).toLocaleString('ar-EG-u-nu-latn', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    ...(options.time ? { hour: '2-digit', minute: '2-digit' } as const : {}),
+  });
+}

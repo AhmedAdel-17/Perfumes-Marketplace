@@ -28,6 +28,8 @@ const DESTINATIONS = [
   { key: 'houses', href: '/ops/houses', label: 'الدور' },
   { key: 'content', href: '/ops/content', label: 'المحتوى' },
   { key: 'site', href: '/ops/site', label: 'الموقع' },
+  // Last, because it is where the work is READ rather than done.
+  { key: 'audit', href: '/ops/audit', label: 'سجل القرارات' },
 ] as const;
 
 export type OpsSection = (typeof DESTINATIONS)[number]['key'];

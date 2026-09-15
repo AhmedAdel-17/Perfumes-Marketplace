@@ -14,7 +14,7 @@ import type { ContentRepository, ContentRevision } from '../ports/content-reposi
 import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
-import type { AuditRecord, AuditTrail } from '../ports/audit-trail';
+import { newestFirst, type AuditRecord, type AuditTrail } from '../ports/audit-trail';
 import type {
   ModeratedReview, PublishedReview, ReviewRepository, ReviewableLine,
 } from '../ports/review-repository';
@@ -924,11 +924,21 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         });
       },
       async recent(options = {}) {
+        let cursor: AuditRecord | undefined;
+        if (options.before !== undefined) {
+          cursor = auditRows.find((row) => row.id === options.before);
+          // The same answer the SQL gives: a subselect that finds no row
+          // compares as NULL, and NULL admits nothing.
+          if (!cursor) return [];
+        }
         return auditRows
           .filter((row) => (!options.entityTable || row.entityTable === options.entityTable)
-            && (!options.entityId || row.entityId === options.entityId))
-          .slice()
-          .reverse()
+            && (!options.entityId || row.entityId === options.entityId)
+            && (!options.action || row.action === options.action)
+            // Strictly after the cursor in newest-first order, i.e. older: the
+            // comparator is negative when its first argument sorts first.
+            && (!cursor || newestFirst(cursor, row) < 0))
+          .sort(newestFirst)
           .slice(0, options.limit ?? 100);
       },
     };

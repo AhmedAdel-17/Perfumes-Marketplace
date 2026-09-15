@@ -180,7 +180,9 @@ function Entry({ row }: { row: ReturnRow }) {
                   type="button"
                   disabled={pending}
                   onClick={() => act(to)}
-                  className="tappable min-h-touch border-b border-line pb-1 text-small text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+                  // Both axes. `انتهى` is five narrow glyphs — 38px wide with the
+                  // height fixed — so the width needs its own floor.
+                  className="tappable min-h-touch min-w-touch border-b border-line pb-1 text-small text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
                 >
                   {RETURN_STATE_AR[to]}
                 </button>

@@ -12,6 +12,8 @@ export * from './reviews';
 export * from './returns';
 export * from './support';
 export * from './verification';
+export * from './catalogue';
+export * from './audit';
 export { ar, type Dictionary } from './ar';
 
 import { ar, type Dictionary } from './ar';

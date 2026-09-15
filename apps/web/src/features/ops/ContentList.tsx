@@ -11,15 +11,13 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PageState } from '@diyar/domain';
+import { PAGE_STATE_AR } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { createPage } from './content-actions';
 
-const STATE_LABELS: Record<PageState, string> = {
-  draft: 'مسودة',
-  in_review: 'قيد المراجعة',
-  published: 'منشورة',
-  archived: 'مؤرشفة',
-};
+// Shared with the page editor and the audit screen; typed against the domain
+// union so a new state cannot arrive without its word.
+const STATE_LABELS: Record<PageState, string> = PAGE_STATE_AR;
 
 export interface PageRow {
   id: string;

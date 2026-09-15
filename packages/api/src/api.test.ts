@@ -1197,6 +1197,97 @@ describe('the audit trail records who decided what', () => {
   });
 });
 
+/**
+ * Reading the trail through the console's own procedure.
+ *
+ * The cases above read through the repository, which is what an auditor with
+ * SQL would do. These read through `audit.recent`, which is what an operator
+ * with a browser does — the second half of gate 6.
+ */
+describe('the audit trail can be read without database work', () => {
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+  const OPERATOR = { staffId: '', role: 'admin', label: 'مشغّلة المنصّة' };
+
+  beforeAll(async () => {
+    const [staff] = await db.select({ id: schema.platformStaff.id })
+      .from(schema.platformStaff).limit(1);
+    OPERATOR.staffId = staff!.id;
+
+    // At least two entries of one kind, whatever ran before this block.
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    for (let i = 0; i < 2; i += 1) {
+      await ops.platform.runPayout({
+        sellerId: ids['dar-al-ward']!,
+        periodStart: '2026-09-01T00:00:00.000Z',
+        periodEnd: '2026-09-30T00:00:00.000Z',
+      });
+    }
+  });
+
+  it('an operator reads the newest decisions, with who made them', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const { entries } = await ops.audit.recent({});
+
+    expect(entries.length).toBeGreaterThanOrEqual(2);
+    expect(entries[0]!.actorLabel).toBe(OPERATOR.label);
+    for (let i = 1; i < entries.length; i += 1) {
+      expect(entries[i]!.occurredAt <= entries[i - 1]!.occurredAt).toBe(true);
+    }
+  });
+
+  it('offers an older page only when there is one, and the page is different', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const first = await ops.audit.recent({ action: 'payout_approval', limit: 1 });
+    expect(first.nextBefore, 'two payouts exist, so a second page must be offered').not.toBeNull();
+
+    const second = await ops.audit.recent({
+      action: 'payout_approval', limit: 1, before: first.nextBefore!,
+    });
+    expect(second.entries[0]!.id).not.toBe(first.entries[0]!.id);
+
+    // And at the end of the trail, no "older" link that leads to an empty page.
+    const all = await ops.audit.recent({ action: 'payout_approval', limit: 100 });
+    expect(all.nextBefore).toBeNull();
+  });
+
+  it('narrows to one kind of decision', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const { entries } = await ops.audit.recent({ action: 'payout_approval' });
+    expect(entries.length).toBeGreaterThanOrEqual(2);
+    expect(entries.every((entry) => entry.action === 'payout_approval')).toBe(true);
+  });
+
+  it('a HOUSE cannot read the trail', async () => {
+    // The trail records decisions ABOUT houses, including other houses'
+    // payouts. Refused at the procedure, and 0002 gives sellers no policy on
+    // the table, so this is the first of two locks.
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+    await expect(ward.audit.recent({})).rejects.toThrow();
+  });
+
+  it('nobody signed out can read it', async () => {
+    await expect(caller({ role: 'anon', id: null }).audit.recent({})).rejects.toThrow();
+  });
+
+  it('has no procedure that writes — entries are written by the decisions they record', () => {
+    /*
+     * A console that could add, amend or annotate an entry after the fact is a
+     * console for rewriting what happened. The table already refuses UPDATE and
+     * DELETE; this keeps the API from growing a way around that by INSERTing a
+     * "correction" nobody decided.
+     */
+    // Through `unknown`: the flat procedure map is typed as the nested router
+    // shape, and only the flat map carries `_def.type` per path.
+    const flat = appRouter._def.procedures as unknown as Record<string, { _def: { type: string } }>;
+    const procedures = Object.entries(flat)
+      .filter(([path]) => path.startsWith('audit.'));
+    expect(procedures.length).toBeGreaterThan(0);
+    for (const [path, procedure] of procedures) {
+      expect(procedure._def.type, `${path} is not a query`).toBe('query');
+    }
+  });
+});
+
 describe('the money loop — order to payout, against a real Postgres', () => {
   const ANON: ActorContext = { role: 'anon', id: null };
   const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };

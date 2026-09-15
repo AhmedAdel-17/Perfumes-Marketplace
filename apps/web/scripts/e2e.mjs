@@ -1242,6 +1242,66 @@ try {
     );
   });
 
+  /* ------------------------------------------------ the decisions, on record */
+
+  await test('the audit screen shows that moderation — by name, in words', async () => {
+    // Gate 6, the half that says "without database work". The two decisions
+    // above were just made through the console; they must be readable here
+    // without anybody opening SQL.
+    await ops.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
+    const text = await ops.locator('main').innerText();
+
+    assert(text.includes('سجل القرارات'), 'the audit screen must render');
+    assert(text.includes('إشراف على تقييم'), 'the review moderation must be on the record');
+    assert(text.includes('لغة مسيئة — اختبار'), 'and so must the reason the moderator wrote');
+    assert(text.includes('مخفي') && text.includes('ظاهر'), 'hiding and restoring must both be there, in words');
+
+    // The table stores JSON and enum codes. None of that is for a person.
+    assert(!/review_moderation|payout_approval|\{"|"hidden"/.test(text),
+      `raw storage leaked onto the screen:\n${text.slice(0, 300)}`);
+  });
+
+  await test('an entry\'s time is data — Western digits, as on every operating tool', async () => {
+    const times = await ops.locator('main ol time').allInnerTexts();
+    assert(times.length > 0, 'entries must carry a time');
+    assert(times.every((t) => /\d/.test(t) && !/[٠-٩]/.test(t)),
+      `a time used Arabic-Indic digits: ${times[0]}`);
+  });
+
+  await test('filtering by kind narrows, and the filter is a URL', async () => {
+    await ops.locator('nav[aria-label="نوع القرار"] a', { hasText: 'إشراف على تقييم' }).click();
+    await ops.waitForURL('**/ops/audit?action=review_moderation', { timeout: 20_000 });
+
+    const headings = await ops.locator('main ol > li h2').allInnerTexts();
+    assert(headings.length >= 2, 'the hide and the restore must both be listed');
+    assert(headings.every((h) => h.includes('إشراف على تقييم')),
+      `the filter let another kind through: ${headings.join(' | ')}`);
+  });
+
+  await test('a hand-edited audit URL is ignored, not a crash', async () => {
+    // A screen whose job is to be there when something went wrong must not be
+    // the thing that breaks on a mistyped link.
+    const response = await ops.goto(`${BASE}/ops/audit?before=not-a-cursor&action=bogus`,
+      { waitUntil: 'networkidle' });
+    assert(response?.status() === 200, `status ${response?.status()}`);
+    assert((await ops.locator('main').innerText()).includes('إشراف على تقييم'),
+      'a bad query must fall back to the whole trail');
+  });
+
+  await test('the audit screen offers no way to change the record', async () => {
+    // Everything below the header. The header holds the console's own chrome
+    // (appearance, sign-out), which is not a control over the trail.
+    const controls = await ops.locator('main > div').locator('button, input, select, textarea, form').count();
+    assert(controls === 0, `the audit screen has ${controls} form controls; it must have none`);
+  });
+
+  await test('the audit screen is closed to a signed-out visitor', async () => {
+    const page = await browser.newPage();
+    await page.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
+    assert(!page.url().includes('/ops/audit'), `reached the audit trail unauthenticated: ${page.url()}`);
+    await page.close();
+  });
+
   /* =============================================================== returns */
   group('the returns policy, with a way to act on it');
 

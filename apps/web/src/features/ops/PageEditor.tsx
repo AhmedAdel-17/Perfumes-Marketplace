@@ -19,6 +19,7 @@
 import { useState, useTransition } from 'react';
 import type { Block, BlockKind, PageState, PublishObjection } from '@diyar/domain';
 import { BLOCK_KINDS, LIMITS } from '@diyar/domain';
+import { PAGE_STATE_AR } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { movePageTo, savePageDraft } from './content-actions';
 
@@ -33,12 +34,7 @@ const KIND_LABELS: Record<BlockKind, string> = {
   call_to_action: 'زر إجراء',
 };
 
-const STATE_LABELS: Record<PageState, string> = {
-  draft: 'مسودة',
-  in_review: 'قيد المراجعة',
-  published: 'منشورة',
-  archived: 'مؤرشفة',
-};
+const STATE_LABELS: Record<PageState, string> = PAGE_STATE_AR;
 
 /** What each move is CALLED from the operator's side, not the machine's. */
 const MOVE_LABELS: Record<PageState, string> = {

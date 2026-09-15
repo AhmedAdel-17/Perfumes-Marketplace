@@ -28,7 +28,7 @@ import {
   SCENT_FAMILIES, SEASONS,
   type ClaimFinding, type ListingDraft, type ListingGap, type ListingState,
 } from '@diyar/domain';
-import { CURRENCY_LABEL, westernDigits } from '@diyar/i18n';
+import { CURRENCY_LABEL, LISTING_STATE_AR, westernDigits } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import {
   archiveListing, saveListing, submitListing, withdrawListing,
@@ -36,13 +36,9 @@ import {
 
 /* ------------------------------------------------------------------ labels */
 
-const STATE_LABELS: Record<ListingState, string> = {
-  draft: 'مسودة',
-  pending_moderation: 'قيد المراجعة',
-  published: 'منشور',
-  suspended: 'موقوف',
-  archived: 'مؤرشف',
-};
+// Shared with the listing list and the audit screen; typed against the domain
+// union so a new state cannot arrive without its word.
+const STATE_LABELS: Record<ListingState, string> = LISTING_STATE_AR;
 
 const MOVE_LABELS = {
   pending_moderation: 'إرسال للمراجعة',

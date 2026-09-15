@@ -24,6 +24,7 @@ export * from './ports/content-repository';
 export * from './ports/site-repository';
 export * from './ports/listing-repository';
 export * from './ports/audit-trail';
+export * from './ports/audit-contract';
 export * from './catalogue/vocabularies';
 export * from './catalogue/claims';
 export * from './catalogue/listing';

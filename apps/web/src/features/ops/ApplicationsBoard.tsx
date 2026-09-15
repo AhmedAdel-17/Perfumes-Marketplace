@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react';
 import type { VerificationControl, VerificationStatus } from '@diyar/domain';
-import { VERIFICATION_CONTROL_AR, VERIFICATION_STATUS_AR, internal as num } from '@diyar/i18n';
+import {
+  VERIFICATION_CONTROL_AR, VERIFICATION_STATUS_AR, internal as num, internalDate,
+} from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { fetchApplication, setHouseStatus, verifyControl } from './application-actions';
 
@@ -124,7 +126,11 @@ function Entry({ row }: { row: ApplicationRow }) {
         <span
           className={[
             'rounded-pill px-3 py-1 text-micro tracking-label',
-            complete ? 'bg-accent/15 text-accent' : 'bg-line/60 text-ink3',
+            // Outlined, not filled, when incomplete. `bg-line/60` under `ink3`
+            // measured 4.45:1 on paper: a translucent fill darkens the ground
+            // an ink was calibrated against, and every ink sits just above
+            // 4.5:1 by construction. `ink2` on the ground itself has margin.
+            complete ? 'bg-accent/15 text-accent' : 'border border-line text-ink2',
           ].join(' ')}
         >
           <span className="tnum">{num(approved)}</span> من{' '}
@@ -139,9 +145,7 @@ function Entry({ row }: { row: ApplicationRow }) {
         {row.city && <> · {row.city}</>}
         {row.appliedAt && (
           <> · <time dateTime={row.appliedAt}>
-            {new Date(row.appliedAt).toLocaleDateString('ar-EG', {
-              year: 'numeric', month: 'long', day: 'numeric',
-            })}
+            {internalDate(row.appliedAt)}
           </time></>
         )}
       </div>
@@ -241,7 +245,8 @@ function Entry({ row }: { row: ApplicationRow }) {
             type="button"
             disabled={pending}
             onClick={() => move('terminated')}
-            className="tappable min-h-touch border-b border-line pb-1 text-small text-ink3 transition-colors duration-base ease-out hover:border-danger hover:text-danger"
+            // Both axes: `ارفض` is 41px wide with the height fixed.
+            className="tappable min-h-touch min-w-touch border-b border-line pb-1 text-small text-ink3 transition-colors duration-base ease-out hover:border-danger hover:text-danger"
           >
             ارفض
           </button>

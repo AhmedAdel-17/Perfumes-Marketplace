@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import {
-  SUPPORT_CATEGORY_AR, TICKET_PRIORITY_AR, TICKET_STATUS_AR,
+  SUPPORT_CATEGORY_AR, TICKET_PRIORITY_AR, TICKET_STATUS_AR, internalDate,
 } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { updateTicket } from './support-actions';
@@ -115,9 +115,7 @@ function Entry({ row }: { row: TicketRow }) {
       <p className="mt-2 text-micro text-ink3">
         وصلت{' '}
         <time dateTime={row.createdAt}>
-          {new Date(row.createdAt).toLocaleString('ar-EG', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-          })}
+          {internalDate(row.createdAt, { time: true })}
         </time>
         {row.firstResponseAt === null
           // The number that matters. Not how many are open — how long somebody

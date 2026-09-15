@@ -398,6 +398,10 @@ try {
     ['legal-privacy', '/privacy'],
     ['houses', '/houses'],
     ['house', '/house/maison-nour'],
+    // The two sign-in screens. Every run passed THROUGH them and none had
+    // ever audited them — the first screen a house or an operator sees.
+    ['seller-sign-in', '/seller'],
+    ['ops-sign-in', '/ops'],
     // The page a visitor meets when something has already gone wrong.
     ['not-found', '/nothing-here'],
   ];
@@ -427,10 +431,27 @@ try {
       ['seller-queue', '/seller/orders'],
       ['seller-listings', '/seller/listings'],
       ['seller-payouts', '/seller/payouts'],
+      ['seller-returns', '/seller/returns'],
     ]) {
       await seller.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
       await auditPage(seller, surface, size.name);
     }
+  }
+
+  // One listing editor: the densest form in the product, twenty-four fields.
+  // Navigating first, for the reason given at the ops page editor below.
+  await seller.goto(`${BASE}/seller/listings`, { waitUntil: 'networkidle' });
+  const firstListing = await seller.locator('a[href^="/seller/listings/"]').first()
+    .getAttribute('href', { timeout: 10_000 })
+    .catch(() => null);
+  if (firstListing) {
+    for (const size of WIDTHS) {
+      await seller.setViewportSize({ width: size.width, height: size.height });
+      await seller.goto(`${BASE}${firstListing}`, { waitUntil: 'networkidle' });
+      await auditPage(seller, 'seller-listing-editor', size.name);
+    }
+  } else {
+    record('seller-listing-editor', '—', 'missing', 'no listing link to follow — the editor was not audited');
   }
 
   /* ------------------------------------------------------------------ ops */
@@ -452,6 +473,14 @@ try {
     ['ops-content', '/ops/content'],
     ['ops-moderation', '/ops/moderation'],
     ['ops-site', '/ops/site'],
+    // The aftercare consoles. They shipped with end-to-end coverage and were
+    // never added here, so no width or theme had ever been audited on them.
+    ['ops-reviews', '/ops/reviews'],
+    ['ops-returns', '/ops/returns'],
+    ['ops-support', '/ops/support'],
+    ['ops-houses', '/ops/houses'],
+    // The audit trail: read all day by the person answering "who did this".
+    ['ops-audit', '/ops/audit'],
   ];
 
   for (const size of WIDTHS) {
@@ -476,7 +505,13 @@ try {
       await ops.setViewportSize({ width: size.width, height: size.height });
       await ops.goto(`${BASE}${firstPage}`, { waitUntil: 'networkidle' });
       await auditPage(ops, 'ops-page-editor', size.name);
+      // The draft preview renders through the PUBLIC renderer, inside the
+      // console's session — a surface of its own, never audited until now.
+      await ops.goto(`${BASE}${firstPage}/preview`, { waitUntil: 'networkidle' });
+      await auditPage(ops, 'ops-page-preview', size.name);
     }
+  } else {
+    record('ops-page-editor', '—', 'missing', 'no content link to follow — the editor was not audited');
   }
 } catch (error) {
   /*

@@ -10,27 +10,16 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ListingState, ModerationReason } from '@diyar/domain';
-import { formatPrice, CURRENCY_LABEL, data as num } from '@diyar/i18n';
+import {
+  formatPrice, CURRENCY_LABEL, data as num, LISTING_STATE_AR, MODERATION_REASON_AR,
+} from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { createListing } from './listing-actions';
 
-const STATE_LABELS: Record<ListingState, string> = {
-  draft: 'مسودة',
-  pending_moderation: 'قيد المراجعة',
-  published: 'منشور',
-  suspended: 'موقوف',
-  archived: 'مؤرشف',
-};
-
-const REASON_LABELS: Record<ModerationReason, string> = {
-  prohibited_claim: 'ادّعاء ممنوع',
-  missing_required_fields: 'بيانات ناقصة',
-  unsupported_claim: 'ادّعاء بلا دليل',
-  misleading_media: 'صور مضلّلة',
-  implausible_pricing: 'سعر غير منطقي',
-  duplicate_listing: 'منتج مكرّر',
-  restricted_ingredient: 'مكوّن مقيّد',
-};
+// Declared against the domain's unions, so a state or reason added there
+// without a word in i18n fails to compile here rather than rendering blank.
+const STATE_LABELS: Record<ListingState, string> = LISTING_STATE_AR;
+const REASON_LABELS: Record<ModerationReason, string> = MODERATION_REASON_AR;
 
 export interface ListingRow {
   id: string;

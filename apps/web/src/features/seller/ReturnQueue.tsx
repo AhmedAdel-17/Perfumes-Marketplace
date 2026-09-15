@@ -5,7 +5,7 @@ import type { ReturnState } from '@diyar/domain';
 import { ReturnLifecycle } from '@diyar/domain';
 import {
   COST_BEARER_AR, CURRENCY_LABEL, RETURN_REASON_AR, RETURN_STATE_AR,
-  formatPrice, internal as num,
+  formatPrice, internal as num, internalDate,
 } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { decideReturn, fetchReturnQueue } from './return-actions';
@@ -118,9 +118,7 @@ export function ReturnQueue() {
               <p className="mt-2 text-micro text-ink3">
                 طُلب في{' '}
                 <span className="tnum">
-                  {new Date(row.requestedAt).toLocaleDateString('ar-EG', {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                  })}
+                  {internalDate(row.requestedAt)}
                 </span>
               </p>
 

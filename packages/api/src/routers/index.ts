@@ -1,5 +1,6 @@
 import { router } from '../trpc';
 import { applicationsRouter } from './applications';
+import { auditRouter } from './audit';
 import { cartRouter } from './cart';
 import { catalogueRouter } from './catalogue';
 import { contentRouter } from './content';
@@ -14,6 +15,7 @@ import { supportRouter } from './support';
 
 export const appRouter = router({
   applications: applicationsRouter,
+  audit: auditRouter,
   cart: cartRouter,
   catalogue: catalogueRouter,
   content: contentRouter,

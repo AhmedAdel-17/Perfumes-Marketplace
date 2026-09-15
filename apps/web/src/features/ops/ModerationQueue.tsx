@@ -16,19 +16,15 @@
 import { useState, useTransition } from 'react';
 import type { ClaimFinding, ModerationReason } from '@diyar/domain';
 import { MODERATION_REASONS } from '@diyar/domain';
-import { formatPrice, CURRENCY_LABEL, data as num, plural } from '@diyar/i18n';
+import {
+  formatPrice, CURRENCY_LABEL, data as num, plural, MODERATION_REASON_AR,
+} from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { decideListing } from './moderation-actions';
 
-const REASON_LABELS: Record<ModerationReason, string> = {
-  prohibited_claim: 'ادّعاء ممنوع',
-  missing_required_fields: 'بيانات ناقصة',
-  unsupported_claim: 'ادّعاء بلا دليل',
-  misleading_media: 'صور مضلّلة',
-  implausible_pricing: 'سعر غير منطقي',
-  duplicate_listing: 'منتج مكرّر',
-  restricted_ingredient: 'مكوّن مقيّد',
-};
+// One vocabulary, shared with the seller's list and the audit screen. Typed
+// against the domain's union so a new reason cannot arrive without its word.
+const REASON_LABELS: Record<ModerationReason, string> = MODERATION_REASON_AR;
 
 const CLAIM_LABELS: Record<ClaimFinding['code'], string> = {
   similarity_percentage: 'نسبة تطابق',

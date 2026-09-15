@@ -73,15 +73,58 @@ export interface AuditRecord extends AuditEntry {
   readonly occurredAt: Date;
 }
 
+export interface AuditQuery {
+  readonly entityTable?: string;
+  readonly entityId?: string;
+  readonly action?: AuditAction;
+  /**
+   * The id of the last entry already shown. Only entries after it in
+   * newest-first order are returned.
+   *
+   * A KEYSET, not an offset and not a timestamp. An offset shifts under a
+   * reader when a decision is recorded between pages, so one entry appears
+   * twice and another never appears. A timestamp skips entries that share an
+   * instant — and they do: `occurred_at` defaults to the transaction's `now()`,
+   * so two entries written by one decision are identical to the microsecond.
+   *
+   * An id rather than the (time, id) pair itself, because Postgres keeps
+   * microseconds and a JavaScript `Date` keeps milliseconds: a pair that went
+   * out to a browser and came back would have lost the precision the ordering
+   * depends on. The adapter looks the row up and compares exactly.
+   *
+   * An id that names no entry returns nothing — a cursor from somewhere else is
+   * not a page of this list.
+   */
+  readonly before?: string;
+  readonly limit?: number;
+}
+
 export interface AuditTrail {
   record(entry: AuditEntry): Promise<void>;
 
-  /** Newest first. Optionally narrowed to one entity's history. */
-  recent(options?: {
-    entityTable?: string;
-    entityId?: string;
-    limit?: number;
-  }): Promise<AuditRecord[]>;
+  /**
+   * Newest first, ordered by (occurredAt desc, id desc).
+   *
+   * Optionally narrowed to one entity's history, to one kind of decision, or
+   * to what came before a cursor.
+   */
+  recent(options?: AuditQuery): Promise<AuditRecord[]>;
+}
+
+/**
+ * The order `recent` returns, as a comparator.
+ *
+ * Stated once, in the domain, so the in-memory adapter sorts by the same rule
+ * the SQL `ORDER BY` states — and so a cursor means the same thing to both.
+ */
+export function newestFirst(
+  a: Pick<AuditRecord, 'occurredAt' | 'id'>,
+  b: Pick<AuditRecord, 'occurredAt' | 'id'>,
+): number {
+  const byTime = b.occurredAt.getTime() - a.occurredAt.getTime();
+  if (byTime !== 0) return byTime;
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? 1 : -1;
 }
 
 /**

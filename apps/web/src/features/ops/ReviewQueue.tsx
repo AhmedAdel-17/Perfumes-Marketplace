@@ -18,7 +18,7 @@
  */
 import { useState, useTransition } from 'react';
 import { REVIEW_DIMENSIONS, formatRating, type Ratings } from '@diyar/domain';
-import { REVIEW_DIMENSION_AR, data as num } from '@diyar/i18n';
+import { REVIEW_DIMENSION_AR, data as num, internalDate } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { hideReview, restoreReview } from './review-actions';
 
@@ -91,9 +91,7 @@ function Entry({ row }: { row: ReviewRow }) {
         {row.authorName}
         {' · '}
         <time dateTime={row.createdAt}>
-          {new Date(row.createdAt).toLocaleDateString('ar-EG', {
-            year: 'numeric', month: 'long', day: 'numeric',
-          })}
+          {internalDate(row.createdAt)}
         </time>
         {hidden && <span className="text-danger"> · مخفي</span>}
       </div>
