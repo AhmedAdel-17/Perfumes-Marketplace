@@ -38,6 +38,8 @@ export * from './catalogue/media';
 export * from './catalogue/photo-set';
 export * from './ports/photo-repository';
 export * from './ports/photo-contract';
+export * from './ports/content-image-repository';
+export * from './ports/content-image-contract';
 export * from './trust/review';
 export * from './trust/return-request';
 export * from './trust/support';

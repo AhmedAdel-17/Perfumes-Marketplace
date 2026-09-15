@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import { IMAGE_TYPES, MEDIA_LIMITS, MAX_PHOTOS, ALT_TEXT_MAX, type ImageType } from '@diyar/domain';
 import { internal as num } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { INTERRUPTED_UPLOAD, reasonNotToSend, sendFile } from '@/features/media/upload';
 import {
   confirmPhoto, describePhoto, makePrimaryPhoto, removePhoto, reorderPhotos, startPhotoUpload,
 } from './photo-actions';
@@ -52,43 +53,6 @@ export interface PhotoView {
 const control = 'w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent';
 
 const quiet = 'tappable inline-flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled';
-
-/** PUT the file to the signed URL, reporting progress. `fetch` cannot report upload progress. */
-function sendFile(
-  url: string,
-  headers: Readonly<Record<string, string>>,
-  file: File,
-  onProgress: (fraction: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('PUT', url);
-    for (const [name, value] of Object.entries(headers)) request.setRequestHeader(name, value);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(event.loaded / event.total);
-    };
-    request.onload = () => (request.status >= 200 && request.status < 300
-      ? resolve()
-      : reject(new Error(String(request.status))));
-    request.onerror = () => reject(new Error('network'));
-    request.send(file);
-  });
-}
-
-/** The displayed dimensions — browsers apply EXIF orientation to `naturalWidth`. */
-async function dimensionsOf(file: File): Promise<{ width: number; height: number } | null> {
-  const url = URL.createObjectURL(file);
-  try {
-    const image = new Image();
-    image.src = url;
-    await image.decode();
-    return { width: image.naturalWidth, height: image.naturalHeight };
-  } catch {
-    return null;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
 
 export function PhotoManager({ productId, photos, readOnly }: {
   productId: string;
@@ -290,17 +254,9 @@ function AddPhoto({ productId }: { productId: string }) {
 
     // Courtesy checks — the server decides. Saying so early saves a house an
     // upload over a phone connection that was always going to be refused.
-    if (!(IMAGE_TYPES as readonly string[]).includes(chosen.type)) {
-      setError('استخدم صورة بصيغة JPG أو PNG أو WebP.');
-      return;
-    }
-    if (chosen.size > MEDIA_LIMITS.maxBytes) {
-      setError('الصورة أكبر من 10 ميجابايت. صدّرها بجودة أقل قليلًا.');
-      return;
-    }
-    const size = await dimensionsOf(chosen);
-    if (size && Math.min(size.width, size.height) < MEDIA_LIMITS.minEdge) {
-      setError('الصورة صغيرة جدًا وستبدو غير واضحة. يجب ألا يقل ضلعها الأقصر عن 800 بكسل.');
+    const reason = await reasonNotToSend(chosen);
+    if (reason) {
+      setError(reason);
       return;
     }
     setFile(chosen);
@@ -323,7 +279,7 @@ function AddPhoto({ productId }: { productId: string }) {
         await sendFile(started.value.url, started.value.headers, file, setProgress);
       } catch {
         setProgress(null);
-        setError('انقطع الرفع قبل أن يكتمل. تحقّق من الاتصال وحاول مرّة أخرى.');
+        setError(INTERRUPTED_UPLOAD);
         return;
       }
 

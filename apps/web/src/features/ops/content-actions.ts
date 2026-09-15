@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Block, PageState, PublishObjection } from '@diyar/domain';
+import type { Block, ImageType, PageState, PublishObjection } from '@diyar/domain';
 import { api } from '@/core/api';
 import { activeOperator } from './actions';
 
@@ -95,6 +95,31 @@ export async function movePageTo(id: string, to: PageState): Promise<ContentResu
     };
   } catch (error) {
     return { ok: false, message: (error as Error).message };
+  }
+}
+
+/**
+ * Editorial images — a thin transport over `contentImages`, like the house's
+ * photograph actions. The browser sends the file straight to storage between
+ * the two; nothing here sees the bytes.
+ */
+export async function startContentImageUpload(pageId: string, contentType: ImageType, byteSize: number) {
+  const call = await caller();
+  if (!call) return { ok: false as const, message: EXPIRED.message! };
+  try {
+    return { ok: true as const, value: await call.contentImages.startUpload({ pageId, contentType, byteSize }) };
+  } catch (error) {
+    return { ok: false as const, message: (error as Error).message };
+  }
+}
+
+export async function confirmContentImage(pageId: string, key: string) {
+  const call = await caller();
+  if (!call) return { ok: false as const, message: EXPIRED.message! };
+  try {
+    return { ok: true as const, value: await call.contentImages.confirm({ pageId, key }) };
+  } catch (error) {
+    return { ok: false as const, message: (error as Error).message };
   }
 }
 

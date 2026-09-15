@@ -7,7 +7,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
-  index, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid,
+  index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core';
 import type { Block } from '@diyar/domain';
 import { platformStaff } from './governance';
@@ -55,3 +55,18 @@ export const contentRevisions = pgTable('content_revisions', {
 }, (t) => [
   index('content_revisions_page_idx').on(t.pageId, t.publishedAt),
 ]);
+
+/**
+ * The images an editorial page may show. Migration 0022 carries the reasoning,
+ * the key-shape and fact CHECKs, and the policy that lets a visitor read a row
+ * only while a live page serves it. A row exists only for a file the server read.
+ */
+export const contentImages = pgTable('content_images', {
+  storageKey: text('storage_key').primaryKey(),
+  contentType: text('content_type').notNull(),
+  byteSize: integer('byte_size').notNull(),
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  uploadedBy: uuid('uploaded_by').notNull().references(() => platformStaff.id),
+  uploadedAt: timestamp('uploaded_at', { withTimezone: true }).defaultNow().notNull(),
+});

@@ -2045,6 +2045,76 @@ try {
     }
   });
 
+  /*
+   * The same store, from the other console (5.7.6). The image block used to be
+   * a text field that saved any key at all; the operator now uploads, and the
+   * page is only publishable with a picture the server verified.
+   *
+   * Its own signed-in context: the operator signed out at the end of the site
+   * group, and asserting that sign-out held is worth more than reusing it.
+   */
+  await test('an operator uploads an image to an editorial page, and a visitor sees it', async () => {
+    const editorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const editor = await editorContext.newPage();
+    try {
+      await signIn(editor, '/ops', OPERATOR, '/ops/queue');
+
+      const slug = `images-${Date.now().toString(36)}`;
+      await editor.goto(`${BASE}/ops/content`, { waitUntil: 'networkidle' });
+      await editor.fill('#new-title', `صفحة بصورة ${slug}`);
+      await editor.fill('#new-slug', slug);
+      await editor.locator('button', { hasText: 'إنشاء' }).click();
+      await editor.waitForURL('**/ops/content/**', { timeout: 20_000 });
+      await editor.waitForTimeout(1500);
+
+      await editor.locator('button', { hasText: '+ عنوان قسم' }).click();
+      await editor.waitForTimeout(400);
+      await editor.fill('#b0-text', 'في المعمل');
+      await editor.locator('button', { hasText: '+ صورة' }).click();
+      await editor.waitForTimeout(400);
+
+      // Described first, as the editor asks: the picture it shows back carries
+      // this as its alternative text, which is how the test finds it.
+      const alt = 'قوارير الزيوت على رفّ خشبي';
+      await editor.fill('#b1-alt', alt);
+      await editor.locator('#b1-file').setInputFiles({
+        name: 'atelier.png', mimeType: 'image/png', buffer: png(1600, 1067),
+      });
+
+      const preview = editor.locator(`ol li img[alt="${alt}"]`).first();
+      await preview.waitFor({ state: 'visible', timeout: 30_000 });
+      assert(!(await editor.locator('main').innerText()).includes('مفتاح الصورة'),
+        'the console must not offer a key to type any more');
+
+      await editor.locator('button', { hasText: 'حفظ المسودة' }).click();
+      await editor.waitForTimeout(2500);
+      await editor.locator('button', { hasText: 'إرسال للمراجعة' }).click();
+      await editor.waitForTimeout(3000);
+      await editor.locator('button', { hasText: /^نشر$/ }).click();
+      await editor.waitForTimeout(3500);
+
+      const objections = await editor.locator('[aria-live="polite"] li').allInnerTexts();
+      equal(objections.length, 0, `a verified image must not block publishing: ${objections.join(' | ')}`);
+
+      const visitor = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+      try {
+        const page = await visitor.newPage();
+        const response = await page.goto(`${BASE}/${slug}`, { waitUntil: 'networkidle' });
+        equal(response?.status(), 200, 'the public status of the published page');
+        const shown = page.locator(`main figure img[alt="${alt}"]`).first();
+        await shown.waitFor({ state: 'visible', timeout: 20_000 });
+        const src = await shown.getAttribute('src');
+        assert(src && src.includes('/_next/image'), `the page must serve the image through the optimiser: ${src}`);
+        const served = await page.request.get(new URL(src, BASE).toString());
+        equal(served.status(), 200, 'the optimised image response');
+      } finally {
+        await visitor.close();
+      }
+    } finally {
+      await editorContext.close();
+    }
+  });
+
   if (sellerContext) await sellerContext.close();
   if (opsContext) await opsContext.close();
 } finally {

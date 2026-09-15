@@ -15,6 +15,7 @@ import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import type { PhotoRepository, StoredPhoto } from '../ports/photo-repository';
+import type { ContentImage, ContentImageRepository } from '../ports/content-image-repository';
 import { newestFirst, type AuditRecord, type AuditTrail } from '../ports/audit-trail';
 import type { OwnerReportRepository } from '../ports/owner-report-repository';
 import type { OwnerReportSubOrder } from '../insights/owner-metrics';
@@ -268,6 +269,9 @@ export class InMemoryUnitOfWork implements UnitOfWork {
    * adapter to the Postgres one.
    */
   readonly photoRows = new Map<string, PhotoRow>();
+
+  /** `content_images`, keyed by storage key — the primary key in 0022. */
+  private readonly contentImageRows = new Map<string, ContentImage>();
 
   private photoSeq = 0;
 
@@ -1684,9 +1688,28 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    const contentImageRows = this.contentImageRows;
+    const contentImages: ContentImageRepository = {
+      async record(image) {
+        // The first record wins, as `ON CONFLICT DO NOTHING` does: facts read
+        // from the bytes once are not rewritten by a retry.
+        const existing = contentImageRows.get(image.storageKey);
+        if (existing) return existing;
+        const row: ContentImage = { ...image };
+        contentImageRows.set(row.storageKey, row);
+        return row;
+      },
+
+      async findByKeys(keys) {
+        return [...new Set(keys)]
+          .map((key) => contentImageRows.get(key))
+          .filter((row): row is ContentImage => row !== undefined);
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
-      site, reviews, returns, support, applications, ownerReport, photos,
+      site, reviews, returns, support, applications, ownerReport, photos, contentImages,
     };
   }
 }

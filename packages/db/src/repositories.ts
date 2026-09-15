@@ -32,6 +32,7 @@ import { applicationRepository } from './application-repository';
 import { auditTrail } from './audit-trail';
 import { ownerReportRepository, settlementFacts } from './owner-report-repository';
 import { photoRepository } from './photo-repository';
+import { contentImageRepository } from './content-image-repository';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -681,6 +682,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   audit: auditTrail(db),
   ownerReport: ownerReportRepository(db),
   photos: photoRepository(db),
+  contentImages: contentImageRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */

@@ -64,7 +64,7 @@ export default async function PreviewPage(
           {page.title}
         </h1>
         <article className="pb-4">
-          <Blocks blocks={page.blocks} />
+          <Blocks blocks={page.blocks} images={page.images} />
         </article>
 
         <a

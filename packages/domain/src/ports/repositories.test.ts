@@ -15,6 +15,7 @@ import { repositoryContract, type ContractWorld } from './repository-contract';
 import { ownerReportContract } from './owner-report-contract';
 import { photoContract } from './photo-contract';
 import { contentContract } from './content-contract';
+import { contentImageContract } from './content-image-contract';
 import { siteContract } from './site-contract';
 
 const ORDERED_AT = new Date('2026-09-01T21:42:00Z');
@@ -165,5 +166,22 @@ describe('content contract — in-memory adapter', () => {
 
   it('runs a meaningful number of cases', () => {
     expect(contentContract.length).toBeGreaterThanOrEqual(8);
+  });
+});
+
+describe('content image contract — in-memory adapter', () => {
+  const contentHarness = async () => ({
+    uow: new InMemoryUnitOfWork(),
+    staffId: 'staff-1',
+  });
+
+  for (const testCase of contentImageContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
+    });
+  }
+
+  it('runs every case the contract defines', () => {
+    expect(contentImageContract.length).toBeGreaterThanOrEqual(4);
   });
 });

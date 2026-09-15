@@ -16,13 +16,18 @@
  * it would mean an editor who wandered off mid-sentence could not get back to
  * what they had before they started.
  */
-import { useState, useTransition } from 'react';
-import type { Block, BlockKind, PageState, PublishObjection } from '@diyar/domain';
+import { useRef, useState, useTransition } from 'react';
+import type { Block, BlockKind, ImageType, PageState, PublishObjection } from '@diyar/domain';
 import { BLOCK_KINDS, LIMITS } from '@diyar/domain';
 import { PAGE_STATE_AR } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { statusPill } from '@/features/shell/status-pill';
-import { movePageTo, savePageDraft } from './content-actions';
+import type { ContentImageView, ContentImages } from '@/features/content/Blocks';
+import { INTERRUPTED_UPLOAD, reasonNotToSend, sendFile } from '@/features/media/upload';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
+import {
+  confirmContentImage, movePageTo, savePageDraft, startContentImageUpload,
+} from './content-actions';
 
 /** Arabic names for the block kinds, as a complete Record over the union. */
 const KIND_LABELS: Record<BlockKind, string> = {
@@ -63,6 +68,7 @@ function objectionText(objection: PublishObjection): string {
     case 'heading_order': return `القسم يبدأ بعنوان فرعي. اجعل أول عنوان رئيسيًا${where}`;
     case 'external_link': return `الروابط الخارجية غير مسموح بها. استخدم مسارًا داخلي${where}`;
     case 'missing_alt': return `الصورة بلا وصف بديل، ولن يقرأها قارئ الشاشة${where}`;
+    case 'unverified_image': return `الصورة لم تُرفع عبر المنصّة. ارفعها من جديد${where}`;
     case 'over_length': return `النص أطول من الحد المسموح${where}`;
   }
 }
@@ -143,12 +149,110 @@ function Area({
   );
 }
 
+/**
+ * An editorial image: choose a file, and see what arrived.
+ *
+ * This replaced a text field labelled "image key" that saved whatever was typed
+ * into it. The key is now never typed and never shown — the operator sees the
+ * picture, and the key is one the server issued for this page and verified.
+ */
+function ImageField({ id, pageId, mediaKey, image, alt, onUploaded }: {
+  id: string;
+  pageId: string;
+  mediaKey: string;
+  image: ContentImageView | undefined;
+  alt: string;
+  onUploaded(key: string, image: ContentImageView): void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  const upload = (file: File | null) => {
+    setError(null);
+    if (!file) return;
+    start(async () => {
+      const reason = await reasonNotToSend(file);
+      if (reason) {
+        setError(reason);
+        return;
+      }
+
+      const started = await startContentImageUpload(pageId, file.type as ImageType, file.size);
+      if (!started.ok) {
+        setError(started.message);
+        return;
+      }
+
+      try {
+        setProgress(0);
+        await sendFile(started.value.url, started.value.headers, file, setProgress);
+      } catch {
+        setProgress(null);
+        setError(INTERRUPTED_UPLOAD);
+        return;
+      }
+
+      const confirmed = await confirmContentImage(pageId, started.value.key);
+      setProgress(null);
+      if (!confirmed.ok) {
+        setError(confirmed.message);
+        return;
+      }
+      const { key, url, width, height } = confirmed.value;
+      onUploaded(key, { url, width, height });
+      if (input.current) input.current.value = '';
+    });
+  };
+
+  return (
+    <div className="mb-3">
+      {image ? (
+        <div className="relative mb-3 aspect-[3/2] w-full overflow-hidden border border-line bg-ground sm:w-1/2">
+          <ProductPhoto
+            photo={{ url: image.url, alt, width: image.width, height: image.height }}
+            sizes="(min-width: 640px) 50vw, 100vw"
+          />
+        </div>
+      ) : mediaKey.trim() ? (
+        // A key saved before uploads existed, or typed by hand. Said plainly,
+        // because the publish rule will refuse it and the editor should know why.
+        <p className="mb-3 border-s-2 border-danger/60 ps-4 text-small leading-relaxed text-ink2">
+          هذه الصورة لم تُرفع عبر المنصّة، ولن تُنشر. ارفع الملف من جديد.
+        </p>
+      ) : null}
+
+      <Label htmlFor={id}>{image ? 'استبدال الصورة' : 'الصورة'}</Label>
+      <input
+        id={id}
+        ref={input}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        disabled={pending}
+        onChange={(event) => upload(event.target.files?.[0] ?? null)}
+        className="block min-h-touch w-full text-small text-ink2"
+      />
+      <p className="mt-1.5 text-caption text-ink3">
+        JPG أو PNG أو WebP · حتى 10 ميجابايت · لا يقل الضلع الأقصر عن 800 بكسل
+      </p>
+      {progress !== null && (
+        <progress max={1} value={progress} aria-label="تقدّم رفع الصورة" className="mt-2 w-full accent-accent" />
+      )}
+      {error && <p role="alert" className="mt-2 text-small text-danger">{error}</p>}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------- per-kind editors */
 
 function BlockFields({
-  block, index, onChange,
+  block, index, onChange, pageId, images, onImage,
 }: {
   block: Block; index: number; onChange(next: Block): void;
+  pageId: string;
+  images: ContentImages;
+  onImage(key: string, image: ContentImageView): void;
 }) {
   const id = (field: string) => `b${index}-${field}`;
 
@@ -257,9 +361,16 @@ function BlockFields({
     case 'image':
       return (
         <>
-          <Text
-            id={id('key')} label="مفتاح الصورة" value={block.mediaKey} ltr
-            onChange={(mediaKey) => onChange({ ...block, mediaKey })}
+          <ImageField
+            id={id('file')}
+            pageId={pageId}
+            mediaKey={block.mediaKey}
+            image={images[block.mediaKey]}
+            alt={block.alt}
+            onUploaded={(key, image) => {
+              onImage(key, image);
+              onChange({ ...block, mediaKey: key });
+            }}
           />
           <Text
             id={id('alt')} label="الوصف البديل — مطلوب" value={block.alt}
@@ -321,12 +432,15 @@ export function PageEditor({ page }: {
     state: PageState;
     isLive: boolean;
     blocks: Block[];
+    images: ContentImages;
     canMoveTo: PageState[];
     objections: PublishObjection[];
   };
 }) {
   const [title, setTitle] = useState(page.title);
   const [blocks, setBlocks] = useState<Block[]>(page.blocks);
+  // Grows as images are uploaded, so a new picture shows before the next save.
+  const [images, setImages] = useState<ContentImages>(page.images);
   const [state, setState] = useState<PageState>(page.state);
   const [canMoveTo, setCanMoveTo] = useState<PageState[]>(page.canMoveTo);
   const [objections, setObjections] = useState<readonly PublishObjection[]>(page.objections);
@@ -455,7 +569,14 @@ export function PageEditor({ page }: {
                 </button>
               </div>
             </div>
-            <BlockFields block={block} index={index} onChange={(b) => replace(index, b)} />
+            <BlockFields
+              block={block}
+              index={index}
+              onChange={(b) => replace(index, b)}
+              pageId={page.id}
+              images={images}
+              onImage={(key, image) => setImages((known) => ({ ...known, [key]: image }))}
+            />
           </li>
         ))}
       </ol>

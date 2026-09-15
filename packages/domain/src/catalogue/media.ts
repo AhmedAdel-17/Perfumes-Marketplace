@@ -234,14 +234,39 @@ export const isImageType = (value: string): value is ImageType =>
  * randomness is INJECTED, as it is for order references, so the domain stays
  * free of `crypto` and the tests stay deterministic.
  *
- * The product id is in the path so an operator reading a bucket listing can
- * tell whose photograph a key is without a database query.
+ * The owner's id is in the path so an operator reading a bucket listing can
+ * tell whose image a key is without a database query.
  */
+function mediaKey(
+  prefix: 'products' | 'content',
+  ownerId: string,
+  type: ImageType,
+  randomBytes: (count: number) => Uint8Array,
+): string {
+  const token = [...randomBytes(12)].map((v) => v.toString(16).padStart(2, '0')).join('');
+  return `${prefix}/${ownerId}/${token}.${EXTENSION[type]}`;
+}
+
+/** A product photograph's key, under its product. */
 export function productMediaKey(
   productId: string,
   type: ImageType,
   randomBytes: (count: number) => Uint8Array,
 ): string {
-  const token = [...randomBytes(12)].map((v) => v.toString(16).padStart(2, '0')).join('');
-  return `products/${productId}/${token}.${EXTENSION[type]}`;
+  return mediaKey('products', productId, type, randomBytes);
+}
+
+/**
+ * An editorial image's key, under its page — the shape migration 0022 CHECKs.
+ *
+ * Its own prefix, never `products/`: an operator's upload and a house's
+ * photograph are different rows with different policies, and a key that could
+ * be read as either is a key one of them could be tricked into accepting.
+ */
+export function contentMediaKey(
+  pageId: string,
+  type: ImageType,
+  randomBytes: (count: number) => Uint8Array,
+): string {
+  return mediaKey('content', pageId, type, randomBytes);
 }

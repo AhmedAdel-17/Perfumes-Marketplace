@@ -16,6 +16,16 @@ import type {
   Block, BlockKind, CallToActionBlock, HeadingBlock, ImageBlock, NoteListBlock,
   PassageBlock, PullQuoteBlock,
 } from '@diyar/domain';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
+
+/** A verified editorial image, as the API hands it over: an address and its real size. */
+export interface ContentImageView {
+  readonly url: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+export type ContentImages = Readonly<Record<string, ContentImageView>>;
 
 /**
  * Paragraphs are separated by a blank line, and nothing else is markup.
@@ -110,26 +120,43 @@ function NoteList({ block }: { block: NoteListBlock }) {
   );
 }
 
-function ContentImage({ block }: { block: ImageBlock }) {
+function ContentImage({ block, image }: { block: ImageBlock; image: ContentImageView | undefined }) {
   /*
    * `mediaKey`, not a URL — the origin of an asset is infrastructure, not
    * content, and a stored URL is a stored decision about hosting that outlives
-   * the hosting.
+   * the hosting. The API resolves the key to an address, and only for an image
+   * the server verified (`content_images`, 0022).
    *
-   * The media store is not built yet, so this renders the frame and the caption
-   * and leaves the image itself to the store. It is deliberately visible rather
-   * than hidden: a placeholder an editor can see is a placeholder that gets
-   * reported, and a silently missing image is not.
+   * At its OWN proportions, not cropped into a house frame: an editorial image
+   * was chosen for what is in it, and a 3:2 crop of a portrait loses the half
+   * somebody framed on purpose.
+   *
+   * A key with no verified image draws the visible frame. A published page
+   * cannot reach that — publishing refuses it — but a preview of a draft can,
+   * and a placeholder an editor can see is a placeholder that gets fixed.
    */
   return (
     <figure className="mt-10">
-      <div
-        className="flex aspect-[3/2] w-full items-center justify-center border border-line bg-raised"
-        role="img"
-        aria-label={block.alt}
-      >
-        <span className="text-micro tracking-label text-ink3">صورة</span>
-      </div>
+      {image ? (
+        <div
+          className="relative w-full overflow-hidden bg-raised"
+          // Data, not design: the proportions of this file, read from its bytes.
+          style={{ aspectRatio: `${image.width} / ${image.height}` }}
+        >
+          <ProductPhoto
+            photo={{ url: image.url, alt: block.alt, width: image.width, height: image.height }}
+            sizes="(min-width: 1024px) 50vw, 100vw"
+          />
+        </div>
+      ) : (
+        <div
+          className="flex aspect-[3/2] w-full items-center justify-center border border-line bg-raised"
+          role="img"
+          aria-label={block.alt}
+        >
+          <span className="text-micro tracking-label text-ink3">صورة</span>
+        </div>
+      )}
       {block.caption && (
         <figcaption className="mt-3 text-caption text-ink3">{block.caption}</figcaption>
       )}
@@ -164,25 +191,25 @@ function CallToAction({ block }: { block: CallToActionBlock }) {
  * published page.
  */
 const RENDERERS: {
-  [K in BlockKind]: (block: Extract<Block, { kind: K }>, key: number) => React.ReactNode;
+  [K in BlockKind]: (block: Extract<Block, { kind: K }>, key: number, images: ContentImages) => React.ReactNode;
 } = {
   heading: (block, key) => <Heading key={key} block={block} />,
   passage: (block, key) => <Passage key={key} block={block} />,
   pull_quote: (block, key) => <PullQuote key={key} block={block} />,
   note_list: (block, key) => <NoteList key={key} block={block} />,
-  image: (block, key) => <ContentImage key={key} block={block} />,
+  image: (block, key, images) => <ContentImage key={key} block={block} image={images[block.mediaKey]} />,
   divider: (_block, key) => <Divider key={key} />,
   call_to_action: (block, key) => <CallToAction key={key} block={block} />,
 };
 
-export function Blocks({ blocks }: { blocks: readonly Block[] }) {
+export function Blocks({ blocks, images }: { blocks: readonly Block[]; images: ContentImages }) {
   return (
     <>
       {blocks.map((block, index) => {
         // The cast is the one place the discriminated union has to be
         // re-associated with its renderer; every other site is checked.
-        const render = RENDERERS[block.kind] as (b: Block, k: number) => React.ReactNode;
-        return render(block, index);
+        const render = RENDERERS[block.kind] as (b: Block, k: number, i: ContentImages) => React.ReactNode;
+        return render(block, index, images);
       })}
     </>
   );

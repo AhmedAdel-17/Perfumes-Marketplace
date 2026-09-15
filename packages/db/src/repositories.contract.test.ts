@@ -19,6 +19,7 @@ import {
   ownerReportContract,
   photoContract,
   contentContract, type ContentContractWorld,
+  contentImageContract,
   siteContract, type SiteContractWorld,
 } from '@diyar/domain';
 import * as schema from './schema/index';
@@ -224,6 +225,15 @@ describe('site contract — Drizzle + Postgres adapter', () => {
 
 describe('content contract — Drizzle + Postgres adapter', () => {
   for (const testCase of contentContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
+
+/** The content world again: an image records who uploaded it, and that is an operator. */
+describe('content image contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of contentImageContract) {
     it(testCase.name, async () => {
       await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
     }, 60_000);

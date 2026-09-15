@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { InvalidTransition, UnauthorisedActor } from '../errors/index';
 import { FixedClock } from '../ports/clock';
 import {
-  isEmptyBlock, isInternalPath, LIMITS, objectionsToPublishing, type Block,
+  imageKeysIn, isEmptyBlock, isInternalPath, LIMITS, objectionsToPublishing, type Block,
 } from './blocks';
 import {
   canMove, isUsableSlug, isVisible, movePage, nextStates, PAGE_STATES,
@@ -10,6 +10,9 @@ import {
 } from './page';
 
 const clock = new FixedClock(new Date('2026-09-04T10:00:00.000Z'));
+
+/** No verified images — stated, for documents that have no image block to verify. */
+const NONE: ReadonlySet<string> = new Set();
 
 const page = (over: Partial<ContentPage> = {}): ContentPage => ({
   id: 'p1',
@@ -54,7 +57,7 @@ describe('links an editor may author', () => {
       { kind: 'heading', level: 2, text: 'اكتشف' },
       { kind: 'call_to_action', label: 'زورونا', href: 'https://evil.test' },
     ];
-    expect(objectionsToPublishing(blocks)).toContainEqual({
+    expect(objectionsToPublishing(blocks, NONE)).toContainEqual({
       code: 'external_link', blockIndex: 1,
     });
   });
@@ -71,16 +74,16 @@ describe('what stops a page being published', () => {
       { kind: 'passage', text: '   ' },
       { kind: 'call_to_action', label: 'اذهب', href: 'https://evil.test' },
     ];
-    const codes = objectionsToPublishing(blocks).map((o) => o.code).sort();
+    const codes = objectionsToPublishing(blocks, NONE).map((o) => o.code).sort();
     expect(codes).toEqual(['empty_block', 'external_link', 'heading_order']);
   });
 
   it('refuses an empty document', () => {
-    expect(objectionsToPublishing([])).toEqual([{ code: 'empty_document' }]);
+    expect(objectionsToPublishing([], NONE)).toEqual([{ code: 'empty_document' }]);
   });
 
   it('refuses a document that opens at level 3', () => {
-    expect(objectionsToPublishing([{ kind: 'heading', level: 3, text: 'فرع' }]))
+    expect(objectionsToPublishing([{ kind: 'heading', level: 3, text: 'فرع' }], NONE))
       .toContainEqual({ code: 'heading_order', blockIndex: 0 });
   });
 
@@ -89,12 +92,12 @@ describe('what stops a page being published', () => {
       { kind: 'heading', level: 2, text: 'قسم' },
       { kind: 'heading', level: 3, text: 'فرع' },
     ];
-    expect(objectionsToPublishing(blocks)).toEqual([]);
+    expect(objectionsToPublishing(blocks, NONE)).toEqual([]);
   });
 
   it('refuses an image with no alternative text', () => {
     const blocks: Block[] = [{ kind: 'image', mediaKey: 'm1', alt: '  ' }];
-    const codes = objectionsToPublishing(blocks).map((o) => o.code);
+    const codes = objectionsToPublishing(blocks, NONE).map((o) => o.code);
     expect(codes).toContain('missing_alt');
   });
 
@@ -104,7 +107,7 @@ describe('what stops a page being published', () => {
     ['pull_quote', { kind: 'pull_quote', text: 'ا'.repeat(LIMITS.quoteText + 1) }],
   ] as const)('refuses an over-long %s', (_kind, block) => {
     const blocks: Block[] = [{ kind: 'heading', level: 2, text: 'قسم' }, block as Block];
-    expect(objectionsToPublishing(blocks).map((o) => o.code)).toContain('over_length');
+    expect(objectionsToPublishing(blocks, NONE).map((o) => o.code)).toContain('over_length');
   });
 
   it('refuses a document longer than any page', () => {
@@ -112,7 +115,7 @@ describe('what stops a page being published', () => {
       { kind: 'heading', level: 2, text: 'قسم' },
       ...Array.from({ length: LIMITS.blocksPerPage }, (): Block => ({ kind: 'divider' })),
     ];
-    expect(objectionsToPublishing(blocks).map((o) => o.code)).toContain('too_many_blocks');
+    expect(objectionsToPublishing(blocks, NONE).map((o) => o.code)).toContain('too_many_blocks');
   });
 
   it('treats a divider as content, because it is', () => {
@@ -124,47 +127,94 @@ describe('what stops a page being published', () => {
   });
 });
 
+/* ----------------------------------------------------------- images (5.7.6) */
+
+describe('an image a page may publish', () => {
+  const KEY = 'content/p1/aaaaaaaaaaaaaaaaaaaaaaaa.jpg';
+  const withImage = (mediaKey: string): Block[] => [
+    { kind: 'heading', level: 2, text: 'في المعمل' },
+    { kind: 'image', mediaKey, alt: 'قوارير الزيوت على رفّ خشبي' },
+  ];
+
+  it('refuses an image whose key was never verified, and names the block', () => {
+    // The console used to accept any text as a key. A key typed by hand is the
+    // exact thing this refuses — whether it names nothing or someone else's file.
+    expect(objectionsToPublishing(withImage(KEY), NONE))
+      .toEqual([{ code: 'unverified_image', blockIndex: 1 }]);
+  });
+
+  it('accepts the same block once its key is verified', () => {
+    expect(objectionsToPublishing(withImage(KEY), new Set([KEY]))).toEqual([]);
+  });
+
+  it('reports a blank key once, as an empty block', () => {
+    expect(objectionsToPublishing(withImage('  '), NONE).map((o) => o.code)).toEqual(['empty_block']);
+  });
+
+  it('holds publishing to it, and nothing short of publishing', () => {
+    const inReview = page({ state: 'in_review', draftBlocks: withImage(KEY) });
+    expect(movePage(inReview, 'published', 'publisher', clock, NONE))
+      .toEqual({ objections: [{ code: 'unverified_image', blockIndex: 1 }] });
+    expect('moved' in movePage(inReview, 'published', 'publisher', clock, new Set([KEY]))).toBe(true);
+
+    // A draft may be broken — submitting it for review is not publishing it.
+    expect('moved' in movePage(page({ draftBlocks: withImage(KEY) }), 'in_review', 'editor', clock, NONE))
+      .toBe(true);
+  });
+
+  it('lists each image key once, and no blank ones', () => {
+    const blocks: Block[] = [
+      ...withImage(KEY),
+      { kind: 'image', mediaKey: KEY, alt: 'مرّة ثانية' },
+      { kind: 'image', mediaKey: ' ', alt: 'بلا ملف' },
+      // A passage that happens to contain a key is text, not an image.
+      { kind: 'passage', text: KEY },
+    ];
+    expect(imageKeysIn(blocks)).toEqual([KEY]);
+  });
+});
+
 /* --------------------------------------------------------- the state machine */
 
 describe('moving a page', () => {
   it('sends a draft for review', () => {
-    const result = movePage(page(), 'in_review', 'editor', clock);
+    const result = movePage(page(), 'in_review', 'editor', clock, NONE);
     expect('moved' in result && result.moved.to).toBe('in_review');
   });
 
   it('refuses to let an editor publish', () => {
-    expect(() => movePage(page({ state: 'in_review' }), 'published', 'editor', clock))
+    expect(() => movePage(page({ state: 'in_review' }), 'published', 'editor', clock, NONE))
       .toThrow(UnauthorisedActor);
   });
 
   it('lets a publisher publish a reviewed page', () => {
-    const result = movePage(page({ state: 'in_review' }), 'published', 'publisher', clock);
+    const result = movePage(page({ state: 'in_review' }), 'published', 'publisher', clock, NONE);
     expect('moved' in result && result.moved.publishes).toBe(true);
   });
 
   it('refuses to publish a page straight from draft', () => {
     // Review is not optional. A single pair of eyes is how the shopfront
     // acquires a sentence nobody meant to ship.
-    expect(() => movePage(page(), 'published', 'publisher', clock))
+    expect(() => movePage(page(), 'published', 'publisher', clock, NONE))
       .toThrow(InvalidTransition);
   });
 
   it('names the page in the error, not the sub-order', () => {
     // The message hardcoded "sub-order" when there was only one state machine.
-    expect(() => movePage(page(), 'published', 'publisher', clock))
+    expect(() => movePage(page(), 'published', 'publisher', clock, NONE))
       .toThrow(/content page/);
   });
 
   it('returns objections instead of publishing broken content', () => {
     const broken = page({ state: 'in_review', draftBlocks: [{ kind: 'passage', text: '' }] });
-    const result = movePage(broken, 'published', 'publisher', clock);
+    const result = movePage(broken, 'published', 'publisher', clock, NONE);
     expect('objections' in result && result.objections.length).toBeGreaterThan(0);
   });
 
   it('lets a broken DRAFT be saved and reviewed', () => {
     // A draft is allowed to be broken. That is what a draft is.
     const broken = page({ draftBlocks: [{ kind: 'passage', text: '' }] });
-    expect('moved' in movePage(broken, 'in_review', 'editor', clock)).toBe(true);
+    expect('moved' in movePage(broken, 'in_review', 'editor', clock, NONE)).toBe(true);
   });
 
   it('has no move that is legal for nobody', () => {

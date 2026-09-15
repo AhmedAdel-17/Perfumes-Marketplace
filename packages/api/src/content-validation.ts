@@ -56,7 +56,17 @@ const noteList = z.object({
 
 const image = z.object({
   kind: z.literal('image'),
-  mediaKey: z.string().trim().min(1).max(200),
+  /*
+   * Any key, blank included, is SAVEABLE — and that is deliberate.
+   *
+   * A new image block starts with no key until its upload is confirmed, and this
+   * used to demand one, so adding an image block made the whole draft unsaveable.
+   * What a key may do is decided where it matters: publishing refuses a block
+   * whose key has no verified upload (`unverified_image`), and the renderer only
+   * resolves verified keys. Refusing an unverified key HERE would instead lock an
+   * editor out of saving any other change to a page that has one.
+   */
+  mediaKey: z.string().trim().max(200),
   alt: trimmed(LIMITS.alt),
   caption: trimmed(LIMITS.caption).optional(),
 }).strict();

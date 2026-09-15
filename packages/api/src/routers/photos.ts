@@ -2,11 +2,11 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
   IMAGE_TYPES, MEDIA_LIMITS, isListingEditableBySeller, objectionsToAddingPhoto, objectionsToDescribing,
-  objectionsToImage, objectionsToRemovingPhoto, productMediaKey, reorderedPhotos,
-  sniffImage, type ImageObjection, type ImageType, type PhotoObjection, type Repositories,
-  type StoredPhoto,
+  objectionsToRemovingPhoto, productMediaKey, reorderedPhotos,
+  type ImageObjection, type PhotoObjection, type Repositories, type StoredPhoto,
 } from '@diyar/domain';
 import { IMAGE_OBJECTION_AR, PHOTO_OBJECTION_AR } from '@diyar/i18n';
+import { declaredTypeOf, verifyArrivedImage } from '../image-verification';
 import { assertMediaKey, type MediaStore } from '../providers/media';
 import { consume, rateLimitMessage } from '../rate-limit';
 import { router, sellerProcedure } from '../trpc';
@@ -37,12 +37,6 @@ import { router, sellerProcedure } from '../trpc';
  */
 
 const UPLOAD_SECONDS = 600;
-
-const TYPE_BY_EXTENSION: Readonly<Record<string, ImageType>> = {
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-};
 
 const idSchema = z.string().min(1).max(64);
 
@@ -181,10 +175,10 @@ export const photosRouter = router({
       } catch {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'رابط الصورة غير صالح.' });
       }
-      if (!input.key.startsWith(`products/${input.productId}/`)) {
+      const declaredType = declaredTypeOf(input.key);
+      if (!input.key.startsWith(`products/${input.productId}/`) || !declaredType) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'رابط الصورة غير صالح.' });
       }
-      const declaredType = TYPE_BY_EXTENSION[input.key.slice(input.key.lastIndexOf('.') + 1)]!;
 
       // Listing ownership first, so a house probing another house's keys learns
       // nothing from whether a file exists there.
@@ -198,25 +192,9 @@ export const photosRouter = router({
       const already = existing.find((p) => p.storageKey === input.key);
       if (already) return photoOut(already, ctx.media);
 
-      const stored = await ctx.media.describe(input.key);
-      if (!stored) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'لم تصل الصورة إلى التخزين. أعد رفعها.' });
-      }
-
-      const header = await ctx.media.readHeader(input.key, MEDIA_LIMITS.headerBytes);
-      const facts = header ? sniffImage(header) : null;
-
-      const imageObjections = objectionsToImage({ facts, declaredType, byteSize: stored.byteSize });
-      // The type storage will SERVE it with must agree with what the bytes are.
-      if (facts && stored.contentType !== null && stored.contentType !== facts.type) {
-        imageObjections.push('type_mismatch');
-      }
-
-      if (imageObjections.length > 0 || !facts) {
-        // It can never become a photograph, so it does not stay in storage.
-        await ctx.media.remove(input.key);
-        throw refuse(imageObjections.length > 0 ? imageObjections : ['unsupported_type']);
-      }
+      // The bytes decide, in the one place both upload flows share. A file that
+      // can never become a photograph is removed there, before this throws.
+      const verified = await verifyArrivedImage(ctx.media, input.key, declaredType);
 
       const photoObjections = objectionsToAddingPhoto({
         existing: existing.length,
@@ -234,10 +212,10 @@ export const photosRouter = router({
           storageKey: input.key,
           alt: input.alt,
           ownershipConfirmed: input.ownershipConfirmed,
-          contentType: facts.type,
-          byteSize: stored.byteSize,
-          width: facts.width,
-          height: facts.height,
+          contentType: verified.type,
+          byteSize: verified.byteSize,
+          width: verified.width,
+          height: verified.height,
         });
       });
       return photoOut(added, ctx.media);

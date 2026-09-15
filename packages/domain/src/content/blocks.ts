@@ -202,9 +202,31 @@ export type PublishObjection =
   | { code: 'heading_order'; blockIndex: number }
   | { code: 'external_link'; blockIndex: number }
   | { code: 'missing_alt'; blockIndex: number }
+  /** A key with no verified upload behind it (`content_images`, 0022). */
+  | { code: 'unverified_image'; blockIndex: number }
   | { code: 'over_length'; blockIndex: number };
 
-export function objectionsToPublishing(blocks: readonly Block[]): PublishObjection[] {
+/**
+ * Every image key these blocks name, each once, blank keys excluded.
+ *
+ * What a caller looks up in `ContentImageRepository` before asking
+ * `objectionsToPublishing`, and what a renderer resolves to addresses.
+ */
+export function imageKeysIn(blocks: readonly Block[]): string[] {
+  return [...new Set(blocks.flatMap((block) =>
+    (block.kind === 'image' && block.mediaKey.trim().length > 0 ? [block.mediaKey] : [])))];
+}
+
+/**
+ * `verifiedImageKeys` is REQUIRED, not defaulted. An optional set would make
+ * "forgot to look the images up" indistinguishable from "this page has none",
+ * and the first caller to forget would publish whatever key an operator typed.
+ * A document with no image blocks passes an empty set, and says so.
+ */
+export function objectionsToPublishing(
+  blocks: readonly Block[],
+  verifiedImageKeys: ReadonlySet<string>,
+): PublishObjection[] {
   const objections: PublishObjection[] = [];
 
   if (blocks.length === 0) return [{ code: 'empty_document' }];
@@ -255,6 +277,11 @@ export function objectionsToPublishing(blocks: readonly Block[]): PublishObjecti
 
       case 'image':
         if (block.alt.trim().length === 0) objections.push({ code: 'missing_alt', blockIndex });
+        // A blank key is already `empty_block`; reporting it twice would give an
+        // editor two instructions for one missing picture.
+        if (block.mediaKey.trim().length > 0 && !verifiedImageKeys.has(block.mediaKey)) {
+          objections.push({ code: 'unverified_image', blockIndex });
+        }
         if (block.alt.length > LIMITS.alt || (block.caption ?? '').length > LIMITS.caption) {
           objections.push({ code: 'over_length', blockIndex });
         }

@@ -8,6 +8,7 @@ import type { ReturnRepository } from './return-repository';
 import type { SupportRepository } from './support-repository';
 import type { ApplicationRepository } from './application-repository';
 import type { ContentRepository } from './content-repository';
+import type { ContentImageRepository } from './content-image-repository';
 /**
  * Repository ports.
  *
@@ -453,6 +454,8 @@ export interface Repositories {
   readonly ownerReport: OwnerReportRepository;
   /** A product's photographs. House scoping is checked by the caller and by RLS. */
   readonly photos: PhotoRepository;
+  /** The verified images an editorial page may show. */
+  readonly contentImages: ContentImageRepository;
 }
 
 /**

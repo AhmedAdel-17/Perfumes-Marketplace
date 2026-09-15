@@ -56,7 +56,7 @@ export default async function ContentPage(
         </h1>
 
         <article className="pb-4">
-          <Blocks blocks={page.blocks} />
+          <Blocks blocks={page.blocks} images={page.images} />
         </article>
       </main>
       <SiteFooter />

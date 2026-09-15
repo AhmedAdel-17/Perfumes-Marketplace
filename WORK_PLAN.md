@@ -67,7 +67,7 @@ the work, in the order below — chosen by what blocks the others, not by size.
 
 | Gate (doc 04 §8) | State (updated 15 September 2026) |
 |---|---|
-| Seller approved, publishes a product, receives an attributed order, sees a statement | **blocked on media (5.7)** — approval, listing, moderation, attribution and statements all work; a listing cannot publish without a primary image, and there is no media store |
+| Seller approved, publishes a product, receives an attributed order, sees a statement | ✅ — since 5.7: a house uploads a verified photograph, the listing publishes, and the shop and the bag show it. Production storage needs the R2 bucket and its CORS rule (README, "Deploying") |
 | Customer understands shipping and completes COD checkout | ✅ |
 | Split order produces correct seller tasks and customer tracking | ✅ — and since 0020, a dispatch deadline per house |
 | Cancelled, refused, returned, failed-payment states reconcile | ✅ — returns requested, decided and refunded through screens; refunds audited |
@@ -76,7 +76,7 @@ the work, in the order below — chosen by what blocks the others, not by size.
 | Privacy, terms, seller agreement, return policy, prohibited products | **partial** — pages published through the CMS, prohibited-claim controls live; **pending counsel** on the wording, and the PDPL export/delete process is on the legal-review list before it may be built |
 | Owner sees funnel, seller SLA and contribution without database work | ✅ for everything recorded — `/ops/insights`. Pre-order funnel blocked on A-1; a contribution margin on A-2 |
 
-## 5. The seller's catalogue  ⬜
+## 5. The seller's catalogue  ✅
 
 The largest remaining gap, and the one everything else waits on: today every
 product in the system was seeded by hand. A marketplace where the platform
@@ -88,7 +88,7 @@ enters the catalogue is not a marketplace.
 - [x] 5.4 Prohibited-claim controls: refused outright, or flagged for a person
 - [x] 5.5 Stock and price editable on a live listing (the audit trail is §6)
 - [x] 5.6 Domain tests, database guards, 19 surfaces in the audit
-- [ ] 5.7 **Media — UNBLOCKED 15 Sep 2026 (M-1: Cloudflare R2).** A listing cannot
+- [x] 5.7 **Media — done 16 Sep 2026 (M-1: Cloudflare R2).** A listing cannot
       publish without a primary image whose ownership is confirmed, and no house can
       add one. The schema (`product_media`) and the publish trigger already exist.
       - [x] 5.7.1 `MediaStore` port: presign an upload, verify what arrived, public URL
@@ -106,7 +106,9 @@ enters the catalogue is not a marketplace.
             cart port, so both adapters and the cart contract gain the field. Read
             in the same query as the price; follows a change of primary (a mutation
             to either adapter's join fails the contract case)
-      - [ ] 5.7.6 The CMS image block renders from the same store
+      - [x] 5.7.6 The CMS image block renders from the same store — an operator
+            uploads, the server verifies (`content_images`, 0022), and a page with
+            an unverified key cannot publish. The "image key" text field is gone
       - [x] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 
 ## 6. The audit trail  ◐
@@ -304,7 +306,8 @@ Newest last. One line per completed item, with anything the next session must kn
   database. Audit clean in both themes, every surface, every width.
 
   **Still blocked, and not mine:** 5.7 media (gate 1), 9.5 the pre-order funnel
-  (A-1), a contribution margin (A-2).
+  (A-1), a contribution margin (A-2). *(Superseded: M-1 and A-1 were decided on
+  15 Sep; see the entries below.)*
 
 - 2026-09-15 — **§5.7.1–5.7.5a and 5.7.7: a house can photograph its perfume, and
   the shop shows it.** Browsers upload straight to storage on a signed URL; the
@@ -330,3 +333,40 @@ Newest last. One line per completed item, with anything the next session must kn
 
   e2e 124/124 on a fresh database. Audit clean in both themes, every surface,
   every width. Tokens 123.
+
+- 2026-09-16 — **§5.7 done, and with it §5 and MVP gate 1.** Two slices since the
+  last entry.
+
+  **5.7.5b, the bag** (commit efe6a89). The cart snapshot carries the verified
+  primary photograph as a key, read in the same query as the price; the API makes
+  it a URL. A contract case follows a change of primary, and breaking the primary
+  condition in either adapter fails it.
+
+  **5.7.6, editorial images.** The image block was a text field that saved any
+  key an operator typed — a key to nothing drew a placeholder on the public site,
+  and a key to a house's photograph would have published that photograph on a
+  page nobody reviewed it for. Now:
+
+  * `content_images` (0022): a row only for bytes the server read. Keys are
+    CHECKed to `content/{page}/…`; every fact NOT NULL. A visitor reads a row only
+    while a live page's SERVED revision names it — not a draft's upload, not an
+    old revision's, not an archived page's. 14 cases prove each clause.
+  * `objectionsToPublishing` now REQUIRES the verified keys. Optional would have
+    made "forgot to look them up" read as "no images", and the first caller to
+    forget would publish a typed key. A router mutation that treats every named
+    key as verified fails the API test.
+  * The file checks behind both uploads are one function (`image-verification.ts`),
+    and the browser side one module (`features/media/upload.ts`); the photograph
+    manager uses both rather than keeping its own copies.
+  * Saving a draft no longer demands an image key, which had made any page with a
+    new image block unsaveable. Publishing is where a key is judged.
+  * `next.config.mjs` allows `/content/**` from the media origin as well as
+    `/products/**` — invisible in development, fatal in production if missed.
+  * DEBT #4 widened: editorial images are never deleted, because immutable
+    revisions may still name them.
+
+  Domain 647, db 323, api 268, tokens 123. e2e 125/125 on a fresh database,
+  including an operator uploading an image and a visitor seeing it through the
+  optimiser. Audit clean in both themes, every surface, every width.
+
+  **Next: §10**, the dependency advisories — drizzle-orm first.

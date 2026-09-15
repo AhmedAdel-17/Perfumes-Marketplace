@@ -109,6 +109,8 @@ export function movePage(
   to: PageState,
   role: ContentRole,
   clock: Clock,
+  /** The image keys with a verified upload behind them — see `objectionsToPublishing`. */
+  verifiedImageKeys: ReadonlySet<string>,
 ): { moved: PageMoved } | { objections: PublishObjection[] } {
   const legal = (TRANSITIONS[page.state] ?? []).find((m) => m.to === to);
   if (!legal) throw new InvalidTransition(page.state, to, 'content page');
@@ -124,7 +126,7 @@ export function movePage(
    * before they have finished the first sentence.
    */
   if (to === 'published') {
-    const objections = objectionsToPublishing(page.draftBlocks);
+    const objections = objectionsToPublishing(page.draftBlocks, verifiedImageKeys);
     if (objections.length > 0) return { objections };
   }
 

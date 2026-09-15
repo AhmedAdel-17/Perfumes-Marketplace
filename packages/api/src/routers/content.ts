@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
-  isUsableSlug, movePage, nextStates, objectionsToPublishing, PAGE_STATES,
-  type ContentRole, type PublishObjection,
+  imageKeysIn, isUsableSlug, movePage, nextStates, objectionsToPublishing, PAGE_STATES,
+  type ContentImage, type ContentRole, type PublishObjection,
 } from '@diyar/domain';
+import type { MediaStore } from '../providers/media';
 import { platformProcedure, publicProcedure, router } from '../trpc';
 import { blocksSchema, pageTitleSchema } from '../content-validation';
 
@@ -48,17 +49,42 @@ function staffOrThrow(ctx: { platformStaffId: string | null }): string {
   return ctx.platformStaffId;
 }
 
+/** The keys of the images that ARE verified — what the publish rule is given. */
+const keysOf = (images: readonly ContentImage[]): Set<string> =>
+  new Set(images.map((image) => image.storageKey));
+
+/**
+ * Addresses for the verified images a page names, keyed by the block's own key.
+ *
+ * Only the images asked for, never "every image": a page is handed exactly what
+ * it shows. A key with no record has no entry, and the renderer draws the
+ * placeholder — which a published page cannot reach, because publishing refuses it.
+ */
+const imagesOut = (images: readonly ContentImage[], media: MediaStore) =>
+  Object.fromEntries(images.map((image) => [
+    image.storageKey,
+    { url: media.publicUrl(image.storageKey), width: image.width, height: image.height },
+  ]));
+
 export const contentRouter = router({
   /** What a visitor is served. Never a draft, by construction. */
   read: publicProcedure
     .input(z.object({ slug: z.string().trim().max(80) }))
     .query(async ({ ctx, input }) => {
-      const page = await ctx.uow.transaction((r) => r.content.findLive(input.slug));
-      if (!page) return null;
+      // The images in the SAME transaction as the revision, under the visitor's
+      // own policies: `content_images` is readable only while a live page serves
+      // the key (0022), so this cannot hand out a draft's upload.
+      const served = await ctx.uow.transaction(async (r) => {
+        const live = await r.content.findLive(input.slug);
+        return live ? { live, images: await r.contentImages.findByKeys(imageKeysIn(live.blocks)) } : null;
+      });
+      if (!served) return null;
+      const { live: page, images } = served;
       return {
         slug: page.slug,
         title: page.title,
         blocks: page.blocks,
+        images: imagesOut(images, ctx.media),
         publishedAt: page.publishedAt.toISOString(),
       };
     }),
@@ -94,8 +120,14 @@ export const contentRouter = router({
   get: platformProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const page = await ctx.uow.transaction((r) => r.content.findById(input.id));
-      if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+      const found = await ctx.uow.transaction(async (r) => {
+        const draft = await r.content.findById(input.id);
+        return draft
+          ? { page: draft, images: await r.contentImages.findByKeys(imageKeysIn(draft.draftBlocks)) }
+          : null;
+      });
+      if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+      const { page, images } = found;
 
       const role = contentRoleFor(ctx.platformRole);
       return {
@@ -107,10 +139,12 @@ export const contentRouter = router({
         // — a published page pulled back to draft is still on the site.
         isLive: page.publishedRevisionId !== null && page.state !== 'archived',
         blocks: page.draftBlocks,
+        // So the editor shows each uploaded picture, not a key.
+        images: imagesOut(images, ctx.media),
         canMoveTo: nextStates(page.state, role),
         // Shown while editing, so an editor learns what will block publishing
         // before they ask to publish rather than after.
-        objections: objectionsToPublishing(page.draftBlocks),
+        objections: objectionsToPublishing(page.draftBlocks, keysOf(images)),
       };
     }),
 
@@ -140,15 +174,16 @@ export const contentRouter = router({
       blocks: blocksSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.uow.transaction(async (r) => {
+      const images = await ctx.uow.transaction(async (r) => {
         const page = await r.content.findById(input.id);
         if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
         await r.content.saveDraft(input.id, { title: input.title, blocks: input.blocks });
+        return r.contentImages.findByKeys(imageKeysIn(input.blocks));
       });
 
       // Returned so the console can show what still stands between this draft
       // and being publishable, without a second round trip.
-      return { objections: objectionsToPublishing(input.blocks) };
+      return { objections: objectionsToPublishing(input.blocks, keysOf(images)) };
     }),
 
   move: platformProcedure
@@ -167,7 +202,10 @@ export const contentRouter = router({
         // mapped to Arabic by the error middleware; content that is not ready
         // comes back as objections, because that is an editor's ordinary
         // working state and not an error.
-        const result = movePage(page, input.to, role, ctx.clock);
+        // Looked up in the transaction that publishes, from the draft that will
+        // be frozen — not from what the console last saw.
+        const verified = keysOf(await r.contentImages.findByKeys(imageKeysIn(page.draftBlocks)));
+        const result = movePage(page, input.to, role, ctx.clock, verified);
         if ('objections' in result) {
           return {
             objections: result.objections,
@@ -251,12 +289,19 @@ export const contentRouter = router({
   preview: platformProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const page = await ctx.uow.transaction((r) => r.content.findById(input.id));
-      if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+      const found = await ctx.uow.transaction(async (r) => {
+        const draft = await r.content.findById(input.id);
+        return draft
+          ? { page: draft, images: await r.contentImages.findByKeys(imageKeysIn(draft.draftBlocks)) }
+          : null;
+      });
+      if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
+      const { page, images } = found;
       return {
         slug: page.slug,
         title: page.title,
         blocks: page.draftBlocks,
+        images: imagesOut(images, ctx.media),
         state: page.state,
       };
     }),
