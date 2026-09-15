@@ -73,6 +73,16 @@ export const RATE_LIMITS = {
    * caller actually made, so this is a backstop rather than the control.
    */
   aftercare: { limit: 20, windowMs: HOUR },
+
+  /**
+   * Starting a photograph upload. Keyed on the HOUSE, not a phone — only a
+   * signed-in house can upload, and its staff share one allowance.
+   *
+   * Each start signs a URL that can put up to 10 MB into storage. Eight
+   * photographs across several listings in an evening is a house working;
+   * sixty an hour is far past that and still well short of a bill.
+   */
+  upload: { limit: 60, windowMs: HOUR },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

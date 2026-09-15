@@ -16,8 +16,10 @@ import { DrizzleUnitOfWork, schema, type ActorContext, type DiyarDatabase } from
 import { applyMigrations } from '@diyar/db/migrate';
 import { appRouter } from './routers/index';
 import type { ApiContext } from './trpc';
+import { testMediaStore } from './testing/media';
 
 const CLOCK = new FixedClock(new Date('2026-09-02T09:00:00Z'));
+const MEDIA = testMediaStore();
 const PLATFORM = '99999999-9999-9999-9999-999999999999';
 const HOUSE_STAFF = '11111111-1111-1111-1111-111111111111';
 
@@ -40,6 +42,7 @@ const caller = (
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     aftercareUow: new DrizzleUnitOfWork(db, { role: 'aftercare', id: null }),
     intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
+    media: MEDIA,
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);

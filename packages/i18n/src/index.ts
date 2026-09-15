@@ -15,6 +15,7 @@ export * from './verification';
 export * from './catalogue';
 export * from './audit';
 export * from './insights';
+export * from './media';
 export { ar, type Dictionary } from './ar';
 
 import { ar, type Dictionary } from './ar';

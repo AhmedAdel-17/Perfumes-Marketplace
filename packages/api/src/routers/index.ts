@@ -7,6 +7,7 @@ import { contentRouter } from './content';
 import { insightsRouter } from './insights';
 import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
+import { photosRouter } from './photos';
 import { platformRouter } from './platform';
 import { returnsRouter } from './returns';
 import { reviewsRouter } from './reviews';
@@ -23,6 +24,7 @@ export const appRouter = router({
   insights: insightsRouter,
   listings: listingsRouter,
   orders: ordersRouter,
+  photos: photosRouter,
   platform: platformRouter,
   returns: returnsRouter,
   reviews: reviewsRouter,

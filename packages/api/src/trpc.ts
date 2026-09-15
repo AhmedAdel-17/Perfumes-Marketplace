@@ -9,6 +9,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import type { Clock, UnitOfWork } from '@diyar/domain';
 import type { ActorContext } from '@diyar/db';
 import { toTRPCError } from './errors';
+import type { MediaStore } from './providers/media';
 
 export interface ApiContext {
   readonly actor: ActorContext;
@@ -88,6 +89,14 @@ export interface ApiContext {
    * does.
    */
   readonly intakeUow: UnitOfWork;
+  /**
+   * Where photographs are stored — R2, or the local-disk stub in development.
+   *
+   * On the context, built once at the composition root, for the reason the
+   * service-role Units of Work are: the adapter in use is decided in one
+   * visible place, and it is the same instance `assertProductionSafe` inspects.
+   */
+  readonly media: MediaStore;
   readonly clock: Clock;
 }
 

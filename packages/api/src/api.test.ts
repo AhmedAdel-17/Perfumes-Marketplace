@@ -21,9 +21,11 @@ import { applyMigrations } from '@diyar/db/migrate';
 import { appRouter } from './routers/index';
 import { placeOrderSchema, declineSchema, phoneSchema } from './validation';
 import type { ApiContext } from './trpc';
+import { testMediaStore } from './testing/media';
 
 const MIGRATIONS = join(import.meta.dirname, '../../db/migrations');
 const CLOCK = new FixedClock(new Date('2026-09-02T09:00:00Z'));
+const MEDIA = testMediaStore();
 
 let pg: PGlite;
 let db: DiyarDatabase;
@@ -52,6 +54,7 @@ const caller = (
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     aftercareUow: new DrizzleUnitOfWork(db, { role: 'aftercare', id: null }),
     intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
+    media: MEDIA,
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);
@@ -1484,5 +1487,214 @@ describe('the money loop — order to payout, against a real Postgres', () => {
 
     const stolen = await nour.seller.statement({ payoutId: wardPayouts[0]!.id });
     expect(stolen).toBeNull();
+  });
+});
+
+/**
+ * A house adding photographs — WORK_PLAN 5.7.3, through the procedures the
+ * console calls, against a real Postgres and the local media store.
+ *
+ * The browser's half (PUT to the signed URL) is simulated by writing the bytes
+ * straight into the test store; everything the SERVER does with them is real.
+ */
+describe('a house adds photographs to its own listing', () => {
+  const be16 = (n: number) => [(n >> 8) & 0xff, n & 0xff];
+
+  /** A real JPEG header: SOI, JFIF, a baseline frame at the given size. */
+  const jpeg = (width: number, height: number) => new Uint8Array([
+    0xff, 0xd8,
+    0xff, 0xe0, ...be16(16), 0x4a, 0x46, 0x49, 0x46, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0,
+    0xff, 0xc0, ...be16(17), 8, ...be16(height), ...be16(width), 3, 1, 0x11, 0, 2, 0x11, 1, 3, 0x11, 1,
+    0xff, 0xda,
+  ]);
+
+  const ward = () => caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
+  const nour = () => caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+
+  const newListing = async () => {
+    const house = ward();
+    const suffix = Math.random().toString(36).slice(2, 8);
+    return house.listings.create({
+      name: 'عطر للصور', slug: `photos-${suffix}`, sku: `PHO-${suffix}`,
+      brandId: (await house.listings.myBrand())!.id,
+    });
+  };
+
+  const described = { alt: 'زجاجة على رخام أسود', ownershipConfirmed: true };
+
+  /** Start an upload and put the bytes where the URL points. */
+  const upload = async (productId: string, bytes: Uint8Array) => {
+    const started = await ward().photos.startUpload({
+      productId, contentType: 'image/jpeg', byteSize: bytes.length,
+    });
+    await MEDIA.write(started.key, bytes);
+    return started.key;
+  };
+
+  const confirm = (productId: string, key: string, details = described) =>
+    ward().photos.confirm({ productId, key, ...details });
+
+  it('uploads, verifies what arrived, and lists it with its real dimensions', async () => {
+    const listing = await newListing();
+    const started = await ward().photos.startUpload({
+      productId: listing.id, contentType: 'image/jpeg', byteSize: 4_000,
+    });
+
+    expect(started.key.startsWith(`products/${listing.id}/`)).toBe(true);
+    expect(started.url).toContain('signature=');
+
+    await MEDIA.write(started.key, jpeg(2400, 3000));
+    const photo = await confirm(listing.id, started.key);
+
+    expect(photo.isPrimary).toBe(true);
+    expect([photo.width, photo.height]).toEqual([2400, 3000]);
+    expect(photo.url).toContain(started.key);
+
+    const listed = await ward().photos.list({ productId: listing.id });
+    expect(listed.map((p) => p.id)).toEqual([photo.id]);
+
+    // And the listing gap closes: this is the photograph the publish rule wants.
+    const draft = await ward().listings.get({ id: listing.id });
+    expect(draft.primaryImage).toBe(true);
+  });
+
+  it('confirming the same upload twice returns the SAME photograph, not a second', async () => {
+    const listing = await newListing();
+    const key = await upload(listing.id, jpeg(2400, 3000));
+    const first = await confirm(listing.id, key);
+    const second = await confirm(listing.id, key);
+    expect(second.id).toBe(first.id);
+    expect(await ward().photos.list({ productId: listing.id })).toHaveLength(1);
+  });
+
+  it('refuses a web page called photo.jpg, and deletes it from storage', async () => {
+    const listing = await newListing();
+    const key = await upload(listing.id, new TextEncoder().encode('<!doctype html><script>alert(1)</script>'));
+
+    await expect(confirm(listing.id, key)).rejects.toThrow(/ليس صورة يمكن عرضها/);
+    expect(await MEDIA.describe(key)).toBeNull();
+    expect(await ward().photos.list({ productId: listing.id })).toHaveLength(0);
+  });
+
+  it('refuses a photograph too small to stay sharp, and deletes it', async () => {
+    const listing = await newListing();
+    const key = await upload(listing.id, jpeg(600, 900));
+
+    await expect(confirm(listing.id, key)).rejects.toThrow(/800 بكسل/);
+    expect(await MEDIA.describe(key)).toBeNull();
+  });
+
+  it('refuses a blank description but KEEPS the file, so the house need not upload it twice', async () => {
+    const listing = await newListing();
+    const key = await upload(listing.id, jpeg(2400, 3000));
+
+    await expect(confirm(listing.id, key, { alt: '   ', ownershipConfirmed: true }))
+      .rejects.toThrow(/اكتب وصفًا/);
+    expect(await MEDIA.describe(key)).not.toBeNull();
+
+    const photo = await confirm(listing.id, key, { alt: 'العلبة من الأمام', ownershipConfirmed: true });
+    expect(photo.alt).toBe('العلبة من الأمام');
+  });
+
+  it('refuses a key issued for a DIFFERENT product', async () => {
+    const mine = await newListing();
+    const other = await newListing();
+    const key = await upload(other.id, jpeg(2400, 3000));
+
+    await expect(confirm(mine.id, key)).rejects.toThrow(/رابط الصورة غير صالح/);
+  });
+
+  it('another house can neither see nor add photographs to this listing', async () => {
+    const listing = await newListing();
+    await expect(nour().photos.list({ productId: listing.id })).rejects.toThrow(/غير موجود/);
+    await expect(nour().photos.startUpload({
+      productId: listing.id, contentType: 'image/jpeg', byteSize: 4_000,
+    })).rejects.toThrow(/غير موجود/);
+  });
+
+  it('refuses an oversized file before signing anything', async () => {
+    const listing = await newListing();
+    await expect(ward().photos.startUpload({
+      productId: listing.id, contentType: 'image/jpeg', byteSize: 11 * 1024 * 1024,
+    })).rejects.toThrow(/10 ميجابايت/);
+  });
+
+  it('makes another photograph primary, reorders, and promotes the next when a draft loses its primary', async () => {
+    const listing = await newListing();
+    const a = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    const b = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    const c = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+
+    await ward().photos.makePrimary({ productId: listing.id, photoId: b.id });
+    await ward().photos.reorder({ productId: listing.id, photoIds: [c.id, b.id, a.id] });
+    let listed = await ward().photos.list({ productId: listing.id });
+    expect(listed.map((p) => p.id)).toEqual([c.id, b.id, a.id]);
+    expect(listed.filter((p) => p.isPrimary).map((p) => p.id)).toEqual([b.id]);
+
+    await ward().photos.remove({ productId: listing.id, photoId: b.id });
+    listed = await ward().photos.list({ productId: listing.id });
+    expect(listed.map((p) => p.id)).toEqual([c.id, a.id]);
+    expect(listed.filter((p) => p.isPrimary).map((p) => p.id)).toEqual([c.id]);
+  });
+
+  it('refuses a stale reorder rather than guessing', async () => {
+    const listing = await newListing();
+    const a = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+
+    await expect(ward().photos.reorder({ productId: listing.id, photoIds: [a.id] }))
+      .rejects.toThrow(/حدّث الصفحة/);
+  });
+
+  it('refuses to strip the primary photograph from a listing awaiting review', async () => {
+    /*
+     * The listing reaches review the way a house's does — a complete draft,
+     * saved and submitted — not by a direct UPDATE.
+     *
+     * The first version of this case set `status = 'pending_moderation'` in SQL
+     * on an empty draft, and the database refused it: the publish gate in 0001
+     * will not let a listing into review with fifteen required fields missing.
+     * The rule under test was never reached. A test that bypasses the product's
+     * own path to set up a state the product forbids is testing nothing.
+     */
+    const listing = await newListing();
+    const primary = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+
+    await ward().listings.save({
+      id: listing.id,
+      draft: {
+        pricePiastres: 45000,
+        volumeMl: 50,
+        stock: 12,
+        fulfilmentHours: 48,
+        concentration: 'eau_de_parfum',
+        form: 'spray',
+        genderPositioning: 'unisex',
+        scentFamily: 'oud',
+        notesTop: ['برغموت'],
+        notesHeart: ['ورد'],
+        notesBase: ['عود'],
+        seasons: ['winter'],
+        dayNight: 'night',
+        occasions: ['evening'],
+        projectionBand: 'moderate',
+        longevityBand: 'long',
+        performanceSource: 'seller_provided',
+        responsiblePartyName: 'دار الورد',
+        returnEligibility: 'sealed_only',
+        defectRoute: 'استبدال خلال 14 يومًا',
+      },
+    });
+
+    const submitted = await ward().listings.submit({ id: listing.id });
+    // Asserted, so this case cannot pass for the wrong reason: if the listing
+    // never reached review, the refusal below would prove nothing.
+    expect(submitted.submitted, `the listing did not reach review: ${JSON.stringify(submitted.gaps)}`).toBe(true);
+    expect((await ward().listings.get({ id: listing.id })).state).toBe('pending_moderation');
+
+    await expect(ward().photos.remove({ productId: listing.id, photoId: primary.id }))
+      .rejects.toThrow(/اختر صورة رئيسية أخرى/);
+    // And it is still there.
+    expect((await ward().photos.list({ productId: listing.id })).map((p) => p.id)).toContain(primary.id);
   });
 });

@@ -170,14 +170,21 @@ export function sniffImage(bytes: Uint8Array): ImageFacts | null {
   return sniffPng(bytes) ?? sniffJpeg(bytes) ?? sniffWebp(bytes);
 }
 
-export type ImageObjection =
-  /** Not a JPEG, PNG or WebP — or not readable as one. */
-  | 'unsupported_type'
-  /** The header says one type and the upload declared another. */
-  | 'type_mismatch'
-  | 'too_large_file'
-  | 'too_small_dimensions'
-  | 'too_large_dimensions';
+/**
+ * Every reason a file may be refused, as a list a test can enumerate.
+ *
+ *  - `unsupported_type` — not a JPEG, PNG or WebP, or not readable as one;
+ *  - `type_mismatch` — the header says one type and the upload declared another.
+ */
+export const IMAGE_OBJECTIONS = [
+  'unsupported_type',
+  'type_mismatch',
+  'too_large_file',
+  'too_small_dimensions',
+  'too_large_dimensions',
+] as const;
+
+export type ImageObjection = (typeof IMAGE_OBJECTIONS)[number];
 
 /**
  * Why an uploaded file may not become a product photograph. Empty when it may.

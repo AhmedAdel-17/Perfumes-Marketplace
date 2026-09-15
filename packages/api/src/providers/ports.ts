@@ -68,6 +68,12 @@ export interface Providers {
    * courier.ts while courier.ts depends on ports.ts.
    */
   readonly courier?: ExternalProvider;
+  /**
+   * Where photographs are stored. Loosely typed for the same reason as the
+   * courier: media.ts imports this file. The local-disk store declares
+   * `isStub: true`, so a production process holding it refuses to start.
+   */
+  readonly media?: ExternalProvider;
 }
 
 export class StubInProductionError extends Error {

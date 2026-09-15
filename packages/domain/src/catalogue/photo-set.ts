@@ -32,13 +32,21 @@ export interface PhotoSummary {
   readonly isPrimary: boolean;
 }
 
-export type PhotoObjection =
-  | 'too_many_photos'
-  | 'alt_required'
-  | 'alt_too_long'
-  | 'ownership_unconfirmed'
-  /** Removing it would leave a product that is live, or awaiting review, with no primary photograph. */
-  | 'primary_of_live_listing';
+/**
+ * Every reason a photograph may be refused, as a list a test can enumerate.
+ *
+ * `primary_of_live_listing` — removing it would leave a product that is live, or
+ * awaiting review, with no primary photograph.
+ */
+export const PHOTO_OBJECTIONS = [
+  'too_many_photos',
+  'alt_required',
+  'alt_too_long',
+  'ownership_unconfirmed',
+  'primary_of_live_listing',
+] as const;
+
+export type PhotoObjection = (typeof PHOTO_OBJECTIONS)[number];
 
 /** States in which a listing is — or is about to be — in front of customers. */
 const LIVE: readonly ListingState[] = ['published', 'pending_moderation'];

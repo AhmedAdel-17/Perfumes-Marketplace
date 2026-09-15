@@ -3,6 +3,7 @@ import { appRouter, type ApiCaller, type ApiContext } from '@diyar/api';
 import { systemClock } from '@diyar/domain';
 import type { ActorContext } from '@diyar/db';
 import { unitOfWork } from './db';
+import { mediaStore } from './media';
 
 /**
  * Calling the API from the server.
@@ -57,6 +58,8 @@ export function api(
     // The intake service role. It can create an application and nothing
     // else — see 0018.
     intakeUow: unitOfWork({ role: 'intake', id: null }),
+    // One store per process — the instance `instrumentation.ts` checks.
+    media: mediaStore(),
     clock: systemClock,
   };
   return appRouter.createCaller(ctx);
