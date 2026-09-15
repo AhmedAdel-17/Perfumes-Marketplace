@@ -50,7 +50,9 @@ export default async function PreviewPage(
         confusion runs in the dangerous direction: someone sees their change,
         believes it shipped, and stops.
       */}
-      <div className="sticky top-0 z-10 border-b border-accent/40 bg-accent/10 px-5 py-2.5 text-center">
+      {/* On the raised surface, not a tint of accent: the accent ink is proven
+          against the surfaces, and a tint is none of them. */}
+      <div className="sticky top-0 z-10 border-b border-accent/40 bg-raised px-5 py-2.5 text-center">
         <span className="text-caption tracking-label text-accent">
           معاينة المسودة — غير منشورة
         </span>

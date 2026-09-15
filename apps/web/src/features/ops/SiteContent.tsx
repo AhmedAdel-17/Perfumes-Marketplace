@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { ANNOUNCEMENT_MAX_LENGTH } from '@diyar/domain';
 import { data as num } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { endAnnouncement, postAnnouncement, setCuration } from './site-actions';
 
 export interface AnnouncementRow {
@@ -148,12 +149,12 @@ export function SiteContent({ announcements, products, curation }: {
                     it listed as live, and never learns why nobody mentioned it.
                   */}
                   {a.isShowing && (
-                    <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
+                    <span className={statusPill('accent')}>
                       معروض الآن
                     </span>
                   )}
                   {a.isLive && !a.isShowing && (
-                    <span className="rounded-pill border border-line px-3 py-1 text-micro tracking-label text-ink3">
+                    <span className={statusPill('quiet')}>
                       مغطّى بأحدث منه
                     </span>
                   )}

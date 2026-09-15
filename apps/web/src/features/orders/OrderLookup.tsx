@@ -7,6 +7,7 @@ import {
 import { Field } from '@/features/checkout/Field';
 import { lookupOrder, type OrderLookupResult } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { ReviewPanel } from '@/features/reviews/ReviewPanel';
 import { ReturnPanel } from '@/features/returns/ReturnPanel';
 
@@ -116,12 +117,9 @@ function OrderDetail({
             <div className="flex items-baseline justify-between">
               <h2 className="font-display text-h4 lg:text-h3">{house.brandName}</h2>
               <span
-                className={[
-                  'rounded-pill px-3 py-1 text-micro tracking-label',
-                  copy.terminal && house.state !== 'delivered'
-                    ? 'bg-danger/15 text-danger'
-                    : 'bg-accent/15 text-accent',
-                ].join(' ')}
+                className={statusPill(
+                  copy.terminal && house.state !== 'delivered' ? 'danger' : 'accent',
+                )}
               >
                 {copy.label}
               </span>

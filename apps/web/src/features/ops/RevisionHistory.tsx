@@ -15,6 +15,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { BLOCK, counted, data as num } from '@diyar/i18n';
+import { statusPill } from '@/features/shell/status-pill';
 import { restoreRevision } from './content-actions';
 
 export interface Revision {
@@ -102,7 +103,7 @@ export function RevisionHistory({ pageId, revisions }: {
                   // Which one the visitor is reading, stated rather than
                   // inferred from position — the top row stops being the live
                   // one the moment anything is rolled back.
-                  <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
+                  <span className={statusPill('accent')}>
                     على الموقع الآن
                   </span>
                 )}

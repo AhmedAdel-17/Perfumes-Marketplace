@@ -28,7 +28,10 @@ export async function AnnouncementBar() {
       // reader mid-sentence, and a shipping notice is not worth interrupting
       // someone for. It is announced when they reach it.
       role="status"
-      className="border-b border-accent/25 bg-accent/[0.07] px-5 py-2.5 text-center"
+      // The raised surface, not a 7% tint of accent: the message is set in the
+      // accent ink, which is proven against the surfaces and not against a
+      // tint of itself. The brass rule beneath still marks it as a notice.
+      className="border-b border-accent/25 bg-raised px-5 py-2.5 text-center"
     >
       {announcement.href ? (
         <a

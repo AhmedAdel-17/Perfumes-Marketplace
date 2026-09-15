@@ -22,6 +22,7 @@
  * refused teaches nothing about which sentence.
  */
 import { useState, useTransition } from 'react';
+import { statusPill } from '@/features/shell/status-pill';
 import {
   CONCENTRATIONS, DAY_NIGHT, GENDER_POSITIONINGS, LONGEVITY_BANDS, OCCASIONS,
   PERFORMANCE_SOURCES, PRODUCT_FORMS, PROJECTION_BANDS, RETURN_ELIGIBILITIES,
@@ -200,7 +201,10 @@ function Toggles<T extends string>({
                 'tappable flex min-h-touch items-center rounded-sm border px-4 text-small',
                 'transition-colors duration-base ease-out',
                 on
-                  ? 'border-accent bg-accent/10 text-accent'
+                  // No tint behind the chosen chip: accent on a 10% accent fill
+                  // is the pill failure again. The border, the ink and
+                  // `aria-pressed` carry the choice.
+                  ? 'border-accent text-accent'
                   : 'border-line text-ink2 hover:border-ink2 hover:text-ink',
               ].join(' ')}
             >
@@ -370,7 +374,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   return (
     <div className="px-5 lg:px-0">
       <div className="mb-7 flex flex-wrap items-center gap-3 border-b border-line pb-5">
-        <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
+        <span className={statusPill('accent')}>
           {STATE_LABELS[state]}
         </span>
         {listing.slug && <span className="latin text-caption text-ink3">/p/{listing.slug}</span>}

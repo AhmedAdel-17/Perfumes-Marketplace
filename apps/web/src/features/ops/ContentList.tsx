@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import type { PageState } from '@diyar/domain';
 import { PAGE_STATE_AR } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { createPage } from './content-actions';
 
 // Shared with the page editor and the audit screen; typed against the domain
@@ -85,7 +86,7 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
                 */}
                 <span>
                   {page.isLive && (
-                    <span className="rounded-sm border border-accent/40 bg-accent/10 px-2 py-1 text-micro tracking-label text-accent">
+                    <span className={statusPill('accent')}>
                       على الموقع
                     </span>
                   )}

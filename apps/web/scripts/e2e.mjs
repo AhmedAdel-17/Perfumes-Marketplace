@@ -17,6 +17,7 @@
  */
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
+import { crc32, deflateSync } from 'node:zlib';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
 const LOG = process.env.DEV_LOG;
@@ -1865,6 +1866,172 @@ try {
     await ops.waitForTimeout(2500);
     await ops.goto(`${BASE}/ops/queue`, { waitUntil: 'networkidle' });
     assert(!ops.url().includes('/ops/queue'), 'a signed-out session still reached the queue');
+  });
+
+  /* ================================================ a house's photographs */
+  group('a house photographs its own perfume');
+
+  /**
+   * A REAL, decodable PNG — a solid warm colour, compressed with the zlib Node
+   * already has.
+   *
+   * Not a header with nothing behind it: the photograph manager asks the
+   * browser to decode the file to check its size, and the storefront's image
+   * optimiser decodes it again. A file that only LOOKS like a PNG would pass
+   * the server's checks and then render as a broken image — which is exactly
+   * the seam this group exists to walk across.
+   */
+  const png = (width, height) => {
+    const chunk = (type, data) => {
+      const length = Buffer.alloc(4);
+      length.writeUInt32BE(data.length);
+      const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+      const crc = Buffer.alloc(4);
+      crc.writeUInt32BE(crc32(body));
+      return Buffer.concat([length, body, crc]);
+    };
+    const header = Buffer.alloc(13);
+    header.writeUInt32BE(width, 0);
+    header.writeUInt32BE(height, 4);
+    header[8] = 8; // bit depth
+    header[9] = 2; // colour type: RGB
+    const row = Buffer.alloc(1 + width * 3);
+    for (let x = 0; x < width; x += 1) {
+      row[1 + x * 3] = 0x2a; row[2 + x * 3] = 0x20; row[3 + x * 3] = 0x19;
+    }
+    const pixels = Buffer.concat(Array.from({ length: height }, () => row));
+    return Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk('IHDR', header),
+      chunk('IDAT', deflateSync(pixels)),
+      chunk('IEND', Buffer.alloc(0)),
+    ]);
+  };
+
+  /** The seller page, signed in. An earlier group may have signed it out. */
+  const sellerOnListings = async () => {
+    await seller.goto(`${BASE}/seller/listings`, { waitUntil: 'networkidle' });
+    if (!seller.url().includes('/seller/listings')) {
+      await signIn(seller, '/seller', workingHouse, '/seller/orders');
+      await seller.goto(`${BASE}/seller/listings`, { waitUntil: 'networkidle' });
+    }
+  };
+
+  const photos = () => seller.locator('section[aria-labelledby="photos-heading"]');
+  const altField = () => photos().getByPlaceholder('مثال: الزجاجة على رخام أسود، من الأمام');
+  const ownership = () => photos().locator('input[type="checkbox"]');
+  const fileField = () => photos().locator('input[type="file"]');
+  const uploadButton = () => photos().locator('button', { hasText: 'رفع الصورة' });
+
+  const choose = async (name, buffer) => {
+    await fileField().setInputFiles({ name, mimeType: 'image/png', buffer });
+    // The size check decodes the file in the browser; give it a moment.
+    await seller.waitForTimeout(600);
+  };
+
+  /** Describe, confirm, choose, upload — and wait for the new card to appear. */
+  const uploadPhoto = async (alt, width, height) => {
+    const before = await photos().locator('ol > li').count();
+    await altField().fill(alt);
+    await ownership().check();
+    await choose(`photo-${width}x${height}.png`, png(width, height));
+    await uploadButton().click();
+    await photos().locator('ol > li').nth(before).waitFor({ state: 'visible', timeout: 30_000 });
+  };
+
+  let draftUrl = null;
+
+  await test('a new listing asks for a photograph, and says why', async () => {
+    if (!seller) throw new Error('no signed-in house to photograph with');
+    await sellerOnListings();
+
+    const stamp = Date.now().toString(36);
+    await seller.fill('#n-name', 'عطر للتصوير');
+    await seller.fill('#n-slug', `photo-test-${stamp}`);
+    await seller.fill('#n-sku', `PHT-${stamp}`);
+    await seller.locator('button', { hasText: 'إنشاء' }).click();
+    await seller.waitForURL('**/seller/listings/**', { timeout: 20_000 });
+    draftUrl = seller.url();
+
+    const text = await seller.locator('main').innerText();
+    assert(text.includes('الصور'), 'the listing editor must have a photographs section');
+    assert(text.includes('لا توجد صور بعد'), 'an empty listing must say it has no photographs');
+    assert(text.includes('أضف صورة رئيسية'), 'and point the house at the gap that blocks publishing');
+  });
+
+  await test('uploading waits for a description and an ownership confirmation', async () => {
+    await choose('photo.png', png(1000, 1250));
+    assert(await uploadButton().isDisabled(), 'a file alone must not be uploadable');
+    await altField().fill('الزجاجة من الأمام');
+    assert(await uploadButton().isDisabled(), 'a description without confirming ownership must not be enough');
+    await ownership().check();
+    assert(!(await uploadButton().isDisabled()), 'with both, the upload must be possible');
+  });
+
+  await test('a photograph too small to stay sharp is refused before it is sent', async () => {
+    await choose('small.png', png(400, 400));
+    const text = await photos().innerText();
+    assert(text.includes('800 بكسل'), `a 400px photograph must be refused with the reason:\n${text.slice(0, 300)}`);
+    assert(await uploadButton().isDisabled(), 'a refused file must not be uploadable');
+  });
+
+  await test('a real photograph uploads, is verified, and becomes the primary', async () => {
+    await seller.goto(draftUrl, { waitUntil: 'networkidle' });
+    await uploadPhoto('الزجاجة على رخام أسود، من الأمام', 1000, 1250);
+
+    const card = photos().locator('ol > li').first();
+    assert((await card.innerText()).includes('رئيسية'), 'the first photograph must become the primary');
+
+    // The photograph the card shows is actually served — as an image.
+    const src = await card.locator('img').getAttribute('src');
+    assert(src, 'the card must show the photograph');
+    const served = await seller.request.get(new URL(src, BASE).toString());
+    equal(served.status(), 200, 'the photograph response');
+    assert((served.headers()['content-type'] ?? '').startsWith('image/png'),
+      `served as ${served.headers()['content-type']}`);
+
+    // And the gap that blocked publishing has closed.
+    await seller.goto(draftUrl, { waitUntil: 'networkidle' });
+    assert(!(await seller.locator('main').innerText()).includes('أضف صورة رئيسية'),
+      'with a primary photograph, the listing must stop asking for one');
+  });
+
+  await test('a live perfume shows its photograph in the shop', async () => {
+    await sellerOnListings();
+    const live = seller.locator('a[href^="/seller/listings/"]', { hasText: 'منشور' }).first();
+    assert(await live.count() > 0, 'the signed-in house must have a published listing');
+    await live.click();
+    await seller.waitForURL('**/seller/listings/**', { timeout: 20_000 });
+
+    const shopLink = await seller.locator('a', { hasText: 'عرض في المتجر' }).first().getAttribute('href');
+    assert(shopLink, 'a published listing must link to its page in the shop');
+
+    const alt = 'الزجاجة في ضوء النافذة';
+    await uploadPhoto(alt, 1200, 1500);
+    // A published listing already had a primary only if one was uploaded before;
+    // make THIS one primary so the shop has a verified photograph to show.
+    const newest = photos().locator('ol > li').last();
+    const makePrimary = newest.locator('button', { hasText: 'اجعلها رئيسية' });
+    if (await makePrimary.count() > 0) {
+      await makePrimary.click();
+      await seller.waitForTimeout(2500);
+    }
+
+    const shopper = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const page = await shopper.newPage();
+    try {
+      await page.goto(`${BASE}${shopLink}`, { waitUntil: 'networkidle' });
+      const hero = page.locator(`main img[alt="${alt}"]`).first();
+      await hero.waitFor({ state: 'visible', timeout: 20_000 });
+      const src = await hero.getAttribute('src');
+      assert(src && src.includes('/_next/image'), `the shop must serve the photograph through the image optimiser: ${src}`);
+      const served = await page.request.get(new URL(src, BASE).toString());
+      equal(served.status(), 200, 'the optimised photograph response');
+      assert((served.headers()['content-type'] ?? '').startsWith('image/'),
+        `the optimiser returned ${served.headers()['content-type']}`);
+    } finally {
+      await shopper.close();
+    }
   });
 
   if (sellerContext) await sellerContext.close();

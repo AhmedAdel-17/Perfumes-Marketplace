@@ -6,6 +6,7 @@ import {
   VERIFICATION_CONTROL_AR, VERIFICATION_STATUS_AR, internal as num, internalDate,
 } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { fetchApplication, setHouseStatus, verifyControl } from './application-actions';
 
 export interface ApplicationRow {
@@ -124,14 +125,8 @@ function Entry({ row }: { row: ApplicationRow }) {
           <span className="latin ms-2 text-caption tracking-label text-ink3">{row.slug}</span>
         </div>
         <span
-          className={[
-            'rounded-pill px-3 py-1 text-micro tracking-label',
-            // Outlined, not filled, when incomplete. `bg-line/60` under `ink3`
-            // measured 4.45:1 on paper: a translucent fill darkens the ground
-            // an ink was calibrated against, and every ink sits just above
-            // 4.5:1 by construction. `ink2` on the ground itself has margin.
-            complete ? 'bg-accent/15 text-accent' : 'border border-line text-ink2',
-          ].join(' ')}
+          // Outlined in both states — see `status-pill.ts` for why a tint fails.
+          className={statusPill(complete ? 'accent' : 'quiet')}
         >
           <span className="tnum">{num(approved)}</span> من{' '}
           <span className="tnum">{num(row.totalControls)}</span>

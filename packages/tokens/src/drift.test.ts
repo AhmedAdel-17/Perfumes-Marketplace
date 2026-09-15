@@ -1,7 +1,7 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import raw from './tokens.json' with { type: 'json' };
+import { TOKENS_SOURCE, UI_SOURCE, WEB_SOURCE, stripComments, walk } from './source-files';
 
 /**
  * A token value must exist in exactly one place.
@@ -23,32 +23,7 @@ import raw from './tokens.json' with { type: 'json' };
  * tokens and should not be — because a rule that fires constantly gets
  * suppressed, and a suppressed rule protects nothing.
  */
-const ROOTS = [
-  join(import.meta.dirname, '../../../apps/web/src'),
-  join(import.meta.dirname, '../../../packages/ui/src'),
-  join(import.meta.dirname, '..'),
-];
-
-const SOURCE = /\.(ts|tsx|css)$/;
-
-/** Block and line comments, so prose about a colour is not mistaken for one. */
-function stripComments(source: string): string {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
-}
-
-function walk(dir: string, out: string[] = []): string[] {
-  let entries: string[];
-  try { entries = readdirSync(dir); } catch { return out; }
-  for (const entry of entries) {
-    if (entry === 'node_modules' || entry === '.next' || entry.startsWith('.')) continue;
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (SOURCE.test(entry) && !full.endsWith('drift.test.ts')) out.push(full);
-  }
-  return out;
-}
+const ROOTS = [WEB_SOURCE, UI_SOURCE, TOKENS_SOURCE];
 
 /**
  * Every colour token, flattened to `name -> #hex`.
@@ -71,7 +46,8 @@ describe('token drift — a value lives in one place or it lives in none', () =>
   });
 
   it('never repeats a token colour as a literal in source', () => {
-    const files = ROOTS.flatMap((root) => walk(root));
+    const files = ROOTS.flatMap((root) => walk(root))
+      .filter((file) => !file.endsWith('drift.test.ts'));
     expect(files.length, 'the walker must actually find source').toBeGreaterThan(20);
 
     const offences: string[] = [];

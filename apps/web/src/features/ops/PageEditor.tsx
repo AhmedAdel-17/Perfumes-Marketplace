@@ -21,6 +21,7 @@ import type { Block, BlockKind, PageState, PublishObjection } from '@diyar/domai
 import { BLOCK_KINDS, LIMITS } from '@diyar/domain';
 import { PAGE_STATE_AR } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { movePageTo, savePageDraft } from './content-actions';
 
 /** Arabic names for the block kinds, as a complete Record over the union. */
@@ -393,7 +394,7 @@ export function PageEditor({ page }: {
   return (
     <div className="px-5 lg:px-0">
       <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-line pb-5">
-        <span className="rounded-pill bg-accent/15 px-3 py-1 text-micro tracking-label text-accent">
+        <span className={statusPill('accent')}>
           {STATE_LABELS[state]}
         </span>
         <span className="latin text-caption text-ink3">/{page.slug}</span>

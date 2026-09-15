@@ -5,6 +5,7 @@ import {
   SUPPORT_CATEGORY_AR, TICKET_PRIORITY_AR, TICKET_STATUS_AR, internalDate,
 } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { updateTicket } from './support-actions';
 
 export interface TicketRow {
@@ -86,10 +87,7 @@ function Entry({ row }: { row: TicketRow }) {
           <span className="latin ms-2 text-caption tracking-label text-ink3">{row.reference}</span>
         </div>
         <span
-          className={[
-            'rounded-pill px-3 py-1 text-micro tracking-label',
-            urgent ? 'bg-danger/15 text-danger' : 'bg-accent/15 text-accent',
-          ].join(' ')}
+          className={statusPill(urgent ? 'danger' : 'accent')}
         >
           {TICKET_PRIORITY_AR[row.priority as keyof typeof TICKET_PRIORITY_AR] ?? row.priority}
         </span>

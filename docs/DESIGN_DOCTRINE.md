@@ -161,6 +161,10 @@ Any one of these, anywhere, breaks the impression:
 - Inconsistent corner radius across two components
 - A grey darker than `#90887F` on noir, or lighter than `#6B635A` on paper (§7)
 - An alpha applied to an ink role — `text-accent/90` measures 4.08:1 on paper (§7)
+- A calibrated ink on a translucent fill — `bg-accent/15 text-accent` also measures 4.08:1 on
+  paper, and shipped as seven status pills because it clears the floor on noir. A status label
+  is outlined (`statusPill`): its border may be translucent, its ground may not. Both this and
+  the line above are refused in source by `packages/tokens/src/tint.test.ts`
 - Any hardcoded colour, size or spacing value that bypasses the tokens
 
 ---

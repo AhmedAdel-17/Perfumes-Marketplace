@@ -46,6 +46,14 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
 const LOG = process.env.DEV_LOG;
 
+// Refused up front. Without it the audit ran every surface up to the first
+// sign-in and then reported a crash inside `readFileSync` — which names a
+// missing path, not a missing variable, and has already spent a one-time code.
+if (!LOG) {
+  console.error('DEV_LOG is not set: the audit reads one-time codes from the dev server log. See README, "Checks".');
+  process.exit(1);
+}
+
 /**
  * Which theme this run audits.
  *

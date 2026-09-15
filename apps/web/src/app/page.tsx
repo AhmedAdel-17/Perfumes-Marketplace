@@ -165,7 +165,7 @@ export default async function Home() {
         */}
         <Reveal as="section" className="border-b border-line/70">
           <div className="mx-auto max-w-contentMax px-5 py-9 lg:px-8 lg:py-[104px]">
-            <p className="max-w-[860px] font-display text-h3 leading-[1.5] text-ink/90 lg:text-h1Lg lg:leading-[1.45]">
+            <p className="max-w-[860px] font-display text-h3 leading-[1.5] text-ink lg:text-h1Lg lg:leading-[1.45]">
               كل دار تصنع عطرها وتشحنه بنفسها.
               <span className="text-ink3"> نحن نضمن أن ما تقرأه عنه صحيح.</span>
             </p>

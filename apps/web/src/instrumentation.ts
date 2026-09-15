@@ -11,62 +11,24 @@
  * anybody who can read a log line, and it would have said nothing about it.
  *
  * Next runs this once per server process, before the first request. That is the
- * only place a "refuse to start" check can actually refuse to start.
- */
-import {
-  assertProductionSafe, cashOnDelivery, consoleOtpSender, type Providers,
-} from '@diyar/api';
-import { mediaStore } from './core/media';
-
-/**
- * What this process is actually holding.
+ * only place a "refuse to start" check can actually refuse to start. The checks
+ * themselves are in `instrumentation-node.ts`.
  *
- * Assembled HERE rather than imported as a ready-made object, because the
- * composition root is the only place that knows which adapters were chosen —
- * and a guard that inspects a different set from the one in use is a guard that
- * passes for the wrong reason.
+ * THE SHAPE OF THE IMPORT BELOW IS LOAD-BEARING. Next compiles this file for
+ * the edge runtime as well as for Node, replacing `process.env.NEXT_RUNTIME`
+ * with a constant in each build — so an import INSIDE `if (NEXT_RUNTIME ===
+ * 'nodejs')` is dead code in the edge build and removed with its whole module
+ * graph. Two other shapes were tried and both put `node:crypto` into the edge
+ * compile, failing it and turning every page into a 500:
  *
- * When the real SMS and payment adapters land they are swapped in here and the
- * check starts passing on its own. Until then, this is what stops the stubs
- * reaching a customer.
+ *   - a top-level import, guarded only by a runtime check before use;
+ *   - an early `return` for the edge runtime, followed by the import — which
+ *     the production build happened to eliminate and the dev compiler did not,
+ *     so `next build` passed while `next dev` served nothing.
  */
-const configured = (): Providers => ({
-  otp: consoleOtpSender,
-  payments: cashOnDelivery,
-  // The SAME store the API context uses (core/media.ts). Built inside
-  // `register`, so its environment is read when a server starts — never
-  // during `next build`, which imports this module with no R2 settings.
-  media: mediaStore(),
-});
-
-export function register(): void {
-  // The Node runtime only. The edge runtime has no providers to check and
-  // importing them there would pull `node:crypto` into a bundle that cannot
-  // have it.
-  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
-
-  assertProductionSafe(configured(), process.env.NODE_ENV);
-
-  /*
-   * The signing keys, checked here too.
-   *
-   * Both session modules throw without them, but they throw on the FIRST
-   * SIGN-IN — which is a seller discovering the portal is broken, not a deploy
-   * failing. Reading them at startup moves the failure to where somebody is
-   * watching.
-   */
-  if (process.env.NODE_ENV === 'production') {
-    const missing = (['SELLER_SESSION_SECRET', 'OPS_SESSION_SECRET', 'DATABASE_URL'] as const)
-      .filter((name) => !process.env[name]);
-
-    if (missing.length > 0) {
-      // Every one of them, not the first. Discovering these a deploy at a time
-      // is how a release takes four attempts.
-      throw new Error(
-        `Refusing to start: ${missing.join(', ')} not set. `
-        + 'A signing key with a default is not a key, and an embedded database '
-        + 'in production is not a database.',
-      );
-    }
+export async function register(): Promise<void> {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { checkStartup } = await import('./instrumentation-node');
+    checkStartup();
   }
 }

@@ -63,12 +63,15 @@ pnpm build       # production build
 
 # Browser suite and accessibility audit — need the dev server running
 DEV_LOG=<path to the dev server log> pnpm --filter @diyar/web e2e
-pnpm --filter @diyar/web audit
-THEME=light pnpm --filter @diyar/web audit
+DEV_LOG=<path to the dev server log> pnpm --filter @diyar/web run audit
+DEV_LOG=<path to the dev server log> THEME=light pnpm --filter @diyar/web run audit
 ```
 
-The end-to-end suite reads one-time codes out of the dev server's log, which is
-why it needs `DEV_LOG`. Those codes are real credentials for the seeded
+Write `run audit`, not `audit`: from inside `apps/web`, a bare `pnpm audit` is
+pnpm's own dependency-vulnerability report, not this script.
+
+Both suites sign in, and read the one-time codes out of the dev server's log,
+which is why they need `DEV_LOG`. Those codes are real credentials for the seeded
 accounts; the log is gitignored for that reason.
 
 **Restart the dev server between full runs.** Requesting a one-time code is rate
@@ -82,7 +85,7 @@ limiter nobody has ever seen work.
 
 Copy `.env.example` and fill it in. Every variable there is **required in
 production** — the process refuses to start without one, in
-`apps/web/src/instrumentation.ts`. Three of those refusals are load-bearing:
+`apps/web/src/instrumentation-node.ts`. Three of those refusals are load-bearing:
 
 - **`DATABASE_URL`** — without it the app would open an embedded database on the
   container's disk, which is not shared between instances and does not survive a
@@ -93,6 +96,40 @@ production** — the process refuses to start without one, in
   sender or the payment gateway is a stub. Cash on delivery is *not* a stub, so
   a COD-only launch is a real product rather than a degraded one; the SMS sender
   still is, which means **seller and operator sign-in cannot go live yet**.
+
+- **Photographs** — production stores them in Cloudflare R2 (decision M-1). The
+  local-disk store used in development is a stub and is refused at startup, and
+  setting only some of the five `R2_*` variables is refused everywhere.
+
+### Before the first photograph is uploaded
+
+Houses' browsers send photographs **straight to R2** with a URL the server
+signed, so the bucket itself needs two things the application cannot configure:
+
+1. **A public custom domain** for reads. Its origin is `R2_PUBLIC_BASE_URL`,
+   and because `next.config.mjs` reads it at build time, changing it means a
+   rebuild.
+2. **A CORS rule allowing uploads from the site**, or every upload fails in the
+   browser with an error that names nothing useful:
+
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://YOUR-SITE-ORIGIN"],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["content-type"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+   Only `PUT`, only the site's own origin, only `content-type` — the one header
+   the upload URL is signed over. Reads go through the public domain and need no
+   CORS rule.
+
+A photograph whose row is removed can leave its file behind if the delete after
+commit fails, and an upload that is never confirmed leaves one too. The sweep for
+those is `docs/DEBT_REGISTER.md` #4.
 
 Migrations are applied by `packages/db`'s `applyMigrations` against the target
 database, as a deploy step. Nothing at request time runs one.

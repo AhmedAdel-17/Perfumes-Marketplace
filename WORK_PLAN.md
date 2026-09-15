@@ -105,7 +105,7 @@ enters the catalogue is not a marketplace.
       - [ ] 5.7.5b The bag shows the photograph too — its snapshot comes through the
             cart port, so both adapters and the cart contract gain the field
       - [ ] 5.7.6 The CMS image block renders from the same store
-      - [ ] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
+      - [x] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 
 ## 6. The audit trail  ◐
 - [x] 6.1 The port, both adapters, and a field-level diff
@@ -140,7 +140,21 @@ Funnel, seller SLA, contribution inputs — without touching the database (gate 
 - [x] 9.4 The owner screen (`/ops/insights`, admins only): money beside held money,
       the funnel with exits by reason, SLA per house, refusals by governorate, source
       mix, and contribution inputs with their status
-- [ ] 9.5 Pre-order funnel — **blocked on A-1** (lawful basis for guest browsing events)
+- [ ] 9.5 Pre-order funnel — **unblocked 15 Sep 2026 (A-1 approved).** First-party
+      events under an anonymous id, no personal data, no third-party script
+
+## 10. Dependency security  ⬜
+`pnpm audit` on 15 Sep 2026: 12 advisories (1 critical, 4 high). None is reachable in
+the way its advisory describes, and none is left open on that argument.
+
+- [ ] 10.1 `drizzle-orm` 0.38 → ≥0.45.2 (high: identifiers not escaped in `sql.identifier`
+      / `sql.as`), with `drizzle-kit` 0.30 → 0.31. Runtime dependency — first.
+- [ ] 10.2 `vitest` 2 → ≥4.1.11 across the six manifests; brings patched `vite` and
+      `esbuild` (critical: the Vitest UI server — not installed here — and the dev
+      server's path and origin checks). Development only.
+- [ ] 10.3 `postcss` ≥8.5.23 under Next, by a pnpm override: Next's newest 15.x
+      (15.5.25) still pins 8.4.31, and Next 16 is its own migration
+- [ ] 10.4 `pnpm audit` clean, and a check that keeps it clean
 
 Then the roadmap's Phase 2, and the mobile apps.
 
@@ -289,3 +303,28 @@ Newest last. One line per completed item, with anything the next session must kn
 
   **Still blocked, and not mine:** 5.7 media (gate 1), 9.5 the pre-order funnel
   (A-1), a contribution margin (A-2).
+
+- 2026-09-15 — **§5.7.1–5.7.5a and 5.7.7: a house can photograph its perfume, and
+  the shop shows it.** Browsers upload straight to storage on a signed URL; the
+  server reads the bytes that ARRIVED (type, size, dimensions) before a row exists.
+  Five new browser tests, including a real 1000×1250 upload through to the shop.
+
+  Three things found on the way, all fixed:
+
+  * **Every page was a 500 in development.** The startup guard imported Node-only
+    modules at the top of `instrumentation.ts`, which Next also compiles for the
+    edge. An early `return` before a dynamic import was eliminated by `next build`
+    and NOT by `next dev` — so the build passed while the dev server served
+    nothing. The only shape both remove is the import inside
+    `if (NEXT_RUNTIME === 'nodejs')`, with the checks in `instrumentation-node.ts`.
+  * **The light theme failed on seven status pills** (`bg-accent/15 text-accent`,
+    4.08:1). One outlined `statusPill`, the same fix on four other tinted grounds,
+    and `text-ink/90` on the home page. `tint.test.ts` refuses both forms in
+    source — and its first version passed a planted offence, because it checked
+    literals with their quotes on. Proved failing, then fixed.
+  * `pnpm audit` from `apps/web` is pnpm's vulnerability report, not the
+    accessibility audit — which is how 12 advisories surfaced. Now §10. The audit
+    script refuses to start without `DEV_LOG`.
+
+  e2e 124/124 on a fresh database. Audit clean in both themes, every surface,
+  every width. Tokens 123.
