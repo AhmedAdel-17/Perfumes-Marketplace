@@ -60,7 +60,11 @@ function open(): MediaStore {
 
   return localMediaStore({
     root: process.env.MEDIA_DIR ?? './.data/media',
-    publicBaseUrl: `${process.env.APP_ORIGIN ?? 'http://localhost:3100'}/dev-media`,
+    // RELATIVE, not http://localhost:3100/dev-media. Next's image optimiser
+    // treats a same-site path as a local image and an absolute localhost URL as
+    // a remote host it will not fetch; the browser resolves a relative upload
+    // URL just as well.
+    publicBaseUrl: '/dev-media',
     // A development signing key, like the session modules' development
     // fallbacks. The store itself is refused in production, key and all.
     secret: process.env.MEDIA_DEV_SECRET ?? 'development-only-not-a-secret-media',

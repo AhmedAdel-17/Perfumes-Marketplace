@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidTransition, UnauthorisedActor } from '../errors/index';
 import {
-  canMoveListing, isListingVisible, LISTING_ACTORS, LISTING_STATES,
+  canMoveListing, isListingEditableBySeller, isListingVisible, LISTING_ACTORS, LISTING_STATES,
   moveListing, nextListingStates, type ListingState,
 } from './listing';
 import {
@@ -105,6 +105,30 @@ describe('a decision about somebody else\'s product carries a reason', () => {
 describe('what a visitor sees', () => {
   it.each(LISTING_STATES)('%s', (state) => {
     expect(isListingVisible(state as ListingState)).toBe(state === 'published');
+  });
+});
+
+describe('what its own house may change', () => {
+  it('is locked while a moderator is reading it, and once archived', () => {
+    expect(isListingEditableBySeller('pending_moderation')).toBe(false);
+    expect(isListingEditableBySeller('archived')).toBe(false);
+  });
+
+  it('stays editable while live — price, stock and photographs change without taking it off sale', () => {
+    expect(isListingEditableBySeller('published')).toBe(true);
+  });
+
+  it('is editable as a draft, and when suspended so the house can fix what was wrong', () => {
+    expect(isListingEditableBySeller('draft')).toBe(true);
+    expect(isListingEditableBySeller('suspended')).toBe(true);
+  });
+
+  it('answers for every state — a new state cannot slip through unconsidered', () => {
+    const answers = LISTING_STATES.map((state) => [state, isListingEditableBySeller(state)]);
+    expect(answers).toEqual([
+      ['draft', true], ['pending_moderation', false], ['published', true],
+      ['suspended', true], ['archived', false],
+    ]);
   });
 });
 

@@ -1646,22 +1646,10 @@ describe('a house adds photographs to its own listing', () => {
       .rejects.toThrow(/حدّث الصفحة/);
   });
 
-  it('refuses to strip the primary photograph from a listing awaiting review', async () => {
-    /*
-     * The listing reaches review the way a house's does — a complete draft,
-     * saved and submitted — not by a direct UPDATE.
-     *
-     * The first version of this case set `status = 'pending_moderation'` in SQL
-     * on an empty draft, and the database refused it: the publish gate in 0001
-     * will not let a listing into review with fifteen required fields missing.
-     * The rule under test was never reached. A test that bypasses the product's
-     * own path to set up a state the product forbids is testing nothing.
-     */
-    const listing = await newListing();
-    const primary = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
-
+  /** A complete draft, saved and submitted the way a house's is — never a direct UPDATE. */
+  const submitForReview = async (productId: string) => {
     await ward().listings.save({
-      id: listing.id,
+      id: productId,
       draft: {
         pricePiastres: 45000,
         volumeMl: 50,
@@ -1685,16 +1673,56 @@ describe('a house adds photographs to its own listing', () => {
         defectRoute: 'استبدال خلال 14 يومًا',
       },
     });
-
-    const submitted = await ward().listings.submit({ id: listing.id });
-    // Asserted, so this case cannot pass for the wrong reason: if the listing
-    // never reached review, the refusal below would prove nothing.
+    const submitted = await ward().listings.submit({ id: productId });
+    // Asserted, so the cases below cannot pass for the wrong reason.
     expect(submitted.submitted, `the listing did not reach review: ${JSON.stringify(submitted.gaps)}`).toBe(true);
-    expect((await ward().listings.get({ id: listing.id })).state).toBe('pending_moderation');
+    expect((await ward().listings.get({ id: productId })).state).toBe('pending_moderation');
+  };
+
+  it('a listing awaiting review refuses every photograph change — the screen and the API agree', async () => {
+    /*
+     * The first version of this case pushed an empty draft into review with a
+     * direct UPDATE, which the publish gate refused, so the rule under test was
+     * never reached. The listing now reaches review by the house's own path.
+     */
+    const listing = await newListing();
+    const primary = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    await submitForReview(listing.id);
+
+    const locked = /قيد المراجعة/;
+    await expect(ward().photos.startUpload({
+      productId: listing.id, contentType: 'image/jpeg', byteSize: 4_000,
+    })).rejects.toThrow(locked);
+    await expect(ward().photos.remove({ productId: listing.id, photoId: primary.id })).rejects.toThrow(locked);
+    await expect(ward().photos.describe({
+      productId: listing.id, photoId: primary.id, alt: 'وصف آخر', ownershipConfirmed: true,
+    })).rejects.toThrow(locked);
+
+    // Reading is still allowed — a house can look at what it submitted.
+    expect((await ward().photos.list({ productId: listing.id })).map((p) => p.id)).toEqual([primary.id]);
+  });
+
+  it('a LIVE listing keeps its primary photograph, but may gain another', async () => {
+    const listing = await newListing();
+    const primary = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    await submitForReview(listing.id);
+
+    // Published by the platform's own decision, as a moderator would.
+    const [staff] = await db.select({ id: schema.platformStaff.id }).from(schema.platformStaff).limit(1);
+    const platform = caller(
+      { role: 'platform', id: PLATFORM }, null,
+      { staffId: staff!.id, role: 'admin', label: 'مشغّلة المنصّة' },
+    );
+    await platform.listings.decide({ id: listing.id, to: 'published', reason: null });
+    expect((await ward().listings.get({ id: listing.id })).state).toBe('published');
 
     await expect(ward().photos.remove({ productId: listing.id, photoId: primary.id }))
       .rejects.toThrow(/اختر صورة رئيسية أخرى/);
-    // And it is still there.
-    expect((await ward().photos.list({ productId: listing.id })).map((p) => p.id)).toContain(primary.id);
+
+    // A better photograph should not require taking a product off sale.
+    const second = await confirm(listing.id, await upload(listing.id, jpeg(2400, 3000)));
+    await ward().photos.makePrimary({ productId: listing.id, photoId: second.id });
+    await ward().photos.remove({ productId: listing.id, photoId: primary.id });
+    expect((await ward().photos.list({ productId: listing.id })).map((p) => p.id)).toEqual([second.id]);
   });
 });

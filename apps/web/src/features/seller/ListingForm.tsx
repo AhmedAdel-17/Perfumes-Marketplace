@@ -27,6 +27,7 @@ import {
   PERFORMANCE_SOURCES, PRODUCT_FORMS, PROJECTION_BANDS, RETURN_ELIGIBILITIES,
   SCENT_FAMILIES, SEASONS,
   type ClaimFinding, type ListingDraft, type ListingGap, type ListingState,
+  isListingEditableBySeller,
 } from '@diyar/domain';
 import { CURRENCY_LABEL, LISTING_STATE_AR, westernDigits } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
@@ -363,7 +364,8 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   });
 
   const refused = claims.some((c) => c.severity === 'refused');
-  const readOnly = state === 'pending_moderation' || state === 'archived';
+  // The domain's rule, shared with the photograph screen and its endpoints.
+  const readOnly = !isListingEditableBySeller(state);
 
   return (
     <div className="px-5 lg:px-0">
@@ -521,7 +523,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {!listing.primaryImage && (
         <p className="mb-6 border-s-2 border-line ps-4 text-small leading-relaxed text-ink2">
-          الصورة الرئيسية تُضاف من فريق المنصّة حاليًا. المنتج لا يُنشر بدونها.
+          أضف صورة رئيسية من قسم «الصور» أعلاه. المنتج لا يُنشر بدونها.
         </p>
       )}
 

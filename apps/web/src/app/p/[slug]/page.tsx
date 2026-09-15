@@ -6,6 +6,7 @@ import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
 import { PerformanceMeter } from '@/features/product/PerformanceMeter';
 import { Flacon } from '@/features/product/Flacon';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { BuyBlock } from '@/features/product/BuyBlock';
 import { ProductTile } from '@/features/catalogue/ProductTile';
 import { ProductReviews } from '@/features/reviews/ProductReviews';
@@ -85,14 +86,29 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,#2C221A_0%,#16110E_46%,#070606_84%)]" />
                   <div className="absolute inset-0 bg-[radial-gradient(38%_30%_at_50%_10%,rgba(206,168,100,.16),transparent_74%)]" />
 
-                  <Reveal className="absolute inset-0 flex items-start justify-center pt-3 lg:items-center lg:pt-0">
-                    <Flacon
-                      family={product.family}
-                      house={product.brandLatin}
-                      uid={`hero-${product.id}`}
-                      className="h-[80%] w-auto drop-shadow-[0_34px_64px_rgba(0,0,0,.55)] lg:h-[92%]"
+                  {product.photo ? (
+                    /*
+                     * The house's own photograph, full-bleed on the plate. The
+                     * vignette and the foot fade below still apply, so a real
+                     * photograph sits in the same lit scene the illustration did
+                     * and the title reads over it on a phone. `priority`: this is
+                     * the largest paint on the page.
+                     */
+                    <ProductPhoto
+                      photo={product.photo}
+                      priority
+                      sizes="(min-width: 1024px) 58vw, 100vw"
                     />
-                  </Reveal>
+                  ) : (
+                    <Reveal className="absolute inset-0 flex items-start justify-center pt-3 lg:items-center lg:pt-0">
+                      <Flacon
+                        family={product.family}
+                        house={product.brandLatin}
+                        uid={`hero-${product.id}`}
+                        className="h-[80%] w-auto drop-shadow-[0_34px_64px_rgba(0,0,0,.55)] lg:h-[92%]"
+                      />
+                    </Reveal>
+                  )}
 
                   <div className="absolute inset-0 bg-[radial-gradient(124%_104%_at_50%_44%,transparent_40%,rgba(6,5,5,.58)_100%)]" />
 

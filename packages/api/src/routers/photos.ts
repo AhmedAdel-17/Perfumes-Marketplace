@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
-  IMAGE_TYPES, MEDIA_LIMITS, objectionsToAddingPhoto, objectionsToDescribing,
+  IMAGE_TYPES, MEDIA_LIMITS, isListingEditableBySeller, objectionsToAddingPhoto, objectionsToDescribing,
   objectionsToImage, objectionsToRemovingPhoto, productMediaKey, reorderedPhotos,
   sniffImage, type ImageObjection, type ImageType, type PhotoObjection, type Repositories,
   type StoredPhoto,
@@ -55,6 +55,26 @@ async function ownedListing(r: Repositories, productId: string, sellerId: string
   const listing = await r.listings.findForSeller(productId, sellerId);
   // Not found and not yours are the same answer, as everywhere a house asks.
   if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: 'المنتج غير موجود' });
+  return listing;
+}
+
+/**
+ * A listing its house may CHANGE right now.
+ *
+ * Every write goes through this, not only the screen: the photograph manager
+ * hides its controls on a locked listing, and without the same rule here a
+ * house could still change, through the API, a listing a moderator is reading.
+ */
+async function editableListing(r: Repositories, productId: string, sellerId: string) {
+  const listing = await ownedListing(r, productId, sellerId);
+  if (!isListingEditableBySeller(listing.state)) {
+    throw new TRPCError({
+      code: 'CONFLICT',
+      message: listing.state === 'pending_moderation'
+        ? 'المنتج قيد المراجعة. اسحبه من المراجعة إذا أردت تعديل صوره.'
+        : 'المنتج مؤرشف، ولا يمكن تعديل صوره.',
+    });
+  }
   return listing;
 }
 
@@ -117,7 +137,7 @@ export const photosRouter = router({
       if (input.byteSize > MEDIA_LIMITS.maxBytes) throw refuse(['too_large_file']);
 
       const existing = await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         return r.photos.listForProduct(input.productId);
       });
       const room = objectionsToAddingPhoto({ existing: existing.length, alt: 'x', ownershipConfirmed: true });
@@ -169,7 +189,7 @@ export const photosRouter = router({
       // Listing ownership first, so a house probing another house's keys learns
       // nothing from whether a file exists there.
       const existing = await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         return r.photos.listForProduct(input.productId);
       });
 
@@ -209,7 +229,7 @@ export const photosRouter = router({
       }
 
       const added = await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         return r.photos.add(input.productId, {
           storageKey: input.key,
           alt: input.alt,
@@ -236,7 +256,7 @@ export const photosRouter = router({
       if (objections.length > 0) throw refuse([], objections);
 
       const found = await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         return r.photos.describe(input.photoId, input.productId, input);
       });
       if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصورة غير موجودة' });
@@ -248,7 +268,7 @@ export const photosRouter = router({
     .mutation(async ({ ctx, input }) => {
       const sellerId = houseOrThrow(ctx);
       const found = await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         return r.photos.makePrimary(input.photoId, input.productId);
       });
       if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصورة غير موجودة' });
@@ -260,7 +280,7 @@ export const photosRouter = router({
     .mutation(async ({ ctx, input }) => {
       const sellerId = houseOrThrow(ctx);
       await ctx.uow.transaction(async (r) => {
-        await ownedListing(r, input.productId, sellerId);
+        await editableListing(r, input.productId, sellerId);
         const current = await r.photos.listForProduct(input.productId);
         const order = reorderedPhotos(current, input.photoIds);
         if (!order) {
@@ -279,7 +299,7 @@ export const photosRouter = router({
       const sellerId = houseOrThrow(ctx);
 
       const removed = await ctx.uow.transaction(async (r) => {
-        const listing = await ownedListing(r, input.productId, sellerId);
+        const listing = await editableListing(r, input.productId, sellerId);
         const current = await r.photos.listForProduct(input.productId);
         const photo = current.find((p) => p.id === input.photoId);
         if (!photo) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصورة غير موجودة' });

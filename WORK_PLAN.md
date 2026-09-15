@@ -91,14 +91,19 @@ enters the catalogue is not a marketplace.
 - [ ] 5.7 **Media — UNBLOCKED 15 Sep 2026 (M-1: Cloudflare R2).** A listing cannot
       publish without a primary image whose ownership is confirmed, and no house can
       add one. The schema (`product_media`) and the publish trigger already exist.
-      - [ ] 5.7.1 `MediaStore` port: presign an upload, verify what arrived, public URL
-      - [ ] 5.7.2 Adapters: R2 (S3 API, presigned PUT) and a local-disk store for
+      - [x] 5.7.1 `MediaStore` port: presign an upload, verify what arrived, public URL
+      - [x] 5.7.2 Adapters: R2 (S3 API, presigned PUT) and a local-disk store for
             development, refused in production by `assertProductionSafe`
-      - [ ] 5.7.3 Upload flow: the browser uploads straight to storage; the server
+      - [x] 5.7.3 Upload flow: the browser uploads straight to storage; the server
             checks type, size and dimensions of what ARRIVED before writing a row
-      - [ ] 5.7.4 The seller's photo manager: add, order, choose primary, alt text,
-            ownership confirmation — and the listing gap closes
-      - [ ] 5.7.5 Product, grid, house page and bag render real photographs
+      - [x] 5.7.4 The seller's photo manager: add, order, choose primary, alt text,
+            ownership confirmation — and the listing gap closes. Photo changes are
+            refused while a listing awaits review or is archived, by one domain
+            rule shared by the form, the manager and every endpoint
+      - [x] 5.7.5a Product tiles, the product page, the house page and search render
+            the verified primary photograph (the flacon until there is one)
+      - [ ] 5.7.5b The bag shows the photograph too — its snapshot comes through the
+            cart port, so both adapters and the cart contract gain the field
       - [ ] 5.7.6 The CMS image block renders from the same store
       - [ ] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 

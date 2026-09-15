@@ -1,9 +1,10 @@
 import 'server-only';
 import { unitOfWork } from './db';
-import { and, asc, desc, eq, gt, inArray, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNotNull, like, sql } from 'drizzle-orm';
 import { schema } from '@diyar/db';
 import { queryTerms, type CatalogueQuery } from '@diyar/domain';
 import { database } from './db';
+import { mediaStore } from './media';
 
 /**
  * Read models for the public catalogue.
@@ -46,11 +47,28 @@ const SOURCE_AR: Record<string, string> = {
   review_aggregate: 'المصدر: متوسّط تقييمات المشترين',
 };
 
+/** A product photograph as a storefront component renders it. */
+export interface StorefrontPhoto {
+  readonly url: string;
+  readonly alt: string;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
   pricePiastres: number; volumeMl: number; familyLabel: string;
   /** Raw scent-family token key — drives the flacon render. */
   family: string;
+  /**
+   * The primary photograph, when the house has uploaded a VERIFIED one.
+   *
+   * Null otherwise, and the storefront draws the illustrated flacon instead.
+   * Rows written before the upload flow existed name paths with no file behind
+   * them; they carry no facts (0021) and are never turned into a URL, so the
+   * shop cannot render a broken image from one.
+   */
+  photo: StorefrontPhoto | null;
 }
 
 export interface ProductDetail extends ProductCard {
@@ -66,7 +84,11 @@ export interface ProductDetail extends ProductCard {
   inStock: boolean;
 }
 
-const toCard = (row: typeof schema.products.$inferSelect, brandLatin: string): ProductCard => ({
+const toCard = (
+  row: typeof schema.products.$inferSelect,
+  brandLatin: string,
+  photos: ReadonlyMap<string, StorefrontPhoto>,
+): ProductCard => ({
   id: row.id,
   slug: row.slug,
   name: row.name,
@@ -75,7 +97,47 @@ const toCard = (row: typeof schema.products.$inferSelect, brandLatin: string): P
   volumeMl: row.volumeMl,
   familyLabel: FAMILY_AR[row.scentFamily ?? ''] ?? '',
   family: row.scentFamily ?? 'amber',
+  photo: photos.get(row.id) ?? null,
 });
+
+/**
+ * The verified primary photograph of each product, in ONE query.
+ *
+ * Asked once per page for every product on it, rather than once per product:
+ * a grid of twenty-four is otherwise twenty-four round trips before the first
+ * byte, and that cost lands on exactly the connections the site is built for.
+ */
+async function primaryPhotos(productIds: readonly string[]): Promise<Map<string, StorefrontPhoto>> {
+  const found = new Map<string, StorefrontPhoto>();
+  if (productIds.length === 0) return found;
+
+  const rows = await database()
+    .select({
+      productId: schema.productMedia.productId,
+      key: schema.productMedia.storagePath,
+      alt: schema.productMedia.altText,
+      width: schema.productMedia.width,
+      height: schema.productMedia.height,
+    })
+    .from(schema.productMedia)
+    .where(and(
+      inArray(schema.productMedia.productId, [...productIds]),
+      eq(schema.productMedia.isPrimary, true),
+      // Verified rows only — see `ProductCard.photo`.
+      isNotNull(schema.productMedia.contentType),
+    ));
+
+  const store = mediaStore();
+  for (const row of rows) {
+    found.set(row.productId, {
+      url: store.publicUrl(row.key),
+      alt: row.alt,
+      width: row.width!,
+      height: row.height!,
+    });
+  }
+  return found;
+}
 
 export async function listPublishedProducts(): Promise<ProductCard[]> {
   const db = database();
@@ -85,7 +147,8 @@ export async function listPublishedProducts(): Promise<ProductCard[]> {
     .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
     .where(eq(schema.products.status, 'published'));
 
-  return rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase()));
+  const photos = await primaryPhotos(rows.map((r) => r.p.id));
+  return rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase(), photos));
 }
 
 export async function findProductBySlug(slug: string): Promise<ProductDetail | null> {
@@ -115,8 +178,10 @@ export async function findProductBySlug(slug: string): Promise<ProductDetail | n
         }
       : null;
 
+  const photos = await primaryPhotos([row.p.id]);
+
   return {
-    ...toCard(row.p, (row.brandEn ?? row.brandName).toUpperCase()),
+    ...toCard(row.p, (row.brandEn ?? row.brandName).toUpperCase(), photos),
     brandName: row.brandName,
     houseSlug: row.houseSlug,
     concentrationLabel: CONCENTRATION_AR[row.p.concentration ?? ''] ?? '',
@@ -188,6 +253,8 @@ export async function findHouseBySlug(slug: string): Promise<HouseDetail | null>
     .where(eq(schema.brands.sellerId, house.s.id))
     .limit(1);
 
+  const photos = await primaryPhotos(rows.map((r) => r.p.id));
+
   return {
     slug: house.s.slug,
     name: house.s.tradingName,
@@ -197,7 +264,7 @@ export async function findHouseBySlug(slug: string): Promise<HouseDetail | null>
     foundedYear: house.s.foundedYear,
     city: house.s.city,
     serviceGovernorates: house.s.serviceGovernorates ?? [],
-    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase())),
+    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase(), photos)),
   };
 }
 
@@ -323,8 +390,10 @@ export async function searchCatalogue(query: CatalogueQuery): Promise<SearchResu
     ))
     .orderBy(asc(schema.sellers.tradingName));
 
+  const photos = await primaryPhotos(rows.map((r) => r.p.id));
+
   return {
-    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase())),
+    products: rows.map((r) => toCard(r.p, (r.brandEn ?? r.brandName).toUpperCase(), photos)),
     houses: houseRows,
     total: rows.length,
   };

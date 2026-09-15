@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
 
 /**
@@ -26,12 +27,20 @@ export function ProductTile({ product }: { product: ProductCard }) {
         <div className="absolute inset-0 bg-[radial-gradient(70%_56%_at_52%_22%,#2A2019_0%,#141010_48%,#070606_88%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(52%_42%_at_52%_20%,rgba(196,160,96,.20),transparent_70%)] opacity-0 transition-opacity duration-slow ease-out group-hover:opacity-100" />
 
-        <Flacon
-          family={product.family}
-          house={product.brandLatin}
-          uid={`tile-${product.id}`}
-          className="absolute inset-0 h-full w-full px-[17%] py-[6%]"
-        />
+        {/* The house's own photograph when it has uploaded a verified one; the
+            illustrated flacon until then. The lit plate, the hover light and the
+            vignette apply to both, so a grid mixing the two still reads as one
+            catalogue rather than as photographs beside drawings. */}
+        {product.photo ? (
+          <ProductPhoto photo={product.photo} sizes="(min-width: 1024px) 25vw, 50vw" />
+        ) : (
+          <Flacon
+            family={product.family}
+            house={product.brandLatin}
+            uid={`tile-${product.id}`}
+            className="absolute inset-0 h-full w-full px-[17%] py-[6%]"
+          />
+        )}
 
         {/* Grounding vignette: the corners of a lit scene are never as bright as
             its centre, and without this the tile reads as a sticker. */}

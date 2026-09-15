@@ -146,3 +146,22 @@ export function moveListing(
 
 /** Whether a visitor can see it. One place, so no query has to remember. */
 export const isListingVisible = (state: ListingState): boolean => state === 'published';
+
+/**
+ * Whether its own house may change it — its fields, or its photographs.
+ *
+ * Not while it awaits review: a moderator is reading it, and a listing that
+ * changes under a moderator's eyes is approved as one thing and published as
+ * another. The house withdraws it to draft first, which is a visible act. Not
+ * once archived: that is the house's own decision that it is finished.
+ *
+ * A PUBLISHED listing stays editable — price and stock move every week, and a
+ * better photograph should not require taking a product off sale.
+ *
+ * One place, because it was a condition written inline in the listing form, and
+ * the photograph screen and its endpoints needed the same answer. Two copies of
+ * "which states are locked" is how a house can change through the API what the
+ * screen told it was locked.
+ */
+export const isListingEditableBySeller = (state: ListingState): boolean =>
+  state !== 'pending_moderation' && state !== 'archived';
