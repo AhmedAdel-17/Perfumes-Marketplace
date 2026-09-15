@@ -710,11 +710,17 @@ describe('authorisation — defence in depth, through the whole stack', () => {
   it('puts the order closest to breaching its SLA at the top', async () => {
     // Sorted by arrival, the order about to breach hides behind five that are
     // not — the only ordering here that actually costs money.
+    //
+    // By the deadline each order is racing NOW: confirmation while it waits
+    // for the house, dispatch once confirmed. The first version compared
+    // confirmation deadlines across every row, which stays true even when a
+    // confirmed parcel due tonight is listed below one due next week.
     const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']);
     const rows = await ward.seller.queue();
-    const due = rows.map((r) => r.confirmDueAt).filter((d): d is string => d !== null);
-    const sorted = [...due].sort();
-    expect(due).toEqual(sorted);
+    const active = rows
+      .map((r) => (r.state === 'confirmed' ? r.dispatchDueAt : r.confirmDueAt))
+      .filter((d): d is string => d !== null);
+    expect(active).toEqual([...active].sort());
   });
 
   it("a house cannot confirm a competitor's sub-order, even naming its id", async () => {
@@ -745,6 +751,26 @@ describe('the queue actually works for its owner', () => {
     const rows = await ward.seller.queue();
     const confirmed = rows.find((row) => row.id === ids['dar-al-ward:sub']);
     expect(confirmed?.state).toBe('confirmed');
+
+    /*
+     * Confirming starts the dispatch clock.
+     *
+     * The fixture's houses are inserted without naming a dispatch window, so
+     * 0020's trigger snapshots the house's own setting — the table default of
+     * 48 hours — onto the sub-order. Confirmed at CLOCK (2 Sept, 09:00 UTC), it
+     * must be shipped by 4 Sept, 09:00. Before 0020 this field did not exist on
+     * the queue and the column behind it had never been written.
+     */
+    expect(confirmed?.dispatchDueAt).toBe('2026-09-04T09:00:00.000Z');
+  });
+
+  it('an order still awaiting confirmation has no dispatch deadline yet', async () => {
+    // A house cannot be late shipping an order it has not agreed to take.
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
+    const rows = await nour.seller.queue();
+    const waiting = rows.find((row) => row.id === ids['maison-nour:sub']);
+    expect(waiting?.state).toBe('awaiting_seller');
+    expect(waiting?.dispatchDueAt).toBeNull();
   });
 
   it('maps an illegal transition to an Arabic message, not a 500', async () => {

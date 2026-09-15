@@ -93,6 +93,12 @@ interface SubOrderRow {
   };
   placedAt: Date;
   confirmDueAt: Date | null;
+  /** Snapshotted at placement, as the database does in 0020. */
+  dispatchSlaHours: number;
+  /** Set when the house confirms. */
+  dispatchDueAt: Date | null;
+  confirmedAt?: Date;
+  dispatchedAt?: Date;
   shipment?: { courier: string; trackingNumber: string | null; dispatchedAt: Date | null };
   orderId: string;
   sellerId: string;
@@ -444,6 +450,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             },
             placedAt: draft.placedAt,
             confirmDueAt: sub.confirmDueAt,
+            dispatchSlaHours: sub.dispatchSlaHours,
+            dispatchDueAt: null,
             lines: sub.lineItems.map((li) => ({
               id: `line-${++s.seq}`,
               productId: li.productId,
@@ -597,6 +605,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             shipping: Money.fromMinor(so.shippingMinor),
             placedAt: so.placedAt,
             confirmDueAt: so.confirmDueAt,
+            dispatchDueAt: so.dispatchDueAt,
             ...so.delivery,
             items: so.lines.map((l) => ({
               name: l.name,
@@ -624,9 +633,28 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           throw new InvalidTransition(row.state, to);
         }
 
+        /*
+         * The state it moved FROM, read before the row changes.
+         *
+         * This used to assign `row.state = to` first and then log
+         * `from: row.state`, so every recorded transition claimed to have gone
+         * from its new state to its new state. Nothing reads this log through
+         * the port, which is how it survived; the Postgres adapter has always
+         * recorded the real previous state.
+         *
+         * The timestamps now match the Postgres adapter as well: it has stamped
+         * `confirmed_at` and `dispatched_at` all along, and this stamped only
+         * delivery.
+         */
+        const from = row.state;
         row.state = to;
+        if (to === 'confirmed') {
+          row.confirmedAt = record.at;
+          row.dispatchDueAt = SubOrderLifecycle.dispatchDueAt(record.at, row.dispatchSlaHours);
+        }
+        if (to === 'dispatched') row.dispatchedAt = record.at;
         if (to === 'delivered') row.deliveredAt = record.at;
-        s.transitions.push({ ...record, from: row.state, to, actor, reason });
+        s.transitions.push({ ...record, from, to, actor, reason });
       },
 
       async recordRemittance({ subOrderId, remittedAt }) {

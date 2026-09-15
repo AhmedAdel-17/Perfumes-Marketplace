@@ -129,7 +129,11 @@ function Row({
         thing on it and used to be the most prominent.
       */}
       <header className="flex items-baseline justify-between gap-3 border-b border-line pb-3">
-        <Countdown dueAt={entry.confirmDueAt} state={entry.state} />
+        <Countdown
+          confirmDueAt={entry.confirmDueAt}
+          dispatchDueAt={entry.dispatchDueAt}
+          state={entry.state}
+        />
         <span className="latin text-micro tracking-label text-ink3">{entry.reference}</span>
       </header>
 
@@ -329,22 +333,37 @@ function DeclineReasons({
 }
 
 /**
- * The confirmation deadline, as time remaining rather than a timestamp.
+ * The deadline the order is racing, as time remaining rather than a timestamp.
  *
  * "18:40" requires the reader to know what time it is now and do subtraction;
  * "متبقٍ ٣ ساعات" does not. It turns amber under an hour and red once it has
  * passed, because a breached SLA has to look different from a tight one.
+ *
+ * TWO CLOCKS. Confirmation while the order waits for the house; dispatch once
+ * it is confirmed. The second was never shown — the column behind it had never
+ * been written (migration 0020) — so the card in the shipping step, the one a
+ * packer is working from, was the only card with no deadline on it. The label
+ * names which clock, because "٣ ساعات" on a card that has already been
+ * confirmed is ambiguous in exactly the way that gets a parcel shipped late.
  */
-function Countdown({ dueAt, state }: { dueAt: string | null; state: string }) {
+function Countdown({ confirmDueAt, dispatchDueAt, state }: {
+  confirmDueAt: string | null;
+  dispatchDueAt: string | null;
+  state: string;
+}) {
   const [now, setNow] = useState(() => Date.now());
 
+  const deciding = state === 'placed' || state === 'awaiting_seller';
+  const shipping = state === 'confirmed';
+  const dueAt = deciding ? confirmDueAt : shipping ? dispatchDueAt : null;
+
   useEffect(() => {
-    if (state !== 'placed' && state !== 'awaiting_seller') return;
+    if (!deciding && !shipping) return;
     const timer = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
-  }, [state]);
+  }, [deciding, shipping]);
 
-  if (!dueAt || (state !== 'placed' && state !== 'awaiting_seller')) return null;
+  if (!dueAt) return null;
 
   const remaining = new Date(dueAt).getTime() - now;
   const overdue = remaining <= 0;
@@ -359,8 +378,12 @@ function Countdown({ dueAt, state }: { dueAt: string | null; state: string }) {
 
   return (
     <span className={`flex items-baseline gap-1.5 text-bodyLg ${tone}`}>
-      <span className="text-caption tracking-label opacity-80">
-        {overdue ? 'تأخّر' : 'متبقٍ'}
+      {/* No opacity on the label. Every ink sits just above 4.5:1 by
+          construction, and an alpha spends a margin that was never there. */}
+      <span className="text-caption tracking-label">
+        {shipping
+          ? (overdue ? 'تأخّر الشحن' : 'متبقٍ للشحن')
+          : (overdue ? 'تأخّر' : 'متبقٍ')}
       </span>
       {hours > 0 && <span className="tnum font-semibold">{num(hours)}<span className="text-caption font-normal"> س</span></span>}
       <span className="tnum font-semibold">{num(minutes)}<span className="text-caption font-normal"> د</span></span>

@@ -117,6 +117,14 @@ export const subOrders = pgTable('sub_orders', {
    */
   deliveryFulfilledBy: deliveryFulfilledBy('delivery_fulfilled_by').notNull(),
 
+  /**
+   * The house's dispatch window in hours, snapshotted at placement (0020).
+   *
+   * A BEFORE INSERT trigger copies it from the house when a writer omits it,
+   * so a raw insert cannot produce a sub-order with no promise attached.
+   */
+  dispatchSlaHours: integer('dispatch_sla_hours').notNull(),
+
   recipientName: text('recipient_name').notNull(),
   recipientPhone: text('recipient_phone').notNull(),
   governorate: governorate('governorate').notNull(),

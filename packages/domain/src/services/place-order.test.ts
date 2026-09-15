@@ -169,6 +169,32 @@ describe('SLA clocks start at purchase', () => {
     expect(byId[NOUR]!.confirmDueAt.toISOString()).toBe('2026-09-02T21:42:00.000Z');
     expect(byId[SIWA]!.confirmDueAt.toISOString()).toBe('2026-09-03T21:42:00.000Z');
   });
+
+  it('snapshots each house’s DISPATCH hours — and does not start that clock yet', () => {
+    /*
+     * The dispatch hours were received here and thrown away, which is why
+     * `dispatch_due_at` was never written anywhere. They are carried on the
+     * draft now, as the commission rate is: what a house promised when it
+     * accepted this order must not change when it edits its terms next week.
+     *
+     * No deadline, though. A house cannot be late shipping an order it has not
+     * confirmed, so the clock starts at confirmation, not at purchase.
+     */
+    const order = place({
+      terms: [
+        { sellerId: NOUR, confirmationSlaHours: 24, dispatchSlaHours: 48 },
+        { sellerId: WARD, confirmationSlaHours: 12, dispatchSlaHours: 24 },
+        { sellerId: SIWA, confirmationSlaHours: 48, dispatchSlaHours: 72 },
+      ],
+    });
+    const byId = Object.fromEntries(order.subOrders.map((s) => [s.sellerId, s]));
+    expect(byId[NOUR]!.dispatchSlaHours).toBe(48);
+    expect(byId[WARD]!.dispatchSlaHours).toBe(24);
+    expect(byId[SIWA]!.dispatchSlaHours).toBe(72);
+    for (const sub of order.subOrders) {
+      expect(sub).not.toHaveProperty('dispatchDueAt');
+    }
+  });
 });
 
 describe('invariants — a malformed order cannot exist even briefly', () => {

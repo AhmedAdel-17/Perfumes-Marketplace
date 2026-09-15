@@ -237,4 +237,30 @@ export class SubOrderLifecycle {
   static attractsCommission(state: SubOrderState): boolean {
     return SubOrderLifecycle.isCompleted(state);
   }
+
+  /**
+   * When a confirmed sub-order must be handed to a courier.
+   *
+   * The clock starts at CONFIRMATION, not at purchase: a house cannot be late
+   * shipping an order it has not agreed to take, and a house that confirms
+   * quickly should not be rewarded with a shorter window for it. The hours are
+   * the ones SNAPSHOTTED onto the sub-order at placement (migration 0020) — a
+   * house changing its terms next week must not rewrite what it promised on
+   * orders it already accepted.
+   *
+   * Stated once, here, so both adapters compute the same deadline. Before this
+   * existed the column had been in the schema since 0000 and nothing wrote it.
+   *
+   * A built-in RangeError rather than a domain error: a non-positive window is
+   * a programming fault upstream (the database refuses one too), not a
+   * business outcome a caller should translate for a person.
+   */
+  static dispatchDueAt(confirmedAt: Date, dispatchSlaHours: number): Date {
+    if (!Number.isInteger(dispatchSlaHours) || dispatchSlaHours <= 0) {
+      throw new RangeError(
+        `A dispatch window must be a positive whole number of hours, received ${dispatchSlaHours}`,
+      );
+    }
+    return new Date(confirmedAt.getTime() + dispatchSlaHours * 3_600_000);
+  }
 }

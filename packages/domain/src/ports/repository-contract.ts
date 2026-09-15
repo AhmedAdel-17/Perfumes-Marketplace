@@ -202,6 +202,39 @@ export const repositoryContract: readonly ContractCase[] = [
   },
 
   {
+    name: 'confirming starts the dispatch clock from the hours snapshotted at placement',
+    async run(setup) {
+      /*
+       * `dispatch_due_at` was in the schema from the first migration and no
+       * adapter ever wrote it, so a confirmed order carried no deadline at all.
+       * Both adapters now compute it through `SubOrderLifecycle.dispatchDueAt`,
+       * and this is the case that holds them to the same answer.
+       */
+      const w = await setup();
+      await w.uow.transaction((r) => r.orders.save(w.makeDraft('DY-C0010'), w.sellerIdBySlug));
+      const wardId = w.sellerIdBySlug.get('dar-al-ward')!;
+      const [sub] = await w.uow.transaction((r) => r.subOrders.listBySeller(wardId));
+      assert(sub !== undefined, 'seeded sub-order');
+
+      const before = await w.uow.transaction((r) => r.subOrders.listQueueForSeller(wardId));
+      equal(before.find((e) => e.id === sub!.id)?.dispatchDueAt ?? null, null,
+        'an unconfirmed order has no dispatch deadline');
+
+      for (const [to, actor] of [['awaiting_seller', 'system'], ['confirmed', 'seller']] as const) {
+        const current = await w.uow.transaction((r) => r.subOrders.findById(sub!.id));
+        const record = SubOrderLifecycle.transition(current!.state, { to, actor }, CLOCK);
+        await w.uow.transaction((r) => r.subOrders.applyTransition(sub!.id, to, actor, null, record));
+      }
+
+      const after = await w.uow.transaction((r) => r.subOrders.listQueueForSeller(wardId));
+      const due = after.find((e) => e.id === sub!.id)?.dispatchDueAt;
+      // Both harnesses give Ward 48 dispatch hours; confirmed at CLOCK.
+      equal(due?.toISOString() ?? null, '2026-09-03T21:42:00.000Z',
+        'dispatch deadline = confirmation + snapshotted hours');
+    },
+  },
+
+  {
     name: 'listForSettlement() returns rows the domain can settle directly',
     async run(setup) {
       const w = await setup();

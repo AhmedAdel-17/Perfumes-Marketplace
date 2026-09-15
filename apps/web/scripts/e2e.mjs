@@ -894,6 +894,16 @@ try {
     assert(text.includes('رقم الشحنة'), 'a confirmed order must ask for a tracking number');
   });
 
+  await test('a confirmed order shows how long is left to SHIP it', async () => {
+    // The dispatch clock existed as a column and was never started, so a
+    // confirmed order carried no deadline at all — the card that most needed
+    // a countdown was the one card without one.
+    const shipping = seller.locator('section', { hasText: 'جاهزة للشحن' }).first();
+    const text = await shipping.innerText();
+    assert(/متبقٍ للشحن|تأخّر الشحن/.test(text),
+      `a confirmed order must show its dispatch deadline:\n${text.slice(0, 200)}`);
+  });
+
   await test('dispatch refuses a tracking number too short to be one', async () => {
     const field = seller.locator('input[id^="t-"]').first();
     const ship = seller.locator('button', { hasText: /تم الشحن/ }).first();

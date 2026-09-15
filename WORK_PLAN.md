@@ -99,16 +99,31 @@ enters the catalogue is not a marketplace.
       approval, remittance, policy publishing — inside the same transaction
 - [x] 6.3 Proved from both sides: an entry exists after a decision, and a FAILED
       decision leaves none behind
-- [ ] 6.4 A console screen to read it without SQL (the second half of gate 6)
+- [x] 6.4 A console screen to read it without SQL (the second half of gate 6) —
+      `/ops/audit`: filter by kind, keyset paging, every entry in words
 
-## 7. Reviews  ⬜
-Verified purchase only, from delivered orders (gate 5).
+## 7. Reviews  ✅
+Verified purchase only, from delivered orders (gate 5). Shipped in e4486ad.
 
-## 8. Refused and returned  ⬜
-The state machine handles them; no screen does (gate 4).
+## 8. Refused and returned  ✅
+Return requests, seller decisions, platform refunds. Shipped in e4486ad.
 
-## 9. What the owner can see  ⬜
+## 9. What the owner can see  ◐
 Funnel, seller SLA, contribution inputs — without touching the database (gate 8).
+
+- [x] 9.1 Definitions BEFORE a dashboard (doc 04 §6) — `docs/ANALYTICS_DEFINITIONS.md`.
+      "Completed" is the payout's own `earned`; unrecorded inputs are shown as
+      unrecorded, never as zero; hands back A-1..A-3.
+- [x] 9.2 **The dispatch clock was never started.** `dispatch_due_at` has existed since
+      0000 and nothing ever wrote it, so half of "seller SLA" did not exist and no house
+      was shown a dispatch deadline. Migration 0020 snapshots the house's dispatch hours
+      onto the sub-order; confirmation starts the clock; both adapters, contract cases,
+      and the seller queue's countdown.
+- [ ] 9.3 Owner metrics computed in the domain from the same classifiers the payout run
+      uses — one definition, two screens
+- [ ] 9.4 The owner screen: post-order funnel with exits by reason, SLA per house,
+      contribution inputs with their status
+- [ ] 9.5 Pre-order funnel — **blocked on A-1** (lawful basis for guest browsing events)
 
 Then the roadmap's Phase 2, and the mobile apps.
 
@@ -204,3 +219,26 @@ Newest last. One line per completed item, with anything the next session must kn
   stays noir/brass — the report proposes three alternatives and recommends
   keeping it. **Open and design's to draw:** the operating tools have never had a
   type scale of their own; they wear the storefront's 52px display headline.
+
+- 2026-09-15 — **§6.4 done: the audit trail has a screen** (`/ops/audit`, commit
+  dcee0ad). Keyset paging proved against both adapters, every entry in words, no
+  write procedure. Widening the accessibility audit to seven screens it had never
+  visited found three sub-44px targets and a 4.45:1 pill; fixed.
+
+  **§9 started, and the first thing it found was a defect.** `dispatch_due_at`
+  existed from migration 0000 and nothing ever wrote it: no house was shown a
+  dispatch deadline and half of "seller SLA" did not exist. Migration 0020
+  snapshots the house's dispatch hours onto each sub-order (a trigger fills it for
+  any writer that omits it), confirmation starts the clock through one domain
+  function, and the seller's shipping card now counts down. The in-memory adapter
+  was also logging every transition as from-its-new-state; nothing read that log
+  through the port, which is how it survived.
+
+  `docs/ANALYTICS_DEFINITIONS.md` written BEFORE any dashboard: "completed" is the
+  payout's own `earned`, and inputs the system does not record are shown as not
+  recorded, never as zero. Nothing writes `analytics_events` today, so the
+  pre-order half of the funnel is blocked on A-1 (a legal question, not code).
+
+  Operational: a second e2e run on the same server fails at sign-in — the OTP
+  limiter working as designed — and a persistent dev database makes the review
+  tests fail on their second run. For a clean run: `seed -- --fresh`, restart.

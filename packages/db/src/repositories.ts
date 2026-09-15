@@ -237,6 +237,9 @@ const orderRepository = (db: Executor): OrderRepository => ({
         merchandisePiastres: sub.merchandise.minor,
         shippingPiastres: sub.shipping.minor,
         confirmDueAt: sub.confirmDueAt,
+        // Sent explicitly, from the domain's snapshot. The 0020 trigger fills
+        // the column only when a writer does not.
+        dispatchSlaHours: sub.dispatchSlaHours,
         // The house cannot read the parent order — that would show it what the
         // customer bought from competing houses — so everything it needs to
         // pack and label is written onto its own row. Migration 0004.
@@ -454,6 +457,7 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
       shipping: Money.fromMinor(r.shippingPiastres),
       placedAt: r.createdAt,
       confirmDueAt: r.confirmDueAt,
+      dispatchDueAt: r.dispatchDueAt,
       recipientName: r.recipientName,
       recipientPhone: r.recipientPhone,
       governorate: r.governorate,
@@ -488,7 +492,10 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     reason: ReasonCode | null,
     record: TransitionRecord,
   ) {
-    const [current] = await db.select({ state: schema.subOrders.state })
+    const [current] = await db.select({
+      state: schema.subOrders.state,
+      dispatchSlaHours: schema.subOrders.dispatchSlaHours,
+    })
       .from(schema.subOrders).where(eq(schema.subOrders.id, id)).limit(1);
     if (!current) throw new Error(`Unknown sub-order ${id}`);
 
@@ -502,7 +509,14 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
     await db.update(schema.subOrders)
       .set({
         state: to,
-        ...(to === 'confirmed' ? { confirmedAt: record.at } : {}),
+        // Confirming starts the dispatch clock, from the hours snapshotted at
+        // placement. Computed by the domain so both adapters agree exactly.
+        ...(to === 'confirmed'
+          ? {
+            confirmedAt: record.at,
+            dispatchDueAt: SubOrderLifecycle.dispatchDueAt(record.at, current.dispatchSlaHours),
+          }
+          : {}),
         ...(to === 'dispatched' ? { dispatchedAt: record.at } : {}),
         ...(to === 'delivered' ? { deliveredAt: record.at } : {}),
       })

@@ -32,6 +32,36 @@ describe('sub-order — the happy path', () => {
   });
 });
 
+describe('sub-order — the dispatch clock starts at confirmation', () => {
+  /*
+   * `dispatch_due_at` existed from the first migration and nothing computed it,
+   * so no house was ever shown how long it had to ship. The deadline is the
+   * confirmation plus the house's dispatch hours as SNAPSHOTTED at placement —
+   * one rule, stated here, used by both adapters.
+   */
+  it('is the confirmation time plus the snapshotted hours', () => {
+    const due = SubOrderLifecycle.dispatchDueAt(new Date('2026-09-10T08:00:00Z'), 30);
+    expect(due.toISOString()).toBe('2026-09-11T14:00:00.000Z');
+  });
+
+  it('does not depend on when the order was placed', () => {
+    // A house that confirms early gets its full window; a house that confirms
+    // late does not get a shorter one. Both start from their own confirmation.
+    const early = SubOrderLifecycle.dispatchDueAt(new Date('2026-09-10T08:00:00Z'), 48);
+    const late = SubOrderLifecycle.dispatchDueAt(new Date('2026-09-10T20:00:00Z'), 48);
+    expect(late.getTime() - early.getTime()).toBe(12 * 3_600_000);
+  });
+
+  it('refuses a window that is not a positive whole number of hours', () => {
+    // The database refuses zero too (0020); refusing here means the domain
+    // never produces a deadline equal to, or before, its own confirmation.
+    for (const hours of [0, -4, 1.5, Number.NaN]) {
+      expect(() => SubOrderLifecycle.dispatchDueAt(new Date('2026-09-10T08:00:00Z'), hours))
+        .toThrow();
+    }
+  });
+});
+
 describe('sub-order — illegal moves are refused, not ignored', () => {
   it('cannot skip seller confirmation', () => {
     expect(() =>

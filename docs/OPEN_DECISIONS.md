@@ -42,6 +42,19 @@ Update this file as decisions are made. It is the fastest way to see what's bloc
 
 ---
 
+## Raised by the owner dashboard work (15 September 2026)
+
+From `docs/ANALYTICS_DEFINITIONS.md` §6 and the seller-portal review. None blocks
+the MVP screens being built; each blocks a specific number or permission being
+honest.
+
+| # | Decision | Owner | Blocks |
+|---|---|---|---|
+| A-1 | **Lawful basis and retention for guest browsing events** (product views, bag adds) under PDPL 151/2020 | Counsel + business founder | The pre-order half of the funnel. `analytics_events` exists; nothing may write it until this is answered |
+| A-2 | **How payment and courier costs enter the system** — provider reports, or a monthly figure entered by an admin | Business founder (with D-5) | Showing a contribution margin at all. Until then the screen shows each input's status, not a margin |
+| A-3 | **Whether a support ticket is costed, and at what rate** | Business founder | Variable support as money rather than a count |
+| S-1 | **What `manager` and `viewer` seller staff may do.** The database makes money, the house profile and staff management owner-only (tested). Every other role can currently confirm, decline and dispatch orders exactly like an owner. Doc 04 says staff have "limited permissions" but never defines the matrix | Business founder, with seller interviews | Per-role enforcement, and the staff-management screen owners do not yet have |
+
 ## Legal review required before implementing
 
 These are not decisions to make in code. Each needs Egyptian counsel sign-off first.

@@ -243,6 +243,11 @@ export interface QueueEntry {
   readonly placedAt: Date;
   /** When the confirmation SLA expires. The countdown the house is racing. */
   readonly confirmDueAt: Date | null;
+  /**
+   * When a CONFIRMED order must be shipped. Null until the house confirms —
+   * the clock starts then, from the hours snapshotted at placement.
+   */
+  readonly dispatchDueAt: Date | null;
   readonly recipientName: string;
   readonly recipientPhone: string;
   readonly governorate: string;

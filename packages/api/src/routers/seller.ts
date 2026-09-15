@@ -33,14 +33,19 @@ export const sellerRouter = router({
     });
 
     // Soonest deadline first. A queue sorted by arrival looks tidier and buries
-    // the order that is about to breach its confirmation SLA behind five that
-    // are not — which is the only ordering that actually costs money.
+    // the order that is about to breach its SLA behind five that are not —
+    // which is the only ordering that actually costs money.
+    //
+    // The deadline that matters is the one the order is racing NOW: the
+    // confirmation clock until the house confirms, the dispatch clock after.
+    // Sorting confirmed orders by a confirmation deadline they have already met
+    // would put the wrong parcel at the top of the shipping step.
+    const activeDeadline = (e: (typeof entries)[number]): number =>
+      (e.state === 'confirmed' ? e.dispatchDueAt : e.confirmDueAt)?.getTime()
+        ?? Number.MAX_SAFE_INTEGER;
+
     return [...entries]
-      .sort((a, b) => {
-        const left = a.confirmDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        const right = b.confirmDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        return left - right;
-      })
+      .sort((a, b) => activeDeadline(a) - activeDeadline(b))
       .map((s) => ({
         id: s.id,
         reference: s.reference,
@@ -49,6 +54,7 @@ export const sellerRouter = router({
         shippingPiastres: s.shipping.minor,
         placedAt: s.placedAt.toISOString(),
         confirmDueAt: s.confirmDueAt?.toISOString() ?? null,
+        dispatchDueAt: s.dispatchDueAt?.toISOString() ?? null,
         recipient: {
           name: s.recipientName,
           phone: s.recipientPhone,

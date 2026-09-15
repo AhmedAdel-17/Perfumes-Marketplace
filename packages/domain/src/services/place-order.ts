@@ -91,6 +91,14 @@ export interface DraftSubOrder {
   readonly commission: Money;
   readonly attribution: AttributionDecision;
   readonly confirmDueAt: Date;
+  /**
+   * The house's dispatch window, SNAPSHOTTED — not a deadline.
+   *
+   * The deadline cannot exist yet: it starts at confirmation. What is fixed at
+   * placement is how long the house promised to take, for the same reason the
+   * commission rate is fixed here.
+   */
+  readonly dispatchSlaHours: number;
   readonly etaDaysMin: number;
   readonly etaDaysMax: number;
 }
@@ -192,6 +200,9 @@ export class PlaceOrder {
         confirmDueAt: new Date(
           input.orderedAt.getTime() + terms.confirmationSlaHours * 3_600_000,
         ),
+        // Received here and discarded until 0020, which is why no dispatch
+        // deadline was ever written anywhere.
+        dispatchSlaHours: terms.dispatchSlaHours,
         etaDaysMin: quote.etaDaysMin,
         etaDaysMax: quote.etaDaysMax,
       };
