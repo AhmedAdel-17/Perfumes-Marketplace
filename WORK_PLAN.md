@@ -147,18 +147,28 @@ Funnel, seller SLA, contribution inputs — without touching the database (gate 
 - [ ] 9.5 Pre-order funnel — **unblocked 15 Sep 2026 (A-1 approved).** First-party
       events under an anonymous id, no personal data, no third-party script
 
-## 10. Dependency security  ⬜
-`pnpm audit` on 15 Sep 2026: 12 advisories (1 critical, 4 high). None is reachable in
-the way its advisory describes, and none is left open on that argument.
+## 10. Dependency security  ✅
+`pnpm audit` on 15 Sep 2026: 12 advisories (1 critical, 4 high). None was reachable in
+the way its advisory describes, and none was left open on that argument. Zero on
+16 Sep 2026.
 
-- [ ] 10.1 `drizzle-orm` 0.38 → ≥0.45.2 (high: identifiers not escaped in `sql.identifier`
-      / `sql.as`), with `drizzle-kit` 0.30 → 0.31. Runtime dependency — first.
-- [ ] 10.2 `vitest` 2 → ≥4.1.11 across the six manifests; brings patched `vite` and
+- [x] 10.1 `drizzle-orm` 0.38 → 0.45.2 (high: identifiers not escaped in `sql.identifier`
+      / `sql.as`), with `drizzle-kit` 0.30 → 0.31.10. Runtime dependency — first.
+      **It broke something:** 0.45 wraps a driver error in `DrizzleQueryError`, so the
+      one router that reads what the DATABASE said stopped matching and an explained
+      refusal became "something went wrong". Fixed with `errorMessages` (the whole
+      `cause` chain); the test that missed it now asserts the sentence
+- [x] 10.2 `vitest` 2 → 4.1.11 across the six manifests; brings patched `vite` and
       `esbuild` (critical: the Vitest UI server — not installed here — and the dev
-      server's path and origin checks). Development only.
-- [ ] 10.3 `postcss` ≥8.5.23 under Next, by a pnpm override: Next's newest 15.x
-      (15.5.25) still pins 8.4.31, and Next 16 is its own migration
-- [ ] 10.4 `pnpm audit` clean, and a check that keeps it clean
+      server's path and origin checks). Development only. No config change needed
+- [x] 10.3 `postcss` ≥8.5.23 under Next, by a pnpm override in `pnpm-workspace.yaml`:
+      Next's newest 15.x (15.5.25) still pins 8.4.31, and Next 16 is its own
+      migration. A second override followed — `@esbuild-kit/core-utils>esbuild`,
+      drizzle-kit's deprecated loader — visible only once 10.2 removed the other
+      esbuild paths. Both are parent-scoped and say when they may be removed
+- [x] 10.4 `pnpm audit:deps` (root script, `--audit-level=moderate`) and README
+      "Dependency advisories". **Not** in `pnpm test`: it asks the registry, and a
+      test that fails an unchanged commit overnight is a test people learn to skip
 
 Then the roadmap's Phase 2, and the mobile apps.
 
@@ -370,3 +380,36 @@ Newest last. One line per completed item, with anything the next session must kn
   optimiser. Audit clean in both themes, every surface, every width.
 
   **Next: §10**, the dependency advisories — drizzle-orm first.
+
+- 2026-09-16 — **§10 done: `pnpm audit` is clean, 12 advisories to zero.**
+  drizzle-orm 0.38 → 0.45.2 with drizzle-kit 0.31.10, vitest 2 → 4.1.11 across
+  six manifests, and two parent-scoped overrides in `pnpm-workspace.yaml`
+  (Next's postcss, drizzle-kit's esbuild).
+
+  **The upgrade broke a message, and the test did not notice.** drizzle-orm 0.45
+  wraps a driver error in `DrizzleQueryError`; `applications.setStatus` matched
+  the trigger's words against `error.message`, which is now "Failed query: …"
+  with the real text under `cause`. So an operator trying to make an unvetted
+  house live was told "حدث خطأ" instead of how many controls still fail — on the
+  one screen where the reason is the point. The test asserted `.rejects.toThrow()`
+  and passed either way. `errorMessages` now walks the cause chain, the test
+  asserts the sentence, and undoing the fix fails it with the exact wrong text.
+
+  **Two mistakes of mine, both worth keeping:**
+
+  * I reported "0 advisories" while one remained. The summary script counted
+    `advisories` in `pnpm audit --json` and read an empty response as zero — the
+    same "passes by finding nothing" flaw the tint guard had. `audit:deps` uses
+    pnpm's EXIT CODE instead, and that is what found the last one.
+  * `pnpm exec drizzle-kit --help` installed the pending esbuild override while
+    the browser suite was running: in pnpm 11 every pnpm command runs the
+    dependency check first. The suite still passed 125/125 (the site does not use
+    esbuild at runtime), but the hazard is in the README now.
+
+  Domain 647, i18n 50, tokens 123, db 323, api 268. e2e 125/125 on a fresh
+  database, with ZERO "unhandled error" lines in the server log — which is the
+  fix above, proved through the real stack. Audit clean in both themes, every
+  surface, every width. Production build passes.
+
+  **Next: §9.5**, the pre-order funnel (A-1 approved): first-party events under
+  an anonymous id, no personal data, no third-party script.

@@ -75,6 +75,32 @@ const asZodError = (error: unknown): { message: string } | null => {
   return { message: first.message };
 };
 
+/**
+ * Every message in an error's `cause` chain, joined — for the rare router that
+ * must read what the DATABASE said.
+ *
+ * A refusal from a trigger no longer arrives as the driver's own error.
+ * drizzle-orm 0.45 wraps it in `DrizzleQueryError`, whose message is
+ * "Failed query: …" and whose `cause` is what Postgres actually raised. The one
+ * router that matched a trigger's wording against `error.message` stopped
+ * matching the day the wrapper arrived, and an explained refusal ("the checklist
+ * is 3 of 8") became "something went wrong" — on the screen where the reason is
+ * the whole point. Its test only asserted that the call was refused.
+ *
+ * Bounded, because a cause chain is data from a library and a cycle in it must
+ * not hang a request.
+ */
+export function errorMessages(error: unknown): string {
+  const messages: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; depth < 8 && typeof current === 'object' && current !== null; depth += 1) {
+    const message = (current as { message?: unknown }).message;
+    if (typeof message === 'string') messages.push(message);
+    current = (current as { cause?: unknown }).cause;
+  }
+  return messages.join('\n');
+}
+
 export const toTRPCError = (error: unknown): TRPCError => {
   if (error instanceof TRPCError) return error;
 

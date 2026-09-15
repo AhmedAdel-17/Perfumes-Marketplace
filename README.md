@@ -70,6 +70,32 @@ DEV_LOG=<path to the dev server log> THEME=light pnpm --filter @diyar/web run au
 Write `run audit`, not `audit`: from inside `apps/web`, a bare `pnpm audit` is
 pnpm's own dependency-vulnerability report, not this script.
 
+### Dependency advisories
+
+```bash
+pnpm audit:deps   # fails on any moderate-or-worse advisory
+```
+
+Run before a release and whenever dependencies change. It is **not** part of
+`pnpm test`, on purpose: it asks the registry, and a test that depends on the
+network — or fails an unchanged commit because an advisory was published
+overnight — is a test people learn to skip. It was clean on 16 Sep 2026 after
+WORK_PLAN §10; a finding since then is new, not inherited.
+
+Each override in `pnpm-workspace.yaml` — Next's copy of postcss, drizzle-kit's
+copy of esbuild — says when it may be removed. Check them on every upgrade of
+the package that needs them.
+
+Trust the exit code, not a summary of the output. A script that counted
+`advisories` in `pnpm audit --json` reported zero when the response came back
+empty; the exit code of `audit:deps` did not, and found the one that was left.
+
+**Any pnpm command installs.** In pnpm 11 even `pnpm exec <tool> --help` runs
+the dependency check first, and if the lockfile or an override has changed it
+installs on the spot — rewriting `node_modules` under whatever is running. After
+editing `pnpm-workspace.yaml` or a manifest, stop the dev server and any browser
+run first, then install deliberately.
+
 Both suites sign in, and read the one-time codes out of the dev server's log,
 which is why they need `DEV_LOG`. Those codes are real credentials for the seeded
 accounts; the log is gitignored for that reason.

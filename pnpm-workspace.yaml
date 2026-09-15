@@ -12,3 +12,23 @@ packages:
 # `pnpm dev`. The failure names esbuild and says nothing about the key.
 allowBuilds:
   esbuild: true
+
+# WORK_PLAN 10.3. Next pins postcss 8.4.31 for its own CSS pipeline — including
+# in 15.5.25, the newest 15.x — and that version carries four advisories (source
+# map path traversal and file disclosure, an XSS in its stringifier). Next 16 is
+# a migration of its own, so the fix is to lift ONLY Next's copy, within postcss 8.
+#
+# Parent-scoped (`next>postcss`), not global: every other consumer already
+# resolves a patched 8.5.x on its own, and a global override would silently
+# outrank a future package that genuinely needs something else. Remove this when
+# Next's own dependency reaches >=8.5.23 — `pnpm why postcss` shows it.
+overrides:
+  "next>postcss": "^8.5.23"
+  # drizzle-kit still depends on the deprecated @esbuild-kit loaders, and their
+  # core-utils pins esbuild <=0.24.2 — whose advisory concerns esbuild's dev
+  # SERVER, which the loader never starts. Lifted anyway: an advisory argued away
+  # as unreachable is one nobody re-checks when the code around it changes.
+  # Scoped to that one parent for the same reason as postcss. Proved by running
+  # `drizzle-kit export`, which loads the schema through this loader. Remove when
+  # drizzle-kit drops @esbuild-kit — `pnpm why @esbuild-kit/core-utils` shows it.
+  "@esbuild-kit/core-utils>esbuild": "^0.25.0"

@@ -500,8 +500,11 @@ describe('applications — a house joins, and cannot let itself in', () => {
     const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
     const applied = (await ops.applications.queue()).find((a) => a.slug === 'atelier-siwa')!;
 
+    // The SENTENCE, not merely a refusal. This asserted `.rejects.toThrow()`,
+    // and kept passing when a driver upgrade turned the explained refusal into
+    // "something went wrong" — refused either way, told nothing either way.
     await expect(ops.applications.setStatus({ id: applied.id, status: 'live' }))
-      .rejects.toThrow();
+      .rejects.toThrow('اكتمال بنود المراجعة');
 
     const still = (await ops.applications.queue()).find((a) => a.slug === 'atelier-siwa')!;
     expect(still.status).not.toBe('live');

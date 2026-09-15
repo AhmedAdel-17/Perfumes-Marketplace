@@ -14,6 +14,7 @@ import {
   houseSlug, objectionsToApplying,
   type ApplicationObjection, type ApplicationRecord,
 } from '@diyar/domain';
+import { errorMessages } from '../errors';
 import { platformProcedure, publicProcedure, router } from '../trpc';
 import { phoneSchema, uuidSchema } from '../validation';
 import { consume, rateLimitMessage } from '../rate-limit';
@@ -236,8 +237,9 @@ export const applicationsRouter = router({
             id: input.id, status: input.status, now: ctx.clock.now(),
           });
         } catch (error) {
-          const message = String((error as Error).message ?? '');
-          if (/incomplete checklist/i.test(message)) {
+          // The whole cause chain: the trigger's words are under the driver's
+          // wrapper, not in its own message. See `errorMessages`.
+          if (/incomplete checklist/i.test(errorMessages(error))) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message: `لا يمكن تشغيل الدار قبل اكتمال بنود المراجعة — ${
