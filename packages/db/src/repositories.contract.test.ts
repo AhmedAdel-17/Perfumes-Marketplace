@@ -20,6 +20,7 @@ import {
   photoContract,
   contentContract, type ContentContractWorld,
   contentImageContract,
+  analyticsContract,
   siteContract, type SiteContractWorld,
 } from '@diyar/domain';
 import * as schema from './schema/index';
@@ -234,6 +235,20 @@ describe('content contract — Drizzle + Postgres adapter', () => {
 /** The content world again: an image records who uploaded it, and that is an operator. */
 describe('content image contract — Drizzle + Postgres adapter', () => {
   for (const testCase of contentImageContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
+    }, 60_000);
+  }
+});
+
+/**
+ * The browsing trail. Run as PLATFORM, like every other contract here — the
+ * insert policy that lets the shop write one is proved separately, in
+ * `analytics-rls.test.ts`, because "can the visitor's role write this" is a
+ * different question from "does the adapter count correctly".
+ */
+describe('analytics contract — Drizzle + Postgres adapter', () => {
+  for (const testCase of analyticsContract) {
     it(testCase.name, async () => {
       await expect(testCase.run(contentHarness)).resolves.toBeUndefined();
     }, 60_000);

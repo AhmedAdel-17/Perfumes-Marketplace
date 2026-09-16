@@ -126,7 +126,7 @@ Verified purchase only, from delivered orders (gate 5). Shipped in e4486ad.
 ## 8. Refused and returned  ✅
 Return requests, seller decisions, platform refunds. Shipped in e4486ad.
 
-## 9. What the owner can see  ◐
+## 9. What the owner can see  ✅
 Funnel, seller SLA, contribution inputs — without touching the database (gate 8).
 
 - [x] 9.1 Definitions BEFORE a dashboard (doc 04 §6) — `docs/ANALYTICS_DEFINITIONS.md`.
@@ -144,8 +144,13 @@ Funnel, seller SLA, contribution inputs — without touching the database (gate 
 - [x] 9.4 The owner screen (`/ops/insights`, admins only): money beside held money,
       the funnel with exits by reason, SLA per house, refusals by governorate, source
       mix, and contribution inputs with their status
-- [ ] 9.5 Pre-order funnel — **unblocked 15 Sep 2026 (A-1 approved).** First-party
-      events under an anonymous id, no personal data, no third-party script
+- [x] 9.5 Pre-order funnel — **done 16 Sep 2026 (A-1).** First-party events under an
+      anonymous id, no third-party script, and no personal data: migration 0023's
+      insert-only `analytics` role refuses a customer id, a payload (so a search is
+      counted and its words are not), a source, a campaign and an order. Seven events
+      from the shop; the owner's screen counts VISITORS and events per stage.
+      Retention is a purge function — 180 days, proposed to counsel, unscheduled
+      (DEBT #5)
 
 ## 10. Dependency security  ✅
 `pnpm audit` on 15 Sep 2026: 12 advisories (1 critical, 4 high). None was reachable in
@@ -413,3 +418,46 @@ Newest last. One line per completed item, with anything the next session must kn
 
   **Next: §9.5**, the pre-order funnel (A-1 approved): first-party events under
   an anonymous id, no personal data, no third-party script.
+
+- 2026-09-16 — **§9.5 done, and with it §9.** `analytics_events` had existed since
+  0000 with nothing ever writing to it, so "who looked at a perfume and did not
+  buy" had no answer at all.
+
+  **The privacy rules are a policy, not a promise.** Migration 0023 adds an
+  insert-only `analytics` service role — the fourth, and the narrowest: it may
+  append an event and may not read the table back. Its WITH CHECK refuses a
+  customer id, a payload, a source, a campaign and an order id, so **a search is
+  counted and the words are not** — the search box is exactly where somebody
+  types a name or a phone number. The domain draft type has no field for any of
+  them either, and 0023 refuses an event name outside the seven the shop fires.
+
+  **Identity** is 24 random hex characters in an `httpOnly`, 180-day first-party
+  cookie, set from a server action because Next refuses a cookie written while
+  rendering. **Retention** is `app.purge_analytics_events` — written, tested, and
+  scheduled by nothing (DEBT #5). Both 180-day figures are the proposal in A-1,
+  awaiting counsel.
+
+  **Counted two ways.** The owner's screen shows VISITORS and events per stage:
+  one person refreshing a perfume page twenty times is one visitor who looked,
+  and a rate built on events would call them twenty people who did not buy. No
+  browse-to-order conversion is shown: stages count visitors and the post-order
+  funnel counts sub-orders, so the ratio would have a different unit on each
+  side. That needs the anonymous id on the order, which A-1 did not decide.
+
+  **Two of my own mistakes, both caught by the checks rather than by luck:**
+
+  * Making `browsing` required on the report input without passing it in the test
+    helper — every owner-metrics test failed at once, which is what a required
+    field should do.
+  * `preOrder` computed, typed, and left out of the returned object. Every test
+    passed; `report.preOrder` would have been undefined on the screen. The
+    typecheck caught it, and there is now a report-level test for the wiring.
+
+  Domain 677, db 347, api 274, i18n 50, tokens 123. e2e 126/126 on a fresh
+  database, including an anonymous visitor's view and bag-add read back from the
+  operator's own screen. Audit clean in both themes, every surface, every width.
+
+  **Next:** the roadmap's Phase 2 and the mobile apps. Still the founder's:
+  A-2 (payment and courier costs, deferred to pre-deployment), A-3 (costing a
+  support ticket), S-1's support-inbox question, and the legal items — a real SMS
+  provider, D-5, and counsel on the A-1 retention figures.

@@ -8,11 +8,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  BROWSING_EVENTS,
   CANCELLATION_REASONS, ORDER_SOURCES, REFUSAL_REASONS, REJECTION_REASONS, RETURN_REASONS,
   Money, buildOwnerReport,
 } from '@diyar/domain';
 import {
-  CONTRIBUTION_INPUT_AR, INPUT_STATUS_AR, ORDER_SOURCE_AR, REASON_CODE_AR,
+  BROWSING_EVENT_AR, CONTRIBUTION_INPUT_AR, INPUT_STATUS_AR, ORDER_SOURCE_AR, REASON_CODE_AR,
 } from '@diyar/i18n';
 
 const sorted = (values: Iterable<string>) => [...values].sort();
@@ -38,6 +39,7 @@ describe('the owner report’s vocabulary', () => {
       platformRefunds: Money.zero(),
       ticketCount: 0,
       discounts: Money.zero(),
+      browsing: [],
     });
     expect(sorted(Object.keys(CONTRIBUTION_INPUT_AR)))
       .toEqual(sorted(report.contributionInputs.map((i) => i.key)));
@@ -45,10 +47,18 @@ describe('the owner report’s vocabulary', () => {
       .toEqual(sorted(['recorded', 'zero_by_arrangement', 'count_only', 'not_recorded']));
   });
 
+  it('names every browsing event the site can fire', () => {
+    // The vocabulary and the events are declared in different packages; this is
+    // the one place both are in scope. An event added without words would reach
+    // the owner's screen as `filter_apply`.
+    expect(sorted(Object.keys(BROWSING_EVENT_AR))).toEqual(sorted(BROWSING_EVENTS));
+  });
+
   it('every label is Arabic', () => {
     for (const words of [
       ...Object.values(REASON_CODE_AR), ...Object.values(ORDER_SOURCE_AR),
       ...Object.values(CONTRIBUTION_INPUT_AR), ...Object.values(INPUT_STATUS_AR),
+      ...Object.values(BROWSING_EVENT_AR),
     ]) {
       expect(words).toMatch(/[؀-ۿ]/);
     }

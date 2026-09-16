@@ -16,6 +16,9 @@ import type { Announcement } from '../content/announcement';
 import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
 import type { PhotoRepository, StoredPhoto } from '../ports/photo-repository';
 import type { ContentImage, ContentImageRepository } from '../ports/content-image-repository';
+import type {
+  AnalyticsRepository, BrowsingCount, RecordedBrowsingEvent,
+} from '../ports/analytics-repository';
 import { newestFirst, type AuditRecord, type AuditTrail } from '../ports/audit-trail';
 import type { OwnerReportRepository } from '../ports/owner-report-repository';
 import type { OwnerReportSubOrder } from '../insights/owner-metrics';
@@ -272,6 +275,9 @@ export class InMemoryUnitOfWork implements UnitOfWork {
 
   /** `content_images`, keyed by storage key — the primary key in 0022. */
   private readonly contentImageRows = new Map<string, ContentImage>();
+
+  /** `analytics_events`. Append-only here as in the database. */
+  private readonly browsingEvents: RecordedBrowsingEvent[] = [];
 
   private photoSeq = 0;
 
@@ -1707,9 +1713,37 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    const browsingEvents = this.browsingEvents;
+    const analytics: AnalyticsRepository = {
+      async record(event) {
+        browsingEvents.push({ ...event });
+      },
+
+      async countsInPeriod(from, to) {
+        const inPeriod = browsingEvents.filter((event) =>
+          event.occurredAt.getTime() >= from.getTime() && event.occurredAt.getTime() < to.getTime());
+
+        const byName = new Map<string, { events: number; visitors: Set<string> }>();
+        for (const event of inPeriod) {
+          const row = byName.get(event.name) ?? { events: 0, visitors: new Set<string>() };
+          row.events += 1;
+          row.visitors.add(event.anonymousId);
+          byName.set(event.name, row);
+        }
+
+        return [...byName.entries()].map(([name, row]): BrowsingCount => ({
+          name: name as BrowsingCount['name'],
+          events: row.events,
+          // Distinct visitors, as the SQL adapter's `count(distinct …)` does.
+          visitors: row.visitors.size,
+        }));
+      },
+    };
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
+      analytics,
     };
   }
 }

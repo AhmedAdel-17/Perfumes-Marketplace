@@ -6,6 +6,7 @@ import { Flacon } from '@/features/product/Flacon';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
+import { Track } from '@/features/analytics/Track';
 import { counted, CURRENCY_LABEL, editorial, formatPrice, PERFUME } from '@diyar/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,9 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
+
+      {/* The top of the funnel: somebody arrived. Renders nothing. */}
+      <Track event="landing_view" />
 
       <main>
         {/*

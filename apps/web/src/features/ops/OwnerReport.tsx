@@ -18,6 +18,7 @@
  */
 import type { ReactNode } from 'react';
 import {
+  BROWSING_EVENT_AR,
   CONTRIBUTION_INPUT_AR, CURRENCY_LABEL, EXIT_STATE_AR, FUNNEL_STAGE_AR, GOVERNORATE_AR,
   INPUT_STATUS_AR, ORDER_SOURCE_AR, REASON_CODE_AR,
   formatPrice, internal as num, internalDate,
@@ -167,6 +168,37 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
               : <Money piastres={report.aovPiastres} />}
           </Figure>
         </dl>
+      </Section>
+
+      {/* ------------------------------------------------------ pre-order */}
+      <Section
+        title="قبل الطلب"
+        note="ما فعله الزوّار قبل أن يصير أي طلب. «زوّار» تحسب الشخص مرّة واحدة مهما كرّر، و«مرات» تحسب كل مرّة — الشخص الذي فتح صفحة عطر عشرين مرّة زائر واحد نظر، لا عشرون لم يشتروا. لا نحتفظ بكلمات البحث، ولا نربط هذا بأي حساب."
+      >
+        {report.preOrder.isEmpty ? (
+          <p className="text-caption text-ink3">لم يُسجَّل نشاط تصفّح في هذه الفترة.</p>
+        ) : (
+          <ol className="grid grid-cols-1 gap-y-2 sm:grid-cols-4 sm:gap-x-4 lg:grid-cols-7">
+            {report.preOrder.stages.map((stage) => (
+              <li
+                key={stage.event}
+                className="flex items-baseline justify-between gap-3 border-b border-line py-2 sm:block sm:border-b-0 sm:border-s sm:ps-4"
+              >
+                <span className="text-caption tracking-label text-ink3">
+                  {BROWSING_EVENT_AR[stage.event]}
+                </span>
+                <span className="block">
+                  <span className="tnum text-h3 text-ink">{num(stage.visitors)}</span>
+                  {/* The second number, quietly: events are the sanity check on
+                      visitors, not the headline. */}
+                  <span className="ms-2 text-caption text-ink3">
+                    <span className="tnum">{num(stage.events)}</span> مرّة
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
       </Section>
 
       {/* --------------------------------------------------------- funnel */}

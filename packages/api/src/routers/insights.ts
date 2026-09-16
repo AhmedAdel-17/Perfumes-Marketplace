@@ -38,23 +38,27 @@ export const insightsRouter = router({
       const asOf = ctx.clock.now();
       const period = cairoPeriod(asOf, input.days);
 
-      const { facts, houseNames } = await ctx.uow.transaction(async (r) => {
+      const { facts, houseNames, browsing } = await ctx.uow.transaction(async (r) => {
         const found = await r.ownerReport.facts(period);
         const names = new Map<string, string>();
         for (const sellerId of new Set(found.subOrders.map((s) => s.sellerId))) {
           const house = await r.sellers.findById(sellerId);
           names.set(sellerId, house?.tradingName ?? '—');
         }
-        return { facts: found, houseNames: names };
+        // The same period, read in the same transaction as the orders it is
+        // shown beside — two reads a moment apart could disagree across a
+        // midnight boundary.
+        return { facts: found, houseNames: names, browsing: await r.analytics.countsInPeriod(period.from, period.to) };
       });
 
-      const report = buildOwnerReport({ ...facts, asOf });
+      const report = buildOwnerReport({ ...facts, browsing, asOf });
 
       return {
         days: input.days,
         periods: PERIODS,
         from: period.from.toISOString(),
         to: period.to.toISOString(),
+        preOrder: report.preOrder,
         funnel: report.funnel,
         sla: report.sla.map((s) => ({
           sellerId: s.sellerId,

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { CheckoutForm } from '@/features/checkout/CheckoutForm';
+import { Track } from '@/features/analytics/Track';
 
 export const metadata: Metadata = {
   title: 'إتمام الطلب | ديار',
@@ -35,6 +36,12 @@ export default function CheckoutPage() {
         "تم استلام طلبك": a heading contradicting the state beneath it, with the
         real title demoted to an h2 under an h1 that no longer applied.
       */}
+      {/*
+        Reaching this screen is the last stage of the funnel that happens before
+        an order exists — everything after it is measured from `sub_orders`.
+        Renders nothing; see `Track`.
+      */}
+      <Track event="checkout_start" />
       <main className="mx-auto max-w-phoneMax lg:max-w-contentMax lg:px-8">
         <CheckoutForm />
       </main>

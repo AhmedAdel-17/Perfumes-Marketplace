@@ -33,6 +33,7 @@ import { auditTrail } from './audit-trail';
 import { ownerReportRepository, settlementFacts } from './owner-report-repository';
 import { photoRepository } from './photo-repository';
 import { contentImageRepository } from './content-image-repository';
+import { analyticsRepository } from './analytics-repository';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -683,21 +684,25 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   ownerReport: ownerReportRepository(db),
   photos: photoRepository(db),
   contentImages: contentImageRepository(db),
+  analytics: analyticsRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */
 export interface ActorContext {
   /**
-   * `checkout` is a SERVICE role, not a user role: it is set only inside the
-   * order-placement transaction, after the router has validated the request,
-   * and it can create an order and read back what it just wrote. See 0003.
+   * `checkout`, `aftercare`, `intake` and `analytics` are SERVICE roles, not
+   * user roles. Each is set only inside one server-side transaction, after the
+   * router has validated the request, and none is reachable from a browser.
+   * See 0003, 0015, 0018 and 0023.
+   *
+   * Each exists because some visitor who is nobody — a guest checking out, a
+   * guest reviewing what they bought, a house that does not exist yet, a
+   * visitor browsing — has to write exactly one thing, and every other policy
+   * is keyed on an identity they do not have.
    */
-  /**
-   * `checkout` and `aftercare` are SERVICE roles, not user roles. Each is set
-   * only inside one server-side transaction, after the router has validated
-   * the request, and neither is reachable from a browser. See 0003 and 0015.
-   */
-  readonly role: 'anon' | 'customer' | 'seller' | 'platform' | 'checkout' | 'aftercare' | 'intake';
+  readonly role:
+    | 'anon' | 'customer' | 'seller' | 'platform'
+    | 'checkout' | 'aftercare' | 'intake' | 'analytics';
   /** The Supabase auth user id. Null for anonymous traffic. */
   readonly id: string | null;
 }

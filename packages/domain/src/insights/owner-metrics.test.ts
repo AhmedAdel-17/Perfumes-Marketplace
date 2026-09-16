@@ -61,8 +61,28 @@ const report = (subOrders: OwnerReportSubOrder[], extra: Partial<Parameters<type
     platformRefunds: Money.zero(),
     ticketCount: 0,
     discounts: Money.zero(),
+    // Most cases are about orders; a case that cares passes its own counts.
+    browsing: [],
     ...extra,
   });
+
+describe('the half of the funnel before an order exists', () => {
+  it('carries the browsing counts into the report, every stage present', () => {
+    // The projection has its own tests; this proves the report is WIRED to it —
+    // the field was typed and computed once and left out of the returned object,
+    // which every test passed through and the typecheck caught.
+    const r = report([], { browsing: [{ name: 'product_view', events: 9, visitors: 4 }] });
+
+    expect(r.preOrder.isEmpty).toBe(false);
+    expect(r.preOrder.stages.find((s) => s.event === 'product_view'))
+      .toEqual({ event: 'product_view', events: 9, visitors: 4 });
+    expect(r.preOrder.stages.find((s) => s.event === 'cart_add')?.events).toBe(0);
+  });
+
+  it('says so when nothing was recorded, rather than showing a funnel of zeros', () => {
+    expect(report([]).preOrder.isEmpty).toBe(true);
+  });
+});
 
 describe('the funnel — stages reached, and every exit with its reason', () => {
   it('counts a stage as REACHED by its timestamp, not by where the order is now', () => {

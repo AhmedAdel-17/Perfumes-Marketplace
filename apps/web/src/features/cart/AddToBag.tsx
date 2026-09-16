@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PrimaryHighlight, primarySurfaceStyle } from '@/features/shell/primary-surface';
+import { recordBrowsing } from '@/features/analytics/record';
 import { useCart } from './CartStore';
 
 /**
@@ -33,6 +34,9 @@ export function AddToBag({
 
   const onClick = () => {
     add({ productId, quantity: 1, seenPricePiastres: pricePiastres });
+    // Not awaited, and it cannot throw: the bag is updated whatever analytics
+    // does, and the confirmation below must not wait on a database write.
+    void recordBrowsing('cart_add', { productId });
     setConfirmed(true);
     // Long enough to read, short enough that a second genuine add is not
     // blocked. The button stays live throughout; only the label changes.

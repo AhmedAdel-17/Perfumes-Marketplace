@@ -83,6 +83,18 @@ export const RATE_LIMITS = {
    * sixty an hour is far past that and still well short of a bill.
    */
   upload: { limit: 60, windowMs: HOUR },
+
+  /**
+   * A browsing event (WORK_PLAN 9.5). Keyed on the ANONYMOUS ID, which is a
+   * cookie the site issued and anybody can discard — so this is a courtesy
+   * limit, not a control: what stops a determined flood is a limit at the edge.
+   *
+   * What it does stop is the failure that actually happens: one looping page, or
+   * one mistaken effect that fires on every render, filling the table from a
+   * single browser. Three hundred an hour is far past a person reading perfume
+   * pages and far short of a problem.
+   */
+  browsing: { limit: 300, windowMs: HOUR },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

@@ -90,6 +90,19 @@ export interface ApiContext {
    */
   readonly intakeUow: UnitOfWork;
   /**
+   * A Unit of Work running as the `analytics` SERVICE role (migration 0023).
+   *
+   * A browsing event is written for a visitor who is nobody at all, so no user
+   * role can insert one — and this role is the narrowest of the four: it may
+   * INSERT into `analytics_events` and it may not read the table back. What it
+   * is allowed to store is decided by the policy's WITH CHECK, not here: no
+   * customer id, no payload, no source, no campaign (founder decision A-1).
+   *
+   * On the CONTEXT for the reason the others are: an elevation improvised at
+   * the point of use is an elevation nobody reviews.
+   */
+  readonly analyticsUow: UnitOfWork;
+  /**
    * Where photographs are stored — R2, or the local-disk stub in development.
    *
    * On the context, built once at the composition root, for the reason the

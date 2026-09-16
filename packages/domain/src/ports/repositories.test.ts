@@ -16,6 +16,7 @@ import { ownerReportContract } from './owner-report-contract';
 import { photoContract } from './photo-contract';
 import { contentContract } from './content-contract';
 import { contentImageContract } from './content-image-contract';
+import { analyticsContract } from './analytics-contract';
 import { siteContract } from './site-contract';
 
 const ORDERED_AT = new Date('2026-09-01T21:42:00Z');
@@ -183,5 +184,22 @@ describe('content image contract — in-memory adapter', () => {
 
   it('runs every case the contract defines', () => {
     expect(contentImageContract.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('analytics contract — in-memory adapter', () => {
+  const analyticsHarness = async () => ({
+    uow: new InMemoryUnitOfWork(),
+    staffId: 'staff-1',
+  });
+
+  for (const testCase of analyticsContract) {
+    it(testCase.name, async () => {
+      await expect(testCase.run(analyticsHarness)).resolves.toBeUndefined();
+    });
+  }
+
+  it('runs every case the contract defines', () => {
+    expect(analyticsContract.length).toBeGreaterThanOrEqual(5);
   });
 });

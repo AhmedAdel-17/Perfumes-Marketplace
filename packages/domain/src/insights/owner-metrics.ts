@@ -24,6 +24,8 @@ import { CommissionPolicy, type OrderSource } from '../policies/commission';
 import type { ReasonCode } from '../state-machines/sub-order';
 import type { SettlementSubOrder } from '../services/settlement';
 import { classifyForSettlement } from '../services/settlement-classify';
+import type { BrowsingCount } from '../ports/analytics-repository';
+import { buildPreOrderFunnel, type PreOrderFunnel } from './pre-order-funnel';
 
 export interface OwnerReportSubOrder extends SettlementSubOrder {
   readonly orderId: string;
@@ -59,6 +61,16 @@ export interface OwnerReportInput {
   readonly ticketCount: number;
   /** Order-level discounts in the period (`orders.discount_piastres`). */
   readonly discounts: Money;
+  /**
+   * Browsing counts for the same period (WORK_PLAN 9.5, A-1).
+   *
+   * REQUIRED, not optional, for the reason the publish rule's verified keys are:
+   * an optional field would make "nobody read the counts" indistinguishable from
+   * "nobody browsed", and the first caller to forget would put a funnel of zeros
+   * on the owner's screen. A period with no browsing passes an empty list, and
+   * says so.
+   */
+  readonly browsing: readonly BrowsingCount[];
 }
 
 /** A proportion that knows when it has nothing to measure. */
@@ -132,6 +144,8 @@ export interface SourceShare {
 
 export interface OwnerReport {
   readonly asOf: Date;
+  /** Before an order exists: what visitors did. Counted in visitors AND events. */
+  readonly preOrder: PreOrderFunnel;
   readonly funnel: Funnel;
   readonly sla: readonly SellerSla[];
   readonly refusalByGovernorate: Readonly<Record<string, Rate>>;
@@ -225,6 +239,10 @@ export function buildOwnerReport(input: OwnerReportInput): OwnerReport {
     return [state, { total: leaving.length, byReason }];
   })) as Record<ExitState, Exit>;
 
+  // What happened BEFORE any of the above: the two halves are assembled in one
+  // place so the screen never has to join them itself.
+  const preOrder = buildPreOrderFunnel(input.browsing);
+
   const funnel: Funnel = {
     placed: subOrders.length,
     // Reached, not currently in: a delivered order was also confirmed and
@@ -305,6 +323,7 @@ export function buildOwnerReport(input: OwnerReportInput): OwnerReport {
 
   return {
     asOf,
+    preOrder,
     funnel,
     sla,
     refusalByGovernorate,

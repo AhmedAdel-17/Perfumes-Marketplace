@@ -50,11 +50,28 @@ honest.
 
 | # | Decision | Status | Blocks |
 |---|---|---|---|
-| A-1 | **Guest browsing events** (product views, bag adds) | **DECIDED 15 Sep 2026 — record them.** Founder decision. Engineering position: first-party only, anonymous id, no third-party trackers, no personal data in the event | Unblocks the pre-order funnel (WORK_PLAN 9.5) |
+| A-1 | **Guest browsing events** (product views, bag adds) | **DECIDED 15 Sep 2026 — record them.** Founder decision. Engineering position: first-party only, anonymous id, no third-party trackers, no personal data in the event. **Retention proposed 16 Sep, awaiting confirmation — see below** | Unblocks the pre-order funnel (WORK_PLAN 9.5) |
 | A-2 | **How payment and courier costs enter the system** | **METHOD DECIDED 15 Sep 2026 — the platform admin enters them through the dashboard.** Build deferred by the founder to the stage before deployment | A contribution margin. Until built, the screen shows each input's status, not a margin |
 | A-3 | **Whether a support ticket is costed** | **Open — recommendation: do not cost tickets.** See the note below | Nothing today; the report shows tickets as a count |
 | S-1 | **Seller staff roles** | **ROLES DECIDED 15 Sep 2026: manager, admin, operations, support** (to be revised later). The permission for each role is **proposed below, awaiting confirmation** | Per-role enforcement and the staff-management screen |
 | M-1 | **Media store for product photos** | **DECIDED 15 Sep 2026 — Cloudflare R2.** Amends TECH_STACK (was Supabase Storage); reasoning recorded there | Unblocks WORK_PLAN 5.7 and MVP gate 1 |
+
+**A-1 — retention, and what is deliberately NOT recorded (proposed 16 Sep 2026).**
+PDPL 151/2020 requires a retention rule as well as a lawful basis, and "record them" did
+not set one. Built to this, and easy to change if counsel says otherwise:
+
+| | Proposed | Why |
+|---|---|---|
+| The event | Name, an anonymous id, and the perfume or house it is about. **Nothing else** | See the row below for what that rules out |
+| Never recorded | No `customer_id` — not even for a signed-in customer; no free-text `payload`, so **a search is counted and the words are not**; no source or campaign (attribution is recorded per sub-order at order time, and a second copy would disagree with the money) | A search box is where somebody types a name or a phone number. A column that is usually empty is a column that one day is not |
+| Anonymous id | 24 random hex characters in a first-party cookie, **180 days**, `httpOnly` and `sameSite=lax` | It must outlive a visit for "viewed, then bought a week later" to mean anything. `httpOnly` keeps it out of reach of any script on the page |
+| Raw events | **Deleted after 180 days.** The purge is a database function; nothing schedules it yet (DEBT #5) | A trail nobody deletes is a trail that outlives its purpose, which is what a retention rule exists to prevent |
+| Counts | Kept indefinitely once aggregated, because a count of views per day identifies nobody | |
+
+**To confirm or change:** the two 180-day figures, and whether a cookie banner is needed at
+all for a first-party, no-third-party-script analytics cookie under PDPL — that is counsel's
+call, not engineering's. Until answered, the site sets the cookie without a banner and says
+so in the privacy page.
 
 **A-3 — why a ticket was ever "costed".** Doc 03 §4 lists *variable support* as a term of
 contribution margin. That term is only real if support cost rises with every ticket — an

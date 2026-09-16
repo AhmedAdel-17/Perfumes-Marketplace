@@ -24,6 +24,7 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { ProductTile } from '@/features/catalogue/ProductTile';
+import { Track } from '@/features/analytics/Track';
 import { findHouseBySlug } from '@/core/catalogue';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,10 @@ export default async function HousePage(
   return (
     <>
       <SiteHeader />
+
+      {/* Which house was looked at, which is the whole value of this event.
+          Keyed by slug — see the note on the product page. */}
+      <Track key={house.slug} event="storefront_view" sellerId={house.id} />
 
       <main>
         {/* ------------------------------------------------------- the name */}

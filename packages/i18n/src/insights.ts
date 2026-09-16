@@ -54,6 +54,23 @@ export const FUNNEL_STAGE_AR = {
   completed: 'مكتملة ومستحقة',
 } as const;
 
+/**
+ * The half of the funnel before an order exists (WORK_PLAN 9.5).
+ *
+ * Named as a visitor's ACTION, not as an event name: "فتح صفحة عطر" is what a
+ * person did, `product_view` is what the row is called. An owner reading the
+ * screen should never have to learn the second.
+ */
+export const BROWSING_EVENT_AR = {
+  landing_view: 'وصل إلى الموقع',
+  storefront_view: 'فتح صفحة دار',
+  search: 'بحث بكلمات',
+  filter_apply: 'استخدم الفلاتر',
+  product_view: 'فتح صفحة عطر',
+  cart_add: 'أضاف إلى الحقيبة',
+  checkout_start: 'بدأ إتمام الطلب',
+} as const;
+
 export const EXIT_STATE_AR = {
   rejected: 'اعتذرت الدار',
   cancelled: 'أُلغيت',

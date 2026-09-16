@@ -58,6 +58,9 @@ export function api(
     // The intake service role. It can create an application and nothing
     // else — see 0018.
     intakeUow: unitOfWork({ role: 'intake', id: null }),
+    // The analytics service role. It may append a browsing event and cannot
+    // read the table back — see 0023.
+    analyticsUow: unitOfWork({ role: 'analytics', id: null }),
     // One store per process — the instance `instrumentation.ts` checks.
     media: mediaStore(),
     clock: systemClock,

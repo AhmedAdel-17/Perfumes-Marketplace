@@ -10,10 +10,11 @@
  */
 import type { Metadata } from 'next';
 import { counted, editorial, PERFUME } from '@diyar/i18n';
-import { isEmptyQuery, parseCatalogueQuery } from '@diyar/domain';
+import { activeFilterCount, isEmptyQuery, parseCatalogueQuery } from '@diyar/domain';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
+import { Track } from '@/features/analytics/Track';
 import { ProductTile } from '@/features/catalogue/ProductTile';
 import { Filters } from '@/features/catalogue/Filters';
 import { searchCatalogue } from '@/core/catalogue';
@@ -33,9 +34,33 @@ export default async function SearchPage(
   const query = parseCatalogueQuery(await searchParams);
   const { products, houses } = await searchCatalogue(query);
 
+  /*
+   * Three different things happen on this screen, and only two are events.
+   *
+   * Typing words is a `search`. Narrowing by family, house, price or stock is a
+   * `filter_apply`. Opening /search with nothing set is neither — it is the
+   * catalogue, and counting it as a search would put every visitor who pressed
+   * "العطور" into the numerator of "searches that found nothing".
+   *
+   * WHAT IS RECORDED IS THAT IT HAPPENED, never the words: the event carries no
+   * payload, and the search box is exactly where somebody types a name or a
+   * phone number (A-1, migration 0023).
+   */
+  const filters = activeFilterCount(query);
+  const searched = query.text.trim() !== '';
+
   return (
     <>
       <SiteHeader />
+
+      {/* Keyed by the query, so each new search mounts its own tracker rather
+          than reusing the previous one — see the note in the product page. */}
+      {(searched || filters > 0) && (
+        <Track
+          key={`${query.text}|${filters}`}
+          event={searched ? 'search' : 'filter_apply'}
+        />
+      )}
 
       <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[88px]">
         <header className="pb-7 pt-8 lg:pb-8 lg:pt-12">

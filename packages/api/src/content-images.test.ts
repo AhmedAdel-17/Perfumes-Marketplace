@@ -39,6 +39,7 @@ const caller = (actor: ActorContext, platform: { staffId: string; role: string }
     checkoutUow: new DrizzleUnitOfWork(db, { role: 'checkout', id: null }),
     aftercareUow: new DrizzleUnitOfWork(db, { role: 'aftercare', id: null }),
     intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
+    analyticsUow: new DrizzleUnitOfWork(db, { role: 'analytics', id: null }),
     media: MEDIA,
     clock: CLOCK,
   };

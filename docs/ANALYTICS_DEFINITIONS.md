@@ -53,23 +53,41 @@ point (doc 06 §7): `rejected` (by `REJECTION_REASONS`), `cancelled`, `refused` 
 Stage conversion is `stage ÷ placed` for the same cohort of placed sub-orders — never a
 ratio of two different periods' counts.
 
-### 2b. Before the order — NOT measurable today
+### 2b. Before the order — recorded since 16 September 2026 (A-1)
 
-`landing_view`, `storefront_view`, `search`, `filter_apply`, `product_view`, `cart_add`,
-`checkout_start`, `payment_select` (doc 04 §6).
+| Stage | Event | Fired by |
+|---|---|---|
+| Arrived | `landing_view` | the home page |
+| Looked at a house | `storefront_view` | `/house/[slug]`, carrying the house |
+| Searched | `search` | `/search` with words typed |
+| Narrowed | `filter_apply` | `/search` with filters and no words |
+| Looked at a perfume | `product_view` | `/p/[slug]`, carrying the perfume |
+| Put one in the bag | `cart_add` | the add-to-bag control |
+| Started checkout | `checkout_start` | `/checkout` |
 
-**Nothing writes these.** The `analytics_events` table exists and no code inserts into it.
-The owner's screen shows this half of the funnel as *not yet recorded* rather than
-omitting it, so its absence is visible.
+**Counted two ways, and the difference matters.** *Events* counts rows; *visitors* counts
+distinct anonymous ids. One person refreshing a perfume page twenty times is one visitor
+who viewed it, and a conversion rate built on events would report that person as twenty
+people who did not buy.
 
-**Why it is not simply built — two decisions that are not engineering's to make:**
+**What is deliberately NOT recorded**, enforced by the database's own policy
+(migration 0023), not by convention:
 
-- **Consent (PDPL 151/2020).** `consent_purpose` includes `analytics`, but no consent is
-  collected for it. Recording a browsing trail for a guest requires a lawful basis and a
-  retention rule. → *Counsel, via the PDPL item in OPEN_DECISIONS.*
-- **Identity for guests.** Tying a `product_view` to a later order needs an anonymous id
-  that persists across visits — a cookie. Whether that is acceptable, and for how long,
-  is the same legal question.
+- **No search text.** A `search` is counted; the words are not. The search box is exactly
+  where somebody types a name, a phone number or an address.
+- **No customer id**, not even for a signed-in customer. The trail is never joined to a
+  person.
+- **No source or campaign.** Attribution is recorded per sub-order at order time, and that
+  is the record commission is computed from; a second copy here would drift from the money.
+- **No `payment_select`** — there is one payment method, so the event would record a choice
+  nobody makes. No `wishlist_add` or `comparison_view`: neither feature exists.
+
+**Identity.** A first-party cookie holding 24 random hex characters, `httpOnly`, 180 days.
+It is not an account and means nothing on any other site.
+
+**Retention.** Raw events are deleted after 180 days by `app.purge_analytics_events`.
+Nothing schedules that yet — DEBT_REGISTER #5 — and the two 180-day figures are the
+proposal in OPEN_DECISIONS A-1, **awaiting counsel**, not a settled rule.
 
 ---
 

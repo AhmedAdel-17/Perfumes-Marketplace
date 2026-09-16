@@ -205,6 +205,8 @@ export async function findProductBySlug(slug: string): Promise<ProductDetail | n
  * table since the first migration, unread by anybody.
  */
 export interface HouseDetail {
+  /** The seller id. Not shown anywhere — it is what a `storefront_view` is about. */
+  id: string;
   slug: string;
   /** The trading name, in Arabic. */
   name: string;
@@ -256,6 +258,7 @@ export async function findHouseBySlug(slug: string): Promise<HouseDetail | null>
   const photos = await primaryPhotos(rows.map((r) => r.p.id));
 
   return {
+    id: house.s.id,
     slug: house.s.slug,
     name: house.s.tradingName,
     latin: (brand?.nameEn ?? brand?.name ?? house.s.tradingName).toUpperCase(),

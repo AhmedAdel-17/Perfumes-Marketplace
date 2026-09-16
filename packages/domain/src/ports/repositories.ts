@@ -9,6 +9,7 @@ import type { SupportRepository } from './support-repository';
 import type { ApplicationRepository } from './application-repository';
 import type { ContentRepository } from './content-repository';
 import type { ContentImageRepository } from './content-image-repository';
+import type { AnalyticsRepository } from './analytics-repository';
 /**
  * Repository ports.
  *
@@ -456,6 +457,8 @@ export interface Repositories {
   readonly photos: PhotoRepository;
   /** The verified images an editorial page may show. */
   readonly contentImages: ContentImageRepository;
+  /** The browsing trail: append one event, read counts for a period. */
+  readonly analytics: AnalyticsRepository;
 }
 
 /**

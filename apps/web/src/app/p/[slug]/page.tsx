@@ -13,6 +13,7 @@ import { ProductReviews } from '@/features/reviews/ProductReviews';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
+import { Track } from '@/features/analytics/Track';
 import { DAY, data as num, plural } from '@diyar/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <SiteHeader />
+
+      {/*
+        The view that the funnel turns on: "looked at this perfume" is the stage
+        before "put it in a bag". Renders nothing.
+
+        `key` is the product id, and it is load-bearing. Moving from one perfume
+        to another is a client-side navigation that keeps this component in the
+        same position with the same type, so React REUSES it — and its
+        already-fired guard would then swallow every view after the first. With
+        the key, a different perfume mounts a different tracker.
+      */}
+      <Track key={product.id} event="product_view" productId={product.id} />
 
       <main className="pb-[92px] lg:pb-0">
         {/*

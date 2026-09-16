@@ -2115,6 +2115,66 @@ try {
     }
   });
 
+  /* ================================================ the pre-order funnel */
+  group('what a visitor does before an order exists');
+
+  /*
+   * WORK_PLAN 9.5, founder decision A-1. The post-order funnel is made of
+   * sub-orders; this half is made of events written for somebody who is nobody
+   * at all — so the only honest test is a visitor with no session doing ordinary
+   * things, and then an operator reading the screen.
+   */
+  await test('a visitor’s view and bag-add reach the owner’s screen', async () => {
+    const visitorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const shopper = await visitorContext.newPage();
+    try {
+      // The sellable slugs the buyer's journey already established, rather than
+      // a second way of asking what is in stock.
+      const slug = inStock[0];
+      assert(slug, 'the fixture must include a sellable product');
+
+      await shopper.goto(`${BASE}/p/${slug}`, { waitUntil: 'networkidle' });
+      // The event is written by a server action fired after paint.
+      await shopper.waitForTimeout(2500);
+
+      const cookies = await visitorContext.cookies();
+      const anonymous = cookies.find((c) => c.name === 'diyar.aid');
+      assert(anonymous, 'a visitor must be given an anonymous id');
+      assert(/^[0-9a-f]{24}$/.test(anonymous.value), `the id must be 24 hex characters: ${anonymous.value}`);
+      assert(anonymous.httpOnly, 'the id must be out of reach of any script on the page');
+
+      const { button, enabled } = await buyButton(shopper);
+      assert(enabled, 'the perfume must be sellable');
+      await button.click();
+      await shopper.waitForTimeout(2500);
+    } finally {
+      await visitorContext.close();
+    }
+
+    /*
+     * Read back through the operator's own screen rather than the database: the
+     * point of 9.5 is that the owner can SEE this half of the funnel, and a test
+     * that queried Postgres would pass with the screen still saying "not yet
+     * recorded".
+     */
+    const adminContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const admin = await adminContext.newPage();
+    try {
+      await signIn(admin, '/ops', OPERATOR, '/ops/queue');
+      await admin.goto(`${BASE}/ops/insights?days=1`, { waitUntil: 'networkidle' });
+      await settled(admin);
+
+      const text = await admin.locator('main').innerText();
+      assert(text.includes('قبل الطلب'), `the owner's screen must show the pre-order half: ${text.slice(0, 400)}`);
+      assert(!text.includes('لم يُسجَّل نشاط تصفّح'),
+        'the visitor above browsed, so the screen must not say nothing was recorded');
+      assert(text.includes('فتح صفحة عطر') && text.includes('أضاف إلى الحقيبة'),
+        'both stages must be named in words an owner reads');
+    } finally {
+      await adminContext.close();
+    }
+  });
+
   if (sellerContext) await sellerContext.close();
   if (opsContext) await opsContext.close();
 } finally {
