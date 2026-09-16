@@ -88,13 +88,94 @@ describe('the migration ledger is not an application table', () => {
   });
 });
 
+describe('one-time codes are deliberately unreadable', () => {
+  /*
+   * `login_codes` (0025) is exempt from the readability rule below, and like
+   * the ledger's exemption this one carries its own proof rather than being a
+   * name on a list.
+   *
+   * It holds credentials. Nothing may read a pending code — not a visitor, not
+   * an operator, not the sign-in path that wrote it — because a path that can
+   * read one can enumerate them all. It is not merely unreadable: with RLS
+   * forced and NO policies, direct SQL reaches nothing at all, and all three
+   * operations are guarded `SECURITY DEFINER` functions instead.
+   *
+   * That was not the first design. Policies plus plain SQL was, and the
+   * database refused it: with no SELECT policy, `INSERT … ON CONFLICT DO
+   * UPDATE` cannot read the row it would update, and UPDATE and DELETE match
+   * nothing because they cannot find rows either. Adding a SELECT policy would
+   * have made all three work and handed the sign-in path the ability to read
+   * every pending code in the system. The mechanism moved; the guarantee did
+   * not.
+   *
+   * Three things have to hold for the exemption to be safe, and all three are
+   * asserted here. If a future migration adds a policy, drops SECURITY DEFINER,
+   * or removes a role guard, one of these fails and the exemption stops being
+   * justified — which is the whole difference between an invariant and a
+   * formality.
+   */
+  it('has no policies at all — the property the exemption rests on', () => {
+    const own = policies.filter((p) => p.tablename === 'login_codes');
+    expect(own).toEqual([]);
+  });
+
+  it('is nevertheless reachable, through SECURITY DEFINER functions', async () => {
+    // A definer runs as the owner and bypasses RLS, which is what makes a table
+    // with no policies usable at all. Without this the exemption above would
+    // describe a locked door with no key.
+    const r = await db.query<{ proname: string; prosecdef: boolean }>(
+      `SELECT proname, prosecdef FROM pg_proc p
+         JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'app'
+          AND p.proname IN ('issue_login_code', 'verify_login_code', 'purge_expired_login_codes')
+        ORDER BY proname`);
+
+    expect(r.rows.map((row) => row.proname)).toEqual([
+      'issue_login_code', 'purge_expired_login_codes', 'verify_login_code',
+    ]);
+    expect(r.rows.every((row) => row.prosecdef)).toBe(true);
+  });
+
+  it('and every one of them refuses anyone who is not signing in', async () => {
+    /*
+     * The guard is what stops the definer's privilege being a hole: EXECUTE is
+     * granted to PUBLIC by default and every actor connects as the same
+     * database role, so without this check any caller could issue, verify — or,
+     * worse, brute-force — codes. All three are checked, because a guard
+     * missing from one of them is exactly the one nobody would think to test.
+     */
+    await db.exec(`SET app.actor_role='platform';`);
+
+    await expect(
+      db.query(`SELECT app.issue_login_code('01000000000','seller',$1,300)`, ['a'.repeat(64)]),
+    ).rejects.toThrow(/sign-in operation/);
+    await expect(
+      db.query(`SELECT app.verify_login_code('01000000000','seller',$1,5)`, ['a'.repeat(64)]),
+    ).rejects.toThrow(/sign-in operation/);
+    await expect(
+      db.query('SELECT app.purge_expired_login_codes()'),
+    ).rejects.toThrow(/sign-in operation/);
+
+    await db.exec(`RESET app.actor_role;`);
+  });
+});
+
 describe('every table is reachable by someone', () => {
+  /**
+   * Tables reached ONLY through guarded `SECURITY DEFINER` functions, and
+   * therefore exempt from both rules below. Each name here must be justified by
+   * its own describe block above, which asserts the mechanism that replaces the
+   * policies — never a bare entry.
+   */
+  const REACHED_ONLY_BY_FUNCTION = new Set<string>(['login_codes']);
+
   it('has at least one policy', () => {
     // Forced RLS with no policy is a locked door with no key. It is SAFE, which
     // is why it survives review, and it fails in production as a query that
-    // returns nothing with no error to explain why.
+    // returns nothing with no error to explain why. The exception is a table
+    // where the lock is the design and the key is a function.
     const named = new Set(policies.map((p) => p.tablename));
-    const unreachable = tables.filter((t) => !named.has(t));
+    const unreachable = tables.filter((t) => !named.has(t) && !REACHED_ONLY_BY_FUNCTION.has(t));
     expect(unreachable).toEqual([]);
   });
 
@@ -102,7 +183,13 @@ describe('every table is reachable by someone', () => {
     const readable = new Set(
       policies.filter((p) => p.cmd === 'SELECT' || p.cmd === 'ALL').map((p) => p.tablename),
     );
-    expect(tables.filter((t) => !readable.has(t))).toEqual([]);
+    expect(tables.filter((t) => !readable.has(t) && !REACHED_ONLY_BY_FUNCTION.has(t))).toEqual([]);
+  });
+
+  it('and the exemption list names nothing that does not exist', () => {
+    // An exemption for a table that has been renamed or dropped is an exemption
+    // nobody notices is stale, silently widening the rule it was carved out of.
+    for (const name of REACHED_ONLY_BY_FUNCTION) expect(tables).toContain(name);
   });
 });
 

@@ -109,6 +109,9 @@ importers:
       aws4fetch:
         specifier: 1.0.20
         version: 1.0.20
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@electric-sql/pglite@0.5.8)(gel@2.2.0)(postgres@3.4.9)
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -116,9 +119,6 @@ importers:
       '@electric-sql/pglite':
         specifier: ^0.5.8
         version: 0.5.8
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(@electric-sql/pglite@0.5.8)(gel@2.2.0)(postgres@3.4.9)
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

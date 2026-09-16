@@ -55,3 +55,106 @@ export function isSessionValid(session: SellerSession, now: number): boolean {
 export function generateOtpCode(random: (max: number) => number): string {
   return String(random(1_000_000)).padStart(6, '0');
 }
+
+/* ------------------------------------------------------ where codes are kept */
+
+/**
+ * Which portal a code opens.
+ *
+ * A house's code must not open the operator console. The audience is part of
+ * the row and part of the lookup, so a code issued for one cannot be presented
+ * to the other — it is not that the two flows happen to use different tables,
+ * it is that the same table refuses the swap.
+ */
+export type CodeAudience = 'seller' | 'platform';
+
+export type CodeVerdict = 'ok' | 'wrong' | 'expired' | 'too_many_attempts';
+
+/**
+ * How long a code is worth. Five minutes: long enough to arrive over a slow
+ * Egyptian network and read off a lock screen, short enough that a code seen
+ * over somebody's shoulder is worthless by the time it is typed.
+ */
+export const CODE_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * How many guesses. Six digits is a million possibilities; five attempts makes
+ * brute force hopeless while leaving room for somebody mistyping on a phone.
+ */
+export const CODE_MAX_ATTEMPTS = 5;
+
+/**
+ * Port: where pending one-time codes live.
+ *
+ * NOT an `ExternalProvider`, deliberately. That interface exists for things
+ * another company owns — the SMS sender, Paymob, Bosta — where a fake reaching
+ * production is a hole, and `assertProductionSafe` refuses to boot holding one.
+ * A code store is ours: the Postgres implementation IS the real thing, with no
+ * contract to wait for. Declaring the in-memory one a stub would make production
+ * refuse to start over a component that has a perfectly real implementation, and
+ * would blur what `isStub` means for the providers where it is load-bearing.
+ *
+ * The SMS SENDER remains the stub, and remains what blocks sign-in going live.
+ * That is DEBT_REGISTER #1's actual condition: the store and the sender must be
+ * replaced together. This pays the store half, so the day a contract is signed
+ * only the sender is swapped.
+ */
+export interface LoginCodeStore {
+  /**
+   * Record a code for this number, replacing any pending one.
+   *
+   * Takes the code and stores only a digest of it — see `hashLoginCode`. The
+   * caller keeps the plaintext exactly long enough to hand it to the sender.
+   *
+   * NO EXPIRY ARGUMENT, deliberately. The store decides when the code dies,
+   * from `CODE_TTL_MS` and its own clock — the database's, for the real one. A
+   * caller passing an absolute moment would be trusting whichever container's
+   * clock answered, and the failure mode of a skewed clock is a code accepted
+   * long after it should have died, silently and only on one machine.
+   */
+  issue(input: {
+    readonly phone: string;
+    readonly audience: CodeAudience;
+    readonly code: string;
+  }): Promise<void>;
+
+  /**
+   * Check a submitted code and consume it.
+   *
+   * One call, not read-then-write: two simultaneous guesses that each read the
+   * same attempt count would each write it back incremented by one, and the
+   * ceiling becomes a suggestion at precisely the moment it matters.
+   */
+  verify(input: {
+    readonly phone: string;
+    readonly audience: CodeAudience;
+    readonly code: string;
+  }): Promise<CodeVerdict>;
+}
+
+/**
+ * The digest that is stored instead of the code.
+ *
+ * SHA-256 over the phone and the code TOGETHER. The phone is in the digest
+ * because there are only a million six-digit codes: without it, every row
+ * holding `042513` would have an identical digest, and one precomputed table of
+ * a million hashes would reverse the entire table at once. With it, an attacker
+ * needs that table per phone number, and the row is worthless five minutes
+ * later anyway.
+ *
+ * Not bcrypt or argon2, and that is a decision rather than an oversight. Those
+ * exist to make GUESSING expensive for secrets that live for years; this secret
+ * lives for five minutes, is drawn uniformly from a million values, and is
+ * already protected against guessing by a five-attempt ceiling enforced in the
+ * database. What the digest defends against here is a DUMP — somebody reading a
+ * backup — and a fast hash with the phone mixed in does that. A slow KDF on the
+ * sign-in path would also hand anyone a way to make the server work hard by
+ * typing wrong codes.
+ */
+export function hashLoginCode(
+  phone: string,
+  code: string,
+  sha256: (input: string) => string,
+): string {
+  return sha256(`${phone}:${code}`);
+}

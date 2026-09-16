@@ -239,13 +239,48 @@ survives a restart, and sign-in's codes are DEBT #1.
       since such an edit is indistinguishable from disabling a security check.
       The origin rule was falsified by inverting the INPUT instead of the code.
       The credentials and `Vary` assertions have not been shown able to fail.
-- [ ] 11.2 **One-time codes that survive a restart — pays DEBT #1.** Migration
-      0025 `seller_login_codes`: hashed code, expiry, attempt count, single use,
-      the exact semantics the in-process Map has today (five minutes, five
-      attempts, counted BEFORE the comparison, deleted on success). The debt's
-      own note says it must be replaced together with the SMS adapter and never
-      separately — that still holds; what changes is that the store stops being
-      the blocker, so the day a contract is signed only the sender is swapped.
+- [x] 11.2 **One-time codes that survive a restart — done 16 Sep 2026, pays the
+      STORE half of DEBT #1.** Migration 0025 `login_codes`: a digest, never the
+      code; expiry; attempt count; single use — the exact semantics the
+      in-process Map had (five minutes, five attempts, counted BEFORE the
+      comparison, deleted on success), now shared by every instance. The debt's
+      condition still holds: the store and the SMS sender must be replaced
+      together, and the sender is still a stub, so sign-in still cannot go live.
+      What changed is that only the sender is left.
+
+      **The design moved once, under evidence.** The first attempt was RLS
+      policies plus plain SQL, and Postgres refused it: with no SELECT policy —
+      the whole point, since a path that can read one pending code can enumerate
+      them all — `INSERT … ON CONFLICT DO UPDATE` cannot read the row it would
+      update, and UPDATE and DELETE match nothing because they cannot find rows
+      either. A diagnostic proved it rather than a guess: plain INSERT passed,
+      both upsert paths failed, DELETE silently affected zero rows. Adding a
+      SELECT policy would have made all three work and given away the guarantee.
+
+      So `login_codes` has RLS forced and **no policies at all**, and its three
+      operations are `SECURITY DEFINER` functions each guarded on the actor GUC:
+      `app.issue_login_code`, `app.verify_login_code`,
+      `app.purge_expired_login_codes`. Verification is one locked statement, so
+      the attempt ceiling holds under concurrent guessing rather than being an
+      application convention. Expiry comes from the database's clock, so a
+      skewed container cannot extend a code — the port takes no `expiresAt`,
+      because a parameter the implementation ignores is a lie in the interface.
+
+      `policy-shape.test.ts`'s two invariants now carry an exemption for it, in
+      the shape that file already demanded of the migration ledger: a proof
+      block, not a name on a list — no policies, all three functions definer,
+      all three refusing a non-`identity` actor. A fifth service role,
+      `identity`, joins the closed `ActorContext` union.
+
+      41 tests over the rules, run against the in-memory double AND Postgres so
+      neither is trusted alone; db suite 347 → 351; API and db typechecks clean.
+      `drizzle-orm` moved from devDependencies to dependencies — it is imported
+      at runtime now, and a runtime import resolved through a dev-only
+      dependency is a clean-install failure waiting to happen.
+
+      *Still to wire:* both sign-in paths still call the in-process `issueCode` /
+      `verifyCode`. The store exists and is proved; 11.3 replaces the callers
+      when it adds bearer tokens, because the two touch the same two files.
 - [ ] 11.3 **Identity for a native client.** A browser has cookies; an app has a
       keychain. Bearer tokens signed with the same HMAC discipline as the session
       cookie — short-lived access, refresh with server-side revocation, held in

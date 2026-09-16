@@ -690,19 +690,24 @@ export const repositoriesFor = (db: Executor): Repositories => ({
 /** Who is making the request. Drives every RLS policy in migration 0002. */
 export interface ActorContext {
   /**
-   * `checkout`, `aftercare`, `intake` and `analytics` are SERVICE roles, not
-   * user roles. Each is set only inside one server-side transaction, after the
-   * router has validated the request, and none is reachable from a browser.
-   * See 0003, 0015, 0018 and 0023.
+   * `checkout`, `aftercare`, `intake`, `analytics` and `identity` are SERVICE
+   * roles, not user roles. Each is set only inside one server-side transaction,
+   * after the router has validated the request, and none is reachable from a
+   * browser. See 0003, 0015, 0018, 0023 and 0025.
    *
    * Each exists because some visitor who is nobody — a guest checking out, a
    * guest reviewing what they bought, a house that does not exist yet, a
-   * visitor browsing — has to write exactly one thing, and every other policy
-   * is keyed on an identity they do not have.
+   * visitor browsing, somebody asking for a sign-in code before they are signed
+   * in — has to write exactly one thing, and every other policy is keyed on an
+   * identity they do not have.
+   *
+   * `app.actor_role()` reads a free-text GUC and accepts any string, so a role
+   * misspelled here would produce policies that silently never match rather
+   * than an error. That is why this union is closed.
    */
   readonly role:
     | 'anon' | 'customer' | 'seller' | 'platform'
-    | 'checkout' | 'aftercare' | 'intake' | 'analytics';
+    | 'checkout' | 'aftercare' | 'intake' | 'analytics' | 'identity';
   /** The Supabase auth user id. Null for anonymous traffic. */
   readonly id: string | null;
 }
