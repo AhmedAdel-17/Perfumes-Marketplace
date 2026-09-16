@@ -14,6 +14,7 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
+import { arrivalWindow } from '@diyar/api';
 import { DAY, data as num, plural } from '@diyar/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +50,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) notFound();
 
   const others = (await listPublishedProducts()).filter((p) => p.slug !== slug).slice(0, 4);
-  const days = Math.ceil(product.fulfilmentHours / 24);
+  // The SAME window the bag, the checkout and the confirmation quote. This page
+  // used to compute its own and promised a day earlier than every screen after
+  // it — see `arrivalWindow`.
+  const arrival = arrivalWindow(product.fulfilmentHours);
 
   return (
     <>
@@ -245,8 +249,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </Link>
                 <p className="mt-2 text-caption leading-relaxed text-ink3 lg:text-small">
                   تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
-                  <span className="tnum">{num(days)}</span> إلى{' '}
-                  <span className="tnum">{num(days + 1)}</span> {plural(days + 1, DAY)}.
+                  <span className="tnum">{num(arrival.min)}</span> إلى{' '}
+                  <span className="tnum">{num(arrival.max)}</span> {plural(arrival.max, DAY)}.
                 </p>
               </section>
             </div>

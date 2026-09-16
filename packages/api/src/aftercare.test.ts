@@ -93,8 +93,13 @@ beforeAll(async () => {
   ids.product = product.rows[0]!.id;
 
   await pg.query(
-    `INSERT INTO product_media (product_id,storage_path,alt_text,is_primary,ownership_confirmed)
-     VALUES ($1,'p.jpg','زجاجة',true,true)`, [ids.product]);
+    // With its facts, at a real key — the publish gate requires a renderable
+    // image since 0024, and anything that turns a verified key into a URL runs
+    // it past `assertMediaKey`, which a placeholder like `p.jpg` does not pass.
+    `INSERT INTO product_media (product_id,storage_path,alt_text,is_primary,ownership_confirmed,
+       content_type,byte_size,width,height)
+     VALUES ($1,$2,'زجاجة',true,true,'image/jpeg',180000,1000,1250)`,
+    [ids.product, `products/${ids.product}/${'b'.repeat(24)}.jpg`]);
   await pg.query(`UPDATE products SET status='published' WHERE id=$1`, [ids.product]);
 
   await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);

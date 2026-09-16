@@ -9,6 +9,8 @@ import {
   pluralCategory,
   REVIEW,
   SHIPMENT,
+  TIME,
+  VISITOR,
   type PluralCategory,
   type PluralForms,
 } from './plural';
@@ -90,6 +92,9 @@ describe('the counted nouns themselves', () => {
   const NOUNS: ReadonlyArray<readonly [string, PluralForms]> = [
     ['PERFUME', PERFUME], ['HOUSE', HOUSE], ['DAY', DAY],
     ['ORDER', ORDER], ['REVIEW', REVIEW], ['SHIPMENT', SHIPMENT],
+    // Added after QA read "٣ مرّة" on the owner's screen: the noun had been
+    // written once, in the singular, beside a number that varies.
+    ['TIME', TIME], ['VISITOR', VISITOR],
   ];
   const CATEGORIES: readonly PluralCategory[] = ['zero', 'one', 'two', 'few', 'many', 'other'];
 

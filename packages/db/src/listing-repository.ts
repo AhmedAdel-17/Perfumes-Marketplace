@@ -5,7 +5,7 @@
  * Unit of Work as everything else, so RLS and the status guard from 0010 both
  * apply — this file is not a way around either.
  */
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import { foldArabic } from '@diyar/domain';
 import type {
   ListingDraft, ListingRecord, ListingRepository, ListingState,
@@ -211,6 +211,10 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
         eq(schema.productMedia.isPrimary, true),
         eq(schema.productMedia.ownershipConfirmed, true),
         sql`btrim(${schema.productMedia.altText}) <> ''`,
+        // And the facts the server read from the file (0021), which the publish
+        // gate has required since 0024. Without this clause the seller's editor
+        // would report the gap closed for a listing Postgres then refuses.
+        isNotNull(schema.productMedia.contentType),
       ));
     return (row?.n ?? 0) > 0;
   },

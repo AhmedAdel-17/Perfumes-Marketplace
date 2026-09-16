@@ -71,7 +71,14 @@ export interface ListingRepository {
     at: Date;
   }): Promise<void>;
 
-  /** Whether it has a primary image with confirmed ownership and alt text. */
+  /**
+   * Whether it has a primary image with confirmed ownership, alt text, and the
+   * facts the server read from the file — the publish gate's own rule (0024).
+   *
+   * All four, because the gate requires all four: a row whose file was never
+   * verified is one the storefront refuses to render, and reporting it as a
+   * closed gap would tell a house it may publish something Postgres will refuse.
+   */
   hasPrimaryImage(id: string): Promise<boolean>;
 
   /** What is waiting on a moderator, oldest first. */

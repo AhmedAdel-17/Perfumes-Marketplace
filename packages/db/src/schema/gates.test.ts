@@ -178,9 +178,29 @@ describe('publish gate — no listing publishes with missing required fields', (
     );
     expect(msg).toContain('primary_image');
 
+    /*
+     * A row is not a photograph (0024).
+     *
+     * This used to insert exactly the row below and publish. QA found what that
+     * allowed: a published perfume whose own editor said the image could not be
+     * displayed, because the storefront renders only rows carrying the facts the
+     * server read from the file (0021) — and the gate never asked for them.
+     */
     await db.query(
       `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed)
-       VALUES ($1, 'p/1.jpg', 'زجاجة ورد الطائف', true, true)`,
+       VALUES ($1, 'products/00000000-0000-4000-8000-000000000000/aaaaaaaaaaaaaaaaaaaaaaaa.jpg',
+               'زجاجة ورد الطائف', true, true)`,
+      [id],
+    );
+    const stillRefused = await refuses(() =>
+      db.query(`UPDATE products SET status = 'published' WHERE id = $1`, [id]),
+    );
+    expect(stillRefused).toContain('primary_image');
+
+    // The same row, once the server has actually read the file.
+    await db.query(
+      `UPDATE product_media SET content_type='image/jpeg', byte_size=180000, width=1000, height=1250
+       WHERE product_id = $1`,
       [id],
     );
     await db.query(`UPDATE products SET status = 'published' WHERE id = $1`, [id]);

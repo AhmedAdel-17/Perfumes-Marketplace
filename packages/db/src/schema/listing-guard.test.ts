@@ -93,8 +93,11 @@ beforeAll(async () => {
 
     await db.query(
       // `storage_path`, not a URL — the origin of an asset is infrastructure.
-      `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed)
-       VALUES ($1,'media/nur/layl-1.jpg','زجاجة العطر',true,true)`, [id]);
+      // With the file's facts: since 0024 the publish gate asks for an image the
+      // shop could actually render, and a row without them is not one.
+      `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed,
+         content_type, byte_size, width, height)
+       VALUES ($1,'media/nur/layl-1.jpg','زجاجة العطر',true,true,'image/jpeg',180000,1000,1250)`, [id]);
 
     if (status !== 'draft') {
       await db.query(`UPDATE products SET status=$2::product_status WHERE id=$1`, [id, status]);

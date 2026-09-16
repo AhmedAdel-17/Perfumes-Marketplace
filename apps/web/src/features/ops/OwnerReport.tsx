@@ -20,8 +20,8 @@ import type { ReactNode } from 'react';
 import {
   BROWSING_EVENT_AR,
   CONTRIBUTION_INPUT_AR, CURRENCY_LABEL, EXIT_STATE_AR, FUNNEL_STAGE_AR, GOVERNORATE_AR,
-  INPUT_STATUS_AR, ORDER_SOURCE_AR, REASON_CODE_AR,
-  formatPrice, internal as num, internalDate,
+  INPUT_STATUS_AR, ORDER_SOURCE_AR, REASON_CODE_AR, TIME, VISITOR,
+  counted, formatPrice, internal as num, internalDate,
 } from '@diyar/i18n';
 import type { fetchOwnerReport } from './insights-actions';
 
@@ -188,11 +188,19 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
                   {BROWSING_EVENT_AR[stage.event]}
                 </span>
                 <span className="block">
-                  <span className="tnum text-h3 text-ink">{num(stage.visitors)}</span>
-                  {/* The second number, quietly: events are the sanity check on
-                      visitors, not the headline. */}
-                  <span className="ms-2 text-caption text-ink3">
-                    <span className="tnum">{num(stage.events)}</span> مرّة
+                  {/*
+                    Both figures through `counted`. This read "٣ مرّة" — the noun
+                    written once, in the singular, beside a number that varies —
+                    which is the exact mistake `@diyar/i18n` exists to prevent,
+                    made in new code by the person who wrote the module. The
+                    visitor figure carries its own noun for a second reason: a
+                    bare number needed the section's prose to mean anything.
+                  */}
+                  <span className="block text-h3 text-ink">
+                    {counted(stage.visitors, VISITOR, num)}
+                  </span>
+                  <span className="mt-0.5 block text-caption text-ink3">
+                    {counted(stage.events, TIME, num)}
                   </span>
                 </span>
               </li>

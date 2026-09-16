@@ -40,6 +40,16 @@ Every surface, judged for deployment readiness. One pass per screen, then a whol
 - [x] 3.6 The quote reconciles against summary AND detail, and survives checkout, confirmation and a database round trip
 - [x] 3.7 Authorisation matrix in the browser; 25 policy-shape tests over every table, present and future
 - [x] 3.8 All fixed and re-run. QA_REPORT.md records each finding and why it survived
+- [x] 3.9 **Second pass, 16 Sep 2026** — the system roughly doubled after the first
+      report (search, house pages, light mode, aftercare, the audit trail, the owner's
+      screen, photographs, editorial images, the browsing funnel, a dependency upgrade)
+      and none of it had been walked by hand. Five defects, each fixed in the same
+      pass: one promise told two ways (the product page quoted a delivery a day
+      earlier than the bag, checkout and confirmation of the same purchase); a
+      published privacy page promising a retention the code did not keep; a publish
+      gate admitting an image the shop refuses to render; no favicon at all; and
+      `٣ مرّة` on the owner's screen — the plural bug the i18n package exists to
+      prevent, in code written the day before
 
 ## 4. CMS  ✅
 

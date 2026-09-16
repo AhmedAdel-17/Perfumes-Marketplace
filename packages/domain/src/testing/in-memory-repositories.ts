@@ -970,9 +970,12 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
 
       async hasPrimaryImage(id) {
-        // The rule migration 0001's publish trigger applies, word for word.
+        // The rule the publish trigger applies, word for word — including the
+        // facts 0024 added, so this cannot report a gap closed that Postgres
+        // would refuse.
         return [...photoRows.values()].some((p) => p.productId === id
-          && p.isPrimary && p.ownershipConfirmed && p.alt.trim() !== '');
+          && p.isPrimary && p.ownershipConfirmed && p.alt.trim() !== ''
+          && p.contentType !== null);
       },
 
       async moderationQueue() {

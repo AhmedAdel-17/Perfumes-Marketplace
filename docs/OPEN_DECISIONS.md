@@ -68,6 +68,13 @@ not set one. Built to this, and easy to change if counsel says otherwise:
 | Raw events | **Deleted after 180 days.** The purge is a database function; nothing schedules it yet (DEBT #5) | A trail nobody deletes is a trail that outlives its purpose, which is what a retention rule exists to prevent |
 | Counts | Kept indefinitely once aggregated, because a count of views per day identifies nobody | |
 
+**Corrected 16 September 2026, found by QA:** the published privacy page promised that
+anonymous browsing records are kept **thirteen months** — written on 4 September, before the
+browsing trail existed — while the purge deletes at 180 days. A published promise that the
+code does not keep is worse than either number being wrong, so the page now says 180 days.
+If counsel changes the figure, the page, the cookie and the purge change together; they are
+listed in one place here for that reason.
+
 **To confirm or change:** the two 180-day figures, and whether a cookie banner is needed at
 all for a first-party, no-third-party-script analytics cookie under PDPL — that is counsel's
 call, not engineering's. Until answered, the site sets the cookie without a banner and says

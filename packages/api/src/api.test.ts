@@ -107,9 +107,22 @@ beforeAll(async () => {
       [ids[slug], b.rows[0]!.id, slug + '-product', 'SKU-' + slug, name]);
     ids[slug + ':product'] = p.rows[0]!.id;
 
+    /*
+     * A verified primary, at a REAL key.
+     *
+     * Two things bite here. Since 0024 the publish gate requires the facts the
+     * server read from the file, so a row without them cannot publish at all.
+     * And the cart turns a verified key into a URL through `assertMediaKey`, so
+     * the old placeholder `p.jpg` — a shape the server never issues — threw the
+     * moment the row carried facts, failing every cart test for a reason that
+     * had nothing to do with carts.
+     */
+    const mediaKey = `products/${p.rows[0]!.id}/${'a'.repeat(24)}.jpg`;
+    ids[slug + ':mediaKey'] = mediaKey;
     await pg.query(
-      `INSERT INTO product_media (product_id,storage_path,alt_text,is_primary,ownership_confirmed)
-       VALUES ($1,'p.jpg','زجاجة',true,true)`, [p.rows[0]!.id]);
+      `INSERT INTO product_media (product_id,storage_path,alt_text,is_primary,ownership_confirmed,
+         content_type,byte_size,width,height)
+       VALUES ($1,$2,'زجاجة',true,true,'image/jpeg',180000,1000,1250)`, [p.rows[0]!.id, mediaKey]);
     await pg.query(`UPDATE products SET status='published' WHERE id=$1`, [p.rows[0]!.id]);
   }
 
@@ -215,12 +228,32 @@ describe('cart.price — anonymous, and priced from the database every time', ()
   });
 
   it('shows no photograph for a primary row that never came through verification', async () => {
-    // The seeded primary is 'p.jpg' with no facts — the shape rows had before
-    // the upload flow. It satisfies the publish trigger; it is not a picture.
-    const cart = await caller(ANON).cart.price({
-      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
-    });
-    expect(cart.houses[0]!.lines[0]!.photo).toBeNull();
+    /*
+     * The shape rows had before the upload flow: a key with no facts behind it.
+     *
+     * Made here rather than seeded, because the fixture's own row must be
+     * verified — since 0024 a listing cannot publish without one. The condition
+     * still exists in any database that predates the upload flow, which is
+     * exactly why the storefront must refuse to render it.
+     */
+    const productId = ids['dar-al-ward:product']!;
+    await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+    await pg.query(
+      `UPDATE product_media SET content_type=NULL, byte_size=NULL, width=NULL, height=NULL
+       WHERE product_id=$1 AND is_primary`, [productId]);
+    await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
+
+    try {
+      const cart = await caller(ANON).cart.price({ lines: [{ productId, quantity: 1 }] });
+      expect(cart.houses[0]!.lines[0]!.photo).toBeNull();
+    } finally {
+      // Put the facts back: later cases in this file publish and read this product.
+      await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
+      await pg.query(
+        `UPDATE product_media SET content_type='image/jpeg', byte_size=180000, width=1000, height=1250
+         WHERE product_id=$1 AND is_primary`, [productId]);
+      await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
+    }
   });
 
   it('gives a visitor the public address of a verified primary photograph', async () => {
@@ -229,27 +262,14 @@ describe('cart.price — anonymous, and priced from the database every time', ()
     // anonymous traffic see a published product's photograph. A policy that
     // did not would not fail — the left join would quietly return no picture.
     const productId = ids['maison-nour:product']!;
-    const key = `products/${productId}/${'a'.repeat(24)}.jpg`;
+    const cart = await caller(ANON).cart.price({ lines: [{ productId, quantity: 1 }] });
 
-    await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
-    await pg.query(
-      `UPDATE product_media SET storage_path=$2, content_type='image/jpeg', byte_size=180000, width=1000, height=1250
-       WHERE product_id=$1 AND is_primary`, [productId, key]);
-    await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
-
-    try {
-      const cart = await caller(ANON).cart.price({ lines: [{ productId, quantity: 1 }] });
-      expect(cart.houses[0]!.lines[0]!.photo).toEqual({
-        url: MEDIA.publicUrl(key), alt: 'زجاجة', width: 1000, height: 1250,
-      });
-    } finally {
-      // Put the seed back: later cases in this file read this product.
-      await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
-      await pg.query(
-        `UPDATE product_media SET storage_path='p.jpg', content_type=NULL, byte_size=NULL, width=NULL, height=NULL
-         WHERE product_id=$1 AND is_primary`, [productId]);
-      await pg.exec(`RESET app.actor_role; RESET app.actor_id;`);
-    }
+    // The seeded row is already verified — it has to be, or the listing could
+    // not have published — so this reads it as a visitor would, with nothing
+    // rewritten underneath and nothing to restore afterwards.
+    expect(cart.houses[0]!.lines[0]!.photo).toEqual({
+      url: MEDIA.publicUrl(ids['maison-nour:mediaKey']!), alt: 'زجاجة', width: 1000, height: 1250,
+    });
   });
 });
 

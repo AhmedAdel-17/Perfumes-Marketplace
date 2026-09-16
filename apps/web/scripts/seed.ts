@@ -15,10 +15,53 @@ import { applyMigrations } from '@diyar/db/migrate';
  * could never exist in the real system.
  */
 import { PGlite } from '@electric-sql/pglite';
-import { mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { crc32, deflateSync } from 'node:zlib';
 
 const DATA_DIR = process.env.PGLITE_DIR ?? './.data/pg';
+/** Where the local photograph store keeps files — `core/media.ts` decides this. */
+const MEDIA_DIR = process.env.MEDIA_DIR ?? './.data/media';
+
+/**
+ * A real, decodable PNG — a solid warm ground at the size a product photograph
+ * would be.
+ *
+ * Not a header with nothing behind it: Next's image optimiser decodes what it
+ * serves, and the publish gate (0024) now requires the facts the server reads
+ * from a file. A seed that wrote a path with no file produced exactly what QA
+ * found — a published perfume whose editor says the image cannot be displayed.
+ */
+const solidPng = (width: number, height: number): Buffer => {
+  const chunk = (type: string, data: Buffer): Buffer => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;   // bit depth
+  header[9] = 2;   // truecolour
+  // One filter byte per row, then RGB triples — the brand's warm ground.
+  const row = Buffer.concat([
+    Buffer.from([0]),
+    Buffer.concat(Array.from({ length: width }, () => Buffer.from([0x2c, 0x22, 0x1a]))),
+  ]);
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+};
 const MIGRATIONS = join(process.cwd(), '../../packages/db/migrations');
 const PLATFORM = '99999999-9999-9999-9999-999999999999';
 
@@ -156,6 +199,11 @@ async function main() {
   if (process.argv.includes('--fresh')) {
     rmSync(DATA_DIR, { recursive: true, force: true });
     console.log('· wiped', DATA_DIR);
+    // The photographs too, now that the seed writes real files. Leaving them
+    // would accumulate an orphan per product per fresh seed — the sweep in
+    // DEBT_REGISTER #4, made worse by the one command that runs most often.
+    rmSync(MEDIA_DIR, { recursive: true, force: true });
+    console.log('· wiped', MEDIA_DIR);
   }
   // PGlite opens the directory but does not create the parent chain.
   mkdirSync(DATA_DIR, { recursive: true });
@@ -259,10 +307,29 @@ async function main() {
       );
       const productId = created.rows[0]!.id;
 
+      /*
+       * A REAL file, and the facts read from it.
+       *
+       * This used to write `products/<slug>.jpg` — a path with nothing behind it
+       * and no facts. The storefront refuses to render such a row (0021) while
+       * the publish gate accepted it (0001), so the seeded catalogue published
+       * three perfumes whose own editors said the image could not be displayed.
+       * 0024 closes the gate; this gives the seed something true to publish.
+       *
+       * The key is the shape the server issues — `products/{id}/{24 hex}.png` —
+       * so the development serving route and `assertMediaKey` accept it.
+       */
+      const imageKey = `products/${productId}/${randomBytes(12).toString('hex')}.png`;
+      const image = solidPng(1000, 1250);
+      const imagePath = join(MEDIA_DIR, imageKey);
+      mkdirSync(dirname(imagePath), { recursive: true });
+      writeFileSync(imagePath, image);
+
       await pg.query(
-        `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed)
-         VALUES ($1,$2,$3,true,true)`,
-        [productId, `products/${p.slug}.jpg`, `زجاجة عطر ${p.name} من ${house.name}`],
+        `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed,
+           content_type, byte_size, width, height)
+         VALUES ($1,$2,$3,true,true,'image/png',$4,1000,1250)`,
+        [productId, imageKey, `زجاجة عطر ${p.name} من ${house.name}`, image.length],
       );
 
       // Publishing runs the real gate. If anything above is incomplete, this
@@ -441,7 +508,12 @@ async function main() {
         { kind: 'passage', text: 'يظهر مع تقييمك اسمك الأول وحرف واحد من الاسم الثاني — «ليلى م.» — ولا يظهر رقمك ولا عنوانك ولا ما اشتريته غيره.' },
 
         { kind: 'heading', level: 2, text: 'كم نحتفظ بها' },
-        { kind: 'passage', text: 'بيانات الطلبات تُحفظ سبع سنوات، وهي المدة التي يلزمنا القانون التجاري والضريبي بحفظ الدفاتر خلالها.\n\nرسائل الدعم تُحفظ سنتين. سجلات التصفّح المجهولة تُحفظ ثلاثة عشر شهرًا.' },
+        // 180 days, because that is what `app.purge_analytics_events` actually
+        // deletes at (migration 0023) and what A-1 proposes to counsel. This
+        // said thirteen months, written before the browsing trail existed — a
+        // published promise that no longer matched the code. If counsel changes
+        // the figure, BOTH this sentence and the purge change together.
+        { kind: 'passage', text: 'بيانات الطلبات تُحفظ سبع سنوات، وهي المدة التي يلزمنا القانون التجاري والضريبي بحفظ الدفاتر خلالها.\n\nرسائل الدعم تُحفظ سنتين. سجلات التصفّح المجهولة تُحفظ ١٨٠ يومًا.' },
 
         { kind: 'heading', level: 2, text: 'حقوقك' },
         { kind: 'passage', text: 'يمكنك أن تطلب نسخة من بياناتك، أو تصحيحها، أو حذفها. نردّ خلال ٣٠ يومًا.\n\nما لا نستطيع حذفه هو ما يلزمنا القانون بحفظه: فاتورة طلب تمّ فعلًا تبقى في الدفاتر حتى تنتهي مدّتها القانونية. نحذف كل ما عداه.' },

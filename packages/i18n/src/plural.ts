@@ -121,6 +121,33 @@ export const REVIEW: PluralForms = {
 };
 
 /**
+ * An occurrence — "مرّة" — as the owner's report counts events.
+ *
+ * Added after QA found `٣ مرّة` on the pre-order funnel: the noun had been
+ * written once, in the singular, beside a number that varies. That is the exact
+ * mistake this module exists to prevent, made in new code by the person who
+ * wrote the module.
+ */
+export const TIME: PluralForms = {
+  zero: 'لا مرّات',
+  one: 'مرّة',
+  two: 'مرّتان',
+  few: 'مرّات',
+  many: 'مرّةً',
+  other: 'مرّة',
+};
+
+/** A visitor, counted in the pre-order funnel. Distinct people, not page views. */
+export const VISITOR: PluralForms = {
+  zero: 'لا زوّار',
+  one: 'زائر',
+  two: 'زائران',
+  few: 'زوّار',
+  many: 'زائرًا',
+  other: 'زائر',
+};
+
+/**
  * A count and its noun, assembled the way Arabic actually assembles them.
  *
  * The trap this closes: `zero`, `one` and `two` carry the count INSIDE the word
