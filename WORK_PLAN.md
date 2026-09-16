@@ -62,8 +62,9 @@ with the condition under which that should be reversed stated in advance.
 
 ## The remaining MVP gates
 
-Doc 04 §8 lists eight acceptance gates for the MVP. Four are met. The rest are
-the work, in the order below — chosen by what blocks the others, not by size.
+Doc 04 §8 lists eight acceptance gates for the MVP. **Seven are met** (16 Sep
+2026). The eighth is not engineering's to close: it waits on counsel, and
+building to a guess at what counsel will say is worse than waiting.
 
 | Gate (doc 04 §8) | State (updated 15 September 2026) |
 |---|---|
@@ -73,8 +74,8 @@ the work, in the order below — chosen by what blocks the others, not by size.
 | Cancelled, refused, returned, failed-payment states reconcile | ✅ — returns requested, decided and refunded through screens; refunds audited |
 | Only delivered orders create verified-purchase reviews | ✅ — enforced in the domain, the router and a database trigger |
 | Admin actions, fee changes and payout adjustments are auditable | ✅ — written in the decision's own transaction; readable at `/ops/audit` |
-| Privacy, terms, seller agreement, return policy, prohibited products | **partial** — pages published through the CMS, prohibited-claim controls live; **pending counsel** on the wording, and the PDPL export/delete process is on the legal-review list before it may be built |
-| Owner sees funnel, seller SLA and contribution without database work | ✅ for everything recorded — `/ops/insights`. Pre-order funnel blocked on A-1; a contribution margin on A-2 |
+| Privacy, terms, seller agreement, return policy, prohibited products | **partial — the only gate still open** — pages published through the CMS, prohibited-claim controls live; **pending counsel** on the wording, on the PDPL export/delete process before it may be built, and now on A-1's two 180-day retention figures, which are built to but not settled |
+| Owner sees funnel, seller SLA and contribution without database work | ✅ — `/ops/insights`, both halves of the funnel since 9.5. A contribution margin still waits on A-2 (payment and courier costs), and the screen shows each input's status rather than a margin computed from half its terms |
 
 ## 5. The seller's catalogue  ✅
 
@@ -111,7 +112,7 @@ enters the catalogue is not a marketplace.
             an unverified key cannot publish. The "image key" text field is gone
       - [x] 5.7.7 Contract tests on both adapters, e2e, audit in both themes
 
-## 6. The audit trail  ◐
+## 6. The audit trail  ✅
 - [x] 6.1 The port, both adapters, and a field-level diff
 - [x] 6.2 Written by the decisions doc 04 §8 names — listing moderation, payout
       approval, remittance, policy publishing — inside the same transaction
