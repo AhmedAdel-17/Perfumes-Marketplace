@@ -9,3 +9,4 @@ export * from './providers/session';
 export * from './providers/courier';
 export * from './providers/media';
 export * from './routers/index';
+export * from './http';

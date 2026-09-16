@@ -107,6 +107,29 @@ waiting for the code field. Restarting clears them. The limit is not loosened
 for development on purpose: a limiter that is off where it is exercised is a
 limiter nobody has ever seen work.
 
+## The HTTP API
+
+The tRPC router is mounted at **`/api/trpc`** (WORK_PLAN 11.1). It exists for the
+mobile apps: the web app does not use it, because both halves run in one process
+and it calls the router directly through `createCaller`. Same router, same
+domain, same validation — only the transport differs.
+
+```bash
+curl "http://localhost:3100/api/trpc/catalogue.productBySlug?input=%7B%22slug%22%3A%22ward-al-taif%22%7D"
+```
+
+**It is anonymous only.** No cookie is read and no token is accepted yet; bearer
+tokens arrive with 11.3. Row-level security is what makes that safe — an
+anonymous caller sees live houses and published listings and nothing else.
+
+`API_ALLOWED_ORIGINS` lists **browser** origins allowed to call it from another
+domain, comma-separated, empty by default. The native apps send no `Origin` and
+need no entry; the web app is same-origin and is allowed without being listed. An
+origin that is neither is refused with 403 **before the router runs** — the
+request does not execute and then get hidden, it does not execute. Nothing on
+this surface ever sends `Access-Control-Allow-Credentials`, which is why a
+cross-site request cannot ride on somebody's session cookie.
+
 ## Deploying
 
 Copy `.env.example` and fill it in. Every variable there is **required in

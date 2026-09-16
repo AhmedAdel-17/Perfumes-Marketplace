@@ -186,7 +186,123 @@ the way its advisory describes, and none was left open on that argument. Zero on
       "Dependency advisories". **Not** in `pnpm test`: it asks the registry, and a
       test that fails an unchanged commit overnight is a test people learn to skip
 
-Then the roadmap's Phase 2, and the mobile apps.
+---
+
+## 11. Mobile — the ground the apps stand on
+
+Two Expo apps have been the plan since TECH_STACK §1: separate store listings,
+sharing `packages/*`, never sharing an app. The folder layout in ARCHITECTURE §3
+is founder-specified and normative — extended, never rearranged.
+
+**What does not exist is anything for them to talk to.** Every call in this
+system today is `appRouter.createCaller(ctx)` inside the web server's own
+process. There is no `apps/web/src/app/api` directory at all. A native app
+cannot call a function in someone else's process, so the first phases here are
+not scaffolding — they are the boundary, and the two debts that boundary makes
+undeferrable.
+
+The order is forced, not chosen: no screen is worth writing before sign-in
+survives a restart, and sign-in's codes are DEBT #1.
+
+- [x] 11.1 **The HTTP boundary — done 16 Sep 2026.** `/api/trpc/[trpc]` on the
+      fetch adapter (@trpc/server 11.18 ships `./adapters/fetch`). `core/api.ts`
+      split into `apiContext()` and `api()` so the in-process caller and the wire
+      share ONE composition root — the alternative is a second place where "who
+      is calling" is decided, which is the same class of defect as QA #14. The
+      policy and preflight live in `packages/api/src/http.ts`, testable without
+      booting Next; the route is composition and nothing else.
+
+      Two decisions worth keeping:
+
+      **A stranger is refused BEFORE the router runs.** Ordinary CORS runs the
+      work and then withholds the headers so the browser will not let a script
+      read the reply — which protects the answer and not the write. This returns
+      403 before any context is built. The test proves it with a counter on the
+      context factory, and a CONTROL test sends the same request with that origin
+      allowlisted to show the counter would otherwise move: absence of evidence
+      is only evidence when the instrument is known to work.
+
+      **Anonymous only, deliberately, until 11.3.** Both session resolvers exist
+      and are revocation-aware, and neither is wired to this route. Nothing needs
+      it — the web app reaches the router in-process, and the buyer app's whole
+      first surface is anonymous by design, guest checkout included (D-2). A
+      cookie here would be a forgery surface with no caller; `Allow-Credentials`
+      is never sent, so cross-site forgery is impossible by construction rather
+      than mitigated. The apps present a bearer token in 11.3 and the change is
+      one line.
+
+      14 tests over the boundary, API suite 274 → 287, both typechecks clean, and
+      a real perfume fetched over real HTTP from the running app.
+
+      *Not proven:* the mutation check on two of the three new rules. Breaking
+      `http.ts` on purpose was refused by the permission classifier — correctly,
+      since such an edit is indistinguishable from disabling a security check.
+      The origin rule was falsified by inverting the INPUT instead of the code.
+      The credentials and `Vary` assertions have not been shown able to fail.
+- [ ] 11.2 **One-time codes that survive a restart — pays DEBT #1.** Migration
+      0025 `seller_login_codes`: hashed code, expiry, attempt count, single use,
+      the exact semantics the in-process Map has today (five minutes, five
+      attempts, counted BEFORE the comparison, deleted on success). The debt's
+      own note says it must be replaced together with the SMS adapter and never
+      separately — that still holds; what changes is that the store stops being
+      the blocker, so the day a contract is signed only the sender is swapped.
+- [ ] 11.3 **Identity for a native client.** A browser has cookies; an app has a
+      keychain. Bearer tokens signed with the same HMAC discipline as the session
+      cookie — short-lived access, refresh with server-side revocation, held in
+      Expo SecureStore, never in Redux and never in MMKV. The per-request
+      revocation check the web already does (`activeSellerSession`) applies
+      identically, because revocation that takes effect "eventually" is not
+      revocation.
+- [ ] 11.4 **Rate limits that count once — pays DEBT #2.** Migration 0026
+      `rate_limit_windows` behind the existing `consume()` interface, so no call
+      site changes. Forced by 11.1: a counter in one process, in front of a
+      public HTTP API, is a counter per container and a limit multiplied by the
+      number of them.
+- [ ] 11.5 **The native design system.** `@diyar/tokens/native` already exists
+      and is unused; `packages/ui` is icons and nothing else. Native primitives
+      beside the web ones under one token source, NativeWind wired to the same
+      scale, and RTL forced at first launch — `I18nManager.forceRTL` needs an app
+      restart to take effect and is a documented source of bugs (TECH_STACK §10).
+
+## 12. The buyer app
+
+Guest-first, exactly as the web is: D-2 is still open and `customers.claimed_at`
+exists so a guest order can be claimed later. Nothing here invents an account
+policy — that decision is the founder's.
+
+- [ ] 12.1 `apps/buyer-app` — Expo in the normative layout, typed config, the
+      tRPC client as the ONLY network access (ARCHITECTURE §3.1)
+- [ ] 12.2 Discovery: home, search, house pages
+- [ ] 12.3 The perfume: photographs, notes, the delivery promise from
+      `arrivalWindow` — one formula, the QA #14 rule
+- [ ] 12.4 Bag and checkout, cash on delivery, the same quote the web shows
+- [ ] 12.5 Orders and tracking by phone, the aftercare paths
+- [ ] 12.6 Push notifications: dispatched, out for delivery, delivered
+
+## 13. The seller app
+
+The house's phone is where its work actually happens — a queue with a clock on
+it belongs in a pocket, not on a desk.
+
+- [ ] 13.1 `apps/seller-app` — same layout, sign-in on 11.2/11.3
+- [ ] 13.2 The queue, with the dispatch deadline from 0020
+- [ ] 13.3 Confirm, dispatch, decline — the same three decisions, same refusals
+- [ ] 13.4 Listings and photographs from the camera, through the same verified
+      upload the web uses (5.7) and the same publish gate (0024)
+- [ ] 13.5 Returns and payouts
+- [ ] 13.6 Push: a new order, and a deadline about to pass
+
+## 14. Launch hardening — the rest of the technical scope
+
+- [ ] 14.1 DEBT #3 — a house's contact columns readable by anonymous traffic
+- [ ] 14.2 DEBT #4 — the sweep for photographs whose file outlived its row
+- [ ] 14.3 DEBT #5 — schedule `app.purge_analytics_events`; payout runs, courier
+      polling and 14.2 all want the same scheduler, so it is built once
+- [ ] 14.4 Device tests (Maestro) on both apps
+- [ ] 14.5 EAS build configuration, icons, splash, store metadata. Submission
+      itself waits on Apple organization enrolment — founder, D-U-N-S, 2–6 weeks
+
+Then the roadmap's Phase 2.
 
 ---
 
