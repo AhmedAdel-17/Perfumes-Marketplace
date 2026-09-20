@@ -105,7 +105,7 @@ production (P0.1.3).
 
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
-| P0 Foundations | IN_PROGRESS | 9/29 (inventory + P0.1.1) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
+| P0 Foundations | IN_PROGRESS | 9/30 (inventory + P0.1.1; P0.1.2 blocked on DR-13) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | NOT_STARTED | 0/15 | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
@@ -132,7 +132,8 @@ production (P0.1.3).
 | P0.0.7 | CMS (pages, revisions, preview, announcements, curation, images) | P0 | COMPLETE | — | BUILD | — |
 | P0.0.8 | HTTP boundary `/api/trpc` (anonymous) and durable login codes | P0 | COMPLETE | — | BUILD | — |
 | P0.1.1 | Commit the 11.2 login-code wiring | P0 | COMPLETE | — | BUILD | — |
-| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | READY | P0 | BUILD | — |
+| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | — |
+| P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | BLOCKED | P0 | BUILD | DR-13 |
 | P0.1.3 | Production guard on `platform.runPayout` | P0 | READY | P0 | BUILD | — |
 | P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | READY | P1 | BUILD | P0.1.1 |
 | P0.2.1 | Founders' agreement (doc 05) completed with counsel | P0 | READY | P0 | OPERATE | — |
@@ -363,7 +364,7 @@ because this task's own reason applies to them unchanged.
 **Reference documents:** `WORK_PLAN.md` §11.2; `docs/DEBT_REGISTER.md`.
 
 #### P0.1.2 Git remote, `main`, branch protection, CI trigger
-**Status:** READY · **Priority:** P0 · **Type:** BUILD
+**Status:** BLOCKED (2026-09-20) · **Priority:** P0 · **Type:** BUILD
 **Why:** there is no remote; CI listens on `main`; the branch is `master`. Nothing is
 backed up and nothing is verified by CI.
 **Goal:** the repository lives on GitHub under company-controlled ownership (doc 05 §6),
@@ -378,8 +379,66 @@ protection rule visible.
 **Risks:** account ownership by one founder personally — record in DECISION_REGISTER (doc
 05 §6 requires company-controlled accounts with recovery).
 **Do not do:** change CI content beyond the branch name.
-**Completion evidence:** remote URL; CI run URL.
+**Partial completion evidence (2026-09-20):** remote
+`https://github.com/AhmedAdel-17/Perfumes-Marketplace`, private, confirmed by an
+unauthenticated lookup returning 404 and an authenticated one returning `private: true`.
+`master` renamed to `main`; 74 commits pushed. The remote's only prior commit was GitHub's
+placeholder README, replaced by a lease-checked force push — **local history was not
+rebased**, so the four commit hashes P0.1.1 records as evidence are intact on the remote.
+Branch protection applied; see the scope note below for its exact shape. First CI run
+`35519349702` failed before installing anything; second run `35519916212` has
+`typecheck · test · architecture` **green** — install, typecheck and the full suite on
+Linux — and `no forbidden values` **red**.
+
+**BLOCKER — the acceptance criterion "first CI run green on `main`" is NOT met.** The
+`guard` job's hardcoded-colour step fails on code that predates this task. CI had never run
+before today, so the rule and the artwork had never met. 31 hex literals in three files,
+in three different categories that need three different answers: 2 sit inside COMMENTS
+(`Grain.tsx:5`, `Flacon.tsx:34`) and are guard false positives; `CartView.tsx:152` is a
+real Tailwind arbitrary-value gradient and a true doctrine violation; the remaining ~26 are
+`stopColor` stops in `Flacon.tsx`, the photoreal glass render, where specular and
+brushed-metal values are artwork rather than theme. Fixing any of them means either
+relaxing a guard or adding tokens, and `CLAUDE.md` §14 says to ASK when a token is missing.
+Recorded as **DR-13** and as task **P0.1.5**. Not worked around, and the guard was not
+edited.
+
+**Scope note (2026-09-20) — a CI content change, which this task forbids.** Commit
+`53e0d79` deleted `version: 11` from the pnpm setup step. `package.json` pins
+`packageManager: pnpm@11.25.0` and the action refuses to start when a version is declared
+twice, so the `verify` job verified nothing at all. No step was added, removed or weakened;
+the stricter of the two pins is what remains.
+
+**Scope note (2026-09-20) — protection shape, and why it is not the literal instruction.**
+Required pull request; no force push; no deletion; conversation resolution required;
+`enforce_admins` TRUE, so the rules bind the owner too. Two deliberate departures:
+*required approvals is 0, not 1*, because GitHub forbids approving your own pull request
+and a count of 1 would make a one-person repository permanently unmergeable — this is the
+"self-review noted until a second engineer exists" case the Scope anticipates, and it
+becomes 1 the day a second person has an account. *Required checks list only*
+`typecheck · test · architecture`, not both jobs, because requiring a check that has never
+passed would lock `main` behind DR-13. `no forbidden values` still runs on every push and
+pull request and is visible; P0.1.5 adds it as required the moment it is green.
+**Completion evidence:** remote URL; CI run URL — recorded above; the task stays BLOCKED
+until the guard is green.
 **Reference documents:** `docs/architecture/10-infrastructure.md` §3; doc 05 §6.
+
+#### P0.1.5 Hardcoded-colour guard: decide DR-13, then make `guard` green
+**Status:** BLOCKED (needs DR-13) · **Priority:** P0 · **Type:** BUILD
+**Why:** created 2026-09-20 by P0.1.2, under change-control rule 3. The CI guard that
+`DESIGN_DOCTRINE.md` exists to enforce has never passed, and until it does, `main` has a
+permanently red job and cannot be a required check.
+**Goal:** `no forbidden values` green on `main`, and added to the required status checks.
+**Scope:** whatever DR-13 decides, applied in the category split the decision records — the
+comment hits, the `CartView.tsx:152` gradient and the `Flacon.tsx` artwork are three
+separate questions and may get three different answers. Anything left unfixed gets a dated
+`docs/DEBT_REGISTER.md` entry with a trigger, per standing directive 1.
+**Depends on:** DR-13 · **Blocks:** P0.1.2 closing
+**Acceptance criteria:** the guard job green on `main`; the check required in branch
+protection; every remaining hex either tokenised, deliberately exempt in a rule the guard
+states, or registered as debt.
+**Do not do:** widen the exemption to silence the guard generally; delete the guard.
+**Reference documents:** `CLAUDE.md` §0.5, §14; `docs/DESIGN_DOCTRINE.md`;
+`.github/workflows/ci.yml`; `DECISION_REGISTER.md` DR-13.
 
 #### P0.1.3 Production guard on `platform.runPayout`
 **Status:** READY · **Priority:** P0 · **Type:** BUILD
@@ -2177,3 +2236,44 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   and neither founder has decided. A session that cannot create that remote should mark P0.1.2
   BLOCKED on P0.2.2 rather than push to a personal account. **P0.1.3** (production guard on
   `platform.runPayout`) is the next task after it that is fully executable in code today.
+
+- 2026-09-20 · Claude Code session · P0.1.2 · READY → BLOCKED · the owner approved a personal
+  GitHub account in writing, which removed the ownership blocker this plan predicted. Remote
+  `AhmedAdel-17/Perfumes-Marketplace` (private, verified both unauthenticated and
+  authenticated), `master` renamed `main`, 74 commits pushed, protection applied, CI triggered.
+  Two of three acceptance criteria met. The third — first CI run green on `main` — is NOT met:
+  the `guard` job's hardcoded-colour step fails on pre-existing code. BLOCKED on **DR-13**, with
+  task **P0.1.5** created to carry the work once the decision lands. The `verify` job is green
+  in CI: install, typecheck and the full suite on Linux, run `35519916212`.
+
+- 2026-09-20 · Claude Code session · P0.1.5 · created · BLOCKED · change-control rule 3, next
+  free number in workstream 0.1. Carries DR-13 and the guard.
+
+- 2026-09-20 · Claude Code session · DR-11 · OPEN → DECIDED (GitHub only) · Ahmed Adel,
+  2026-09-20, in writing. Recorded with its limits rather than as a clean yes: every other
+  account is still open, the recommendation's second admin and shared recovery do not exist, so
+  the repository is a single point of failure in one person's credentials, and this register
+  requires both founders on a FOUNDERS-class decision while only one name is on it.
+
+- 2026-09-20 · Claude Code session · DR-13 · created · OPEN · the hardcoded-colour guard versus
+  31 hex literals. Three categories needing three answers: 2 inside comments (guard false
+  positives), 1 real Tailwind gradient violation in `CartView.tsx:152`, and ~26 `stopColor`
+  stops in the `Flacon.tsx` glass render that are artwork rather than theme. Not decided here;
+  `CLAUDE.md` §14 says to ask when a token is missing.
+
+- 2026-09-20 · Claude Code session · — · repository discrepancy · **CI had never run.** The
+  workflow has been in the tree since 2 September with no remote to run it, and it was broken in
+  two independent ways that only a real run could reveal: the pnpm version was declared twice so
+  `verify` never reached install, and `guard` fails on existing source. The plan assumed
+  "confirm the verify and guard jobs run" was a formality. It was not. A green local suite said
+  nothing about either.
+
+- 2026-09-20 · Claude Code session · — · scope note · commit `53e0d79` changed CI content, which
+  P0.1.2's Do-not-do forbids beyond the branch name. Only the duplicate pnpm version
+  declaration was removed. No check was added, removed or weakened, and the job it repaired was
+  verifying nothing.
+
+- 2026-09-20 · Claude Code session · — · next READY · **P0.1.3** (production guard on
+  `platform.runPayout`) is the next fully executable BUILD task and depends on nothing.
+  **P0.1.4** (reconcile engineering docs) is also READY. P0.1.5 and the closing of P0.1.2 wait
+  on DR-13, which is the founders'.
