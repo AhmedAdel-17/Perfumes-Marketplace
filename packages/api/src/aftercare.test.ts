@@ -543,7 +543,7 @@ describe('applications — a house joins, and cannot let itself in', () => {
      * RLS policy that admits it is `status = 'live'` — a check performed as an
      * operator would pass whatever the status said.
      */
-    const public_ = await caller(ANON).catalogue.houseBySlug({ slug: 'atelier-siwa' });
+    const public_ = await caller(ANON).catalogue.house({ slug: 'atelier-siwa' });
     expect(public_, 'a live house must be readable by a visitor').not.toBeNull();
 
     const trail = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)

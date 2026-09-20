@@ -29,6 +29,8 @@ import { reviewRepository } from './review-repository';
 import { returnRepository } from './return-repository';
 import { supportRepository } from './support-repository';
 import { applicationRepository } from './application-repository';
+import { catalogueReadModel } from './catalogue-read-model';
+import { identityRepository } from './identity-repository';
 import { auditTrail } from './audit-trail';
 import { ownerReportRepository, settlementFacts } from './owner-report-repository';
 import { photoRepository } from './photo-repository';
@@ -685,6 +687,8 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   photos: photoRepository(db),
   contentImages: contentImageRepository(db),
   analytics: analyticsRepository(db),
+  catalogue: catalogueReadModel(db),
+  identity: identityRepository(db),
 });
 
 /** Who is making the request. Drives every RLS policy in migration 0002. */

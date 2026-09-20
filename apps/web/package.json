@@ -8,6 +8,7 @@
     "start": "next start -p 3100",
     "seed": "tsx scripts/seed.ts",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "e2e": "node scripts/e2e.mjs",
     "audit": "node scripts/audit.mjs"
   },
@@ -32,6 +33,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
   }
 }

@@ -1,11 +1,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { and, eq, isNull } from 'drizzle-orm';
-import { schema } from '@diyar/db';
 import { consoleOtpSender, consume, rateLimitMessage, type ApiCaller } from '@diyar/api';
 import { api } from '@/core/api';
-import { database } from '@/core/db';
+import { identity } from '@/core/identity';
 import { generateOtpCode } from '@diyar/api';
 import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
@@ -31,21 +29,7 @@ export type OpsResult = { ok: true } | { ok: false; message: string };
 
 const EGYPTIAN_MOBILE = /^(?:\+20|0)1[0125]\d{8}$/;
 
-async function findOperator(phone: string) {
-  const [row] = await database()
-    .select({
-      id: schema.platformStaff.id,
-      authUserId: schema.platformStaff.authUserId,
-      fullName: schema.platformStaff.fullName,
-    })
-    .from(schema.platformStaff)
-    .where(and(
-      eq(schema.platformStaff.phone, phone),
-      isNull(schema.platformStaff.revokedAt),
-    ))
-    .limit(1);
-  return row ?? null;
-}
+const findOperator = (phone: string) => identity.operatorByPhone(phone);
 
 export async function requestOpsCode(phone: string): Promise<OpsResult> {
   const trimmed = phone.trim();
@@ -104,7 +88,7 @@ export async function verifyOpsCode(phone: string, code: string): Promise<OpsRes
   if (!operator) return { ok: false, message: 'الرمز غير صحيح أو انتهت صلاحيته.' };
 
   await issueOpsSession({
-    staffId: operator.id,
+    staffId: operator.staffId,
     authUserId: operator.authUserId,
     fullName: operator.fullName,
     issuedAt: Date.now(),
@@ -129,17 +113,10 @@ export async function activeOperator() {
   const session = await readOpsSession();
   if (!session) return null;
 
-  const [row] = await database()
-    // The role comes back with the id, because it is read at the same moment
-    // and for the same reason: what this operator may do is a fact about the
-    // CURRENT row, not about the cookie they signed in with.
-    .select({ id: schema.platformStaff.id, role: schema.platformStaff.role })
-    .from(schema.platformStaff)
-    .where(and(
-      eq(schema.platformStaff.id, session.staffId),
-      isNull(schema.platformStaff.revokedAt),
-    ))
-    .limit(1);
+  // The role comes back with the id, because it is read at the same moment and
+  // for the same reason: what this operator may do is a fact about the CURRENT
+  // row, not about the cookie they signed in with.
+  const row = await identity.activeOperator(session.staffId);
 
   if (!row) {
     // Best-effort: Next refuses cookie writes during a page render, which is

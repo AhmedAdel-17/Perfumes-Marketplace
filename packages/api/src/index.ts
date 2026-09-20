@@ -11,4 +11,8 @@ export * from './providers/login-codes';
 export * from './providers/courier';
 export * from './providers/media';
 export * from './routers/index';
+/* The storefront read-model types, so a page can name what it renders. */
+export type {
+  HouseDetail, ProductCard, ProductDetail, SearchResult, StorefrontPhoto,
+} from './routers/catalogue';
 export * from './http';

@@ -10,6 +10,8 @@ import type { ApplicationRepository } from './application-repository';
 import type { ContentRepository } from './content-repository';
 import type { ContentImageRepository } from './content-image-repository';
 import type { AnalyticsRepository } from './analytics-repository';
+import type { CatalogueReadModel } from './catalogue-read-model';
+import type { IdentityRepository } from './identity-repository';
 /**
  * Repository ports.
  *
@@ -459,6 +461,19 @@ export interface Repositories {
   readonly contentImages: ContentImageRepository;
   /** The browsing trail: append one event, read counts for a period. */
   readonly analytics: AnalyticsRepository;
+  /**
+   * The shopfront's reads (ADR-10). A READ MODEL rather than a repository: it
+   * loads the shape a page renders, joined across products, brands, houses and
+   * media, and nothing in it is ever written back.
+   */
+  readonly catalogue: CatalogueReadModel;
+  /**
+   * Who is signing in, and are they still allowed to be.
+   *
+   * Every method is refused unless the Unit of Work carries the `identity`
+   * service role, which is set only inside a sign-in transaction on the server.
+   */
+  readonly identity: IdentityRepository;
 }
 
 /**

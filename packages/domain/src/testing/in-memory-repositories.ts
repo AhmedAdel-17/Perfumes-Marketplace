@@ -1743,10 +1743,59 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    /*
+     * The two ports this double deliberately does NOT implement.
+     *
+     * Every other repository here is a faithful second implementation, and the
+     * contract suites run against both so neither is trusted alone. These two
+     * cannot be, and pretending otherwise would be worse than refusing.
+     *
+     * `catalogue` is a READ MODEL joined across products, brands, houses and
+     * media. This store holds no brands and no media, so a second
+     * implementation would answer a different question from the real one while
+     * looking like agreement.
+     *
+     * `identity` is worse: its entire contract is WHAT ROW-LEVEL SECURITY
+     * PERMITS. The reads themselves are trivial — a phone to an id — and the
+     * guarantee is that the `identity` role may perform exactly those and
+     * nothing else. A `Map` cannot express that. A double that answered them
+     * would prove the query shape and quietly assert a security property it has
+     * no way to check, which is the one kind of green test worth less than none.
+     *
+     * Both are proved against a real Postgres instead:
+     * `packages/db/src/catalogue-read-model.test.ts` and
+     * `packages/db/src/identity-repository.test.ts`.
+     */
+    const refuse = (port: string, proved: string) => () => {
+      throw new Error(
+        `${port} has no in-memory implementation on purpose. Its contract is what the `
+        + `database enforces, which this double cannot express. It is proved against a real `
+        + `Postgres in ${proved}.`,
+      );
+    };
+
+    const catalogue = {
+      publishedProducts: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      productBySlug: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      houseBySlug: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      publishedProductsForHouse: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      houses: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      search: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      houseFilterOptions: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      primaryPhotos: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+    } as unknown as Repositories['catalogue'];
+
+    const identity = {
+      sellerByContactPhone: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      operatorByPhone: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      sellerStaffIsActive: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      activeOperator: refuse('IdentityRepository', 'identity-repository.test.ts'),
+    } as unknown as Repositories['identity'];
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
-      analytics,
+      analytics, catalogue, identity,
     };
   }
 }

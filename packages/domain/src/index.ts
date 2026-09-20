@@ -15,6 +15,8 @@ export * from './services/place-order';
 export * from './specifications/index';
 export * from './ports/clock';
 export * from './ports/repositories';
+export * from './ports/catalogue-read-model';
+export * from './ports/identity-repository';
 export * from './ports/repository-contract';
 export * from './ports/content-contract';
 export * from './ports/site-contract';

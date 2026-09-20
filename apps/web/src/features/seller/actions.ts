@@ -3,12 +3,10 @@
 import { redirect } from 'next/navigation';
 import { consoleOtpSender, type SellerSession, consume, rateLimitMessage } from '@diyar/api';
 import { api } from '@/core/api';
-import { database } from '@/core/db';
-import { schema } from '@diyar/db';
-import { and, eq, isNull } from 'drizzle-orm';
 import { generateOtpCode } from '@diyar/api';
 import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
+import { identity } from '@/core/identity';
 import {
   clearSellerSession, issueSellerSession, readSellerSession,
 } from './session';
@@ -53,20 +51,8 @@ export async function requestSellerCode(phone: string): Promise<RequestCodeResul
     return { ok: false, message: rateLimitMessage(verdict.retryAfterSeconds) };
   }
 
-  const [staff] = await database()
-    .select({ sellerId: schema.sellerStaff.sellerId })
-    .from(schema.sellerStaff)
-    .innerJoin(
-      schema.sellerContacts,
-      eq(schema.sellerContacts.sellerId, schema.sellerStaff.sellerId),
-    )
-    .where(and(
-      eq(schema.sellerContacts.contactPhone, trimmed),
-      isNull(schema.sellerStaff.revokedAt),
-    ))
-    .limit(1);
-
-  if (!staff) return generic;
+  const principal = await identity.sellerByContactPhone(trimmed);
+  if (!principal) return generic;
 
   // `randomInt` is cryptographically secure; `Math.random()` is not, and a
   // predictable six-digit code is not a second factor. The code is held only
@@ -94,27 +80,12 @@ export async function verifySellerCode(phone: string, code: string): Promise<Ver
     return { ok: false, message: 'الرمز غير صحيح أو انتهت صلاحيته.' };
   }
 
-  const [staff] = await database()
-    .select({
-      sellerId: schema.sellerStaff.sellerId,
-      authUserId: schema.sellerStaff.authUserId,
-    })
-    .from(schema.sellerStaff)
-    .innerJoin(
-      schema.sellerContacts,
-      eq(schema.sellerContacts.sellerId, schema.sellerStaff.sellerId),
-    )
-    .where(and(
-      eq(schema.sellerContacts.contactPhone, trimmed),
-      isNull(schema.sellerStaff.revokedAt),
-    ))
-    .limit(1);
-
-  if (!staff) return { ok: false, message: 'الرمز غير صحيح أو انتهت صلاحيته.' };
+  const principal = await identity.sellerByContactPhone(trimmed);
+  if (!principal) return { ok: false, message: 'الرمز غير صحيح أو انتهت صلاحيته.' };
 
   await issueSellerSession({
-    sellerId: staff.sellerId,
-    staffAuthUserId: staff.authUserId,
+    sellerId: principal.sellerId,
+    staffAuthUserId: principal.staffAuthUserId,
     issuedAt: Date.now(),
   });
   return { ok: true };
@@ -159,18 +130,11 @@ export async function activeSellerSession(): Promise<SellerSession | null> {
     One indexed lookup per request is the right price for a revocation that
     takes effect on the next click.
   */
-  const [staff] = await database()
-    .select({ id: schema.sellerStaff.id })
-    .from(schema.sellerStaff)
-    .innerJoin(schema.sellers, eq(schema.sellers.id, schema.sellerStaff.sellerId))
-    .where(and(
-      eq(schema.sellerStaff.sellerId, session.sellerId),
-      eq(schema.sellerStaff.authUserId, session.staffAuthUserId),
-      isNull(schema.sellerStaff.revokedAt),
-    ))
-    .limit(1);
+  const active = await identity.sellerStaffIsActive(
+    session.sellerId, session.staffAuthUserId,
+  );
 
-  if (!staff) {
+  if (!active) {
     // Best-effort tidy-up, and deliberately not load-bearing.
     //
     // Next refuses cookie WRITES during a page render — they are only legal in
