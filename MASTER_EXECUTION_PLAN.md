@@ -106,7 +106,7 @@ production (P0.1.3).
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
 | P0 Foundations | IN_PROGRESS | 11/30 (inventory + P0.1.1, P0.1.3, P0.1.4; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
-| P1 Pilot-minimum build | NOT_STARTED | 0/15 | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
+| P1 Pilot-minimum build | IN_PROGRESS | 1/15 (P1.4.6) | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
@@ -166,7 +166,7 @@ production (P0.1.3).
 | P1.4.3 | Observability baseline | P1 | NOT_STARTED | P0 | BUILD | P0.1.2 |
 | P1.4.4 | Deployment: staging and production | P1 | NOT_STARTED | P0 | BUILD | P0.1.2, P0.2.3 |
 | P1.4.5 | Rate limits in the database + edge rules | P1 | NOT_STARTED | P0 | BUILD | P1.4.4 |
-| P1.4.6 | Seller contact isolation | P1 | READY | P0 | BUILD | P0.1.1 |
+| P1.4.6 | Seller contact isolation | P1 | COMPLETE | — | BUILD | P0.1.1 |
 | P1.4.7 | Manual money procedure verified in production | P1 | NOT_STARTED | P0 | OPERATE | P0.1.3, P1.4.4, P0.2.5 |
 | P2.1.1 | Select cohort 1 (3–5 houses) | P2 | NOT_STARTED | P0 | VALIDATE | P0.4.6 |
 | P2.1.2 | Verification with evidence stored privately | P2 | NOT_STARTED | P0 | OPERATE | P2.1.1, P0.3.5 |
@@ -1160,7 +1160,7 @@ existing `rate-limit.test.ts` passes against the table adapter; DEBT #2 closed.
 **Reference documents:** `docs/DEBT_REGISTER.md` #2; `packages/api/src/rate-limit.ts`.
 
 #### P1.4.6 Seller contact isolation
-**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P0 · **Type:** BUILD
+**Status:** COMPLETE · **Type:** BUILD
 **Why:** a live house's phone and email are readable by anonymous traffic (DEBT #3). A
 public deployment exposes every pilot house's number to scraping.
 **Goal:** `seller_contacts` table with its own RLS; the two legitimate readers (sign-in
@@ -1169,6 +1169,57 @@ resolution, ops) routed through it; public policy no longer exposes the columns.
 **Acceptance criteria:** `sellers-contact-columns.test.ts` inverted: anonymous read of a
 live house returns no contact fields; sign-in still resolves.
 **Tests required:** RLS tests; API sign-in tests.
+
+**Completion evidence:** commit `7072101`, 23 files, migration `0026_seller_contacts.sql`.
+`seller_contacts` holds the two fields, RLS enabled and FORCED, with three policies —
+`platform_all`, `seller_read_own_contact`, `intake_insert_contact` — and **no public policy
+at all**. The columns are DROPPED from `sellers`, so a query written in ignorance of the
+change fails as a syntax error rather than succeeding as a disclosure. Readers routed:
+`application-repository.ts` (intake console) joins the new table and writes it in the same
+transaction as the house; `features/seller/actions.ts` (sign-in) resolves through it;
+`seed.ts` writes it. `docs/DEBT_REGISTER.md` #3 moved to **Paid**.
+
+*Acceptance criterion 1 — the guard inverted.* `sellers-contact-columns.test.ts` was a STATIC
+scan of this repository's source for `sellers.contact_phone`. It is now fourteen runtime
+cases that ask the database what an `anon` session can actually reach: the table directly, a
+lookup by phone, a join from the public row it IS allowed to read, and whether the columns
+still exist to be selected. Every case drops to `app_user` first, because the test
+connection is a superuser and Postgres never applies RLS to one — a case that forgot would
+pass while proving nothing.
+
+*Falsified, not assumed* (rule 7, and this is a security fix). Restoring
+`CREATE POLICY ... USING (true)` on the new table fails five of the isolation cases, and the
+`policy-shape.test.ts` invariants catch it twice more. Policy removed, suite re-run green.
+The controls are asserted too: an anonymous visitor must still read a live house, an
+operator must read any house's details, and a DIFFERENT house must read none — without that
+last one the seller policy could have been `USING (true)`.
+
+*Acceptance criterion 2 — sign-in still resolves.* Proved twice, because `apps/web` has no
+unit-test runner. A query-level test of the exact join, living in `packages/db`; and
+**126/126 end-to-end browser tests** on a freshly seeded database, where signing into the
+seller portal is the first thing most groups do. The seed itself is evidence: it writes the
+new table and the portal still prints working sign-in numbers.
+
+*Suite.* db 351 → 363; total 1,538 → 1,550; typecheck clean across seven projects.
+
+**Scope note — ADR-13 exception, written into the migration.** Expand and contract are in
+ONE migration rather than two. The rule exists so an application rollback never needs a
+schema rollback, and there is nothing to roll back to: P1.4.4 has not run and nothing is
+deployed. Splitting it would have shipped a migration that leaves the hole open plus a
+promise to close it later, which is how a security fix becomes a backlog item. The file also
+carries the `-- rollback:` note ADR-13 asks for — one line of DEBT #21 paid in passing.
+
+**What this did NOT fix.** Sign-in reads through `database()`, which never drops to
+`app_user`, so RLS does not apply to it at all — the connection is a superuser and Postgres
+never binds one. That is DEBT #14 and P3.4.1's to fix; it is the reason sign-in kept working
+through a table with no anonymous policy, and the new test says so in its own comment rather
+than leaving the next reader to discover it.
+
+**Repository finding.** Nineteen fixtures across two packages had to change. The typed ones
+the compiler found; the raw-SQL ones only a test run did. One helper builds a house against
+two schema eras — `dispatch-clock.test.ts` deliberately stops at 0020 to run that migration
+over the data of the day — so it now asks `information_schema` which era it is in instead of
+assuming it is this one.
 **Reference documents:** `docs/DEBT_REGISTER.md` #3.
 
 #### P1.4.7 Manual money procedure verified in production
@@ -2430,3 +2481,25 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   priority P0, DEBT #3) is the next executable BUILD task — its only dependency P0.1.1 is
   COMPLETE. **P3.4.1** and **P3.4.2** follow at priority P1. Everything else in P0 is OPERATE
   or VALIDATE and belongs to the founders; P0.1.2 and P0.1.5 wait on DR-13 and DR-14.
+
+- 2026-09-20 · Claude Code session · P1.4.6 · READY → COMPLETE · commit `7072101`, migration
+  0026. `seller_contacts` with no public policy; the columns dropped from `sellers`. The guard
+  inverted from a source scan to fourteen runtime cases and falsified before being trusted.
+  Sign-in proved by a query-level test and by 126/126 browser tests on a fresh database. db
+  351 → 363, suite 1,538 → 1,550. DEBT #3 moved to Paid.
+
+- 2026-09-20 · Claude Code session · P1.4.6 · ADR-13 exception · expand and contract in one
+  migration, reasoned in the file: nothing is deployed, so there is no application to stay
+  compatible with, and splitting it would have shipped the hole plus a promise. The file also
+  carries the `-- rollback:` note ADR-13 wants, which is one line of DEBT #21.
+
+- 2026-09-20 · Claude Code session · — · finding, recorded not acted on · the sign-in path reads
+  through `database()`, which never drops to `app_user`. The connection is a SUPERUSER and
+  Postgres never applies RLS to one, so that path bypasses every policy in 0002 — which is why
+  sign-in kept working against a table with no anonymous policy. DEBT #14 describes this as
+  "as the owner role"; it is stronger than that. P3.4.1 owns it.
+
+- 2026-09-20 · Claude Code session · — · next READY · **P3.4.1** (web reads through the API;
+  identity repository) and **P3.4.2** (sessions table and revocation), both priority P1, both
+  depending only on P0.1.1. Every remaining P1 task depends on P0.2.5 or P0.2.6, which are
+  OPERATE and the founders'. P0.1.2 and P0.1.5 wait on DR-13 and DR-14.
