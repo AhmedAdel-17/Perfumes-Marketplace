@@ -1,5 +1,5 @@
 import 'server-only';
-import { appRouter, type ApiCaller, type ApiContext } from '@diyar/api';
+import { appRouter, payoutsAreEnabled, type ApiCaller, type ApiContext } from '@diyar/api';
 import { systemClock } from '@diyar/domain';
 import type { ActorContext } from '@diyar/db';
 import { unitOfWork } from './db';
@@ -73,6 +73,18 @@ export function apiContext(
     analyticsUow: unitOfWork({ role: 'analytics', id: null }),
     // One store per process — the instance `instrumentation.ts` checks.
     media: mediaStore(),
+    /*
+     * The payout kill switch, read HERE and nowhere else.
+     *
+     * This is the only file in the request path that touches the environment
+     * for it, which is the same arrangement the service roles and the media
+     * store use: what the process is allowed to do is decided in one visible
+     * place rather than discovered at the point of use. Unset means off in
+     * production and on everywhere else — see `payout-switch.ts` for why the
+     * default is computed rather than written down, and for why turning it on
+     * is DR-03's decision and not an engineer's.
+     */
+    payoutsEnabled: payoutsAreEnabled(process.env.PAYOUTS_ENABLED, process.env.NODE_ENV),
     clock: systemClock,
   };
 }

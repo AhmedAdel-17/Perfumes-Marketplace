@@ -40,6 +40,8 @@ const caller = (actor: ActorContext) => {
     intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
     analyticsUow: new DrizzleUnitOfWork(db, { role: 'analytics', id: null }),
     media: MEDIA,
+    // This suite does not run payouts; the switch is on so it behaves as development.
+    payoutsEnabled: true,
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);

@@ -6,6 +6,7 @@ import {
   SubOrderLifecycle,
 } from '@diyar/domain';
 import { platformProcedure, router } from '../trpc';
+import { PAYOUTS_DISABLED_MESSAGE } from '../payout-switch';
 
 /**
  * Operations.
@@ -124,6 +125,20 @@ export const platformRouter = router({
       periodEnd: z.string().datetime(),
     }))
     .mutation(async ({ ctx, input }) => {
+      /*
+       * BEFORE ANY READ, and before the transaction opens.
+       *
+       * Not because a read would be expensive, but because the audit trail is
+       * the thing being protected: an attempt that got far enough to write
+       * `payout_approval` would leave a record of a payout that never happened,
+       * and the register doc 04 §8 asks for is worth nothing if it contains
+       * events that did not occur. Refusing here means the only evidence of a
+       * blocked attempt is the error the operator sees.
+       */
+      if (!ctx.payoutsEnabled) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: PAYOUTS_DISABLED_MESSAGE });
+      }
+
       return ctx.uow.transaction(async (r) => {
         const seller = await r.sellers.findById(input.sellerId);
         if (!seller) throw new TRPCError({ code: 'NOT_FOUND', message: 'الدار غير موجودة' });

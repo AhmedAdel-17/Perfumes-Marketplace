@@ -39,6 +39,16 @@ const ids: Record<string, string> = {};
 /** Matches the products seeded below. */
 const MAX_STOCK = 25;
 
+/**
+ * The payout kill switch, as this suite sees it.
+ *
+ * On by default so every test written before the switch existed behaves as it
+ * did. The refusal pair below turns it off around one call and puts it back in
+ * a `finally`, because a leaked `false` here would not fail loudly — it would
+ * quietly pass the four other payout tests for the wrong reason.
+ */
+let payoutsEnabled = true;
+
 const caller = (
   actor: ActorContext,
   sellerId: string | null = null,
@@ -56,6 +66,7 @@ const caller = (
     intakeUow: new DrizzleUnitOfWork(db, { role: 'intake', id: null }),
     analyticsUow: new DrizzleUnitOfWork(db, { role: 'analytics', id: null }),
     media: MEDIA,
+    payoutsEnabled,
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);
@@ -1783,5 +1794,75 @@ describe('a house adds photographs to its own listing', () => {
     await ward().photos.makePrimary({ productId: listing.id, photoId: second.id });
     await ward().photos.remove({ productId: listing.id, photoId: primary.id });
     expect((await ward().photos.list({ productId: listing.id })).map((p) => p.id)).toEqual([second.id]);
+  });
+});
+
+/**
+ * The payout kill switch (P0.1.3).
+ *
+ * `runPayout` pays every eligible sub-order on every run — defect C1 — and the
+ * fix is the ledger, not a patch. Until then the procedure must be unreachable
+ * in production, and reachable everywhere else, or the four tests above would
+ * be proving the behaviour of something nobody can call.
+ *
+ * The pair matters more than either half. A refusal test alone passes just as
+ * well when the procedure is broken, missing, or refusing for some unrelated
+ * reason; the control test is what makes the refusal evidence.
+ */
+describe('the payout kill switch', () => {
+  const PLATFORM_ACTOR: ActorContext = { role: 'platform', id: PLATFORM };
+  const OPERATOR = { staffId: '', role: 'admin', label: 'مشغّلة المنصّة' };
+  const PERIOD = {
+    periodStart: '2026-09-01T00:00:00.000Z',
+    periodEnd: '2026-09-30T00:00:00.000Z',
+  };
+
+  beforeAll(async () => {
+    const [staff] = await db.select({ id: schema.platformStaff.id })
+      .from(schema.platformStaff).limit(1);
+    OPERATOR.staffId = staff!.id;
+  });
+
+  /*
+   * Narrowed to the action and given a generous limit rather than counting the
+   * default page. `recent` returns 100 rows unless told otherwise, and a count
+   * that silently saturates would turn "no entry was written" into a test that
+   * passes because the page was already full.
+   */
+  const payoutApprovals = async () =>
+    new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ action: 'payout_approval', limit: 1000 }));
+
+  it('refuses in production, and writes nothing while refusing', async () => {
+    const before = (await payoutApprovals()).length;
+
+    payoutsEnabled = false;
+    try {
+      const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+      const attempt = ops.platform.runPayout({ sellerId: ids['dar-al-ward']!, ...PERIOD });
+
+      await expect(attempt).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      // The Arabic message names the REASON, not the rule. An operator told
+      // "forbidden" opens a ticket; one told the ledger is unfinished and the
+      // money is paid by hand knows what to do instead.
+      await expect(attempt).rejects.toThrow(/دفتر الحسابات/);
+    } finally {
+      payoutsEnabled = true;
+    }
+
+    // The audit trail is the thing being protected. An entry here would record
+    // a payout that never happened, and a register containing events that did
+    // not occur is worth less than no register.
+    expect(await payoutApprovals()).toHaveLength(before);
+  });
+
+  it('runs when the switch is on, so the refusal above is the switch and not a broken procedure', async () => {
+    const before = (await payoutApprovals()).length;
+
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    const result = await ops.platform.runPayout({ sellerId: ids['dar-al-ward']!, ...PERIOD });
+
+    expect(result.payoutId).toBeTruthy();
+    expect(await payoutApprovals()).toHaveLength(before + 1);
   });
 });

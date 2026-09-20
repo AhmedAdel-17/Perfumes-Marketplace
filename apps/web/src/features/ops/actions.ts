@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { and, eq, isNull } from 'drizzle-orm';
 import { schema } from '@diyar/db';
-import { consoleOtpSender, consume, rateLimitMessage } from '@diyar/api';
+import { consoleOtpSender, consume, rateLimitMessage, type ApiCaller } from '@diyar/api';
 import { api } from '@/core/api';
 import { database } from '@/core/db';
 import { generateOtpCode } from '@diyar/api';
@@ -186,12 +186,34 @@ export async function opsRecordRemittance(
   }
 }
 
-export async function opsRunPayout(sellerId: string, periodStart: string, periodEnd: string) {
+/**
+ * Run a payout — and, in production, be told why you cannot.
+ *
+ * NOTHING CALLS THIS. There is no operator screen with a payout control, which
+ * is why P0.1.3's instruction to "hide or disable the control" had nothing to
+ * hide; the task's LOG entry records that discrepancy. It is left reachable
+ * because the guard belongs on the procedure rather than on a screen, and a
+ * screen is not what stops a payout.
+ *
+ * It used to answer `null` for every failure, which swallowed the reason — the
+ * thing `CLAUDE.md` §17 forbids, and exactly wrong for a refusal whose entire
+ * value is the sentence it carries. Whoever builds that screen now gets the
+ * message instead of a blank.
+ */
+type RunPayoutResult =
+  | { ok: true; payout: Awaited<ReturnType<ApiCaller['platform']['runPayout']>> }
+  | { ok: false; message: string };
+
+export async function opsRunPayout(
+  sellerId: string,
+  periodStart: string,
+  periodEnd: string,
+): Promise<RunPayoutResult> {
   const caller = await opsCaller();
-  if (!caller) return null;
+  if (!caller) return { ok: false, message: 'انتهت الجلسة.' };
   try {
-    return await caller.platform.runPayout({ sellerId, periodStart, periodEnd });
-  } catch {
-    return null;
+    return { ok: true, payout: await caller.platform.runPayout({ sellerId, periodStart, periodEnd }) };
+  } catch (error) {
+    return { ok: false, message: (error as Error).message };
   }
 }

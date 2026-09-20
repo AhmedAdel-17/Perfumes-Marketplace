@@ -110,6 +110,18 @@ export interface ApiContext {
    * visible place, and it is the same instance `assertProductionSafe` inspects.
    */
   readonly media: MediaStore;
+  /**
+   * Whether a software payout may run at all — see `payout-switch.ts`.
+   *
+   * On the CONTEXT and not read from the environment where it is used, because
+   * `packages/api` reads no environment anywhere: the decision is made once, at
+   * the composition root, next to the decision about which media store and
+   * which service roles exist. It is REQUIRED rather than optional on purpose.
+   * An optional flag defaulting to "allowed" would mean a composition root
+   * added later opens the money path by saying nothing, which is precisely the
+   * failure the switch exists to prevent.
+   */
+  readonly payoutsEnabled: boolean;
   readonly clock: Clock;
 }
 
