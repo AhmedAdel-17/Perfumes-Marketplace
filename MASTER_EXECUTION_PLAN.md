@@ -132,7 +132,7 @@ production (P0.1.3).
 | P0.0.7 | CMS (pages, revisions, preview, announcements, curation, images) | P0 | COMPLETE | — | BUILD | — |
 | P0.0.8 | HTTP boundary `/api/trpc` (anonymous) and durable login codes | P0 | COMPLETE | — | BUILD | — |
 | P0.1.1 | Commit the 11.2 login-code wiring | P0 | COMPLETE | — | BUILD | — |
-| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | — |
+| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | DR-13, DR-14 |
 | P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | BLOCKED | P0 | BUILD | DR-13 |
 | P0.1.3 | Production guard on `platform.runPayout` | P0 | READY | P0 | BUILD | — |
 | P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | READY | P1 | BUILD | P0.1.1 |
@@ -364,7 +364,7 @@ because this task's own reason applies to them unchanged.
 **Reference documents:** `WORK_PLAN.md` §11.2; `docs/DEBT_REGISTER.md`.
 
 #### P0.1.2 Git remote, `main`, branch protection, CI trigger
-**Status:** BLOCKED (2026-09-20) · **Priority:** P0 · **Type:** BUILD
+**Status:** BLOCKED (2026-09-20, on DR-13 and DR-14) · **Priority:** P0 · **Type:** BUILD
 **Why:** there is no remote; CI listens on `main`; the branch is `master`. Nothing is
 backed up and nothing is verified by CI.
 **Goal:** the repository lives on GitHub under company-controlled ownership (doc 05 §6),
@@ -385,7 +385,7 @@ unauthenticated lookup returning 404 and an authenticated one returning `private
 `master` renamed to `main`; 74 commits pushed. The remote's only prior commit was GitHub's
 placeholder README, replaced by a lease-checked force push — **local history was not
 rebased**, so the four commit hashes P0.1.1 records as evidence are intact on the remote.
-Branch protection applied; see the scope note below for its exact shape. First CI run
+Branch protection NOT applied — see the second blocker below. First CI run
 `35519349702` failed before installing anything; second run `35519916212` has
 `typecheck · test · architecture` **green** — install, typecheck and the full suite on
 Linux — and `no forbidden values` **red**.
@@ -408,16 +408,27 @@ edited.
 twice, so the `verify` job verified nothing at all. No step was added, removed or weakened;
 the stricter of the two pins is what remains.
 
-**Scope note (2026-09-20) — protection shape, and why it is not the literal instruction.**
-Required pull request; no force push; no deletion; conversation resolution required;
-`enforce_admins` TRUE, so the rules bind the owner too. Two deliberate departures:
-*required approvals is 0, not 1*, because GitHub forbids approving your own pull request
-and a count of 1 would make a one-person repository permanently unmergeable — this is the
-"self-review noted until a second engineer exists" case the Scope anticipates, and it
-becomes 1 the day a second person has an account. *Required checks list only*
-`typecheck · test · architecture`, not both jobs, because requiring a check that has never
-passed would lock `main` behind DR-13. `no forbidden values` still runs on every push and
-pull request and is visible; P0.1.5 adds it as required the moment it is green.
+**SECOND BLOCKER — "protection rule visible" is NOT met, and cannot be from here.** Both
+GitHub APIs refuse: classic branch protection and the newer rulesets each answer 403,
+"Upgrade to GitHub Pro or make this repository public to enable this feature." Branch
+protection on a PRIVATE repository is a paid feature, on a personal account and in a free
+organisation alike. Verified after the attempts: `GET /branches/main` reports
+`protected: false`, so nothing partial was left behind. The repository was **not** made
+public, which is the other exit GitHub offers and which would publish the blueprint, the
+economics and the red team. Recorded as **DR-14** — a spend decision belonging with the
+budget (P0.2.3), not an engineering one.
+
+**The shape that was prepared, for whoever applies it once DR-14 is paid:** required pull
+request; no force push; no deletion; conversation resolution required; `enforce_admins`
+true, so the rules bind the owner too. Two deliberate departures from the literal Scope.
+*Required approvals 0, not 1*, because GitHub forbids approving your own pull request and a
+count of 1 would make a one-person repository permanently unmergeable — the "self-review
+noted until a second engineer exists" case the Scope anticipates; it becomes 1 the day a
+second person has an account. *Required checks list only* `typecheck · test · architecture`,
+because requiring a job that has never passed would lock `main` behind DR-13; P0.1.5 adds
+`no forbidden values` the moment it is green. The exact payloads are not committed; they
+are three lines of JSON either API will take.
+
 **Completion evidence:** remote URL; CI run URL — recorded above; the task stays BLOCKED
 until the guard is green.
 **Reference documents:** `docs/architecture/10-infrastructure.md` §3; doc 05 §6.
@@ -2240,11 +2251,13 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
 - 2026-09-20 · Claude Code session · P0.1.2 · READY → BLOCKED · the owner approved a personal
   GitHub account in writing, which removed the ownership blocker this plan predicted. Remote
   `AhmedAdel-17/Perfumes-Marketplace` (private, verified both unauthenticated and
-  authenticated), `master` renamed `main`, 74 commits pushed, protection applied, CI triggered.
-  Two of three acceptance criteria met. The third — first CI run green on `main` — is NOT met:
-  the `guard` job's hardcoded-colour step fails on pre-existing code. BLOCKED on **DR-13**, with
-  task **P0.1.5** created to carry the work once the decision lands. The `verify` job is green
-  in CI: install, typecheck and the full suite on Linux, run `35519916212`.
+  authenticated), `master` renamed `main`, 74 commits pushed, CI triggered. **One of three
+  acceptance criteria met** — the remote. Two are not. *CI green on `main`*: `verify` is green
+  (install, typecheck, full suite on Linux, run `35519916212`) and `guard` fails on pre-existing
+  source — BLOCKED on **DR-13**, carried by new task **P0.1.5**. *Protection rule visible*: both
+  GitHub APIs answer 403, branch protection being a paid feature on a private repository —
+  BLOCKED on **DR-14**. `GET /branches/main` confirms `protected: false`, so no half-applied rule
+  was left behind, and the repository was not made public to dodge the charge.
 
 - 2026-09-20 · Claude Code session · P0.1.5 · created · BLOCKED · change-control rule 3, next
   free number in workstream 0.1. Carries DR-13 and the guard.
@@ -2254,6 +2267,12 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   account is still open, the recommendation's second admin and shared recovery do not exist, so
   the repository is a single point of failure in one person's credentials, and this register
   requires both founders on a FOUNDERS-class decision while only one name is on it.
+
+- 2026-09-20 · Claude Code session · DR-14 · created · OPEN · branch protection on a private
+  repository is a paid GitHub feature; classic protection and rulesets both answer 403. The free
+  exit GitHub offers is to make the repository public, which would publish the blueprint, the
+  economics and the red team, so it was rejected rather than tried. A spend decision belonging
+  with the budget (P0.2.3), not an engineering one.
 
 - 2026-09-20 · Claude Code session · DR-13 · created · OPEN · the hardcoded-colour guard versus
   31 hex literals. Three categories needing three answers: 2 inside comments (guard false
