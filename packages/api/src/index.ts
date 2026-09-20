@@ -6,6 +6,7 @@ export * from './shipping';
 export * from './providers/ports';
 export * from './providers/stubs';
 export * from './providers/session';
+export * from './providers/login-codes';
 export * from './providers/courier';
 export * from './providers/media';
 export * from './routers/index';

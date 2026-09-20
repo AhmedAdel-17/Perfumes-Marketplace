@@ -1,7 +1,7 @@
 import 'server-only';
-import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
-import { generateOtpCode, isSessionValid, type SellerSession } from '@diyar/api';
+import { isSessionValid, type SellerSession } from '@diyar/api';
 
 /**
  * The seller's signed-in state.
@@ -10,6 +10,14 @@ import { generateOtpCode, isSessionValid, type SellerSession } from '@diyar/api'
  * id, both of which the server can verify cheaply and neither of which is worth
  * a database round trip on every request. The signature is what makes it safe —
  * without it the cookie is a text field naming which house you would like to be.
+ *
+ * ONE-TIME CODES USED TO LIVE HERE TOO, in a `Map` on `globalThis` that the
+ * operator portal borrowed. They now live in Postgres behind `LoginCodeStore`
+ * (WORK_PLAN 11.2, migration 0025), because a process-local store does not
+ * survive a restart and does not exist across instances — and because the
+ * shared `Map` was keyed on the phone ALONE, so a code issued for a house
+ * verified at the operator console for the same number. The store keys on the
+ * phone and the audience, and refuses the swap.
  */
 
 const COOKIE = 'diyar_seller';
@@ -82,68 +90,4 @@ export async function readSellerSession(): Promise<SellerSession | null> {
 
 export async function clearSellerSession(): Promise<void> {
   (await cookies()).delete(COOKIE);
-}
-
-/* -------------------------------------------------------- one-time codes */
-
-interface PendingCode {
-  readonly code: string;
-  readonly expiresAt: number;
-  attempts: number;
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __diyarOtpCodes: Map<string, PendingCode> | undefined;
-}
-
-/**
- * Issued codes, in memory.
- *
- * This is process-local, so it does not survive a restart and does not work
- * across more than one web instance. That is acceptable ONLY because it is part
- * of the same stubbed sign-in that `assertProductionSafe` refuses to boot — it
- * cannot reach production on its own. It must be replaced TOGETHER with the SMS
- * adapter, never separately, or the day real SMS arrives is the day sign-in
- * starts failing for half of all requests behind a load balancer. Recorded in
- * DEBT_REGISTER.md with that trigger.
- */
-const codes = (): Map<string, PendingCode> => (globalThis.__diyarOtpCodes ??= new Map());
-
-const CODE_TTL_MS = 5 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
-
-export function issueCode(phone: string): string {
-  // `randomInt` is cryptographically secure; `Math.random()` is not, and a
-  // predictable six-digit code is not a second factor.
-  const code = generateOtpCode((max) => randomInt(max));
-  codes().set(phone, { code, expiresAt: Date.now() + CODE_TTL_MS, attempts: 0 });
-  return code;
-}
-
-export type CodeVerdict = 'ok' | 'wrong' | 'expired' | 'too_many_attempts';
-
-export function verifyCode(phone: string, submitted: string): CodeVerdict {
-  const pending = codes().get(phone);
-  if (!pending) return 'expired';
-
-  if (Date.now() > pending.expiresAt) {
-    codes().delete(phone);
-    return 'expired';
-  }
-
-  // Counted BEFORE the comparison, so a failed guess costs an attempt whether
-  // or not anything else about the request was valid.
-  pending.attempts += 1;
-  if (pending.attempts > MAX_ATTEMPTS) {
-    codes().delete(phone);
-    return 'too_many_attempts';
-  }
-
-  if (!signatureMatches(pending.code, submitted)) return 'wrong';
-
-  // Single use. A code that still works after it has been used is a code that
-  // can be replayed from a screenshot.
-  codes().delete(phone);
-  return 'ok';
 }

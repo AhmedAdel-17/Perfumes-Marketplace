@@ -6,8 +6,11 @@ import { api } from '@/core/api';
 import { database } from '@/core/db';
 import { schema } from '@diyar/db';
 import { and, eq, isNull } from 'drizzle-orm';
+import { generateOtpCode } from '@diyar/api';
+import { randomInt } from 'node:crypto';
+import { loginCodes } from '@/core/login-codes';
 import {
-  clearSellerSession, issueCode, issueSellerSession, readSellerSession, verifyCode,
+  clearSellerSession, issueSellerSession, readSellerSession,
 } from './session';
 
 /**
@@ -62,7 +65,12 @@ export async function requestSellerCode(phone: string): Promise<RequestCodeResul
 
   if (!staff) return generic;
 
-  await consoleOtpSender.send({ phone: trimmed, code: issueCode(trimmed) });
+  // `randomInt` is cryptographically secure; `Math.random()` is not, and a
+  // predictable six-digit code is not a second factor. The code is held only
+  // long enough to hand to the sender — the store keeps a digest of it.
+  const code = generateOtpCode((max) => randomInt(max));
+  await loginCodes().issue({ phone: trimmed, audience: 'seller', code });
+  await consoleOtpSender.send({ phone: trimmed, code });
   return generic;
 }
 
@@ -70,7 +78,9 @@ export type VerifyResult = { ok: true } | { ok: false; message: string };
 
 export async function verifySellerCode(phone: string, code: string): Promise<VerifyResult> {
   const trimmed = phone.trim();
-  const verdict = verifyCode(trimmed, code.trim());
+  const verdict = await loginCodes().verify({
+    phone: trimmed, audience: 'seller', code: code.trim(),
+  });
 
   if (verdict === 'too_many_attempts') {
     return { ok: false, message: 'محاولات كثيرة. اطلب رمزًا جديدًا.' };

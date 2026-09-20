@@ -6,10 +6,12 @@ import { schema } from '@diyar/db';
 import { consoleOtpSender, consume, rateLimitMessage } from '@diyar/api';
 import { api } from '@/core/api';
 import { database } from '@/core/db';
+import { generateOtpCode } from '@diyar/api';
+import { randomInt } from 'node:crypto';
+import { loginCodes } from '@/core/login-codes';
 import {
   clearOpsSession, issueOpsSession, readOpsSession,
 } from './session';
-import { issueCode, verifyCode } from '@/features/seller/session';
 
 /**
  * Marketplace operations.
@@ -68,14 +70,28 @@ export async function requestOpsCode(phone: string): Promise<OpsResult> {
   // Success regardless. Confirming which numbers belong to marketplace
   // operators would hand an attacker the shortlist of accounts worth attacking.
   if (await findOperator(trimmed)) {
-    await consoleOtpSender.send({ phone: trimmed, code: issueCode(trimmed) });
+    /*
+     * Issued for the `platform` audience, and that is a security property
+     * rather than bookkeeping.
+     *
+     * Both portals used to share one in-process `Map` keyed on the phone alone,
+     * so a code texted to a house verified here — at the console that releases
+     * money — for the same number. The store keys on the phone AND the
+     * audience, and answers a mismatch with the same 'expired' it gives an
+     * unknown number, so which console a number belongs to stays unobservable.
+     */
+    const code = generateOtpCode((max) => randomInt(max));
+    await loginCodes().issue({ phone: trimmed, audience: 'platform', code });
+    await consoleOtpSender.send({ phone: trimmed, code });
   }
   return { ok: true };
 }
 
 export async function verifyOpsCode(phone: string, code: string): Promise<OpsResult> {
   const trimmed = phone.trim();
-  const verdict = verifyCode(trimmed, code.trim());
+  const verdict = await loginCodes().verify({
+    phone: trimmed, audience: 'platform', code: code.trim(),
+  });
 
   if (verdict === 'too_many_attempts') {
     return { ok: false, message: 'محاولات كثيرة. اطلب رمزًا جديدًا.' };
