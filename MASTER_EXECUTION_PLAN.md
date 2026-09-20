@@ -105,7 +105,7 @@ production (P0.1.3).
 
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
-| P0 Foundations | IN_PROGRESS | 10/30 (inventory + P0.1.1, P0.1.3; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
+| P0 Foundations | IN_PROGRESS | 11/30 (inventory + P0.1.1, P0.1.3, P0.1.4; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | NOT_STARTED | 0/15 | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
@@ -135,7 +135,7 @@ production (P0.1.3).
 | P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | DR-13, DR-14 |
 | P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | BLOCKED | P0 | BUILD | DR-13 |
 | P0.1.3 | Production guard on `platform.runPayout` | P0 | COMPLETE | — | BUILD | — |
-| P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | READY | P1 | BUILD | P0.1.1 |
+| P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | COMPLETE | — | BUILD | P0.1.1 |
 | P0.2.1 | Founders' agreement (doc 05) completed with counsel | P0 | READY | P0 | OPERATE | — |
 | P0.2.2 | Entity path chosen; accountant engaged (D-10) | P0 | READY | P0 | OPERATE | — |
 | P0.2.3 | Budget, runway and the story being told (D-9) | P0 | READY | P0 | OPERATE | P0.2.1 |
@@ -509,7 +509,7 @@ prevent it.
 **Reference documents:** `docs/architecture/08-order-payment-payout-flows.md` §1.1.
 
 #### P0.1.4 Reconcile engineering docs; retire WORK_PLAN as driver
-**Status:** READY · **Priority:** P1 · **Type:** BUILD (documentation)
+**Status:** COMPLETE · **Type:** BUILD (documentation)
 **Why:** `ARCHITECTURE.md`, `TECH_STACK.md`, `README.md`, `WORK_PLAN.md` and `CLAUDE.md` §13
 describe six apps, Supabase Auth, an integrations package, seven gates met and an active
 mobile plan. None is true. Future sessions will follow stale instructions.
@@ -527,7 +527,56 @@ matches the readiness document; debt register lists all 16 items.
 **Tests required:** none (grep for `apps/seller`, `apps/admin`, `Supabase Auth` returns
 nothing outside history sections).
 **Do not do:** delete history; rewrite the founding pack (docs 01–06 are never edited).
-**Completion evidence:** commit; grep output.
+**Completion evidence:** commit `b9903a0`, six files, +398 −158.
+
+*Acceptance criterion 1 — no document describes a folder that does not exist.* Verified by
+grep over `README.md`, `CLAUDE.md`, `docs/ARCHITECTURE.md`, `docs/TECH_STACK.md` and
+`WORK_PLAN.md` for `apps/seller`, `apps/admin`, `packages/integrations`, `apps/jobs` and
+`Supabase Auth`. Every surviving hit is either an explicit negation ("There is no
+`packages/integrations`", "NOT Supabase Auth"), a row labelled PLANNED with its gate, or
+inside `WORK_PLAN.md`, which now opens with a banner saying it does not drive work. Nothing
+is described as existing that does not. `ARCHITECTURE.md` §2, §4, §5 and §6 were replaced
+with what is on disk, checked directory by directory rather than from memory.
+
+*Acceptance criterion 2 — the gate table matches the readiness document.* Eight rows, and
+the verdicts read in order from `docs/product/01-mvp-readiness.md` and from the new table in
+`WORK_PLAN.md` are identical: partial, met (COD), met, not met, met, partial, partial, met.
+The original "seven are met" claim is quoted above the new table rather than deleted, so the
+correction is legible.
+
+*Acceptance criterion 3 — the register lists all 16 items.* `docs/DEBT_REGISTER.md` carries
+items 6–21: eight correctness debts (C1–C6, H1, H13) and eight structural (S1–S8), from
+`docs/product/03-technical-debt.md`. Fifteen sit in **Open**; item 18 is the documentation
+debt this task pays and sits in **Paid**, with its number held open so nobody reuses it. The
+fourth column records why each is CARRIED rather than why it was accepted, because none of
+them was accepted — they were not known.
+
+*Tests.* 1,538 passing, typecheck clean across seven projects — unchanged, as expected from a
+documentation task, and run because rule 7 asks for it rather than because anything could
+have moved.
+
+**Two errors found while checking, neither inherited from the audit.** `CLAUDE.md` §12
+listed three design references when `design-reference/` holds twelve, and named five screens
+as "not yet designed" — seller portal, admin, cart/checkout, order tracking and both mobile
+apps — when each already had a 30–38 KB Arabic mockup. A session trusting that section would
+have invented a visual language that already existed, which is the exact failure this task
+exists to prevent, in the file every session reads first. It also pointed at
+`src/icons.tsx`, which is `packages/ui/src/icons.tsx`, and counted 40 icons where there are
+41. All corrected.
+
+**A third, recorded as debt rather than fixed.** ADR-13 asks that every migration carry a
+`-- rollback:` note. **Zero of the 26 files does**, and `ENGINEERING_PRINCIPLES.md` §6 still
+says "reversible migration", which reads as a down script and means no such thing. The rule
+is now written down in `ARCHITECTURE.md` §6; annotating the files is DEBT #21, an hour of
+work with a trigger.
+
+**On applying unapproved ADRs.** ADR-02, ADR-05, ADR-12 and ADR-13 are all still `Proposed`,
+and ADR-12 carries "founder approval required" because it contradicts the standing
+`WORK_PLAN.md`. Each document says so where it leans on one. What is written is the
+repository as it IS and what this plan already says comes next — P8 has been DEFERRED behind
+GATE 8 since the plan was created — not a decision taken on the founders' behalf. The mobile
+layout and the Redux amendment are marked deferred, never deleted, exactly as the Scope
+requires. Approving the ADRs is P0.2.6.
 **Reference documents:** `docs/architecture/03-architecture-decisions.md`;
 `docs/product/03-technical-debt.md`; `docs/architecture/00-ingestion/CURRENT_ASSUMPTIONS.md`.
 
@@ -2357,3 +2406,27 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   retire WORK_PLAN as driver) is the next executable task; its dependency P0.1.1 is COMPLETE.
   After it, P1.4.6, P3.4.1 and P3.4.2 are READY. P0.1.2 and P0.1.5 remain blocked on DR-13 and
   DR-14, which are the founders'.
+
+- 2026-09-20 · Claude Code session · P0.1.4 · READY → COMPLETE · commit `b9903a0`. All three
+  acceptance criteria verified by grep and by row-for-row comparison, not by reading the
+  prose. `WORK_PLAN.md` keeps its history and loses its authority: a banner withdraws its
+  standing instruction, and its gate table is replaced by the readiness document's with the
+  old claim quoted above it. Sixteen audit debts registered as items 6–21.
+
+- 2026-09-20 · Claude Code session · P0.1.4 · discrepancies found beyond the task's brief ·
+  `CLAUDE.md` §12 understated the design references by nine files and called five designed
+  screens undesigned; the icons path and count were both wrong. Corrected. Separately, ADR-13
+  asks every migration for a `-- rollback:` note and none of the 26 has one — registered as
+  DEBT #21 rather than fixed, because it is an hour of writing that belongs with the next
+  migration rather than with a documentation pass.
+
+- 2026-09-20 · Claude Code session · — · note on authority · the four ADRs this task applies are
+  still `Proposed`, and ADR-12 requires founder approval. Nothing was marked approved. The
+  documents describe the repository as it is and point at this plan for what comes next; every
+  place that leans on an ADR names it and says it is unapproved. P0.2.6 is where they become
+  decisions.
+
+- 2026-09-20 · Claude Code session · — · next READY · **P1.4.6** (seller contact isolation,
+  priority P0, DEBT #3) is the next executable BUILD task — its only dependency P0.1.1 is
+  COMPLETE. **P3.4.1** and **P3.4.2** follow at priority P1. Everything else in P0 is OPERATE
+  or VALIDATE and belongs to the founders; P0.1.2 and P0.1.5 wait on DR-13 and DR-14.
