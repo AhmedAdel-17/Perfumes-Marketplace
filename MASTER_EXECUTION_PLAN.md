@@ -105,7 +105,7 @@ production (P0.1.3).
 
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
-| P0 Foundations | IN_PROGRESS | 8/29 (built inventory only) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
+| P0 Foundations | IN_PROGRESS | 9/29 (inventory + P0.1.1) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | NOT_STARTED | 0/15 | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
@@ -131,7 +131,7 @@ production (P0.1.3).
 | P0.0.6 | Media store (R2 + local), photo manager, publish gate on verified image | P0 | COMPLETE | — | BUILD | — |
 | P0.0.7 | CMS (pages, revisions, preview, announcements, curation, images) | P0 | COMPLETE | — | BUILD | — |
 | P0.0.8 | HTTP boundary `/api/trpc` (anonymous) and durable login codes | P0 | COMPLETE | — | BUILD | — |
-| P0.1.1 | Commit the 11.2 login-code wiring | P0 | READY | P0 | BUILD | — |
+| P0.1.1 | Commit the 11.2 login-code wiring | P0 | COMPLETE | — | BUILD | — |
 | P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | READY | P0 | BUILD | — |
 | P0.1.3 | Production guard on `platform.runPayout` | P0 | READY | P0 | BUILD | — |
 | P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | READY | P1 | BUILD | P0.1.1 |
@@ -165,7 +165,7 @@ production (P0.1.3).
 | P1.4.3 | Observability baseline | P1 | NOT_STARTED | P0 | BUILD | P0.1.2 |
 | P1.4.4 | Deployment: staging and production | P1 | NOT_STARTED | P0 | BUILD | P0.1.2, P0.2.3 |
 | P1.4.5 | Rate limits in the database + edge rules | P1 | NOT_STARTED | P0 | BUILD | P1.4.4 |
-| P1.4.6 | Seller contact isolation | P1 | NOT_STARTED | P0 | BUILD | P0.1.1 |
+| P1.4.6 | Seller contact isolation | P1 | READY | P0 | BUILD | P0.1.1 |
 | P1.4.7 | Manual money procedure verified in production | P1 | NOT_STARTED | P0 | OPERATE | P0.1.3, P1.4.4, P0.2.5 |
 | P2.1.1 | Select cohort 1 (3–5 houses) | P2 | NOT_STARTED | P0 | VALIDATE | P0.4.6 |
 | P2.1.2 | Verification with evidence stored privately | P2 | NOT_STARTED | P0 | OPERATE | P2.1.1, P0.3.5 |
@@ -195,8 +195,8 @@ production (P0.1.3).
 | P3.3.1 | SLA watch job and messages | P3 | NOT_STARTED | P0 | BUILD | P1.1.2, P1.1.3 |
 | P3.3.2 | Purge jobs (analytics, codes, orphan media) | P3 | NOT_STARTED | P1 | BUILD | P1.1.2 |
 | P3.3.3 | Daily exception report | P3 | NOT_STARTED | P0 | BUILD | P3.3.1 |
-| P3.4.1 | Web reads through the API; identity repository | P3 | NOT_STARTED | P1 | BUILD | P0.1.1 |
-| P3.4.2 | Sessions table and revocation | P3 | NOT_STARTED | P1 | BUILD | P0.1.1 |
+| P3.4.1 | Web reads through the API; identity repository | P3 | READY | P1 | BUILD | P0.1.1 |
+| P3.4.2 | Sessions table and revocation | P3 | READY | P1 | BUILD | P0.1.1 |
 | P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | NOT_STARTED | P1 | BUILD | P0.1.2 |
 | P3.4.4 | Payment entity and payment state machine | P3 | NOT_STARTED | P1 | BUILD | P3.1.2 |
 | P4.1.1 | Frontend foundations (R0) | P4 | NOT_STARTED | P1 | BUILD | GATE 4 |
@@ -334,7 +334,7 @@ to P8.1.2.
 ## 0.1 Repository truth
 
 #### P0.1.1 Commit the 11.2 login-code wiring
-**Status:** READY · **Priority:** P0 · **Type:** BUILD
+**Status:** COMPLETE · **Type:** BUILD
 **Why:** five files are modified/untracked in the working tree (`features/seller/actions.ts`,
 `features/ops/actions.ts`, `features/seller/session.ts`, `packages/api/src/index.ts`,
 `apps/web/src/core/login-codes.ts`); they wire both sign-in paths onto the Postgres
@@ -350,7 +350,16 @@ and DEBT #1; update `docs/DEBT_REGISTER.md` item 1 to "store wired; sender still
 **Tests required:** existing `login-codes.test.ts`, `login-codes.contract.test.ts`, API
 suite.
 **Risks:** none. **Do not do:** any other change in the same commit.
-**Completion evidence:** commit hash; test counts.
+**Completion evidence:** `636db20` — the five files, 77 insertions, 72 deletions, no test
+changed. `28a65d9` — DEBT #1 narrowed to the sender alone. Verified BEFORE the commit:
+`pnpm -r typecheck` clean across seven projects; `pnpm -r test` 1,530 passing (tokens 123 ·
+domain 677 · i18n 50 · db 351 · api 329), the plan's own baseline to the test;
+`login-codes.test.ts` + `login-codes.contract.test.ts` 41 passing when run by name. Working
+tree clean. **Scope note (2026-09-20):** a third commit, `088bfa9`, put the 95 untracked
+planning documents — this file, `FOUNDER_RED_TEAM.md`, `DECISION_REGISTER.md` and the 70-document
+blueprint under `docs/` — into history unedited. That is outside this task and is recorded in the
+LOG; it was done because the acceptance criterion asks for a tree clean except `docs/`, and
+because this task's own reason applies to them unchanged.
 **Reference documents:** `WORK_PLAN.md` §11.2; `docs/DEBT_REGISTER.md`.
 
 #### P0.1.2 Git remote, `main`, branch protection, CI trigger
@@ -994,7 +1003,7 @@ existing `rate-limit.test.ts` passes against the table adapter; DEBT #2 closed.
 **Reference documents:** `docs/DEBT_REGISTER.md` #2; `packages/api/src/rate-limit.ts`.
 
 #### P1.4.6 Seller contact isolation
-**Status:** NOT_STARTED · **Priority:** P0 · **Type:** BUILD
+**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P0 · **Type:** BUILD
 **Why:** a live house's phone and email are readable by anonymous traffic (DEBT #3). A
 public deployment exposes every pilot house's number to scraping.
 **Goal:** `seller_contacts` table with its own RLS; the two legitimate readers (sign-in
@@ -1416,7 +1425,7 @@ screen section and a message to the founders.
 ## 3.4 Structure and security
 
 #### P3.4.1 Web reads through the API; identity repository
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P1 · **Type:** BUILD
 **Why:** H8 — the web app queries Postgres as the owner role in three files, bypassing RLS
 and the facade.
 **Goal:** `core/catalogue.ts` replaced by `catalogue.*` procedures (RLS as `anon`); an
@@ -1429,7 +1438,7 @@ roots; Arabic label maps moved to `@diyar/i18n`.
 **Reference documents:** `docs/architecture/03` ADR-10.
 
 #### P3.4.2 Sessions table and revocation
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P1 · **Type:** BUILD
 **Goal:** `sessions` (principal, audience, issued, expires, revoked_at, ip/UA hashes);
 cookies carry session id + HMAC; sign-out-everywhere; per-request revalidation reads the
 row (replaces the staff lookup where appropriate).
@@ -2127,3 +2136,44 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
 - 2026-09-18 · Claude Code (planning phase) · — · plan created from commit `4450d78` +
   uncommitted 11.2 wiring; typecheck clean; 1,530 tests passing (tokens 123, domain 677,
   i18n 50, db 351, api 329); no source changed in this phase.
+
+- 2026-09-20 · Claude Code session · P0.1.1 · READY → COMPLETE · commits `636db20` (the five
+  files: both sign-in paths onto `LoginCodeStore`, the `globalThis` Map and the phone-only key
+  deleted, `core/login-codes.ts` as the composition root, `providers/login-codes` exported) and
+  `28a65d9` (DEBT #1 narrowed to the SMS sender alone). Verified before committing: typecheck
+  clean across seven projects; 1,530 tests passing — tokens 123, domain 677, i18n 50, db 351,
+  api 329, matching this plan's baseline exactly; the two named login-code files 41 passing when
+  run by name. No test changed, because the files are composition and the store's own tests
+  already cover the semantics.
+
+- 2026-09-20 · Claude Code session · P1.4.6, P3.4.1, P3.4.2 · NOT_STARTED → READY · their sole
+  dependency P0.1.1 is COMPLETE. P1.2.1–P1.2.4 are NOT recalculated: each also depends on
+  P0.2.6, an OPERATE task the founders own, so P0.1.1 alone does not release them.
+
+- 2026-09-20 · Claude Code session · P0.1.4 · plan inconsistency, no status change · the task
+  index has carried P0.1.4 as READY since the plan was written, while its only dependency
+  P0.1.1 was incomplete. Under rule 2 that was premature. It is now correct by execution rather
+  than by edit, and the row is left alone per rule 16. Recorded so the next session does not read
+  the earlier READY as evidence that rule 2 is applied loosely.
+
+- 2026-09-20 · Claude Code session · — · scope note · commit `088bfa9` committed 95 untracked
+  markdown files unedited: `MASTER_EXECUTION_PLAN.md` itself, `FOUNDER_RED_TEAM.md`,
+  `DECISION_REGISTER.md` and the 70-document blueprint under `docs/`. This is beyond P0.1.1,
+  which scopes five source files. It was done for that task's own stated reason — uncommitted
+  work is work that can be lost — and because the acceptance criterion asks for a working tree
+  clean except `docs/`, which the three root documents would otherwise have failed. No word of
+  any document was changed; reconciling them is P0.1.4, and editing them here would have hidden
+  what was authored behind what was corrected. No code and no decision was touched.
+
+- 2026-09-20 · Claude Code session · — · repository check · no discrepancy found between plan and
+  repository for this task. The five files were present and modified exactly as described, the
+  store and migration 0025 existed, nothing still imported the deleted `issueCode`/`verifyCode`,
+  and `signatureMatches` remained in use by `readSellerSession` so its retention is correct, not
+  dead code.
+
+- 2026-09-20 · Claude Code session · next READY · **P0.1.2** (git remote, `main`, branch
+  protection, CI trigger) is next in index order and has no dependencies. It needs something a
+  session cannot supply: a GitHub account under company control (doc 05 §6), which P0.2.2 plans
+  and neither founder has decided. A session that cannot create that remote should mark P0.1.2
+  BLOCKED on P0.2.2 rather than push to a personal account. **P0.1.3** (production guard on
+  `platform.runPayout`) is the next task after it that is fully executable in code today.
