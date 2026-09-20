@@ -108,7 +108,7 @@ production (P0.1.3).
 | P0 Foundations | IN_PROGRESS | 11/30 (inventory + P0.1.1, P0.1.3, P0.1.4; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | IN_PROGRESS | 1/15 (P1.4.6) | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
-| P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
+| P3 Money correctness & automation | IN_PROGRESS | 1/15 (P3.4.1, gate exception logged) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
 | P5 Growth | NOT_STARTED | 0/17 | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
@@ -196,7 +196,7 @@ production (P0.1.3).
 | P3.3.1 | SLA watch job and messages | P3 | NOT_STARTED | P0 | BUILD | P1.1.2, P1.1.3 |
 | P3.3.2 | Purge jobs (analytics, codes, orphan media) | P3 | NOT_STARTED | P1 | BUILD | P1.1.2 |
 | P3.3.3 | Daily exception report | P3 | NOT_STARTED | P0 | BUILD | P3.3.1 |
-| P3.4.1 | Web reads through the API; identity repository | P3 | READY | P1 | BUILD | P0.1.1 |
+| P3.4.1 | Web reads through the API; identity repository | P3 | COMPLETE | — | BUILD | P0.1.1 |
 | P3.4.2 | Sessions table and revocation | P3 | READY | P1 | BUILD | P0.1.1 |
 | P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | NOT_STARTED | P1 | BUILD | P0.1.2 |
 | P3.4.4 | Payment entity and payment state machine | P3 | NOT_STARTED | P1 | BUILD | P3.1.2 |
@@ -1633,7 +1633,7 @@ screen section and a message to the founders.
 ## 3.4 Structure and security
 
 #### P3.4.1 Web reads through the API; identity repository
-**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P1 · **Type:** BUILD
+**Status:** COMPLETE · **Type:** BUILD
 **Why:** H8 — the web app queries Postgres as the owner role in three files, bypassing RLS
 and the facade.
 **Goal:** `core/catalogue.ts` replaced by `catalogue.*` procedures (RLS as `anon`); an
@@ -1643,6 +1643,60 @@ roots; Arabic label maps moved to `@diyar/i18n`.
 **Depends on:** P0.1.1 · **Blocks:** P5.8.1
 **Acceptance criteria:** grep shows no `database()` outside `core/db.ts`, `core/login-codes.ts`,
 `core/media.ts`; all e2e groups pass.
+
+**Completion evidence:** commit `0e76e0e`, 22 files, migration `0027_identity_reads.sql`.
+
+*Acceptance criterion 1 — the grep.* `database()` now appears in **two** files, `core/db.ts`
+and `core/login-codes.ts`. `core/media.ts` never used it. Two further composition roots
+exist and neither takes the raw handle: `core/identity.ts` uses `unitOfWork` with the
+`identity` role, and `core/api.ts` imports only a TYPE from `@diyar/db`. The rule is now
+enforced rather than grepped — see criterion 3.
+
+*Acceptance criterion 2 — all e2e groups pass.* **126/126** on a freshly seeded database.
+The accessibility and layout audit is also clean across every surface and width, in dark and
+light, which matters because the whole catalogue rendering path changed underneath it.
+
+*The work.* Six catalogue joins move to a `CatalogueReadModel` port with a Drizzle adapter,
+reached through `catalogue.*` procedures running inside the Unit of Work as `anon`. Most of
+the old `status` filters are DELETED rather than moved, because `public_read_published_products`
+and `public_read_live_sellers` already say it and a policy duplicated in a WHERE clause is a
+second place to get it wrong. One filter stays and the code says why it is not RLS: a
+SUSPENDED house must 404, because an empty storefront reads as a bug and a 404 reads as an
+answer. Sign-in resolution and session revalidation move behind an `IdentityRepository`
+running as the `identity` service role, which migration 0025 created and 0027 gives exactly
+three SELECT policies. Arabic label maps move to `@diyar/i18n`.
+
+*Tests.* 1,550 → **1,591**; db 363 → 398; `apps/web` 0 → 6. `catalogue-read-model.test.ts`
+(21) asserts the NEGATIVE cases as `anon` — a draft, an applicant's product, a suspended
+house — because the arrangement is better and strictly more dangerous to get wrong: if the
+policies stopped binding, a draft would simply appear in the shop.
+`identity-repository.test.ts` (14) ends with the case that makes the role worth having, that
+an anonymous session still cannot resolve a phone to a house. Falsified: the dependency-rule
+test fails by name when a forbidden import is added to a tile.
+
+**`apps/web` HAS A UNIT TEST RUNNER NOW**, which closes the gap logged under P0.1.3. It had
+only `typecheck`, `e2e` and `audit`, so every composition root rested on the compiler alone.
+The runner came with the dependency rule because that rule had nowhere else honest to live.
+`vitest` was already a dependency of five packages; declaring it in a sixth is not a new
+dependency to the project.
+
+**The in-memory double REFUSES these two ports rather than faking them**, and says so in a
+message naming where each is proved instead. A `Map` holds no brands and no media, so a
+catalogue double would answer a different question while looking like agreement — and
+`identity`'s entire contract is what RLS permits, which a double cannot check at all. A
+green test that asserts a security property it has no way to verify is worth less than none.
+
+**Scope note — started before GATE 1.** Phase 3's preamble says it runs from GATE 1, while
+this task's own `Depends on` was satisfied and it was one of only two executable BUILD tasks
+left in the plan. The founder was asked and chose to proceed (20 Sep 2026), on the grounds
+that P3.4 is "Structure and security" rather than ledger work, that Phases 0–3 are the
+freeze envelope DR-09 proposes, and that this is the direct fix for what P1.4.6 surfaced.
+Recorded rather than assumed.
+
+**What this did NOT fix.** `core/api.ts` still imports `ActorContext` from `@diyar/db`. That
+is a type, not a query, and the dependency-rule test exempts the file by name with that
+reason written beside it. Sessions themselves are still a signed cookie revalidated per
+request; a `sessions` table with real revocation is P3.4.2.
 **Reference documents:** `docs/architecture/03` ADR-10.
 
 #### P3.4.2 Sessions table and revocation
@@ -2503,3 +2557,30 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   identity repository) and **P3.4.2** (sessions table and revocation), both priority P1, both
   depending only on P0.1.1. Every remaining P1 task depends on P0.2.5 or P0.2.6, which are
   OPERATE and the founders'. P0.1.2 and P0.1.5 wait on DR-13 and DR-14.
+
+- 2026-09-20 · Claude Code session · P3.4.1 · READY → COMPLETE · commit `0e76e0e`, migration
+  0027. Catalogue reads and identity lookups both move behind ports and run inside the Unit of
+  Work; `database()` drops from three files to two. 1,550 → 1,591 tests, 126/126 e2e, audit
+  clean. DEBT #14 and #20 moved to Paid.
+
+- 2026-09-20 · Claude Code session · P3.4.1 · gate exception, founder-approved · Phase 3's
+  preamble gates it on GATE 1, which is blocked on P0.2 decisions, while this task's own
+  dependency list was satisfied and it was one of only two executable BUILD tasks left. The
+  founder was asked and chose to proceed. Recorded here because sequencing is a
+  DECISION_REGISTER matter under change-control rule 5, and because the same question returns
+  for P3.4.2.
+
+- 2026-09-20 · Claude Code session · — · gap CLOSED · `apps/web` now has a unit test runner.
+  It was logged under P0.1.3 as a gap without an owner: the app had only `typecheck`, `e2e`
+  and `audit`, so every composition root rested on the compiler alone. The dependency-rule
+  test this task required had nowhere else honest to live, so the runner came with it.
+
+- 2026-09-20 · Claude Code session · — · harness finding, already registered · the audit
+  script and the browser suite cannot share a dev-server log: both read one-time codes from it,
+  and running the audit after e2e makes it pick a stale code and time out. Re-running on a
+  fresh log is clean. This is DEBT D-O5's "needs dev log for codes", now with a second symptom.
+
+- 2026-09-20 · Claude Code session · — · next READY · **P3.4.2** (sessions table and
+  revocation) is the ONLY remaining BUILD task whose dependencies are satisfied, and it carries
+  the same Phase 3 gate question P3.4.1 just answered. After it, every task in the plan waits
+  on a founder decision: P0.2.5, P0.2.6, DR-13 or DR-14.
