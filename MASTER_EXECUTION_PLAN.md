@@ -105,7 +105,7 @@ production (P0.1.3).
 
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
-| P0 Foundations | IN_PROGRESS | 9/30 (inventory + P0.1.1; P0.1.2 blocked on DR-13) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
+| P0 Foundations | IN_PROGRESS | 10/30 (inventory + P0.1.1, P0.1.3; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | NOT_STARTED | 0/15 | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | NOT_STARTED | 0/15 | required for GATE 4 | GATE 1 |
@@ -134,7 +134,7 @@ production (P0.1.3).
 | P0.1.1 | Commit the 11.2 login-code wiring | P0 | COMPLETE | — | BUILD | — |
 | P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | DR-13, DR-14 |
 | P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | BLOCKED | P0 | BUILD | DR-13 |
-| P0.1.3 | Production guard on `platform.runPayout` | P0 | READY | P0 | BUILD | — |
+| P0.1.3 | Production guard on `platform.runPayout` | P0 | COMPLETE | — | BUILD | — |
 | P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | READY | P1 | BUILD | P0.1.1 |
 | P0.2.1 | Founders' agreement (doc 05) completed with counsel | P0 | READY | P0 | OPERATE | — |
 | P0.2.2 | Entity path chosen; accountant engaged (D-10) | P0 | READY | P0 | OPERATE | — |
@@ -452,7 +452,7 @@ states, or registered as debt.
 `.github/workflows/ci.yml`; `DECISION_REGISTER.md` DR-13.
 
 #### P0.1.3 Production guard on `platform.runPayout`
-**Status:** READY · **Priority:** P0 · **Type:** BUILD
+**Status:** COMPLETE · **Type:** BUILD
 **Why:** `runPayout` pays every eligible sub-order on every run (audit C1). Until the
 ledger (P3.1.3) exists, no software payout may run against real houses. A deployed
 console with a working "run payout" button is a loaded weapon.
@@ -467,7 +467,45 @@ proves the enabled path.
 `FORBIDDEN` with the message; audit entry not written; test names recorded.
 **Tests required:** new API test pair (refused / enabled).
 **Risks:** none. **Do not do:** touch settlement logic.
-**Completion evidence:** commit; test names.
+**Completion evidence:** commit `58ed21e`. `packages/api/src/payout-switch.ts` holds the
+rule and the Arabic message; `ApiContext.payoutsEnabled` is required, so a composition root
+cannot open the money path by staying silent; the check is the first statement in
+`runPayout`, before the transaction opens. `apps/web/src/core/api.ts` is the only file that
+reads the variable. `.env.example` documents it.
+
+*Test names.* `payout-switch.test.ts` — "is OFF in production when nothing is set", "is on
+in development and in test when nothing is set", "lets an explicit value win in either
+direction", "reads a value the way a shell would hand it over", "treats a value it does not
+recognise as silence, not as consent", "refuses in Arabic, naming the reason and the
+alternative". `api.test.ts`, the required pair — "refuses in production, and writes nothing
+while refusing" and "runs when the switch is on, so the refusal above is the switch and not
+a broken procedure". Suite 1,530 → 1,538; api 329 → 337; typecheck clean across seven
+projects.
+
+*Falsified, not assumed* (rule 7 — this is a money path). With the guard commented out the
+refusal test fails with "promise resolved instead of rejecting" while the control test
+still passes; the guard was then restored and the suite re-run green.
+
+*The acceptance criterion's exact condition, checked in a running process:* with
+`NODE_ENV=production` and `PAYOUTS_ENABLED` unset, the expression the composition root
+evaluates returns `false`, and `false` is what the API test proves raises `FORBIDDEN` with
+the Arabic message and writes no audit entry. The one line joining the two halves is
+typechecked and reviewed but not unit-tested, because `apps/web` has no test runner — only
+`typecheck`, `e2e` and `audit`. Recorded rather than glossed.
+
+**Repository discrepancy (2026-09-20).** Scope says "the ops screen hides or disables the
+control". **There is no such screen and no such control.** `opsRunPayout` in
+`features/ops/actions.ts` has no caller anywhere in the app, so there was nothing to hide,
+and building a payout screen in order to disable it would be absurd. The guard belongs on
+the procedure, which is where it is. One related change was made rather than left: that
+action swallowed every failure into `null`, which `CLAUDE.md` §17 forbids and which is
+exactly wrong for a refusal whose entire value is the sentence it carries — it now returns
+the message, so whoever builds the screen gets it.
+
+**Not done, deliberately.** Settlement logic untouched, as instructed. The switch does not
+decide whether payouts *should* run: DR-03 does, and setting `PAYOUTS_ENABLED=true` against
+real houses before the ledger contradicts it. This code can make that deliberate; it cannot
+prevent it.
 **Reference documents:** `docs/architecture/08-order-payment-payout-flows.md` §1.1.
 
 #### P0.1.4 Reconcile engineering docs; retire WORK_PLAN as driver
@@ -2296,3 +2334,26 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   `platform.runPayout`) is the next fully executable BUILD task and depends on nothing.
   **P0.1.4** (reconcile engineering docs) is also READY. P0.1.5 and the closing of P0.1.2 wait
   on DR-13, which is the founders'.
+
+- 2026-09-20 · Claude Code session · P0.1.3 · READY → COMPLETE · commit `58ed21e`. Kill switch
+  `PAYOUTS_ENABLED`, failing closed, default computed so an unset variable is the safe one.
+  Eight new tests (six on the rule, the required refused/enabled pair on the procedure); suite
+  1,530 → 1,538, api 329 → 337; typecheck clean. Falsified per rule 7: the refusal test fails
+  with the guard removed and the control test does not. The production condition was checked in
+  a running process, not inferred.
+
+- 2026-09-20 · Claude Code session · P0.1.3 · repository discrepancy · the task's Scope names an
+  ops screen control to hide. No such screen or control exists — `opsRunPayout` has no caller.
+  Nothing was built in order to disable it; the guard sits on the procedure. The action's
+  `catch { return null }` was replaced so the Arabic refusal is no longer swallowed, which is a
+  standing-directive fix (§17) rather than new scope.
+
+- 2026-09-20 · Claude Code session · — · gap noted, no task created · `apps/web` has no unit
+  test runner, only `typecheck`, `e2e` and `audit`. Every composition root therefore rests on
+  the compiler alone. Not acted on here because it is outside P0.1.3 and belongs with P3.4.1's
+  dependency-rule test or a decision of its own.
+
+- 2026-09-20 · Claude Code session · — · next READY · **P0.1.4** (reconcile engineering docs;
+  retire WORK_PLAN as driver) is the next executable task; its dependency P0.1.1 is COMPLETE.
+  After it, P1.4.6, P3.4.1 and P3.4.2 are READY. P0.1.2 and P0.1.5 remain blocked on DR-13 and
+  DR-14, which are the founders'.
