@@ -1,10 +1,37 @@
 # Work plan — autonomous run
 
-**Standing instruction (4 September 2026):** work through this list phase by phase without
-asking permission between phases. If a usage limit interrupts the session, the next session
-resumes from the first unchecked box — no context needed beyond this file.
+> # ⛔ THIS FILE NO LONGER DRIVES WORK
+>
+> **`MASTER_EXECUTION_PLAN.md` drives work, from 18 September 2026.** Read that file and
+> take the first `READY` task in index order. Do not resume from the first unchecked box
+> below, and do not start §11.3 or anything after it.
+>
+> This file is **history**. It records what was built between 4 and 16 September 2026, and
+> it is accurate about that. It is kept unedited except for this banner and the gate table
+> in "The remaining MVP gates", which was wrong and is corrected below with its original
+> text preserved beside it.
+>
+> **Two things here are actively misleading if followed:**
+>
+> 1. **The standing instruction below is withdrawn.** "Work through this list phase by
+>    phase without asking permission" was written for a single-developer sprint toward a
+>    demo. The remaining phases are §11.3–13, the native apps, which doc 03 §10 defers until
+>    repeat direct usage proves installation improves retention. ADR-12 says stop; it is
+>    awaiting founder approval (P0.2.6), and until then `MASTER_EXECUTION_PLAN.md` phase P8
+>    is DEFERRED behind GATE 8.
+> 2. **"Seven of eight gates are met" was wrong when written.** Reading the code, three are
+>    met, three are partial and two are not. The plan judged each gate by "a screen exists";
+>    the gates ask whether the outcome is correct. See the table below.
+>
+> Corrected 20 September 2026 by task P0.1.4.
 
-**How to resume:** open Claude Code in `D:\MyDownloads\diyar` and say "continue the work plan".
+**Standing instruction (4 September 2026) — WITHDRAWN, see the banner above:** work through
+this list phase by phase without asking permission between phases. If a usage limit
+interrupts the session, the next session resumes from the first unchecked box — no context
+needed beyond this file.
+
+**How to resume:** open Claude Code in `D:\MyDownloads\diyar` and read
+`MASTER_EXECUTION_PLAN.md`. Saying "continue the work plan" will resume the wrong plan.
 
 ---
 
@@ -70,22 +97,38 @@ with the condition under which that should be reversed stated in advance.
 
 ---
 
-## The remaining MVP gates
+## The remaining MVP gates — CORRECTED 20 September 2026
 
-Doc 04 §8 lists eight acceptance gates for the MVP. **Seven are met** (16 Sep
-2026). The eighth is not engineering's to close: it waits on counsel, and
-building to a guess at what counsel will say is worse than waiting.
+> **What this section said until today:** "Doc 04 §8 lists eight acceptance gates for the
+> MVP. **Seven are met** (16 Sep 2026). The eighth is not engineering's to close: it waits
+> on counsel." Eight rows followed, seven of them a tick.
+>
+> **That was wrong**, and it was wrong in a way worth naming: the plan judged each gate by
+> whether a screen existed, and the gates ask whether the OUTCOME is correct. A returns
+> screen that never moves the sub-order still shows a returns screen. The original rows are
+> not reproduced line by line because they said nothing except "✅"; the reasoning that
+> replaced them is below, from `docs/product/01-mvp-readiness.md`, which is the source of
+> truth for this table.
 
-| Gate (doc 04 §8) | State (updated 15 September 2026) |
-|---|---|
-| Seller approved, publishes a product, receives an attributed order, sees a statement | ✅ — since 5.7: a house uploads a verified photograph, the listing publishes, and the shop and the bag show it. Production storage needs the R2 bucket and its CORS rule (README, "Deploying") |
-| Customer understands shipping and completes COD checkout | ✅ |
-| Split order produces correct seller tasks and customer tracking | ✅ — and since 0020, a dispatch deadline per house |
-| Cancelled, refused, returned, failed-payment states reconcile | ✅ — returns requested, decided and refunded through screens; refunds audited |
-| Only delivered orders create verified-purchase reviews | ✅ — enforced in the domain, the router and a database trigger |
-| Admin actions, fee changes and payout adjustments are auditable | ✅ — written in the decision's own transaction; readable at `/ops/audit` |
-| Privacy, terms, seller agreement, return policy, prohibited products | **partial — the only gate still open** — pages published through the CMS, prohibited-claim controls live; **pending counsel** on the wording, on the PDPL export/delete process before it may be built, and now on A-1's two 180-day retention figures, which are built to but not settled |
-| Owner sees funnel, seller SLA and contribution without database work | ✅ — `/ops/insights`, both halves of the funnel since 9.5. A contribution margin still waits on A-2 (payment and courier costs), and the screen shows each input's status rather than a margin computed from half its terms |
+**Three met, three partial, two not met.**
+
+| # | Gate (doc 04 §8) | Plan said | Audit says | Why |
+|---|---|---|---|---|
+| 1 | Seller approved → publishes a valid product → receives an **attributed** order → views its statement | ✅ | **partial** | Approval, publishing with a photograph, order and statement all exist. The order is not attributed — every order is `unknown` (C4) — and the statement is wrong after the second payout run (C1). |
+| 2 | Customer understands total shipping and completes COD/e-payment checkout without hidden costs | ✅ | **met (COD)** | Per-house fee and window shown before payment; the total reconciles across four screens. E-payment absent by decision (doc 04: "as commercially available"). |
+| 3 | Split order → correct seller tasks and customer tracking | ✅ | **met** | N sub-orders, own clocks, own queues, one tracking page. |
+| 4 | Cancelled, refused, returned and failed-payment states reconcile | ✅ | **NOT MET** | No path reaches `cancelled` or `refused`; `returned` never happens; a refund never reaches settlement; a failed payment cannot exist (C2, C6). |
+| 5 | Only delivered orders create verified-purchase reviews | ✅ | **met** | Domain, router and database trigger. Forgery by a house holding the customer's phone remains possible until checkout phone verification (M16, P1.4.1). |
+| 6 | Admin actions, fee changes and payout adjustments auditable | ✅ | **partial** | Moderation, payouts, remittance, refunds and content are audited. **Fee changes cannot happen** — rates are a constant (C5) — so they are not auditable. Payout *adjustments* have a table and no screen. |
+| 7 | Privacy, terms, seller agreement, return policy, prohibited-product controls live | partial | **partial** | Pages published; claims scanner live; consent records and privacy requests unbuilt; wording pending counsel. |
+| 8 | Founder sees funnel, seller SLA and contribution inputs without database work | ✅ | **met** | `/ops/insights`; margin withheld until A-2 by design. |
+
+Gate 4 is the one that matters most and the one that was reported met. It is the hardest
+requirement in the MVP by `CLAUDE.md` §6's own account, and closing it is P1.2.1–P1.2.4 and
+P3.1.1–P3.1.4 in `MASTER_EXECUTION_PLAN.md`.
+
+**Policy, going forward:** "gate met" in any plan requires a named test per gate clause, not
+a screen.
 
 ## 5. The seller's catalogue  ✅
 

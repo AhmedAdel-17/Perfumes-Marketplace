@@ -2,23 +2,41 @@
 
 Confirmed 1 September 2026. Exact versions pinned at project setup.
 
-**One line:** TypeScript everywhere · Next.js for all web · Expo for both mobile apps ·
-PostgreSQL on Supabase · one shared package holding all money logic.
+> **Reconciled 20 September 2026 (task P0.1.4).** Three things in this document were not
+> true of the repository: it named three web applications where there is one (ADR-02), it
+> named Supabase Auth where the product has its own phone-OTP identity (ADR-05), and it
+> listed a `packages/integrations` that does not exist. Mobile is deferred behind GATE 8
+> (ADR-12) and is marked so rather than removed. Rows now say **BUILT** or **PLANNED**.
+>
+> The ADRs are in `docs/architecture/03-architecture-decisions.md` and are all still
+> `Proposed`; approving them is task P0.2.6. What is written here is the repository as it
+> is, and `MASTER_EXECUTION_PLAN.md` is the source of truth for what comes next.
+
+**One line:** TypeScript everywhere · Next.js for all web · PostgreSQL on Supabase · one
+shared package holding all money logic · Expo for both mobile apps **when GATE 8 opens**.
 
 ---
 
 ## 1. Applications
 
-| Surface | Built with | Hosted on |
-|---|---|---|
-| Marketplace website | Next.js (App Router) + React + TypeScript + Tailwind | Vercel |
-| Brand storefronts | Same app, own routes and metadata | Vercel |
-| Seller portal | Next.js — separate app, same repo | Vercel |
-| Admin + CMS | Next.js — content tables in the platform console (§11) | Vercel |
-| Buyer mobile app | Expo (React Native) — iOS + Android | App Store / Play |
-| Seller mobile app | Expo (React Native) — iOS + Android | App Store / Play |
+| Surface | State | Built with | Hosted on |
+|---|---|---|---|
+| Marketplace website | **BUILT** | Next.js (App Router) + React + TypeScript + Tailwind | Vercel (P1.4.4) |
+| Brand storefronts | **BUILT** | Same app, own routes and metadata | Vercel |
+| Seller portal | **BUILT** | Same app, the `/seller` route group — **not a separate app** (ADR-02) | Vercel |
+| Admin + CMS | **BUILT** | Same app, the `/ops` route group; content tables in the console (§11) | Vercel |
+| Buyer mobile app | **PLANNED — GATE 8** | Expo (React Native) — iOS + Android | App Store / Play |
+| Seller mobile app | **PLANNED — GATE 8** | Expo (React Native) — iOS + Android | App Store / Play |
 
-Two separate store listings, not one binary. They share packages, not an app.
+**One deployable, three route groups.** This document used to describe three Next.js
+applications; there has only ever been one, sharing a composition root, the session modules
+and the design system. Splitting `/ops` onto its own domain later is a Vercel domain mapping
+plus middleware, not a new app (ADR-02).
+
+When the mobile apps are built they are two separate store listings, not one binary. They
+share packages, not an app. Neither exists today — doc 03 §10 defers them until repeat
+direct usage proves installation improves retention, and that is phase P8 in
+`MASTER_EXECUTION_PLAN.md`.
 
 ---
 
@@ -28,11 +46,18 @@ Two separate store listings, not one binary. They share packages, not an app.
 |---|---|
 | `domain` ⭐ | Order state machine, attribution, commission, money. Pure TypeScript, zero framework imports. |
 | `db` | Drizzle schema, migrations, RLS policies, repository implementations |
-| `api` | tRPC routers — thin facades over domain services |
-| `integrations` | Paymob, Bosta, SMS, WhatsApp, email adapters |
-| `tokens` | `tokens.json` → Tailwind preset + React Native theme |
-| `ui` | Shared primitives, web and native variants |
+| `api` | tRPC routers — thin facades over domain services — **and the provider adapters**, in `src/providers/` |
+| `tokens` | `tokens.json` → Tailwind preset (a React Native theme when GATE 8 opens) |
+| `ui` | Shared primitives and `icons.tsx` — web variants only so far |
 | `i18n` | Copy layer — Arabic now, second locale switchable |
+
+**There is no `integrations` package.** Paymob, Bosta, SMS, WhatsApp and email were listed
+here and never built. What exists lives in `packages/api/src/providers/`: the media store
+(R2 and a local-disk stub), the one-time-code store, a console OTP sender, a courier stub
+and a session provider — each behind a port, each declaring `isStub` so
+`assertProductionSafe` refuses to boot production holding one. Paymob is P4.4.1 and Bosta is
+P4.5.1; both are BLOCKED pending contracts. Giving them their own package later is a
+packaging decision, not an architectural one.
 
 ---
 
@@ -43,10 +68,10 @@ Two separate store listings, not one binary. They share packages, not an app.
 | Database | PostgreSQL via Supabase (Frankfurt) | Closest sane region to Egypt |
 | Schema + migrations | **Drizzle** | Typed SQL, migrations in git. Not an ORM — nothing hidden. |
 | Seller data isolation | **Postgres RLS** | Enforced by the database, not app code |
-| Auth | Supabase Auth, phone-OTP primary | Phone is the primary customer identifier |
+| Auth | **This application's own phone-OTP identity — NOT Supabase Auth** (ADR-05) | One-time-code digests in Postgres verified by a locked `SECURITY DEFINER` function (migration 0025); HMAC-signed cookies, one audience per console; RLS-integrated through `app.actor_id`. Customers stay guests; an OTP-verified phone at checkout is configurable (ADR-08, P1.4.1). Still missing: a real SMS sender (DEBT #1, P1.1.1) and a `sessions` table for revocation (P3.4.2) |
 | File storage | **Cloudflare R2** *(amended 15 Sep 2026, founder decision M-1; was Supabase Storage)* | Product images and content images in a public-read bucket behind a Cloudflare custom domain; KYC documents in a SEPARATE private bucket, reachable only through short-lived signed links. See the note below the table |
-| Realtime | Supabase Realtime | Live seller order queue |
-| Background jobs | `pg_boss` + `pg_cron` | SLA clocks, courier polling, payout runs. In-database; no extra vendor. |
+| Realtime | Supabase Realtime | **PLANNED, not built** — the seller queue is request-response today |
+| Background jobs | `pg_boss` + `pg_cron` | **PLANNED, not built.** There is no scheduler, no queue and no worker. The analytics purge is written and called by nothing (DEBT #5); reserve release never runs. Outbox, ledger and runner are P1.1.2 |
 | Internal API | tRPC | End-to-end types from database to mobile screen |
 | Webhook API | REST route handlers + Zod | Paymob, Bosta, WhatsApp |
 
@@ -57,7 +82,8 @@ bill every gigabyte served — the one cost that grows with success. R2 speaks t
 uploads are ordinary presigned PUTs and the adapter is replaceable. It sits behind the
 Cloudflare network the DNS already uses, which has an edge location in Cairo. Supabase
 Storage's main advantage — policies tied to Supabase Auth — does not apply here: sessions are
-this application's own signed cookies, not Supabase Auth.
+this application's own signed cookies, not Supabase Auth (ADR-05 — that was always true in
+the code, and this document said otherwise until 20 September 2026).
 
 **The one dependency it adds: `aws4fetch`** (15 Sep 2026). *What it does:* signs S3-API
 requests and presigned URLs with AWS Signature V4, which R2 requires. *What it replaces:*
@@ -77,7 +103,7 @@ made against real traffic, behind the same `MediaStore` port.
 
 ## 4. Client architecture
 
-| Concern | Web | Mobile |
+| Concern | Web (BUILT) | Mobile (PLANNED — GATE 8) |
 |---|---|---|
 | Framework | Next.js, server components by default | Expo / React Native |
 | Styling | Tailwind, driven entirely by `tokens.json` | NativeWind — same token classes |
@@ -85,8 +111,12 @@ made against real traffic, behind the same `MediaStore` port.
 | Client state | Minimal; URL and server state preferred | **Redux Toolkit** (`core/store/`) |
 | Component library | None — bespoke primitives in `packages/ui` | Same |
 
-**Hard rule:** server data lives in TanStack Query, client state lives in Redux Toolkit,
-and they never overlap. See `ARCHITECTURE.md` §3.2.
+**The mobile column is a specification, not a description.** NativeWind, Redux Toolkit and
+TanStack Query are in no `package.json` in this repository and will not be until GATE 8
+opens. They are kept because when the apps are built, they are built that way.
+
+**Hard rule, for that day:** server data lives in TanStack Query, client state lives in
+Redux Toolkit, and they never overlap. See `ARCHITECTURE.md` §3.2.
 
 Fonts: Amiri (Arabic headings) · Bodoni Moda (Latin labels) · IBM Plex Sans Arabic (body).
 
@@ -94,32 +124,39 @@ Fonts: Amiri (Arabic headings) · Bodoni Moda (Latin labels) · IBM Plex Sans Ar
 
 ## 5. Third-party integrations
 
-| Purpose | Vendor |
-|---|---|
-| Payments (card, wallet, kiosk) | Paymob |
-| Shipping | Bosta — behind a `CourierPort` adapter |
-| SMS / OTP | Egyptian aggregator (SMSMisr / Victory Link), Twilio fallback |
-| WhatsApp | Meta WhatsApp Cloud API |
-| Email | Resend |
-| Push notifications | Expo Push → APNs / FCM |
-| Tax invoices | ETA e-invoicing |
+**None of these is connected.** Every row is a chosen vendor with no account, no contract
+and no adapter; the product runs COD-only, with courier and remittance recorded by hand.
+
+| Purpose | Vendor | State |
+|---|---|---|
+| Payments (card, wallet, kiosk) | Paymob | PLANNED — P4.4.1, BLOCKED on counsel L14 and D-5 |
+| Shipping | Bosta — behind a `CourierPort` adapter | PLANNED — P4.5.1, BLOCKED on a contract. The port and a stub exist |
+| SMS / OTP | Egyptian aggregator (SMSMisr / Victory Link), Twilio fallback | PLANNED — P1.1.1, BLOCKED on ADR-11. **This is the one that blocks sign-in going live** (DEBT #1) |
+| WhatsApp | Meta WhatsApp Cloud API | PLANNED — no task before P5 |
+| Email | Resend | PLANNED — P1.1.3 |
+| Push notifications | Expo Push → APNs / FCM | PLANNED — GATE 8 (P8.1.3) |
+| Tax invoices | ETA e-invoicing | PLANNED — P6.1.5, BLOCKED on the accountant (L15) |
 
 ---
 
 ## 6. Development and operations
 
-| Purpose | Choice |
-|---|---|
-| Repo | pnpm workspaces + Turborepo |
-| Web hosting | Vercel |
-| Mobile builds + OTA | Expo EAS |
-| Source control + CI | GitHub + GitHub Actions |
-| Error monitoring | Sentry |
-| Founder BI | Metabase |
-| DNS | Cloudflare |
-| Unit tests | Vitest — mandatory on `domain` |
-| Web E2E | Playwright — checkout, seller confirm, payout |
-| Mobile E2E | Maestro (post-MVP) |
+| Purpose | Choice | State |
+|---|---|---|
+| Repo | pnpm workspaces + Turborepo | **BUILT** |
+| Web hosting | Vercel | PLANNED — P1.4.4. Nothing is deployed anywhere |
+| Mobile builds + OTA | Expo EAS | PLANNED — GATE 8 (P8.3.1) |
+| Source control + CI | GitHub + GitHub Actions | **BUILT** — private repo since 20 Sep 2026 (P0.1.2). Branch protection needs a paid plan (DR-14); the `guard` job is red (DR-13) |
+| Error monitoring | Sentry | PLANNED — P1.4.3. There is no observability at all today (DEBT #22 class) |
+| Founder BI | Metabase | PLANNED — `/ops/insights` covers gate 8 without it |
+| DNS | Cloudflare | PLANNED — no domain registered (D-1, P0.3.2) |
+| Unit tests | Vitest — mandatory on `domain` | **BUILT** — 1,538 passing |
+| Web E2E | Playwright, driven by `apps/web/scripts/e2e.mjs` | **BUILT** — run by hand, **not in CI** (DEBT, P3.4.3) |
+| Mobile E2E | Maestro (post-MVP) | PLANNED — GATE 8 |
+
+`apps/web` has **no unit test runner** — only `typecheck`, `e2e` and `audit` — so every
+composition root in the application rests on the compiler alone. Noted in the P0.1.3 log as
+a gap without an owner.
 
 ---
 

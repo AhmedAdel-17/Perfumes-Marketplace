@@ -2,23 +2,35 @@
 
 Monorepo for the Egyptian local-fragrance marketplace.
 
-Governing documents live in `docs`:
+**What to work on next lives in `MASTER_EXECUTION_PLAN.md`** (repository root). Take the
+first `READY` task in index order. `WORK_PLAN.md` is history and no longer drives work.
 
-| Document | Governs |
-|---|---|
-| `ENGINEERING_PRINCIPLES.md` | SOLID, SDLC, design-pattern registry, testing, debt policy |
-| `ARCHITECTURE.md` | Layers, the dependency rule, folder structures |
-| `DESIGN_DOCTRINE.md` | Luxury standard, motion, detail checklist |
-| `TECH_STACK.md` | Confirmed stack |
-| `OPEN_DECISIONS.md` | What is NOT decided, and what it blocks |
+| Document | Governs | Where |
+|---|---|---|
+| `MASTER_EXECUTION_PLAN.md` | **What is built next** — every task, its status, its gate | root |
+| `DECISION_REGISTER.md` | Every decision made or still open, and who owns it | root |
+| `FOUNDER_RED_TEAM.md` | The assumptions, the kill criteria, the pivot branches | root |
+| `ENGINEERING_PRINCIPLES.md` | SOLID, SDLC, design-pattern registry, testing, debt policy | `docs` |
+| `ARCHITECTURE.md` | Layers, the dependency rule, folder structures | `docs` |
+| `DESIGN_DOCTRINE.md` | Luxury standard, motion, detail checklist | `docs` |
+| `TECH_STACK.md` | Confirmed stack, and what is chosen but not built | `docs` |
+| `DEBT_REGISTER.md` | Every known shortcut, with a trigger that forces the fix | `docs` |
+| `OPEN_DECISIONS.md` | Engineering interim positions; the register wins where they differ | `docs` |
+
+The strategic pack — market, economics, operations, legal, brand — is the 70 documents
+under `docs/`, indexed by `docs/PROJECT_MASTER_BLUEPRINT.md`. The founding pack is
+`docs/01`–`docs/06` and is never edited.
 
 ## The rule that matters most
 
 ```
-apps  →  api  →  domain  ←  adapters (db, paymob, bosta, sms, whatsapp)
-                    ↑
-             depends on NOTHING
+apps/web  →  api  →  domain  ←  adapters (db, media, login-codes, otp, courier)
+                       ↑
+                depends on NOTHING
 ```
+
+One app, six packages. Paymob, Bosta and a real SMS sender are chosen and **not built** —
+see `docs/TECH_STACK.md` §5 for what each is blocked on.
 
 `packages/domain` imports no framework. Ever.
 

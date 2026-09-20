@@ -276,20 +276,35 @@ Feature count is not success.
 
 `/design-reference/` contains finished HTML mockups. **These are the specification.**
 
+*Corrected 20 September 2026 (P0.1.4): this table listed three files and there are twelve.
+Five screens described below as "not yet designed" already had a reference — a session that
+believed this section would have invented a visual language that already existed.*
+
 | File | Screen |
 |---|---|
 | `maison2.html` | Home / marketplace browse |
 | `product.html` | Product detail, incl. notes visualisation |
+| `marketplace.html` | Marketplace browse, alternative direction |
+| `checkout.html` | The bag and checkout |
+| `orders.html` | Orders and tracking |
+| `seller.html` | Seller portal |
+| `admin.html` | Admin, ops and support console |
+| `mobile.html` | Both mobile apps |
+| `foundation.html` | Foundation and primitives — the design system itself |
+| `directions.html` | Three design directions (history) |
+| `names.html` | Name candidates (history — the name is still open, D-1) |
 | `ALL.html` | All screens, tabbed |
 
 Open the matching reference and **match it exactly** — colours, spacing, type sizes, SVG
 paths, layout. Do not redesign or "improve". If something looks wrong, say so and ask.
 
-Icons are in `src/icons.tsx` (40 components). Never draw a new one without asking.
+Icons are in `packages/ui/src/icons.tsx` (41 components). Never draw a new one without
+asking.
 
-**Not yet designed** — ask before inventing a visual language for these: seller portal,
-admin, cart/checkout, order tracking, review submission, seller onboarding, **both mobile
-apps, the CMS, the support console and the BI dashboard.**
+**Genuinely not yet designed** — ask before inventing a visual language for these: review
+submission, seller onboarding, the CMS editing screens, and the BI dashboard. Note that a
+reference existing is not the same as the screen being built: `mobile.html` is a design for
+apps that are deferred behind GATE 8 and must not be built against it.
 
 Where a design does not yet exist, `docs/DESIGN_DOCTRINE.md` is the standard to design
 against — not a generic app aesthetic. Design capacity, not engineering capacity, is the
@@ -299,25 +314,37 @@ binding constraint on this project.
 
 ## 13. Stack
 
-**Full confirmed stack: `docs/TECH_STACK.md`. Structure: `docs/ARCHITECTURE.md`.**
+**Full confirmed stack: `docs/TECH_STACK.md`. Structure: `docs/ARCHITECTURE.md`. What gets
+built next: `MASTER_EXECUTION_PLAN.md`.**
 
-Monorepo (pnpm + Turborepo) · TypeScript everywhere · Next.js App Router for all web
-(marketplace, seller portal, admin) · **Expo for both mobile apps** (buyer + seller) ·
-PostgreSQL via Supabase with **Drizzle** and RLS · tRPC internally, REST for webhooks ·
-Tailwind on web, NativeWind on mobile, both driven by `tokens.json` · `pg_boss`/`pg_cron`
-for jobs · Paymob · Bosta · Vercel · Expo EAS.
+**What exists (MVP scope).** Monorepo (pnpm + Turborepo) · TypeScript everywhere · **ONE**
+Next.js App Router application, with the marketplace, the seller portal (`/seller`) and the
+console (`/ops`) as route groups in it · PostgreSQL via Supabase with **Drizzle** and RLS ·
+**this application's own phone-OTP identity, not Supabase Auth** · tRPC internally, REST for
+webhooks · Tailwind driven by `tokens.json`.
+
+**Chosen and NOT built.** `pg_boss`/`pg_cron` for jobs · Paymob · Bosta · a real SMS sender
+· Vercel. Nothing is deployed anywhere yet. `docs/TECH_STACK.md` §5 names what each is
+blocked on.
+
+**Deferred behind GATE 8, do not build:** both mobile apps, Expo, Expo EAS, NativeWind,
+Redux Toolkit, TanStack Query, push notifications. None of them appears in any
+`package.json` in this repository.
 
 ### Amendments to the original rules (1 September 2026, on the record)
 
-The original "no ORM, no state library" rule was written for a single server-rendered
-website. Scope now includes two native apps, so:
+*Scope corrected 20 September 2026 (P0.1.4). Both amendments stand; the second is no longer
+MVP scope, because the apps it was written for are deferred. Kept, not deleted — it is the
+rule for the day GATE 8 opens.*
 
-- **Drizzle is permitted** — it is typed SQL, not an ORM. Nothing hidden, no generated
-  queries, migrations in git. With ~25 tables of money logic, hand-written SQL with no type
-  checking is itself technical debt.
-- **Redux Toolkit is permitted on mobile, for client state only.** Auth session, cart draft,
-  filters, onboarding progress, locale. **Server data lives in TanStack Query and never
-  enters the store** — two caches is the most expensive debt trap in a React Native app.
+- **Drizzle is permitted, and is in use** — it is typed SQL, not an ORM. Nothing hidden, no
+  generated queries, migrations in git. With ~25 tables of money logic, hand-written SQL
+  with no type checking is itself technical debt.
+- **Redux Toolkit is permitted on mobile, for client state only — DEFERRED, not in scope.**
+  When the apps are built: auth session, cart draft, filters, onboarding progress, locale.
+  **Server data lives in TanStack Query and never enters the store** — two caches is the
+  most expensive debt trap in a React Native app. Until GATE 8, adding either library is
+  building a deferred phase early.
 
 Everything else stands: no component kit, no search service, no separate backend framework,
 no Redis, no GraphQL, no microservices. **No new dependency without written justification**
