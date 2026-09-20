@@ -18,9 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No `version:` here ON PURPOSE. package.json pins
+      # `packageManager: pnpm@11.25.0`, and the action refuses to start when a
+      # version is declared in both places rather than picking one — the first
+      # CI run on `main` (20 Sep 2026) failed here before installing anything.
+      # Deleting the looser of the two declarations leaves the exact version
+      # developers run, which is the stricter pin and the one a lockfile is
+      # written against.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
