@@ -91,8 +91,8 @@ beforeAll(async () => {
     ['maison-nour', 'ميزون نور', NOUR_STAFF],
   ] as const) {
     const s = await pg.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name,owner_name,contact_phone,slug,status)
-       VALUES ($1,'مالك','01001234567',$2,'live') RETURNING id`, [name, slug]);
+      `INSERT INTO sellers (trading_name,owner_name,slug,status)
+       VALUES ($1,'مالك',$2,'live') RETURNING id`, [name, slug]);
     ids[slug] = s.rows[0]!.id;
     await pg.query(
       `INSERT INTO seller_staff (seller_id,auth_user_id,role,full_name) VALUES ($1,$2,'owner','مالك')`,

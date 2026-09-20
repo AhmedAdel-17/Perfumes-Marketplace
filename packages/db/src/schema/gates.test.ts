@@ -46,8 +46,8 @@ beforeAll(async () => {
   await db.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
   const seller = await db.query<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug)
-     VALUES ('دار الورد', 'خالد', '01001234567', 'dar-al-ward') RETURNING id`,
+    `INSERT INTO sellers (trading_name, owner_name, slug)
+     VALUES ('دار الورد', 'خالد', 'dar-al-ward') RETURNING id`,
   );
   sellerId = seller.rows[0]!.id;
 

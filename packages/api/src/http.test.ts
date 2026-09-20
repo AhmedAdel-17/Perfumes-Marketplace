@@ -101,8 +101,8 @@ beforeAll(async () => {
      VALUES ($1,'مشغّلة المنصّة','01000000001','admin')`, [PLATFORM]);
 
   const seller = await pg.query<{ id: string }>(
-    `INSERT INTO sellers (trading_name,owner_name,contact_phone,slug,status)
-     VALUES ('دار الورد','مالك','01001234567','dar-al-ward','live') RETURNING id`);
+    `INSERT INTO sellers (trading_name,owner_name,slug,status)
+     VALUES ('دار الورد','مالك','dar-al-ward','live') RETURNING id`);
   const sellerId = seller.rows[0]!.id;
   await pg.query(
     `INSERT INTO seller_staff (seller_id,auth_user_id,role,full_name) VALUES ($1,$2,'owner','مالك')`,

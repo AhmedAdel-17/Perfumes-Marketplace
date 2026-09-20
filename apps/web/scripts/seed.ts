@@ -233,11 +233,11 @@ async function main() {
 
   for (const house of houses) {
     const s = await pg.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, city, status,
+      `INSERT INTO sellers (trading_name, owner_name, slug, city, status,
          bio, story, founded_year, service_governorates)
-       VALUES ($1,$2,$3,$4,$5,'applied',$6,$7,$8,$9::governorate[]) RETURNING id`,
+       VALUES ($1,$2,$3,$4,'applied',$5,$6,$7,$8::governorate[]) RETURNING id`,
       [
-        house.name, house.owner, house.phone, house.slug, house.city,
+        house.name, house.owner, house.slug, house.city,
         // The house's own words. These columns have existed since migration
         // 0000 and nothing has ever written to them, so the storefront had
         // nothing to show but a name.
@@ -248,6 +248,14 @@ async function main() {
       ],
     );
     const sellerId = s.rows[0]!.id;
+
+    // The phone moved off the public row in 0026, so it is written here rather
+    // than with the house. Sign-in resolves through this table, which makes a
+    // missing row look exactly like a house nobody can open.
+    await pg.query(
+      `INSERT INTO seller_contacts (seller_id, contact_phone) VALUES ($1,$2)`,
+      [sellerId, house.phone],
+    );
 
     // An owner who can actually sign in. The portal resolves a phone to a house
     // through `seller_staff`, so a house with no staff row is a house nobody can

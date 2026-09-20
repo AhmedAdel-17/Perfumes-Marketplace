@@ -50,11 +50,11 @@ beforeAll(async () => {
   const one = async <T>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]!;
 
   ids.seller = (await one<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-     VALUES ('ميزون نور','نور','01001234567','maison-nour','live') RETURNING id`)).id;
+    `INSERT INTO sellers (trading_name, owner_name, slug, status)
+     VALUES ('ميزون نور','نور','maison-nour','live') RETURNING id`)).id;
   ids.rival = (await one<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-     VALUES ('دار الورد','خالد','01007654321','dar-al-ward','live') RETURNING id`)).id;
+    `INSERT INTO sellers (trading_name, owner_name, slug, status)
+     VALUES ('دار الورد','خالد','dar-al-ward','live') RETURNING id`)).id;
 
   await db.query(
     `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name) VALUES

@@ -57,7 +57,7 @@ const harness = async (): Promise<ContractWorld> => {
   const sellerIdBySlug = new Map<string, string>();
   for (const [slug, name] of [[WARD, 'دار الورد'], [NOUR, 'ميزون نور']] as const) {
     const [s] = await db.insert(schema.sellers).values({
-      tradingName: name, ownerName: 'مالك', contactPhone: '01001234567',
+      tradingName: name, ownerName: 'مالك',
       slug, status: 'live',
     }).returning({ id: schema.sellers.id });
     sellerIdBySlug.set(slug, s!.id);

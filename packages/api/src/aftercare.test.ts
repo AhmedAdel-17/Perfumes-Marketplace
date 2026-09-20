@@ -68,8 +68,8 @@ beforeAll(async () => {
   OPERATOR.staffId = staff.rows[0]!.id;
 
   const seller = await pg.query<{ id: string }>(
-    `INSERT INTO sellers (trading_name,owner_name,contact_phone,slug,status)
-     VALUES ('ميزون نور','مالك','01001234567','maison-nour','live') RETURNING id`);
+    `INSERT INTO sellers (trading_name,owner_name,slug,status)
+     VALUES ('ميزون نور','مالك','maison-nour','live') RETURNING id`);
   ids.seller = seller.rows[0]!.id;
 
   await pg.query(

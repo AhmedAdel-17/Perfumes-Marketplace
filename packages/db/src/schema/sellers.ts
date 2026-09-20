@@ -17,8 +17,15 @@ export const sellers = pgTable('sellers', {
   legalName: text('legal_name'),
   tradingName: text('trading_name').notNull(),
   ownerName: text('owner_name').notNull(),
-  contactPhone: text('contact_phone').notNull(),
-  contactEmail: text('contact_email'),
+
+  /*
+   * `contactPhone` and `contactEmail` USED TO BE HERE and are now in
+   * `sellerContacts` (migration 0026). They moved because this row is read by
+   * anonymous traffic — `public_read_live_sellers` admits every actor to the
+   * whole row of any live house, and Postgres has no column-level row security
+   * to keep two of its columns back. Nothing that renders a storefront needs
+   * them. Do not add a contact field here.
+   */
 
   status: sellerStatus('status').default('applied').notNull(),
 
@@ -55,6 +62,29 @@ export const sellers = pgTable('sellers', {
   uniqueIndex('sellers_slug_key').on(t.slug),
   index('sellers_status_idx').on(t.status),
 ]);
+
+/**
+ * A house's contact details — private, and off the public row.
+ *
+ * ONE TABLE RATHER THAN TWO COLUMNS because RLS in Postgres is per ROW. The
+ * catalogue has to expose a live house to anonymous visitors, so any column on
+ * `sellers` is a column anonymous visitors can select. Moving the two fields to
+ * a table with no public policy is the only arrangement where the guarantee is
+ * the database's rather than a convention about which queries get written.
+ *
+ * Reachable by exactly three parties, and each one is a policy in 0026 rather
+ * than a rule in code: operators, the house itself, and the intake role at the
+ * moment an application is created. Sign-in resolution reads it through the
+ * privileged connection, which is a separate problem (DEBT #14) and P3.4.1's.
+ */
+export const sellerContacts = pgTable('seller_contacts', {
+  sellerId: uuid('seller_id').primaryKey()
+    .references(() => sellers.id, { onDelete: 'cascade' }),
+  contactPhone: text('contact_phone').notNull(),
+  contactEmail: text('contact_email'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [index('seller_contacts_phone_idx').on(t.contactPhone)]);
 
 /** One row per control in doc 06 §3, each with its own evidence and reviewer. */
 export const sellerVerifications = pgTable('seller_verifications', {

@@ -49,7 +49,7 @@ const harness = async (): Promise<ReturnContractWorld> => {
     [NOUR, 'ميزون نور', 'NUR-50', 45_000, 50],
   ] as const) {
     const [seller] = await db.insert(schema.sellers).values({
-      tradingName: name, ownerName: 'مالك', contactPhone: '01001234567',
+      tradingName: name, ownerName: 'مالك',
       slug, status: 'live',
     }).returning({ id: schema.sellers.id });
     sellerIdBySlug.set(slug, seller!.id);

@@ -56,9 +56,12 @@ export async function requestSellerCode(phone: string): Promise<RequestCodeResul
   const [staff] = await database()
     .select({ sellerId: schema.sellerStaff.sellerId })
     .from(schema.sellerStaff)
-    .innerJoin(schema.sellers, eq(schema.sellers.id, schema.sellerStaff.sellerId))
+    .innerJoin(
+      schema.sellerContacts,
+      eq(schema.sellerContacts.sellerId, schema.sellerStaff.sellerId),
+    )
     .where(and(
-      eq(schema.sellers.contactPhone, trimmed),
+      eq(schema.sellerContacts.contactPhone, trimmed),
       isNull(schema.sellerStaff.revokedAt),
     ))
     .limit(1);
@@ -97,9 +100,12 @@ export async function verifySellerCode(phone: string, code: string): Promise<Ver
       authUserId: schema.sellerStaff.authUserId,
     })
     .from(schema.sellerStaff)
-    .innerJoin(schema.sellers, eq(schema.sellers.id, schema.sellerStaff.sellerId))
+    .innerJoin(
+      schema.sellerContacts,
+      eq(schema.sellerContacts.sellerId, schema.sellerStaff.sellerId),
+    )
     .where(and(
-      eq(schema.sellers.contactPhone, trimmed),
+      eq(schema.sellerContacts.contactPhone, trimmed),
       isNull(schema.sellerStaff.revokedAt),
     ))
     .limit(1);

@@ -153,8 +153,8 @@ describe('the sub-order transition table is the same table twice', () => {
     // Behavioural check, independent of the parse above: attempt every possible
     // pair against a real row and record which the database accepts.
     const seller = (await db.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name,owner_name,contact_phone,slug)
-       VALUES ('t','o','01001234567','parity-'||substr(gen_random_uuid()::text,1,8)) RETURNING id`)).rows[0]!.id;
+      `INSERT INTO sellers (trading_name,owner_name,slug)
+       VALUES ('t','o','parity-'||substr(gen_random_uuid()::text,1,8)) RETURNING id`)).rows[0]!.id;
     const customer = (await db.query<{ id: string }>(
       `INSERT INTO customers (phone) VALUES ('01001234567') RETURNING id`)).rows[0]!.id;
 

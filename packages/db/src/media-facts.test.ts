@@ -26,8 +26,8 @@ const refuses = async (work: () => Promise<unknown>): Promise<string> => {
 async function newProduct(): Promise<string> {
   const suffix = Math.random().toString(36).slice(2, 8);
   const seller = await db.query<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug)
-     VALUES ('دار الورد', 'خالد', '01001234567', $1) RETURNING id`, [`ward-${suffix}`]);
+    `INSERT INTO sellers (trading_name, owner_name, slug)
+     VALUES ('دار الورد', 'خالد', $1) RETURNING id`, [`ward-${suffix}`]);
   const brand = await db.query<{ id: string }>(
     `INSERT INTO brands (seller_id, name, slug) VALUES ($1, 'دار الورد', $2) RETURNING id`,
     [seller.rows[0]!.id, `ward-brand-${suffix}`]);

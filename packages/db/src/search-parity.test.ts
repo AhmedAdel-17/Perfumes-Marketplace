@@ -32,7 +32,7 @@ beforeAll(async () => {
   await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
   const [seller] = await db.insert(schema.sellers).values({
-    tradingName: 'ميزون نور', ownerName: 'نور', contactPhone: '01001234567',
+    tradingName: 'ميزون نور', ownerName: 'نور',
     slug: 'maison-nour', status: 'live',
   }).returning();
   sellerId = seller!.id;

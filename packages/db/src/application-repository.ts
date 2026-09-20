@@ -33,8 +33,6 @@ export const applicationRepository = (db: DiyarDatabase): ApplicationRepository 
         tradingName: input.tradingName.trim(),
         slug: input.slug,
         ownerName: input.ownerName.trim(),
-        contactPhone: input.contactPhone,
-        contactEmail: input.contactEmail?.trim() || null,
         city: input.city.trim(),
         applicationNote: input.note.trim(),
         appliedAt: input.now,
@@ -47,7 +45,26 @@ export const applicationRepository = (db: DiyarDatabase): ApplicationRepository 
       .returning({ id: schema.sellers.id, slug: schema.sellers.slug });
 
     const row = inserted[0];
-    return row ? { id: row.id, slug: row.slug } : null;
+    if (!row) return null;
+
+    /*
+     * The contact row, second, and only if the seller row was actually created.
+     *
+     * Two statements rather than one because the details live on their own
+     * table now (0026) — they are off the public `sellers` row precisely so
+     * that anonymous catalogue traffic cannot read them. The ordering matters:
+     * on a slug conflict the insert above affects no rows, and writing a
+     * contact row for a house that does not exist would fail on the foreign
+     * key. Both statements run inside the caller's transaction, so a failure
+     * here leaves no half-made application behind.
+     */
+    await db.insert(schema.sellerContacts).values({
+      sellerId: row.id,
+      contactPhone: input.contactPhone,
+      contactEmail: input.contactEmail?.trim() || null,
+    });
+
+    return { id: row.id, slug: row.slug };
   },
 
   async listApplications() {
@@ -63,8 +80,8 @@ export const applicationRepository = (db: DiyarDatabase): ApplicationRepository 
         tradingName: schema.sellers.tradingName,
         slug: schema.sellers.slug,
         ownerName: schema.sellers.ownerName,
-        contactPhone: schema.sellers.contactPhone,
-        contactEmail: schema.sellers.contactEmail,
+        contactPhone: schema.sellerContacts.contactPhone,
+        contactEmail: schema.sellerContacts.contactEmail,
         city: schema.sellers.city,
         status: schema.sellers.status,
         applicationNote: schema.sellers.applicationNote,
@@ -75,6 +92,18 @@ export const applicationRepository = (db: DiyarDatabase): ApplicationRepository 
         `,
       })
       .from(schema.sellers)
+      /*
+       * INNER, not LEFT, and the difference is a deliberate assertion.
+       *
+       * Every house has exactly one contact row: 0026 backfilled all of them,
+       * the foreign key keeps it attached, and `apply` above writes it in the
+       * same transaction as the house. An INNER join therefore drops nothing —
+       * and if it ever did, the row it dropped would be a house whose
+       * application cannot be acted on anyway, because an operator's first move
+       * is to ring the applicant. `parity.test.ts` asserts the invariant
+       * directly so the failure is named rather than silent.
+       */
+      .innerJoin(schema.sellerContacts, eq(schema.sellerContacts.sellerId, schema.sellers.id))
       .where(inArray(schema.sellers.status, [...IN_INTAKE]))
       // Oldest first. An applicant who has been waiting three weeks is the one
       // most likely to give up, and a list sorted newest-first hides them.
@@ -90,14 +119,15 @@ export const applicationRepository = (db: DiyarDatabase): ApplicationRepository 
         tradingName: schema.sellers.tradingName,
         slug: schema.sellers.slug,
         ownerName: schema.sellers.ownerName,
-        contactPhone: schema.sellers.contactPhone,
-        contactEmail: schema.sellers.contactEmail,
+        contactPhone: schema.sellerContacts.contactPhone,
+        contactEmail: schema.sellerContacts.contactEmail,
         city: schema.sellers.city,
         status: schema.sellers.status,
         applicationNote: schema.sellers.applicationNote,
         appliedAt: schema.sellers.appliedAt,
       })
       .from(schema.sellers)
+      .innerJoin(schema.sellerContacts, eq(schema.sellerContacts.sellerId, schema.sellers.id))
       .where(eq(schema.sellers.id, id))
       .limit(1);
 

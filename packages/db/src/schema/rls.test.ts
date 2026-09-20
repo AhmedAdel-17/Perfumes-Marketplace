@@ -64,11 +64,11 @@ beforeAll(async () => {
   const mk = async <T>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]!;
 
   ids.wardSeller = (await mk<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-     VALUES ('دار الورد','خالد','01001234567','dar-al-ward','live') RETURNING id`)).id;
+    `INSERT INTO sellers (trading_name, owner_name, slug, status)
+     VALUES ('دار الورد','خالد','dar-al-ward','live') RETURNING id`)).id;
   ids.nourSeller = (await mk<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-     VALUES ('ميزون نور','نور','01007654321','maison-nour','live') RETURNING id`)).id;
+    `INSERT INTO sellers (trading_name, owner_name, slug, status)
+     VALUES ('ميزون نور','نور','maison-nour','live') RETURNING id`)).id;
 
   await db.query(
     `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name) VALUES
@@ -490,8 +490,8 @@ describe('the intake role can create an application, and only an application', (
 
   it('can create a house that has APPLIED', () => within(async () => {
     const created = await asActor(INTAKE, null,
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-       VALUES ('دار جديدة','مالكة','01005550001','dar-jadida','applied') RETURNING id`);
+      `INSERT INTO sellers (trading_name, owner_name, slug, status)
+       VALUES ('دار جديدة','مالكة','dar-jadida','applied') RETURNING id`);
     expect(created.rows).toHaveLength(1);
   }));
 
@@ -504,8 +504,8 @@ describe('the intake role can create an application, and only an application', (
      */
     for (const status of ['live', 'approved', 'under_review']) {
       const attempt = await asActor(INTAKE, null,
-        `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-         VALUES ('تسلل','مالك','01005550002','sneaky-' || $1, $1::seller_status) RETURNING id`,
+        `INSERT INTO sellers (trading_name, owner_name, slug, status)
+         VALUES ('تسلل','مالك','sneaky-' || $1, $1::seller_status) RETURNING id`,
         [status]).catch(() => ({ rows: [] }));
       expect(attempt.rows, status).toHaveLength(0);
     }
@@ -514,8 +514,8 @@ describe('the intake role can create an application, and only an application', (
   it('CANNOT promote an application it just made', () => within(async () => {
     await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
     const seller = await db.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-       VALUES ('دار منتظرة','مالك','01005550003','dar-waiting','applied') RETURNING id`);
+      `INSERT INTO sellers (trading_name, owner_name, slug, status)
+       VALUES ('دار منتظرة','مالك','dar-waiting','applied') RETURNING id`);
 
     // No UPDATE policy at all. An applicant cannot edit their application after
     // sending it either, which is deliberate: what an operator reviews has to
@@ -552,8 +552,8 @@ describe('the intake role can create an application, and only an application', (
   it('CANNOT mark its own verification controls as passed', () => within(async () => {
     await db.exec(`SET LOCAL app.actor_role='platform'; SET LOCAL app.actor_id='99999999-9999-9999-9999-999999999999';`);
     const seller = await db.query<{ id: string }>(
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status)
-       VALUES ('دار تتحقق','مالك','01005550004','dar-verify','applied') RETURNING id`);
+      `INSERT INTO sellers (trading_name, owner_name, slug, status)
+       VALUES ('دار تتحقق','مالك','dar-verify','applied') RETURNING id`);
 
     // The eight controls are seeded by 0001's trigger, which the intake role
     // needs INSERT for. It gets nothing else — it cannot read them and cannot

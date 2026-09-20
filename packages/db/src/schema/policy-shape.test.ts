@@ -255,6 +255,10 @@ describe('the tables that hold money and people', () => {
     'returns', 'support_tickets', 'consent_records', 'privacy_requests',
     'seller_verifications', 'platform_staff', 'seller_staff', 'audit_log',
     'commission_overrides', 'sub_order_transitions',
+    // 0026. The reason this table exists is that these two fields could not be
+    // protected while they sat on the publicly readable `sellers` row, so a
+    // blanket policy here would undo the migration rather than merely weaken it.
+    'seller_contacts',
   ];
 
   it.each(SENSITIVE)('%s decides by actor, never by a blanket allow', (table) => {

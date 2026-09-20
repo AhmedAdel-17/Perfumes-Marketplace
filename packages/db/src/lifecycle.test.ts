@@ -44,8 +44,8 @@ beforeAll(async () => {
 
   for (const [key, name, slug] of [[WARD, 'دار الورد', 'dar-al-ward'], [NOUR, 'ميزون نور', 'maison-nour']] as const) {
     const s = await one<{ id: string }>(
-      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, status, payout_reserve_days)
-       VALUES ($1,'مالك','01001234567',$2,'applied',7) RETURNING id`, [name, slug]);
+      `INSERT INTO sellers (trading_name, owner_name, slug, status, payout_reserve_days)
+       VALUES ($1,'مالك',$2,'applied',7) RETURNING id`, [name, slug]);
     ids[key] = s.id;
     await db.query(`UPDATE seller_verifications SET status='approved' WHERE seller_id=$1`, [s.id]);
     await db.query(`UPDATE sellers SET status='live' WHERE id=$1`, [s.id]);

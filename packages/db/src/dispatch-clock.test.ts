@@ -34,11 +34,32 @@ async function world(db: PGlite, dispatchSlaHours: number) {
   await db.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
   const suffix = Math.random().toString(36).slice(2, 8);
 
-  const seller = await db.query<{ id: string }>(
-    `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, dispatch_sla_hours)
-     VALUES ('دار الورد', 'خالد', '01001234567', $1, $2) RETURNING id`,
-    [`ward-${suffix}`, dispatchSlaHours],
-  );
+  /*
+   * This helper builds a house against TWO different schemas.
+   *
+   * The first block below migrates all the way up, where `contact_phone` has
+   * moved to `seller_contacts` (0026). The second deliberately stops at 0020,
+   * to run that migration over data written by the schema of the day — and
+   * back then the column was still on `sellers`, NOT NULL. So the fixture asks
+   * the database which era it is in rather than assuming, because the whole
+   * point of the second block is that it is not in the present one.
+   */
+  const legacyContact = await db.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM information_schema.columns
+      WHERE table_name = 'sellers' AND column_name = 'contact_phone'`);
+  const hasLegacyContact = legacyContact.rows[0]!.n > 0;
+
+  const seller = hasLegacyContact
+    ? await db.query<{ id: string }>(
+      `INSERT INTO sellers (trading_name, owner_name, contact_phone, slug, dispatch_sla_hours)
+       VALUES ('دار الورد', 'خالد', '01001234567', $1, $2) RETURNING id`,
+      [`ward-${suffix}`, dispatchSlaHours],
+    )
+    : await db.query<{ id: string }>(
+      `INSERT INTO sellers (trading_name, owner_name, slug, dispatch_sla_hours)
+       VALUES ('دار الورد', 'خالد', $1, $2) RETURNING id`,
+      [`ward-${suffix}`, dispatchSlaHours],
+    );
   const customer = await db.query<{ id: string }>(
     `INSERT INTO customers (phone) VALUES ('0100' || lpad((floor(random() * 10000000))::text, 7, '0')) RETURNING id`,
   );
