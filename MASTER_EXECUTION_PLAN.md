@@ -163,7 +163,7 @@ production (P0.1.3).
 | P1.3.1 | Attribution capture end to end | P1 | NOT_STARTED | P0 | BUILD | P0.2.5 (DR-02), P0.2.6 |
 | P1.4.1 | Checkout phone verification + risk flags (policy) | P1 | NOT_STARTED | P0 | BUILD | P1.1.1, P0.2.5 (D-2) |
 | P1.4.2 | Consent records at checkout; privacy texts hook | P1 | NOT_STARTED | P0 | BUILD | P0.2.6 |
-| P1.4.3 | Observability baseline | P1 | READY | P0 | BUILD | P0.1.2 |
+| P1.4.3 | Observability baseline | P1 | BLOCKED | P0 | BUILD | P0.1.2; Sentry project; P1.4.4 |
 | P1.4.4 | Deployment: staging and production | P1 | NOT_STARTED | P0 | BUILD | P0.1.2, P0.2.3 |
 | P1.4.5 | Rate limits in the database + edge rules | P1 | NOT_STARTED | P0 | BUILD | P1.4.4 |
 | P1.4.6 | Seller contact isolation | P1 | COMPLETE | — | BUILD | P0.1.1 |
@@ -1151,7 +1151,7 @@ customer/aftercare roles may insert only their own purpose.
 **Reference documents:** `docs/data/04` §2; `docs/legal/02` (consent texts row).
 
 #### P1.4.3 Observability baseline
-**Status:** READY (2026-09-21, P0.1.2 complete) · **Priority:** P0 · **Type:** BUILD
+**Status:** BLOCKED (2026-09-22; built parts complete, three criteria need accounts or a deployment) · **Priority:** P0 · **Type:** BUILD
 **Why:** two `console.error` calls are the whole observability story (FACT). A pilot with
 no error capture is blind.
 **Goal:** request id in middleware propagated to context, logs and audit; JSON structured
@@ -1166,6 +1166,53 @@ reference; a log line for `orders.place` carries `request_id` and `order_ref` an
 uptime check live.
 **Tests required:** unit test for the log helper's PII rules; API test that the error
 response carries a request id.
+
+**Partial completion evidence (2026-09-22):** commit `a4bc28a`, migration
+`0029_audit_request_id.sql`.
+
+*Built and verified:*
+- **Request id in middleware, propagated to context, logs and audit.** `apps/web/src/middleware.ts`
+  names every request with a server-generated UUID and overwrites any client-supplied one
+  (verified with curl: `x-request-id: attacker-chosen` came back as a fresh UUID). The context
+  receives a request-id SOURCE, resolved once per procedure by the base middleware, because
+  `api()` is synchronous at 46 call sites and reading a header is async in Next 15. Every audit
+  entry carries it through a column DEFAULT fed by `app.request_id`, set per transaction beside
+  the actor (0029) — no router passes it, so none can forget it.
+- **JSON structured logs via a small helper, no framework.** `packages/api/src/observability/log.ts`.
+  Its scrubber masks phones to their last two digits (including numbers embedded in messages),
+  drops OTP codes, cookies, tokens and secrets, and redacts addresses below the city.
+- **Unknown errors return the request id in the Arabic message**, and are captured through an
+  `ErrorReporter` port. Expected refusals are not reported.
+- **Required tests:** `log.test.ts` (13 cases on the PII rules); `api.test.ts` "an unexpected error
+  answers in Arabic WITH the request id, and is reported with it" — falsified by removing the id
+  from the message.
+
+*Acceptance criterion 2 — MET.* "A log line for `orders.place` carries `request_id` and
+`order_ref` and no phone." In the API suite, and in the running app: the browser suite's eight
+checkouts wrote eight such lines to the real server log, and no structured line in that log
+contained a full phone number.
+
+*Acceptance criterion 1 — BLOCKED on a Sentry project.* "An induced error appears in Sentry with
+request id and order reference." The induced error, the request id and the reporting path all
+exist and are tested; what is missing is somewhere to send it. A Sentry project and DSN are an
+account only a founder can create (and under DR-11 it should be company-controlled).
+`@sentry/nextjs` was therefore NOT added: a dependency whose only behaviour cannot be verified is
+a dependency added on faith. The console reporter declares `isStub`, so `assertProductionSafe`
+refuses to boot production until the Sentry adapter replaces it — the pilot cannot start blind.
+
+*Acceptance criterion 3 — BLOCKED on P1.4.4.* "Uptime check live" needs a deployed site to
+check, and nothing is deployed. It also needs an uptime-monitor account.
+
+*Alerts (Goal, not a listed criterion) — BLOCKED* on P1.1.2 (job failures, outbox backlog),
+P3.3.1 (SLA breaches) and an alerting account with the founders' numbers.
+
+**Repository discrepancy (rule 15).** The task lists only P0.1.2 as a dependency, but two of its
+three acceptance criteria cannot be met without an external account and a deployment. The
+`Depends on` column is corrected to name them; no scope was dropped.
+
+**What unblocks it:** a founder creates a Sentry project (free tier suffices at pilot volume) and
+provides the DSN as `SENTRY_DSN`; then a Sentry adapter behind the existing `ErrorReporter` port,
+with PII scrubbing and release tagging, is roughly half a day. The uptime check follows P1.4.4.
 **Reference documents:** `docs/architecture/09-observability.md`.
 
 #### P1.4.4 Deployment: staging and production
@@ -2726,3 +2773,14 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
 
 - 2026-09-21 · Claude Code session · P1.4.3, P3.4.3 · NOT_STARTED → READY · each depended only
   on P0.1.2. P3.4.3 is in the P3.4 workstream DR-15 permits before GATE 1.
+
+- 2026-09-22 · Claude Code session · P1.4.3 · READY → BLOCKED · commit `a4bc28a`, migration
+  0029. Built: request ids (middleware → context → logs → audit), a scrubbing structured
+  logger, Arabic error messages carrying the request id, and an `ErrorReporter` port whose stub
+  production refuses. Criterion 2 met in the running app. Criterion 1 blocked on a Sentry project
+  (a founder account); criterion 3 blocked on P1.4.4. `@sentry/nextjs` deliberately not added
+  until it can be verified. 1,595 → 1,619 tests; 126/126 e2e.
+
+- 2026-09-22 · Claude Code session · P1.4.3 · repository discrepancy · two of three acceptance
+  criteria depend on an external account and on P1.4.4, which the `Depends on` column did not
+  say. Corrected, with the original dependency kept.
