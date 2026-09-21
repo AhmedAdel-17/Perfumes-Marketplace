@@ -105,7 +105,7 @@ production (P0.1.3).
 
 | Phase | Status | Progress | Gate | Critical dependency |
 |---|---|---|---|---|
-| P0 Foundations | IN_PROGRESS | 11/30 (inventory + P0.1.1, P0.1.3, P0.1.4; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
+| P0 Foundations | IN_PROGRESS | 13/30 (inventory + all of P0.1: P0.1.1–P0.1.5) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | IN_PROGRESS | 1/15 (P1.4.6) | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
@@ -132,8 +132,8 @@ production (P0.1.3).
 | P0.0.7 | CMS (pages, revisions, preview, announcements, curation, images) | P0 | COMPLETE | — | BUILD | — |
 | P0.0.8 | HTTP boundary `/api/trpc` (anonymous) and durable login codes | P0 | COMPLETE | — | BUILD | — |
 | P0.1.1 | Commit the 11.2 login-code wiring | P0 | COMPLETE | — | BUILD | — |
-| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | BLOCKED | P0 | BUILD | DR-13, DR-14 |
-| P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | BLOCKED | P0 | BUILD | DR-13 |
+| P0.1.2 | Git remote, `main`, branch protection, CI trigger | P0 | COMPLETE | — | BUILD | DR-13, DR-14 |
+| P0.1.5 | Hardcoded-colour guard: decide DR-13, then make `guard` green | P0 | COMPLETE | — | BUILD | DR-13 |
 | P0.1.3 | Production guard on `platform.runPayout` | P0 | COMPLETE | — | BUILD | — |
 | P0.1.4 | Reconcile engineering docs; retire WORK_PLAN as driver | P0 | COMPLETE | — | BUILD | P0.1.1 |
 | P0.2.1 | Founders' agreement (doc 05) completed with counsel | P0 | READY | P0 | OPERATE | — |
@@ -163,7 +163,7 @@ production (P0.1.3).
 | P1.3.1 | Attribution capture end to end | P1 | NOT_STARTED | P0 | BUILD | P0.2.5 (DR-02), P0.2.6 |
 | P1.4.1 | Checkout phone verification + risk flags (policy) | P1 | NOT_STARTED | P0 | BUILD | P1.1.1, P0.2.5 (D-2) |
 | P1.4.2 | Consent records at checkout; privacy texts hook | P1 | NOT_STARTED | P0 | BUILD | P0.2.6 |
-| P1.4.3 | Observability baseline | P1 | NOT_STARTED | P0 | BUILD | P0.1.2 |
+| P1.4.3 | Observability baseline | P1 | READY | P0 | BUILD | P0.1.2 |
 | P1.4.4 | Deployment: staging and production | P1 | NOT_STARTED | P0 | BUILD | P0.1.2, P0.2.3 |
 | P1.4.5 | Rate limits in the database + edge rules | P1 | NOT_STARTED | P0 | BUILD | P1.4.4 |
 | P1.4.6 | Seller contact isolation | P1 | COMPLETE | — | BUILD | P0.1.1 |
@@ -198,7 +198,7 @@ production (P0.1.3).
 | P3.3.3 | Daily exception report | P3 | NOT_STARTED | P0 | BUILD | P3.3.1 |
 | P3.4.1 | Web reads through the API; identity repository | P3 | COMPLETE | — | BUILD | P0.1.1 |
 | P3.4.2 | Sessions table and revocation | P3 | COMPLETE | — | BUILD | P0.1.1 |
-| P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | NOT_STARTED | P1 | BUILD | P0.1.2 |
+| P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | READY | P1 | BUILD | P0.1.2 |
 | P3.4.4 | Payment entity and payment state machine | P3 | NOT_STARTED | P1 | BUILD | P3.1.2 |
 | P4.1.1 | Frontend foundations (R0) | P4 | NOT_STARTED | P1 | BUILD | GATE 4 |
 | P4.2.1 | Trust layer on tiles, product, house, checkout (R1) | P4 | NOT_STARTED | P1 | BUILD | P4.1.1 |
@@ -364,7 +364,7 @@ because this task's own reason applies to them unchanged.
 **Reference documents:** `WORK_PLAN.md` §11.2; `docs/DEBT_REGISTER.md`.
 
 #### P0.1.2 Git remote, `main`, branch protection, CI trigger
-**Status:** BLOCKED (2026-09-20, on DR-13 and DR-14) · **Priority:** P0 · **Type:** BUILD
+**Status:** COMPLETE (2026-09-21; protection formally deferred by DR-14) · **Type:** BUILD
 **Why:** there is no remote; CI listens on `main`; the branch is `master`. Nothing is
 backed up and nothing is verified by CI.
 **Goal:** the repository lives on GitHub under company-controlled ownership (doc 05 §6),
@@ -429,12 +429,21 @@ because requiring a job that has never passed would lock `main` behind DR-13; P0
 `no forbidden values` the moment it is green. The exact payloads are not committed; they
 are three lines of JSON either API will take.
 
-**Completion evidence:** remote URL; CI run URL — recorded above; the task stays BLOCKED
-until the guard is green.
+**Completion evidence:** remote URL; CI run URL — recorded above.
+
+**CLOSED 2026-09-21.** *Criterion 1, remote:* met on 20 Sep. *Criterion 2, first CI run
+green on `main`:* **met by run `35658551191` on commit `0ba1376`** — `typecheck · test ·
+architecture` success, `no forbidden values` success. It is the first fully green run this
+repository has ever had; the guard had never passed since the workflow was written on 2 Sep.
+*Criterion 3, protection rule visible:* **formally deferred, not met**, by the founder's
+decision DR-14 (option d) on 21 Sep: branch protection on a private repository is a paid
+feature and the spend is deferred. The founder chose to close this task with protection
+deferred rather than leave it blocked. Registered as DEBT #23 with three triggers; the exact
+protection shape is written above so applying it later is one API call.
 **Reference documents:** `docs/architecture/10-infrastructure.md` §3; doc 05 §6.
 
 #### P0.1.5 Hardcoded-colour guard: decide DR-13, then make `guard` green
-**Status:** BLOCKED (needs DR-13) · **Priority:** P0 · **Type:** BUILD
+**Status:** COMPLETE (2026-09-21) · **Type:** BUILD
 **Why:** created 2026-09-20 by P0.1.2, under change-control rule 3. The CI guard that
 `DESIGN_DOCTRINE.md` exists to enforce has never passed, and until it does, `main` has a
 permanently red job and cannot be a required check.
@@ -448,6 +457,39 @@ separate questions and may get three different answers. Anything left unfixed ge
 protection; every remaining hex either tokenised, deliberately exempt in a rule the guard
 states, or registered as debt.
 **Do not do:** widen the exemption to silence the guard generally; delete the guard.
+
+**Completion evidence:** commits `5440a4c` (guard, tokens, four components) and `0ba1376`
+(a control byte removed from the workflow — see the LOG). CI run `35658551191`: both jobs
+green.
+
+*Criterion 1 — the guard job green on `main`.* **Met.** The two grep lines are replaced by
+`scripts/guard/forbidden-values.mjs`, plain Node with no install, which strips comments with
+a lexer that knows what a string is, matches hex with no word boundary, states its one
+artwork exemption with its reason, self-tests its own lexer and matchers (exit 2 if broken),
+and refuses to report clean on a walk of fewer than 100 files.
+
+*Criterion 2 — the check required in branch protection.* **Deferred by DR-14**, the same
+founder decision that closes P0.1.2. The guard runs and reports on every push; nothing yet
+stops a red commit landing. DEBT #23.
+
+*Criterion 3 — every remaining hex tokenised, exempt by a stated rule, or registered.*
+**Met.** DR-13 (option c, decided 21 Sep): comments excluded; `Flacon.tsx` exempt as artwork
+in the guard with its reason; genuine component colours tokenised. Fixing the guard showed the
+old `\b` matcher had missed nine colours, and that the one cart gradient was four copies of the
+same stage backdrop; asked again with that evidence, the founder chose one `stage` palette of
+three tokens (the product tile's values), used by the home hero, product page, product tile
+and cart tile. `stage` is the preset's second literal palette beside `family`, dark in both
+themes, and is in the drift test too. The seven `rgb()`/`rgba()` literals the hex guard cannot
+see are registered as DEBT #24 rather than decided.
+
+*Verified where no test reaches:* in a browser, every stage's computed background resolves
+`theme(colors.stage.*)` to exactly the token values, and the hero renders as before. 126/126
+e2e on a fresh database; the accessibility audit clean across every surface and width; 1,595
+unit tests.
+
+*Scope note:* the direction check shares the job and had never run either, because the colour
+step always failed first. Its only hits were three comment sentences, which the same lexer
+removes — required to make the job green, and within DR-13's "exclude comments".
 **Reference documents:** `CLAUDE.md` §0.5, §14; `docs/DESIGN_DOCTRINE.md`;
 `.github/workflows/ci.yml`; `DECISION_REGISTER.md` DR-13.
 
@@ -1109,7 +1151,7 @@ customer/aftercare roles may insert only their own purpose.
 **Reference documents:** `docs/data/04` §2; `docs/legal/02` (consent texts row).
 
 #### P1.4.3 Observability baseline
-**Status:** NOT_STARTED · **Priority:** P0 · **Type:** BUILD
+**Status:** READY (2026-09-21, P0.1.2 complete) · **Priority:** P0 · **Type:** BUILD
 **Why:** two `console.error` calls are the whole observability story (FACT). A pilot with
 no error capture is blind.
 **Goal:** request id in middleware propagated to context, logs and audit; JSON structured
@@ -1750,7 +1792,7 @@ may proceed before GATE 1. Recorded in DR-15.
 **Reference documents:** `docs/architecture/05` §1.
 
 #### P3.4.3 Security headers; CI dependency audit; browser suite in CI
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Status:** READY (2026-09-21, P0.1.2 complete) · **Priority:** P1 · **Type:** BUILD
 **Goal:** CSP with nonce for the theme script, HSTS, frame-ancestors, referrer policy;
 weekly `pnpm audit:deps` workflow; the Playwright suite and the accessibility audit run in
 CI against a built app on PGlite (code read via a test hook, not the log).
@@ -2661,3 +2703,26 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   cart-tile gradient in `CartView.tsx:152` (`#2A2019`, `#131010`, `#070606`) are NOT tokens, so
   fixing that line means adding tokens or mapping to existing ones — a design decision under
   `CLAUDE.md` §14, not an engineering one.
+
+- 2026-09-21 · Claude Code session · DR-13, DR-14 · DECIDED by the founder · DR-13 option (c),
+  split by category, then amended on new evidence to one `stage` palette of three tokens. DR-14
+  option (d), main stays unprotected, DEBT #23.
+
+- 2026-09-21 · Claude Code session · P0.1.5 · BLOCKED → COMPLETE · commits `5440a4c`, `0ba1376`.
+  The guard is now honest in both directions: it no longer fails on comments, and it no longer
+  misses Tailwind's `_`-separated colours — which had hidden nine of them. CI run `35658551191`
+  green on both jobs. Protection criterion deferred by DR-14.
+
+- 2026-09-21 · Claude Code session · P0.1.2 · BLOCKED → COMPLETE · the same run is the first
+  fully green CI run in the repository's history. Protection formally deferred by DR-14, at the
+  founder's explicit choice to close rather than leave blocked.
+
+- 2026-09-21 · Claude Code session · — · finding · commit `5440a4c`'s run failed with ZERO JOBS.
+  A comment written into `ci.yml` through a script turned the two characters `\b` into one
+  backspace byte; YAML forbids control characters, so GitHub could not parse the workflow at all.
+  A parse failure and a test failure look identical on the run summary — only "no jobs" tells
+  them apart. Fixed in `0ba1376`; every file touched in the last twelve commits scanned, this
+  was the only one.
+
+- 2026-09-21 · Claude Code session · P1.4.3, P3.4.3 · NOT_STARTED → READY · each depended only
+  on P0.1.2. P3.4.3 is in the P3.4 workstream DR-15 permits before GATE 1.
