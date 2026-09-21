@@ -49,6 +49,13 @@ jobs:
       - name: Test
         run: pnpm -r --if-present test
 
+      # A production build, because typecheck and tests cannot see what only the
+      # build does: prerendering. From 04081ca until c3ee9af `next build` failed
+      # on /ops while every check here stayed green, and nobody noticed for
+      # three tasks (P3.4.3, 22 Sep 2026).
+      - name: Build
+        run: pnpm --filter @diyar/web build
+
   guard:
     name: no forbidden values
     runs-on: ubuntu-latest
@@ -77,3 +84,88 @@ jobs:
       # checks its own matchers before trusting them.
       - name: No forbidden values
         run: node scripts/guard/forbidden-values.mjs
+
+  # The browser suites (P3.4.3). Each job gets its OWN server and a fresh
+  # database, because the one-time-code rate limit lives in the server process
+  # and several cases count rows: a second suite against the same process fails
+  # tests that have nothing to do with it (logged 21 Sep 2026).
+  #
+  # Against the DEV server, not a production build, deliberately. A built app
+  # runs with NODE_ENV=production, and there the startup guard refuses to boot
+  # while any stub is configured — which, until the SMS sender and Sentry exist,
+  # is always. Relaxing that guard for tests is a security-critical change and
+  # is recorded as an open question in the plan (P3.4.3), not made here.
+  e2e:
+    name: browser suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Codes are read from a file the app writes (the OTP outbox), not scraped
+      # from the server log. The outbox sender is a declared stub, refused in
+      # production, so this hook cannot exist where it would matter.
+      - name: Start the app
+        run: |
+          (cd apps/web && OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
+          echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
+
+      - name: Browser suite
+        run: node apps/web/scripts/e2e.mjs
+        env:
+          OTP_OUTBOX: ${{ runner.temp }}/otp.jsonl
+
+      - name: Server log, when something failed
+        if: failure()
+        run: tail -200 "$RUNNER_TEMP/dev.log"
+
+  a11y:
+    name: accessibility audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the app
+        run: |
+          (cd apps/web && OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
+          echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
+
+      # Every surface, every width, axe WCAG 2 AA, RTL fill edges, focus rings,
+      # 44pt targets — once per theme. One run signs in twice (a house and an
+      # operator), so two runs spend four codes against a limit of five an hour
+      # per number, and can share the server.
+      - name: Accessibility audit (noir)
+        run: node scripts/audit.mjs
+        working-directory: apps/web
+        env:
+          OTP_OUTBOX: ${{ runner.temp }}/otp.jsonl
+
+      - name: Accessibility audit (paper)
+        run: node scripts/audit.mjs
+        working-directory: apps/web
+        env:
+          OTP_OUTBOX: ${{ runner.temp }}/otp.jsonl
+          THEME: light
+
+      - name: Server log, when something failed
+        if: failure()
+        run: tail -200 "$RUNNER_TEMP/dev.log"

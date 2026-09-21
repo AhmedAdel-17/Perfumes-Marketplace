@@ -83,3 +83,28 @@ export const logErrorReporter = (sink: LogSink = stdoutSink): ErrorReporter => (
     });
   },
 });
+
+/**
+ * One-time codes, appended to an outbox the browser suites can read (P3.4.3).
+ *
+ * THE TEST HOOK the plan asks for, so the suites stop scraping a server log for
+ * six digits. Scraping worked by accident of formatting: it read the last line
+ * mentioning a phone and hoped the code was at the end of it, and it could not
+ * run in CI without capturing and sharing a dev server's stdout. An outbox is a
+ * contract — one JSON object per code, `{phone, code, at}` — that a test reads
+ * on purpose.
+ *
+ * A STUB, declared, like the console sender it wraps: `assertProductionSafe`
+ * refuses to boot production holding it, so codes can never be written to disk
+ * where it matters. The writer is injected because `packages/api` reads no
+ * environment and touches no filesystem of its own choosing; the composition
+ * root (`apps/web/src/core/otp.ts`) decides the path.
+ */
+export const outboxOtpSender = (write: (line: string) => void): OtpSender => ({
+  name: 'outbox-otp',
+  isStub: true,
+  async send({ phone, code }) {
+    await consoleOtpSender.send({ phone, code });
+    write(JSON.stringify({ phone, code, at: new Date().toISOString() }));
+  },
+});

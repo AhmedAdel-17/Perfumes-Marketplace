@@ -74,9 +74,9 @@ pnpm test        # unit, contract, RLS, acceptance-gate and API tests
 pnpm build       # production build
 
 # Browser suite and accessibility audit — need the dev server running
-DEV_LOG=<path to the dev server log> pnpm --filter @diyar/web e2e
-DEV_LOG=<path to the dev server log> pnpm --filter @diyar/web run audit
-DEV_LOG=<path to the dev server log> THEME=light pnpm --filter @diyar/web run audit
+OTP_OUTBOX=<same file the app was started with> pnpm --filter @diyar/web e2e
+OTP_OUTBOX=<same file the app was started with> pnpm --filter @diyar/web run audit
+OTP_OUTBOX=<same file the app was started with> THEME=light pnpm --filter @diyar/web run audit
 ```
 
 Write `run audit`, not `audit`: from inside `apps/web`, a bare `pnpm audit` is
@@ -108,9 +108,13 @@ installs on the spot — rewriting `node_modules` under whatever is running. Aft
 editing `pnpm-workspace.yaml` or a manifest, stop the dev server and any browser
 run first, then install deliberately.
 
-Both suites sign in, and read the one-time codes out of the dev server's log,
-which is why they need `DEV_LOG`. Those codes are real credentials for the seeded
-accounts; the log is gitignored for that reason.
+Both suites sign in, and read the one-time codes from an OTP outbox: start the
+app with `OTP_OUTBOX=<file>` and it appends `{phone, code, at}` there, and the
+suites read the same file. That replaced scraping the dev server's log (P3.4.3),
+which worked by accident of formatting and could not run in CI. The outbox
+sender is a declared stub, so production refuses to boot with it — codes are
+never written to disk where it matters. Those codes are real credentials for
+the seeded accounts; keep the file outside the repository.
 
 **Restart the dev server between full runs.** Requesting a one-time code is rate
 limited to five an hour per number, and the counters live in the server process

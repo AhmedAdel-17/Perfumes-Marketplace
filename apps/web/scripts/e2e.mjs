@@ -13,14 +13,22 @@
  * up its own state through the API proves the API works — which is already
  * proven — and skips the wiring, which is not.
  *
- * Run: node scripts/e2e.mjs   (DEV_LOG must point at the dev server log)
+ * Run: node scripts/e2e.mjs   (OTP_OUTBOX must name the file the app was started with)
  */
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { crc32, deflateSync } from 'node:zlib';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
-const LOG = process.env.DEV_LOG;
+const OUTBOX = process.env.OTP_OUTBOX;
+
+// Refused up front. Without it the run went on until the first sign-in and then
+// failed inside `readFileSync` — which names a missing path, not a missing
+// variable, and has already spent a one-time code.
+if (!OUTBOX) {
+  console.error('OTP_OUTBOX is not set: start the app with OTP_OUTBOX=<file> and pass the same path here. See README, "Checks".');
+  process.exit(1);
+}
 
 /* ------------------------------------------------------------ tiny harness */
 
@@ -58,11 +66,22 @@ function equal(actual, expected, what) {
 
 /* ------------------------------------------------------------- page helpers */
 
+/**
+ * The latest one-time code sent to a phone, read from the OTP outbox (P3.4.3).
+ *
+ * The app writes `{phone, code, at}` lines there when `OTP_OUTBOX` is set — a
+ * test hook, where this used to scrape the dev server's log for the last line
+ * mentioning the phone and hope the code was at the end of it. That worked by
+ * accident of formatting and could not run in CI without sharing a server's
+ * stdout; the outbox is a contract.
+ */
 function codeFor(phone) {
-  const lines = readFileSync(LOG, 'utf8').split('\n').filter((l) => l.includes(phone));
-  const match = lines.at(-1)?.match(/(\d{6})\s*$/);
-  if (!match) throw new Error(`No one-time code was printed for ${phone}`);
-  return match[1];
+  const entries = readFileSync(OUTBOX, 'utf8').split('\n').filter(Boolean)
+    .map((line) => JSON.parse(line))
+    .filter((entry) => entry.phone === phone);
+  const latest = entries.at(-1);
+  if (!latest) throw new Error(`No one-time code was sent to ${phone}`);
+  return latest.code;
 }
 
 async function fieldId(page, labelStartsWith) {

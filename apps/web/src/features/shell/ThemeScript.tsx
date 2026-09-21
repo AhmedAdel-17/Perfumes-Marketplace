@@ -26,8 +26,13 @@ const source = [
   '}catch(e){}})()',
 ].join('');
 
-export function ThemeScript() {
-  return <script dangerouslySetInnerHTML={{ __html: source }} />;
+/**
+ * `nonce` is this request's Content-Security-Policy nonce (P3.4.3). Without it
+ * the policy refuses the script, the remembered theme is never applied, and a
+ * visitor who chose paper sees the page flash from black on every navigation.
+ */
+export function ThemeScript({ nonce }: { nonce?: string | undefined }) {
+  return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: source }} />;
 }
 
 /**

@@ -1,12 +1,13 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { consoleOtpSender, consume, rateLimitMessage, type ApiCaller } from '@diyar/api';
+import { consume, rateLimitMessage, type ApiCaller } from '@diyar/api';
 import { api } from '@/core/api';
 import { identity } from '@/core/identity';
 import { generateOtpCode } from '@diyar/api';
 import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
+import { otpSender } from '@/core/otp';
 import {
   clearAllOpsSessions, clearOpsSession, issueOpsSession, readOpsSession,
 } from './session';
@@ -66,7 +67,7 @@ export async function requestOpsCode(phone: string): Promise<OpsResult> {
      */
     const code = generateOtpCode((max) => randomInt(max));
     await loginCodes().issue({ phone: trimmed, audience: 'platform', code });
-    await consoleOtpSender.send({ phone: trimmed, code });
+    await otpSender().send({ phone: trimmed, code });
   }
   return { ok: true };
 }

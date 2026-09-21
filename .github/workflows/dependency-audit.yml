@@ -1,0 +1,31 @@
+name: Dependency audit
+
+# Weekly, and on demand (P3.4.3, docs/architecture/05 §9).
+#
+# NOT on every push, deliberately — the README gives the reason: it asks the
+# registry, so an unchanged commit can fail because an advisory was published
+# overnight, and a check that fails without a code change is a check people
+# learn to skip. Once a week, on its own, it is news rather than noise.
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC — 08:00 or 09:00 in Cairo
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: pnpm audit:deps
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      # Trust the exit code, not a summary: a script that counted advisories in
+      # the JSON once reported zero when the response came back empty.
+      - name: Advisories at moderate or worse
+        run: pnpm audit:deps

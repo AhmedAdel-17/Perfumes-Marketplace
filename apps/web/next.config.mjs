@@ -22,6 +22,29 @@ const MEDIA_PREFIXES = ['/products/**', '/content/**'];
 /** @type {import('next').NextConfig} */
 export default {
   reactStrictMode: true,
+  /*
+   * The headers that are the same on every response (P3.4.3, 05 §9). The
+   * Content-Security-Policy is NOT here: it carries a per-request nonce, so
+   * middleware.ts writes it.
+   *
+   * HSTS is harmless over plain http — browsers only honour it on https — so it
+   * is sent everywhere rather than guessed at per environment. Two years and
+   * subdomains, without `preload`, because preload is a registry submission and
+   * nearly irreversible, and the domain is not even chosen yet (D-1).
+   */
+  async headers() {
+    return [{
+      source: '/:path*',
+      headers: [
+        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        // Belt and braces with `frame-ancestors 'none'`, for browsers that predate it.
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+      ],
+    }];
+  },
   // PGlite ships WebAssembly and must not be bundled for the browser. In
   // production this is postgres-js instead; the Drizzle code is identical.
   serverExternalPackages: ['@electric-sql/pglite'],

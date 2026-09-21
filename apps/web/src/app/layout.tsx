@@ -3,6 +3,7 @@ import { Amiri, Bodoni_Moda, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
 import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
+import { headers } from 'next/headers';
 import './globals.css';
 
 /**
@@ -60,7 +61,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // This request's CSP nonce, minted by middleware.ts. Reading headers() is
+  // also what keeps every page dynamic, which a nonce requires.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html
       lang="ar"
@@ -78,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-ground text-ink font-sans text-body leading-normal">
         {/* First thing in the document: applies the remembered theme before the
             page is painted. See ThemeScript for why this cannot be an effect. */}
-        <ThemeScript />
+        <ThemeScript nonce={nonce} />
         <CartProvider>{children}</CartProvider>
         {/* Sits above everything, catches no clicks. DESIGN_DOCTRINE §2. */}
         <Grain />

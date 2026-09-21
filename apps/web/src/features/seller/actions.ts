@@ -1,11 +1,12 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { consoleOtpSender, type SellerSession, consume, rateLimitMessage } from '@diyar/api';
+import { type SellerSession, consume, rateLimitMessage } from '@diyar/api';
 import { api } from '@/core/api';
 import { generateOtpCode } from '@diyar/api';
 import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
+import { otpSender } from '@/core/otp';
 import { identity } from '@/core/identity';
 import {
   clearAllSellerSessions, clearSellerSession, issueSellerSession, readSellerSession,
@@ -59,7 +60,7 @@ export async function requestSellerCode(phone: string): Promise<RequestCodeResul
   // long enough to hand to the sender — the store keeps a digest of it.
   const code = generateOtpCode((max) => randomInt(max));
   await loginCodes().issue({ phone: trimmed, audience: 'seller', code });
-  await consoleOtpSender.send({ phone: trimmed, code });
+  await otpSender().send({ phone: trimmed, code });
   return generic;
 }
 

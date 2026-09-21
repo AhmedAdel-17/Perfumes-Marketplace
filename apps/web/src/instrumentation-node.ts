@@ -7,7 +7,8 @@
  * the local media store writes with `node:fs`, and none of it may appear in a
  * bundle the edge runtime compiles.
  */
-import { assertProductionSafe, cashOnDelivery, consoleOtpSender } from '@diyar/api';
+import { assertProductionSafe, cashOnDelivery } from '@diyar/api';
+import { otpSender } from './core/otp';
 import { mediaStore } from './core/media';
 import { errorReporter } from './core/api';
 
@@ -26,7 +27,8 @@ export function checkStartup(): void {
    * uses (core/media.ts), so the local-disk stub cannot slip past in production.
    */
   assertProductionSafe({
-    otp: consoleOtpSender,
+    // The SAME sender the sign-in actions use, whichever stub it is.
+    otp: otpSender(),
     payments: cashOnDelivery,
     media: mediaStore(),
     // The SAME reporter the API context uses. Until it is Sentry it is a
