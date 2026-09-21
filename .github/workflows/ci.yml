@@ -69,7 +69,7 @@ jobs:
       #
       # This was two grep lines until 21 Sep 2026 (task P0.1.5, DR-13), and they
       # were wrong in both directions: they matched inside COMMENTS, so the
-      # guard failed on its own documentation, and they matched `#RRGGBB`,
+      # guard failed on its own documentation, and they matched `#RRGGBB\b`,
       # which never fires on Tailwind's `#2C221A_0%` because `_` is a word
       # character — nine real hardcoded colours walked past it. The script
       # strips comments with a lexer that knows what a string is, drops the
