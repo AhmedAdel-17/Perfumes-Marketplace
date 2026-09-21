@@ -119,6 +119,11 @@ jobs:
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
           echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
 
+      # Compile every route before a test navigates to one. The dev server
+      # compiles on first request, and the first CI run lost a navigation to it.
+      - name: Warm every route
+        run: node apps/web/scripts/warm.mjs
+
       - name: Browser suite
         run: node apps/web/scripts/e2e.mjs
         env:
@@ -153,6 +158,9 @@ jobs:
       # 44pt targets — once per theme. One run signs in twice (a house and an
       # operator), so two runs spend four codes against a limit of five an hour
       # per number, and can share the server.
+      - name: Warm every route
+        run: node apps/web/scripts/warm.mjs
+
       - name: Accessibility audit (noir)
         run: node scripts/audit.mjs
         working-directory: apps/web
