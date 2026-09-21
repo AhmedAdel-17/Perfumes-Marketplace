@@ -8,7 +8,7 @@ import { generateOtpCode } from '@diyar/api';
 import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
 import {
-  clearOpsSession, issueOpsSession, readOpsSession,
+  clearAllOpsSessions, clearOpsSession, issueOpsSession, readOpsSession,
 } from './session';
 
 /**
@@ -87,17 +87,26 @@ export async function verifyOpsCode(phone: string, code: string): Promise<OpsRes
   const operator = await findOperator(trimmed);
   if (!operator) return { ok: false, message: 'الرمز غير صحيح أو انتهت صلاحيته.' };
 
-  await issueOpsSession({
-    staffId: operator.staffId,
-    authUserId: operator.authUserId,
-    fullName: operator.fullName,
-    issuedAt: Date.now(),
-  });
+  await issueOpsSession(operator.staffId);
   return { ok: true };
 }
 
 export async function signOutOps(): Promise<void> {
   await clearOpsSession();
+  redirect('/ops');
+}
+
+/**
+ * Sign this operator out of every device at once (migration 0028).
+ *
+ * No control exists for it in the console yet; `design-reference/admin.html`
+ * is where one would be drawn. The person is read from the CURRENT session,
+ * never taken as an argument, so a crafted request cannot sign somebody else
+ * out.
+ */
+export async function signOutOpsEverywhere(): Promise<void> {
+  const session = await readOpsSession();
+  if (session) await clearAllOpsSessions(session.staffId);
   redirect('/ops');
 }
 
@@ -110,22 +119,22 @@ export async function signOutOps(): Promise<void> {
  * acceptable. One indexed lookup buys revocation on the next click.
  */
 export async function activeOperator() {
+  /*
+   * The session read IS the staff check now (migration 0028): it joins the
+   * row to `platform_staff`, so a revoked session, an expired one and a
+   * removed operator are all refused by the same query, and the role that comes
+   * back is the one on the staff row at this moment — not the one they had
+   * when they signed in.
+   */
   const session = await readOpsSession();
-  if (!session) return null;
-
-  // The role comes back with the id, because it is read at the same moment and
-  // for the same reason: what this operator may do is a fact about the CURRENT
-  // row, not about the cookie they signed in with.
-  const row = await identity.activeOperator(session.staffId);
-
-  if (!row) {
+  if (!session) {
     // Best-effort: Next refuses cookie writes during a page render, which is
     // exactly where a revoked session arrives. Refusing access is the security
     // property; clearing the cookie is tidying.
     await clearOpsSession().catch(() => undefined);
     return null;
   }
-  return { ...session, role: row.role };
+  return session;
 }
 
 async function opsCaller() {

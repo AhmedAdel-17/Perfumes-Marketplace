@@ -1,23 +1,30 @@
 import 'server-only';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
-import { isSessionValid, type SellerSession } from '@diyar/api';
+import { SELLER_SESSION_TTL_MS, type SellerSession } from '@diyar/api';
+import { identity } from '@/core/identity';
+import { openSessionId, requestFingerprint, sealSessionId } from '@/core/session-cookie';
 
 /**
  * The seller's signed-in state.
  *
- * A signed cookie, not a session table: the payload is a seller id and a staff
- * id, both of which the server can verify cheaply and neither of which is worth
- * a database round trip on every request. The signature is what makes it safe —
- * without it the cookie is a text field naming which house you would like to be.
+ * A SESSION IS A ROW (task P3.4.2, migration 0028). The cookie carries a
+ * session id and an HMAC of it; who you are, which house, and whether you may
+ * still be here are all read from `sessions` joined to `seller_staff`, on every
+ * request. That one change is what makes three things possible that were not:
  *
- * ONE-TIME CODES USED TO LIVE HERE TOO, in a `Map` on `globalThis` that the
- * operator portal borrowed. They now live in Postgres behind `LoginCodeStore`
- * (WORK_PLAN 11.2, migration 0025), because a process-local store does not
- * survive a restart and does not exist across instances — and because the
- * shared `Map` was keyed on the phone ALONE, so a code issued for a house
- * verified at the operator console for the same number. The store keys on the
- * phone and the audience, and refuses the swap.
+ *   · signing out ends the session for EVERY copy of the cookie, not just the
+ *     one in this browser;
+ *   · "sign out everywhere" is one statement;
+ *   · removing a staff member and revoking a session are refused by the same
+ *     query, so neither can be forgotten while the other is remembered.
+ *
+ * The cookie used to be the session: a signed JSON payload with the house, the
+ * person and a timestamp, whose expiry was decided by this server's clock. A
+ * copy taken before sign-out kept working for the rest of its twelve hours,
+ * because nothing on the server knew it had been signed out.
+ *
+ * ONE-TIME CODES USED TO LIVE HERE TOO, in a `Map` on `globalThis`. They are in
+ * Postgres behind `LoginCodeStore` (WORK_PLAN 11.2, migration 0025).
  */
 
 const COOKIE = 'diyar_seller';
@@ -39,55 +46,78 @@ function secret(): string {
   return 'development-only-not-a-secret';
 }
 
-const sign = (payload: string): string =>
-  createHmac('sha256', secret()).update(payload).digest('base64url');
-
 /**
- * Constant-time comparison.
+ * Open a session for a house and put its id in the cookie.
  *
- * `a === b` on a signature leaks how many leading bytes matched through timing.
- * The length check first is deliberate: `timingSafeEqual` THROWS on mismatched
- * lengths rather than returning false, which would turn a forged cookie into a
- * 500 and hand an attacker a much louder oracle than the timing one.
+ * The expiry is stamped by the DATABASE, with `now()`, from the length given
+ * here. This process's clock decides nothing about how long a session lives.
  */
-function signatureMatches(expected: string, actual: string): boolean {
-  const a = Buffer.from(expected);
-  const b = Buffer.from(actual);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+export async function issueSellerSession(
+  principal: { sellerId: string; staffAuthUserId: string },
+): Promise<void> {
+  const sessionId = await identity.openSession({
+    audience: 'seller',
+    principalId: principal.staffAuthUserId,
+    sellerId: principal.sellerId,
+    ttlSeconds: SELLER_SESSION_TTL_MS / 1000,
+    ...(await requestFingerprint(secret())),
+  });
 
-export async function issueSellerSession(session: SellerSession): Promise<void> {
-  const payload = Buffer.from(JSON.stringify(session)).toString('base64url');
-  const store = await cookies();
-  store.set(COOKIE, `${payload}.${sign(payload)}`, {
+  (await cookies()).set(COOKIE, sealSessionId(secret(), sessionId), {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 12 * 60 * 60,
+    maxAge: SELLER_SESSION_TTL_MS / 1000,
   });
 }
 
-export async function readSellerSession(): Promise<SellerSession | null> {
-  const raw = (await cookies()).get(COOKIE)?.value;
-  if (!raw) return null;
+/**
+ * The signed-in house, if that access still exists.
+ *
+ * The signature proves the cookie is OURS; the row proves the session is still
+ * GOOD — not revoked, not expired by the database's clock, and its staff member
+ * not removed from the house. Both questions are asked on every call, which is
+ * one indexed lookup per request and the right price for revocation that takes
+ * effect on the next click.
+ */
+export async function readSellerSession(): Promise<(SellerSession & { sessionId: string }) | null> {
+  const sessionId = openSessionId(secret(), (await cookies()).get(COOKIE)?.value);
+  if (!sessionId) return null;
 
-  const [payload, signature] = raw.split('.');
-  if (!payload || !signature) return null;
-  if (!signatureMatches(sign(payload), signature)) return null;
+  const active = await identity.activeSellerSession(sessionId);
+  if (!active) return null;
 
-  try {
-    const session = JSON.parse(Buffer.from(payload, 'base64url').toString()) as SellerSession;
-    // The expiry is checked HERE as well as by the cookie's maxAge, because a
-    // cookie's lifetime is enforced by the browser and the browser is the one
-    // party in this exchange we do not control.
-    if (!isSessionValid(session, Date.now())) return null;
-    return session;
-  } catch {
-    return null;
-  }
+  return {
+    sessionId: active.sessionId,
+    sellerId: active.sellerId,
+    staffAuthUserId: active.staffAuthUserId,
+    issuedAt: active.issuedAt.getTime(),
+  };
 }
 
+/**
+ * Sign out: end the session on the server, then forget the cookie.
+ *
+ * The ORDER matters. Revoking first means that if deleting the cookie fails —
+ * and Next refuses cookie writes during a page render — the session is already
+ * dead, and the stale cookie is merely a pointer to nothing. The other order
+ * would leave a working session behind whenever the second step failed.
+ */
 export async function clearSellerSession(): Promise<void> {
+  const jar = await cookies();
+  const sessionId = openSessionId(secret(), jar.get(COOKIE)?.value);
+  if (sessionId) await identity.revokeSession(sessionId);
+  jar.delete(COOKIE);
+}
+
+/**
+ * End every open session this staff member has, on every device, and say how
+ * many. "Sign me out everywhere" is the only honest answer to "I lost my phone",
+ * and until migration 0028 it could not be expressed at all.
+ */
+export async function clearAllSellerSessions(staffAuthUserId: string): Promise<number> {
+  const ended = await identity.revokeAllSessions('seller', staffAuthUserId);
   (await cookies()).delete(COOKIE);
+  return ended;
 }

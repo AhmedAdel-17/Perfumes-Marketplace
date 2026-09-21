@@ -8,7 +8,7 @@ import {
   type Providers,
 } from './ports';
 import { cashOnDelivery, consoleOtpSender } from './stubs';
-import { generateOtpCode, isSessionValid, SELLER_SESSION_TTL_MS } from './session';
+import { generateOtpCode } from './session';
 
 const realOtp: OtpSender = { name: 'vodafone-sms', isStub: false, async send() {} };
 
@@ -138,16 +138,12 @@ describe('seller sessions', () => {
     }
   });
 
-  it('expires a session after its window', () => {
-    const session = { sellerId: 's', staffAuthUserId: 'u', issuedAt: 1_000_000 };
-    expect(isSessionValid(session, 1_000_000)).toBe(true);
-    expect(isSessionValid(session, 1_000_000 + SELLER_SESSION_TTL_MS - 1)).toBe(true);
-    expect(isSessionValid(session, 1_000_000 + SELLER_SESSION_TTL_MS)).toBe(false);
-  });
-
-  it('refuses a session issued in the future', () => {
-    // A clock skew or a forged cookie must not buy an extra twelve hours.
-    const session = { sellerId: 's', staffAuthUserId: 'u', issuedAt: 2_000_000 };
-    expect(isSessionValid(session, 1_999_999)).toBe(false);
-  });
+  /*
+   * Session expiry USED TO be tested here, against `isSessionValid`, which
+   * decided from a timestamp in the cookie by the application server's clock.
+   * Task P3.4.2 made sessions rows and handed expiry to the database's own
+   * `now()`. Those cases now live in `packages/db/src/identity-repository.test.ts`
+   * ("dies when its time is up, by the DATABASE'S clock"), where the clock that
+   * decides is the clock under test.
+   */
 });

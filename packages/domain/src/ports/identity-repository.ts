@@ -16,8 +16,8 @@
  * whatever the calling code does next.
  *
  * WHAT `identity` MAY DO, and it is deliberately almost nothing: resolve a
- * phone to a house, resolve a phone to an operator, and answer whether a
- * session's subject is still active. It may not read a house's catalogue, an
+ * phone to a house, resolve a phone to an operator, and open, read and revoke
+ * sessions (migration 0028). It may not read a house's catalogue, an
  * order, or any other operator's row. It is set only inside a sign-in
  * transaction on the server and is reachable from a browser exactly never.
  *
@@ -40,10 +40,47 @@ export interface OperatorPrincipal {
   readonly fullName: string;
 }
 
-/** An operator as they are RIGHT NOW, which is not what their cookie says. */
-export interface ActiveOperator {
+/** Which console a session opens. A house's session never opens `/ops`. */
+export type SessionAudience = 'seller' | 'platform';
+
+/**
+ * What it takes to open a session (task P3.4.2).
+ *
+ * `ttlSeconds`, not an expiry moment: the database stamps both ends with its
+ * own clock, so a container whose clock has drifted cannot hand out a session
+ * that lives longer than policy says. The hashes are KEYED hashes computed by
+ * the caller, never raw values — see migration 0028.
+ */
+export interface OpenSession {
+  readonly audience: SessionAudience;
+  /** Staff `auth_user_id` for a house; `platform_staff.id` for an operator. */
+  readonly principalId: string;
+  /** The house, for a seller session. Null for an operator. */
+  readonly sellerId: string | null;
+  readonly ttlSeconds: number;
+  readonly ipHash: string | null;
+  readonly uaHash: string | null;
+}
+
+/** A house's session, as it stands right now. */
+export interface ActiveSellerSession {
+  readonly sessionId: string;
+  readonly sellerId: string;
+  readonly staffAuthUserId: string;
+  readonly issuedAt: Date;
+}
+
+/**
+ * An operator's session, as it stands right now — with the CURRENT role and
+ * name, not the ones they had when they signed in.
+ */
+export interface ActiveOperatorSession {
+  readonly sessionId: string;
   readonly staffId: string;
+  readonly authUserId: string;
+  readonly fullName: string;
   readonly role: string;
+  readonly issuedAt: Date;
 }
 
 export interface IdentityRepository {
@@ -60,23 +97,42 @@ export interface IdentityRepository {
   /** The operator whose number this is, if they have not been revoked. */
   operatorByPhone(phone: string): Promise<OperatorPrincipal | null>;
 
-  /**
-   * Is this staff member still working for this house?
-   *
-   * Asked on every request that carries a seller cookie. The cookie is signed
-   * and valid for twelve hours, so without this a revoked staff member keeps
-   * their access until it expires — and the symptom of getting it wrong is not
-   * an error, it is a house seeing an empty queue with no explanation.
-   */
-  sellerStaffIsActive(sellerId: string, staffAuthUserId: string): Promise<boolean>;
+  /* ------------------------------------------------------------ sessions */
 
   /**
-   * The operator's CURRENT row, or null if they have been revoked.
-   *
-   * The role comes back with the id because it is a fact about the row now, not
-   * about the cookie they signed in with. For a console that releases money,
-   * "what may this person do" is not a question to answer from a token issued
-   * hours ago.
+   * Open a session and return its id — the only thing the cookie will carry.
    */
-  activeOperator(staffId: string): Promise<ActiveOperator | null>;
+  openSession(input: OpenSession): Promise<string>;
+
+  /**
+   * The house behind this session, if it is still good.
+   *
+   * ONE query answers all three ways a session dies: it was revoked, it
+   * expired by the database's clock, or the staff member behind it was
+   * removed. Asked on every request that carries a seller cookie, so revoking
+   * anything takes effect on the next click rather than when a cookie happens
+   * to expire. This REPLACES the separate staff lookup that preceded it.
+   */
+  activeSellerSession(sessionId: string): Promise<ActiveSellerSession | null>;
+
+  /**
+   * The operator behind this session, if it is still good, with their CURRENT
+   * role. For a console that releases money, "what may this person do" is not
+   * a question to answer from a token issued hours ago.
+   */
+  activeOperatorSession(sessionId: string): Promise<ActiveOperatorSession | null>;
+
+  /**
+   * End one session. Idempotent: ending an already-ended session is not an
+   * error, because a person pressing "sign out" twice has done nothing wrong.
+   */
+  revokeSession(sessionId: string): Promise<void>;
+
+  /**
+   * End every open session this person has in one console, and say how many.
+   *
+   * "Sign me out everywhere" is the only honest answer to "I lost my phone",
+   * and until 0028 it could not be expressed at all.
+   */
+  revokeAllSessions(audience: SessionAudience, principalId: string): Promise<number>;
 }

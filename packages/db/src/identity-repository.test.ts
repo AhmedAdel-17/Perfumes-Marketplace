@@ -121,31 +121,144 @@ describe('a house signs in', () => {
   });
 });
 
-describe('a session is revalidated on every request', () => {
-  it('confirms a staff member who still works there', async () => {
-    expect(await asIdentity().transaction(
-      (r) => r.identity.sellerStaffIsActive(sellerId, staffAuthUserId))).toBe(true);
+/** Open a seller session as the sign-in flow does, and return its id. */
+const openSeller = (principalId = staffAuthUserId, house = sellerId, ttlSeconds = 3600) =>
+  asIdentity().transaction((r) => r.identity.openSession({
+    audience: 'seller', principalId, sellerId: house, ttlSeconds, ipHash: 'ip#', uaHash: 'ua#',
+  }));
+
+const openOperator = (principalId = operatorStaffId, ttlSeconds = 3600) =>
+  asIdentity().transaction((r) => r.identity.openSession({
+    audience: 'platform', principalId, sellerId: null, ttlSeconds, ipHash: null, uaHash: null,
+  }));
+
+describe('a house’s session is a row, and every way it can die is one query', () => {
+  it('reads back the house and the staff member it was opened for', async () => {
+    const id = await openSeller();
+    const found = await asIdentity().transaction((r) => r.identity.activeSellerSession(id));
+
+    expect(found?.sellerId).toBe(sellerId);
+    expect(found?.staffAuthUserId).toBe(staffAuthUserId);
   });
 
-  it('refuses one whose access was revoked', async () => {
-    const revoked = await pg.query<{ auth_user_id: string }>(
-      `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name, revoked_at)
-       VALUES ($1, gen_random_uuid(), 'fulfilment', 'مسروح', now()) RETURNING auth_user_id`,
-      [sellerId]);
+  it('ends on the next request once it is revoked — the acceptance criterion', async () => {
+    const id = await openSeller();
+    await asIdentity().transaction((r) => r.identity.revokeSession(id));
 
-    expect(await asIdentity().transaction(
-      (r) => r.identity.sellerStaffIsActive(sellerId, revoked.rows[0]!.auth_user_id))).toBe(false);
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(id)),
+      'a revoked session still opened the portal').toBeNull();
   });
 
-  it('refuses a staff member paired with the WRONG house', async () => {
-    // A signed cookie carries both halves, and a forged one would carry a real
-    // staff id against a house it does not belong to. The lookup matches both.
+  it('revoking twice is not an error', async () => {
+    // A person pressing "sign out" twice has done nothing wrong. The trigger
+    // refuses any update to a revoked row, so this proves the WHERE clause
+    // skips it rather than the trigger forgiving it.
+    const id = await openSeller();
+    await asIdentity().transaction((r) => r.identity.revokeSession(id));
+    await expect(asIdentity().transaction((r) => r.identity.revokeSession(id)))
+      .resolves.toBeUndefined();
+  });
+
+  it('dies when its time is up, by the DATABASE’S clock', async () => {
+    const id = await openSeller(staffAuthUserId, sellerId, 1);
+    // Aged by the database rather than by waiting: the check compares against
+    // `now()`, so moving the stamp is the honest way to make it "an hour ago".
+    await pg.exec(`ALTER TABLE sessions DISABLE TRIGGER sessions_only_revoke`);
+    await pg.query(
+      `UPDATE sessions SET issued_at = now() - interval '2 hours',
+         expires_at = now() - interval '1 hour' WHERE id = $1`, [id]);
+    await pg.exec(`ALTER TABLE sessions ENABLE TRIGGER sessions_only_revoke`);
+
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(id))).toBeNull();
+  });
+
+  it('dies when the staff member behind it is removed', async () => {
+    const leaver = await pg.query<{ auth_user_id: string }>(
+      `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name)
+       VALUES ($1, gen_random_uuid(), 'fulfilment', 'مغادر') RETURNING auth_user_id`, [sellerId]);
+    const principal = leaver.rows[0]!.auth_user_id;
+    const id = await openSeller(principal);
+
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(id))).not.toBeNull();
+
+    await pg.query(`UPDATE seller_staff SET revoked_at = now() WHERE auth_user_id = $1`, [principal]);
+
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(id)),
+      'a removed staff member kept their session').toBeNull();
+  });
+
+  it('does not open for a staff member paired with the WRONG house', async () => {
+    // A forged or confused session naming a real person against a house they
+    // do not work for. The join matches the house as well as the person.
     const other = await pg.query<{ id: string }>(
       `INSERT INTO sellers (trading_name, owner_name, slug, status)
        VALUES ('دار ثالثة', 'ليلى', 'dar-thalitha', 'live') RETURNING id`);
+    const id = await openSeller(staffAuthUserId, other.rows[0]!.id);
 
-    expect(await asIdentity().transaction(
-      (r) => r.identity.sellerStaffIsActive(other.rows[0]!.id, staffAuthUserId))).toBe(false);
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(id))).toBeNull();
+  });
+
+  it('is never read as an operator session', async () => {
+    const id = await openSeller();
+    expect(await asIdentity().transaction((r) => r.identity.activeOperatorSession(id))).toBeNull();
+  });
+
+  it('signs out everywhere in one statement, and says how many', async () => {
+    const person = await pg.query<{ auth_user_id: string }>(
+      `INSERT INTO seller_staff (seller_id, auth_user_id, role, full_name)
+       VALUES ($1, gen_random_uuid(), 'owner', 'مسافر') RETURNING auth_user_id`, [sellerId]);
+    const principal = person.rows[0]!.auth_user_id;
+    const phone = await openSeller(principal);
+    const laptop = await openSeller(principal);
+    const bystander = await openSeller();
+
+    const ended = await asIdentity().transaction(
+      (r) => r.identity.revokeAllSessions('seller', principal));
+
+    expect(ended).toBe(2);
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(phone))).toBeNull();
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(laptop))).toBeNull();
+    // The control: somebody else's session is untouched.
+    expect(await asIdentity().transaction((r) => r.identity.activeSellerSession(bystander)))
+      .not.toBeNull();
+  });
+});
+
+describe('a session can only ever be revoked — never altered', () => {
+  /*
+   * The trigger in 0028. RLS cannot say "this column only", so without it the
+   * `identity` role could extend a session, move it to another person, or
+   * un-revoke one. These run as `identity`, the role that holds UPDATE.
+   */
+  it('cannot be extended', async () => {
+    const id = await openSeller();
+    await expect(asRole('identity',
+      `UPDATE sessions SET expires_at = now() + interval '30 days' WHERE id = '${id}'`))
+      .rejects.toThrow(/only be revoked/);
+  });
+
+  it('cannot be moved to another person', async () => {
+    const id = await openSeller();
+    await expect(asRole('identity',
+      `UPDATE sessions SET principal_id = gen_random_uuid() WHERE id = '${id}'`))
+      .rejects.toThrow(/only be revoked/);
+  });
+
+  it('cannot be un-revoked', async () => {
+    const id = await openSeller();
+    await asIdentity().transaction((r) => r.identity.revokeSession(id));
+    await expect(asRole('identity',
+      `UPDATE sessions SET revoked_at = NULL WHERE id = '${id}'`))
+      .rejects.toThrow(/already revoked/);
+  });
+
+  it('cannot be deleted — signed out is a fact about a row, not its absence', async () => {
+    const id = await openSeller();
+    // No DELETE policy, so the statement matches nothing rather than erroring.
+    await asRole('identity', `DELETE FROM sessions WHERE id = '${id}'`);
+    const still = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM sessions WHERE id = $1`, [id]);
+    expect(still.rows[0]!.n).toBe(1);
   });
 });
 
@@ -158,26 +271,33 @@ describe('an operator signs in, and stays signed in only while they work here', 
     expect(found?.fullName).toBe('مشغّلة المنصّة');
   });
 
-  it('reads the CURRENT role, not the one on the cookie', async () => {
-    const active = await asIdentity().transaction(
-      (r) => r.identity.activeOperator(operatorStaffId));
+  it('reads the CURRENT role through the session, not the one on the cookie', async () => {
+    const id = await openOperator();
+    const active = await asIdentity().transaction((r) => r.identity.activeOperatorSession(id));
+    expect(active?.staffId).toBe(operatorStaffId);
+    expect(active?.role).toBe('admin');
 
-    expect(active).toEqual({ staffId: operatorStaffId, role: 'admin' });
+    // A demotion takes effect on the next request, without anybody signing out.
+    await pg.query(`UPDATE platform_staff SET role = 'operator' WHERE id = $1`, [operatorStaffId]);
+    const after = await asIdentity().transaction((r) => r.identity.activeOperatorSession(id));
+    expect(after?.role).toBe('operator');
+    await pg.query(`UPDATE platform_staff SET role = 'admin' WHERE id = $1`, [operatorStaffId]);
   });
 
   it('answers nothing for an operator who has been revoked', async () => {
     const gone = await pg.query<{ id: string }>(
-      `INSERT INTO platform_staff (auth_user_id, full_name, phone, role, revoked_at)
-       VALUES (gen_random_uuid(), 'سابق', '01000000009', 'operator', now()) RETURNING id`);
+      `INSERT INTO platform_staff (auth_user_id, full_name, phone, role)
+       VALUES (gen_random_uuid(), 'سابق', '01000000009', 'operator') RETURNING id`);
+    const id = await openOperator(gone.rows[0]!.id);
+    await pg.query(`UPDATE platform_staff SET revoked_at = now() WHERE id = $1`, [gone.rows[0]!.id]);
 
-    expect(await asIdentity().transaction(
-      (r) => r.identity.activeOperator(gone.rows[0]!.id))).toBeNull();
+    expect(await asIdentity().transaction((r) => r.identity.activeOperatorSession(id))).toBeNull();
     expect(await asIdentity().transaction(
       (r) => r.identity.operatorByPhone('01000000009'))).toBeNull();
   });
 });
 
-describe('the identity role can do these four things and nothing else', () => {
+describe('the identity role can do these things and nothing else', () => {
   /*
    * The half that is not about sign-in working. `identity` is set only inside a
    * sign-in transaction on the server and is reachable from a browser never —

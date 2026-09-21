@@ -8,7 +8,7 @@ import { randomInt } from 'node:crypto';
 import { loginCodes } from '@/core/login-codes';
 import { identity } from '@/core/identity';
 import {
-  clearSellerSession, issueSellerSession, readSellerSession,
+  clearAllSellerSessions, clearSellerSession, issueSellerSession, readSellerSession,
 } from './session';
 
 /**
@@ -86,13 +86,27 @@ export async function verifySellerCode(phone: string, code: string): Promise<Ver
   await issueSellerSession({
     sellerId: principal.sellerId,
     staffAuthUserId: principal.staffAuthUserId,
-    issuedAt: Date.now(),
   });
   return { ok: true };
 }
 
 export async function signOutSeller(): Promise<void> {
   await clearSellerSession();
+  redirect('/seller');
+}
+
+/**
+ * Sign this staff member out of every device at once (migration 0028).
+ *
+ * There is no control for this in the portal yet — `design-reference/seller.html`
+ * would have to be consulted before one is added — so this action exists, is
+ * tested beneath it, and waits for its button. It takes no argument: the person
+ * is read from the CURRENT session, so a crafted request cannot sign somebody
+ * else out.
+ */
+export async function signOutSellerEverywhere(): Promise<void> {
+  const session = await readSellerSession();
+  if (session) await clearAllSellerSessions(session.staffAuthUserId);
   redirect('/seller');
 }
 
@@ -111,42 +125,24 @@ export async function signOutSeller(): Promise<void> {
  * access was withdrawn and merely shows them nothing inside it.
  */
 export async function activeSellerSession(): Promise<SellerSession | null> {
-  const session = await readSellerSession();
-  if (!session) return null;
-
   /*
-    The signature proves the cookie is OURS. It does not prove the access behind
-    it still exists.
-
-    A staff member removed from a house — or a house suspended — keeps a
-    correctly signed cookie until it expires, which is twelve hours of continued
-    access after their access was taken away. Revocation that takes effect
-    "eventually" is not revocation.
-
-    Found by re-seeding the database and watching a signed-in house get an empty
-    queue and no explanation rather than being signed out. The same shape as a
-    real revocation, arrived at by accident.
-
-    One indexed lookup per request is the right price for a revocation that
-    takes effect on the next click.
-  */
-  const active = await identity.sellerStaffIsActive(
-    session.sellerId, session.staffAuthUserId,
-  );
-
-  if (!active) {
-    // Best-effort tidy-up, and deliberately not load-bearing.
-    //
-    // Next refuses cookie WRITES during a page render — they are only legal in
-    // a Server Action or Route Handler — so this throws when the guard runs
-    // from the queue page, which is precisely where a revoked session first
-    // arrives. The security property is the `null` below: access is refused
-    // whether or not the stale cookie could be cleared. Deleting it just saves
-    // the browser from resending something already known to be dead.
+   * One read answers every way a session can die — revoked, expired by the
+   * database's clock, or its staff member removed from the house — because the
+   * session is a row now (migration 0028) and the read joins it to
+   * `seller_staff`. This REPLACES the separate staff lookup that used to follow
+   * the cookie check, and the twelve hours of access-after-removal that lookup
+   * existed to prevent is still prevented, by the same query that ends a
+   * signed-out session.
+   */
+  const session = await readSellerSession();
+  if (!session) {
+    // Best-effort tidy-up, and deliberately not load-bearing. Next refuses
+    // cookie WRITES during a page render, which is exactly where a dead session
+    // first arrives. The security property is the `null`: access is refused
+    // whether or not the stale cookie could be cleared.
     await clearSellerSession().catch(() => undefined);
     return null;
   }
-
   return session;
 }
 

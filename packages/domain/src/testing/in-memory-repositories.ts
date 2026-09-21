@@ -1788,8 +1788,11 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const identity = {
       sellerByContactPhone: refuse('IdentityRepository', 'identity-repository.test.ts'),
       operatorByPhone: refuse('IdentityRepository', 'identity-repository.test.ts'),
-      sellerStaffIsActive: refuse('IdentityRepository', 'identity-repository.test.ts'),
-      activeOperator: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      openSession: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      activeSellerSession: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      activeOperatorSession: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      revokeSession: refuse('IdentityRepository', 'identity-repository.test.ts'),
+      revokeAllSessions: refuse('IdentityRepository', 'identity-repository.test.ts'),
     } as unknown as Repositories['identity'];
 
     return {

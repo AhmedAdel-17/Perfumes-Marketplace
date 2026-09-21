@@ -1,6 +1,7 @@
 import 'server-only';
 import type {
-  ActiveOperator, OperatorPrincipal, SellerPrincipal,
+  ActiveOperatorSession, ActiveSellerSession, OpenSession,
+  OperatorPrincipal, SellerPrincipal, SessionAudience,
 } from '@diyar/domain';
 import { unitOfWork } from './db';
 
@@ -39,9 +40,20 @@ export const identity = {
   operatorByPhone: (phone: string): Promise<OperatorPrincipal | null> =>
     asIdentity().transaction((r) => r.identity.operatorByPhone(phone)),
 
-  sellerStaffIsActive: (sellerId: string, staffAuthUserId: string): Promise<boolean> =>
-    asIdentity().transaction((r) => r.identity.sellerStaffIsActive(sellerId, staffAuthUserId)),
+  /* ------------------------------------------ sessions (task P3.4.2, 0028) */
 
-  activeOperator: (staffId: string): Promise<ActiveOperator | null> =>
-    asIdentity().transaction((r) => r.identity.activeOperator(staffId)),
+  openSession: (input: OpenSession): Promise<string> =>
+    asIdentity().transaction((r) => r.identity.openSession(input)),
+
+  activeSellerSession: (sessionId: string): Promise<ActiveSellerSession | null> =>
+    asIdentity().transaction((r) => r.identity.activeSellerSession(sessionId)),
+
+  activeOperatorSession: (sessionId: string): Promise<ActiveOperatorSession | null> =>
+    asIdentity().transaction((r) => r.identity.activeOperatorSession(sessionId)),
+
+  revokeSession: (sessionId: string): Promise<void> =>
+    asIdentity().transaction((r) => r.identity.revokeSession(sessionId)),
+
+  revokeAllSessions: (audience: SessionAudience, principalId: string): Promise<number> =>
+    asIdentity().transaction((r) => r.identity.revokeAllSessions(audience, principalId)),
 };

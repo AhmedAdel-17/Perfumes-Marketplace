@@ -1,29 +1,38 @@
 import 'server-only';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
+import { OPS_SESSION_TTL_MS } from '@diyar/api';
+import { identity } from '@/core/identity';
+import { openSessionId, requestFingerprint, sealSessionId } from '@/core/session-cookie';
 
 /**
  * The operator's signed-in state.
  *
  * A separate cookie from the seller's, and separately signed, so a seller
- * session can never be presented as an operator one — even if a bug elsewhere
- * confused the two payload shapes. Two names, two secrets-in-effect, no
- * overlap.
+ * session can never be presented as an operator one — and since task P3.4.2
+ * the row behind it carries its audience too, so even a correctly signed id is
+ * refused by the wrong console. Two names, two secrets, two audiences.
  *
- * The window is deliberately SHORTER than the seller's twelve hours. An
- * operator can release money; a house can only work its own queue. A session
- * length is a statement about what an unattended browser is worth to an
- * attacker, and these are not worth the same.
+ * A SESSION IS A ROW (migration 0028). The cookie carries an id and an HMAC;
+ * the operator's name and CURRENT role are read from `platform_staff` on every
+ * request, so a demotion or a removal takes effect on the next click and a
+ * sign-out ends every copy of the cookie, not just this browser's.
+ *
+ * The window is deliberately SHORTER than the seller's twelve hours
+ * (`OPS_SESSION_TTL_MS`). An operator can release money; a house can only work
+ * its own queue. A session length is a statement about what an unattended
+ * browser is worth to an attacker, and these are not worth the same.
  */
 export interface OpsSession {
+  readonly sessionId: string;
   readonly staffId: string;
   readonly authUserId: string;
   readonly fullName: string;
+  /** The CURRENT role, read from the staff row now — never from the cookie. */
+  readonly role: string;
   readonly issuedAt: number;
 }
 
 const COOKIE = 'diyar_ops';
-const TTL_MS = 4 * 60 * 60 * 1000;
 
 function secret(): string {
   const configured = process.env.OPS_SESSION_SECRET;
@@ -36,49 +45,58 @@ function secret(): string {
   return 'development-only-not-a-secret-ops';
 }
 
-const sign = (payload: string): string =>
-  createHmac('sha256', secret()).update(payload).digest('base64url');
+export async function issueOpsSession(staffId: string): Promise<void> {
+  const sessionId = await identity.openSession({
+    audience: 'platform',
+    principalId: staffId,
+    sellerId: null,
+    ttlSeconds: OPS_SESSION_TTL_MS / 1000,
+    ...(await requestFingerprint(secret())),
+  });
 
-function signatureMatches(expected: string, actual: string): boolean {
-  const a = Buffer.from(expected);
-  const b = Buffer.from(actual);
-  // Length first: timingSafeEqual THROWS on a mismatch rather than returning
-  // false, which would turn a forged cookie into a 500.
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-export async function issueOpsSession(session: OpsSession): Promise<void> {
-  const payload = Buffer.from(JSON.stringify(session)).toString('base64url');
-  const store = await cookies();
-  store.set(COOKIE, `${payload}.${sign(payload)}`, {
+  (await cookies()).set(COOKIE, sealSessionId(secret(), sessionId), {
     httpOnly: true,
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: TTL_MS / 1000,
+    maxAge: OPS_SESSION_TTL_MS / 1000,
   });
 }
 
+/**
+ * The signed-in operator, if their access still exists.
+ *
+ * Not revoked, not expired by the database's clock, and not removed from
+ * `platform_staff` — one query, every request.
+ */
 export async function readOpsSession(): Promise<OpsSession | null> {
-  const raw = (await cookies()).get(COOKIE)?.value;
-  if (!raw) return null;
+  const sessionId = openSessionId(secret(), (await cookies()).get(COOKIE)?.value);
+  if (!sessionId) return null;
 
-  const [payload, signature] = raw.split('.');
-  if (!payload || !signature) return null;
-  if (!signatureMatches(sign(payload), signature)) return null;
+  const active = await identity.activeOperatorSession(sessionId);
+  if (!active) return null;
 
-  try {
-    const session = JSON.parse(Buffer.from(payload, 'base64url').toString()) as OpsSession;
-    const age = Date.now() - session.issuedAt;
-    // Rejecting a future `issuedAt` too: clock skew or a forged timestamp must
-    // not buy extra hours.
-    if (age < 0 || age >= TTL_MS) return null;
-    return session;
-  } catch {
-    return null;
-  }
+  return {
+    sessionId: active.sessionId,
+    staffId: active.staffId,
+    authUserId: active.authUserId,
+    fullName: active.fullName,
+    role: active.role,
+    issuedAt: active.issuedAt.getTime(),
+  };
 }
 
+/** Revoke first, then forget the cookie — see `clearSellerSession` on why. */
 export async function clearOpsSession(): Promise<void> {
+  const jar = await cookies();
+  const sessionId = openSessionId(secret(), jar.get(COOKIE)?.value);
+  if (sessionId) await identity.revokeSession(sessionId);
+  jar.delete(COOKIE);
+}
+
+/** End every open console session this operator has, on every device. */
+export async function clearAllOpsSessions(staffId: string): Promise<number> {
+  const ended = await identity.revokeAllSessions('platform', staffId);
   (await cookies()).delete(COOKIE);
+  return ended;
 }

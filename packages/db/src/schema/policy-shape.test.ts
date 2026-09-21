@@ -259,6 +259,8 @@ describe('the tables that hold money and people', () => {
     // protected while they sat on the publicly readable `sellers` row, so a
     // blanket policy here would undo the migration rather than merely weaken it.
     'seller_contacts',
+    // 0028. A session row IS the credential now; the cookie only points at it.
+    'sessions',
   ];
 
   it.each(SENSITIVE)('%s decides by actor, never by a blanket allow', (table) => {

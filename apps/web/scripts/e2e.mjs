@@ -1862,10 +1862,37 @@ try {
   await test('signing out ends the session for good', async () => {
     const out = ops.locator('button', { hasText: /خروج/ }).first();
     if (await out.count() === 0) return;
+
+    /*
+     * A COPY of the cookie, taken before signing out — the shared laptop, the
+     * synced browser profile, the stolen device.
+     *
+     * Until task P3.4.2 the cookie WAS the session, so signing out removed it
+     * from this browser and every copy kept working for the rest of its window;
+     * the check below would have reached the queue. Sessions are rows now
+     * (migration 0028) and signing out revokes the row, so the copy points at
+     * nothing. Checking only that THIS browser lost its cookie — which is all
+     * this test used to do — passes either way and proves nothing about the
+     * property that matters.
+     */
+    const copied = (await opsContext.cookies()).find((c) => c.name === 'diyar_ops');
+    assert(copied, 'no operator cookie to copy — the sign-in above did not happen');
+
     await out.click();
     await ops.waitForTimeout(2500);
     await ops.goto(`${BASE}/ops/queue`, { waitUntil: 'networkidle' });
     assert(!ops.url().includes('/ops/queue'), 'a signed-out session still reached the queue');
+
+    const elsewhere = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    try {
+      await elsewhere.addCookies([copied]);
+      const page = await elsewhere.newPage();
+      await page.goto(`${BASE}/ops/queue`, { waitUntil: 'networkidle' });
+      assert(!page.url().includes('/ops/queue'),
+        'a copy of the cookie taken before sign-out still reached the queue');
+    } finally {
+      await elsewhere.close();
+    }
   });
 
   /* ================================================ a house's photographs */

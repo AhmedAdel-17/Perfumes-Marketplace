@@ -40,9 +40,22 @@ export interface SellerIdentityProvider extends ExternalProvider {
 /** How long a seller stays signed in before the code is asked for again. */
 export const SELLER_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
-export function isSessionValid(session: SellerSession, now: number): boolean {
-  return now - session.issuedAt < SELLER_SESSION_TTL_MS && now >= session.issuedAt;
-}
+/**
+ * How long an OPERATOR stays signed in. Shorter than a house's, deliberately:
+ * an operator can release money and a house can only work its own queue, and a
+ * session length is a statement about what an unattended browser is worth.
+ *
+ * Both lengths live here, beside each other, so the difference is visible in
+ * one place rather than discovered in two session modules.
+ *
+ * `isSessionValid` USED TO LIVE HERE and was deleted with task P3.4.2. It
+ * decided expiry from a timestamp inside the cookie, by the application
+ * server's clock. Sessions are rows now (migration 0028), and the database
+ * decides expiry with `now()` — the clock that stamped them — so the function
+ * had no remaining caller, and a second expiry rule that nothing uses is a rule
+ * somebody will eventually trust by mistake.
+ */
+export const OPS_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**
  * A six-digit code.
