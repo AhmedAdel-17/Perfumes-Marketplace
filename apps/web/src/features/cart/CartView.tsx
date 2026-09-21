@@ -149,7 +149,7 @@ export function CartView() {
                 <Link
                   href={`/p/${line.slug}`}
                   aria-label={line.name}
-                  className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,#2A2019,#131010_52%,#070606)]"
+                  className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,theme(colors.stage.glow),theme(colors.stage.mid)_52%,theme(colors.stage.deep))]"
                 >
                   {line.photo ? (
                     <ProductPhoto photo={line.photo} sizes="84px" />

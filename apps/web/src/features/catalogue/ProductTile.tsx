@@ -24,7 +24,7 @@ export function ProductTile({ product }: { product: ProductCard }) {
   return (
     <Link href={`/p/${product.slug}`} className="group block focus-visible:outline-none">
       <div className="relative aspect-[4/5] overflow-hidden bg-plate">
-        <div className="absolute inset-0 bg-[radial-gradient(70%_56%_at_52%_22%,#2A2019_0%,#141010_48%,#070606_88%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(70%_56%_at_52%_22%,theme(colors.stage.glow)_0%,theme(colors.stage.mid)_48%,theme(colors.stage.deep)_88%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(52%_42%_at_52%_20%,rgba(196,160,96,.20),transparent_70%)] opacity-0 transition-opacity duration-slow ease-out group-hover:opacity-100" />
 
         {/* The house's own photograph when it has uploaded a verified one; the

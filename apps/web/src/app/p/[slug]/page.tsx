@@ -100,7 +100,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     paper is paper. Scoping the plate would have made that fade
                     noir and put back the seam it exists to remove. */}
                 <div className="relative h-[408px] overflow-hidden lg:h-[664px] lg:rounded-sm">
-                  <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,#2C221A_0%,#16110E_46%,#070606_84%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,theme(colors.stage.glow)_0%,theme(colors.stage.mid)_46%,theme(colors.stage.deep)_84%)]" />
                   <div className="absolute inset-0 bg-[radial-gradient(38%_30%_at_50%_10%,rgba(206,168,100,.16),transparent_74%)]" />
 
                   {product.photo ? (

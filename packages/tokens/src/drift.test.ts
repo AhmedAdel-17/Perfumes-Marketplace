@@ -38,6 +38,9 @@ const tokenColours: Array<[string, string]> = [
   ...Object.entries(raw.noteTier),
   ...Object.entries(raw.noteTierLight),
   ...Object.entries(raw.scentFamily),
+  // The stage (DR-13). Four components retyped these by hand before they
+  // were tokens; this is what stops a fifth.
+  ...Object.entries(raw.stage),
 ].filter(([name]) => !name.startsWith('$')) as Array<[string, string]>;
 
 describe('token drift — a value lives in one place or it lives in none', () => {

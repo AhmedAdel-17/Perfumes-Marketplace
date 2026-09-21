@@ -86,7 +86,7 @@ export default async function Home() {
             */
             data-theme="dark"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(64%_78%_at_74%_32%,#2C221A_0%,#15100D_44%,#070606_80%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(64%_78%_at_74%_32%,theme(colors.stage.glow)_0%,theme(colors.stage.mid)_44%,theme(colors.stage.deep)_80%)]" />
             {/* The source. Kept separate from the ground so its warmth can be
                 stronger than the ambient without lifting the black point. */}
             <div className="absolute inset-0 bg-[radial-gradient(34%_40%_at_74%_14%,rgba(206,168,100,.18),transparent_74%)]" />

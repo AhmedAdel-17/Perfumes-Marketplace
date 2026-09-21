@@ -23,6 +23,8 @@ export const colorLight = raw.colorLight;
 export const noteTier = raw.noteTier;
 export const noteTierLight = raw.noteTierLight;
 export const scentFamily = raw.scentFamily;
+/** The lit stage behind a bottle. A literal palette, dark in both themes — see tokens.json. */
+export const stage = raw.stage;
 export const font = strip(raw.font) as unknown as { display: string; displayLatin: string; body: string };
 export const fontSize = strip(raw.fontSize) as unknown as Record<string, number>;
 export const lineHeight = strip(raw.lineHeight) as unknown as Record<string, number>;

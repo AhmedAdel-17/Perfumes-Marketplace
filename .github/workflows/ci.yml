@@ -57,34 +57,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # DESIGN_DOCTRINE.md: never hardcode a colour that bypasses the tokens.
-      # A cheap grep is enough to keep the rule honest as apps are added.
-      - name: No hardcoded hex colours outside tokens
-        run: |
-          set -e
-          hits=$(grep -rnoE '#[0-9a-fA-F]{6}\b' \
-            --include='*.ts' --include='*.tsx' \
-            packages apps 2>/dev/null \
-            | grep -v 'packages/tokens/' \
-            | grep -v '\.test\.ts' || true)
-          if [ -n "$hits" ]; then
-            echo "Hardcoded colours found outside packages/tokens:"
-            echo "$hits"
-            exit 1
-          fi
-          echo "No hardcoded colours."
+      # Plain Node, no install: the guard uses builtins only. Pinned to 22 because
+      # the script reads `import.meta.dirname` (Node 20.11+), and the runner's
+      # preinstalled Node is whatever the image happened to ship.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      # RTL: logical properties only. Physical directions silently mirror wrong
-      # in Arabic, and DESIGN_DOCTRINE §4a records how expensive that already was.
-      - name: No physical direction utilities
-        run: |
-          set -e
-          hits=$(grep -rnoE '\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)[0-9a-z]' \
-            --include='*.tsx' --include='*.ts' \
-            apps packages 2>/dev/null | grep -v '\.test\.' || true)
-          if [ -n "$hits" ]; then
-            echo "Physical direction utilities found — use logical properties (ms-, me-, ps-, pe-, start-, end-):"
-            echo "$hits"
-            exit 1
-          fi
-          echo "Logical properties only."
+      # DESIGN_DOCTRINE.md and CLAUDE.md §14: no hardcoded colour outside the
+      # tokens, and no physical direction utility in an RTL product.
+      #
+      # This was two grep lines until 21 Sep 2026 (task P0.1.5, DR-13), and they
+      # were wrong in both directions: they matched inside COMMENTS, so the
+      # guard failed on its own documentation, and they matched `#RRGGBB`,
+      # which never fires on Tailwind's `#2C221A_0%` because `_` is a word
+      # character — nine real hardcoded colours walked past it. The script
+      # strips comments with a lexer that knows what a string is, drops the
+      # word boundary, states its one artwork exemption with the reason, and
+      # checks its own matchers before trusting them.
+      - name: No forbidden values
+        run: node scripts/guard/forbidden-values.mjs

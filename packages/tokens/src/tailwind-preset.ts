@@ -4,7 +4,7 @@
  * Apps extend this rather than declaring colours of their own, so a value that
  * is not in the token file cannot be reached through a utility class.
  */
-import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, font } from './index';
+import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, stage, font } from './index';
 import { themeColors } from './theme';
 
 const px = (o: Record<string, number>) =>
@@ -29,8 +29,14 @@ export const diyarPreset = {
         `family` is the exception and stays a literal palette. It paints light
         through glass on a plate that is dark in BOTH themes, so it is physics,
         not chrome. See the note in theme.ts.
+
+        `stage` is the second exception, for the same reason (DR-13, 21 Sep
+        2026): it is the light ON that plate — a warm glow falling to near-black
+        behind a bottle — and it does not flip with the theme any more than the
+        room a perfume is photographed in does. It is reached only through
+        `theme(colors.stage.*)` inside a gradient, never as a flat fill.
       */
-      colors: { ...themeColors, family: scentFamily },
+      colors: { ...themeColors, family: scentFamily, stage },
       /*
         Real fallback stacks, not a bare generic.
 

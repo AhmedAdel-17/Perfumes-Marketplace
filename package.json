@@ -10,7 +10,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "audit:deps": "pnpm audit --audit-level=moderate"
+    "audit:deps": "pnpm audit --audit-level=moderate",
+    "guard": "node scripts/guard/forbidden-values.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
