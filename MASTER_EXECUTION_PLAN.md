@@ -108,7 +108,7 @@ production (P0.1.3).
 | P0 Foundations | IN_PROGRESS | 11/30 (inventory + P0.1.1, P0.1.3, P0.1.4; P0.1.2 blocked on DR-13/DR-14) | GATE 0 | founders' agreement (P0.2.1), counsel (P0.3.1), 15 seller interviews (P0.4.2) |
 | P1 Pilot-minimum build | IN_PROGRESS | 1/15 (P1.4.6) | GATE 1 | P0.2.6 approvals; SMS vendor (ADR-11) |
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
-| P3 Money correctness & automation | IN_PROGRESS | 1/15 (P3.4.1, gate exception logged) | required for GATE 4 | GATE 1 |
+| P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
 | P5 Growth | NOT_STARTED | 0/17 | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
@@ -197,7 +197,7 @@ production (P0.1.3).
 | P3.3.2 | Purge jobs (analytics, codes, orphan media) | P3 | NOT_STARTED | P1 | BUILD | P1.1.2 |
 | P3.3.3 | Daily exception report | P3 | NOT_STARTED | P0 | BUILD | P3.3.1 |
 | P3.4.1 | Web reads through the API; identity repository | P3 | COMPLETE | — | BUILD | P0.1.1 |
-| P3.4.2 | Sessions table and revocation | P3 | READY | P1 | BUILD | P0.1.1 |
+| P3.4.2 | Sessions table and revocation | P3 | COMPLETE | — | BUILD | P0.1.1 |
 | P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | NOT_STARTED | P1 | BUILD | P0.1.2 |
 | P3.4.4 | Payment entity and payment state machine | P3 | NOT_STARTED | P1 | BUILD | P3.1.2 |
 | P4.1.1 | Frontend foundations (R0) | P4 | NOT_STARTED | P1 | BUILD | GATE 4 |
@@ -1700,13 +1700,53 @@ request; a `sessions` table with real revocation is P3.4.2.
 **Reference documents:** `docs/architecture/03` ADR-10.
 
 #### P3.4.2 Sessions table and revocation
-**Status:** READY (2026-09-20, P0.1.1 complete) · **Priority:** P1 · **Type:** BUILD
+**Status:** COMPLETE · **Type:** BUILD
 **Goal:** `sessions` (principal, audience, issued, expires, revoked_at, ip/UA hashes);
 cookies carry session id + HMAC; sign-out-everywhere; per-request revalidation reads the
 row (replaces the staff lookup where appropriate).
 **Depends on:** P0.1.1 · **Blocks:** P4.6.1, P8.1.2
 **Acceptance criteria:** revoking a session ends it on the next request; existing
 sign-in e2e passes.
+
+**Completion evidence:** commit `04081ca`, 19 files, migration `0028_sessions.sql`.
+`sessions` holds one row per sign-in (audience, principal, house, issued, expires, revoked,
+keyed IP and UA hashes). The cookie carries a session id and an HMAC of it and nothing else.
+Sign-out revokes the row; sign-out-everywhere is one statement; the per-request check reads
+the row JOINED to the staff record, which REPLACES the separate staff lookup P3.4.1 had
+introduced. Expiry is stamped and judged by the database's `now()`. A trigger makes the row
+immutable except `revoked_at`, set once; no DELETE policy exists.
+
+*Acceptance criterion 1 — revoking a session ends it on the next request.* Proved at two
+levels. `identity-repository.test.ts` "ends on the next request once it is revoked — the
+acceptance criterion"; falsified by deleting the revocation check, which fails that case and
+sign-out-everywhere. And in a real browser: the sign-out e2e test now COPIES the operator
+cookie before signing out and presents the copy from a fresh browser context. Falsified on a
+fresh server by making sign-out forget the cookie without revoking the row — the old
+behaviour exactly — which fails that one test with "a copy of the cookie taken before
+sign-out still reached the queue" while the other 125 pass.
+
+*Acceptance criterion 2 — existing sign-in e2e passes.* **126/126** on a freshly seeded
+database, with the strengthened test included.
+
+*The old test proved nothing new, and that is recorded.* Before this task the sign-out e2e
+checked only that the SAME browser lost its cookie, which passes under a cookie-only design
+too. A test that cannot fail against the defect it names is not evidence for the fix.
+
+*Tests.* 1,591 → **1,595**. db 398 → 408 (session lifecycle, immutability trigger, audience
+separation, a demotion taking effect without sign-out). api 337 → 331: `isSessionValid`
+was deleted with its six cases, because it decided expiry from a cookie timestamp by the app
+server's clock, had no caller left, and a second expiry rule nothing uses is one somebody will
+trust by mistake. Its invariants now live in the database tests, where the clock that decides
+is the clock under test.
+
+**Not done, and recorded.** Sign-out-everywhere is a server action for both consoles with no
+control yet: `design-reference/seller.html` and `admin.html` would have to be consulted
+before a button is drawn. Session rows are never purged — DEBT #22, because there is no
+scheduler and the retention period for access evidence is counsel's (L10–L13).
+
+**Scope note — gate.** Started under the founder's instruction of 21 Sep 2026 to proceed
+with the next steps, applied as DR-15 option (a): the P3.4 "Structure and security" workstream
+may proceed before GATE 1. Recorded in DR-15.
 **Reference documents:** `docs/architecture/05` §1.
 
 #### P3.4.3 Security headers; CI dependency audit; browser suite in CI
@@ -2584,3 +2624,26 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   revocation) is the ONLY remaining BUILD task whose dependencies are satisfied, and it carries
   the same Phase 3 gate question P3.4.1 just answered. After it, every task in the plan waits
   on a founder decision: P0.2.5, P0.2.6, DR-13 or DR-14.
+
+- 2026-09-21 · Claude Code session · P3.4.2 · READY → COMPLETE · commit `04081ca`, migration
+  0028. Sessions are rows; the cookie is an id plus an HMAC; sign-out ends every copy. Both
+  acceptance criteria proved and falsified, one of them in a real browser with a strengthened
+  test. 1,591 → 1,595 tests, 126/126 e2e. DEBT #22 registered (session purge).
+
+- 2026-09-21 · Claude Code session · P3.4.2 · gate · started under the founder's instruction to
+  "proceed with the next steps", read as DR-15 option (a) — the P3.4 workstream may proceed
+  before GATE 1 — since P3.4.2 is the task that instruction could only mean. DR-15 updated.
+
+- 2026-09-21 · Claude Code session · — · harness finding · the browser suite requires a FRESH
+  database and a FRESH server process on every run. A second run against the same process fails
+  five unrelated tests, because the one-time-code rate limit is held in memory (DEBT #2) and
+  several cases count rows. Recorded under D-O5; any CI wiring of e2e (P3.4.3) must start from a
+  clean database.
+
+- 2026-09-21 · Claude Code session · — · **no BUILD task is executable** · with P3.4.2 complete,
+  every remaining BUILD task depends on a founder decision or a blocked task. The shortest
+  unblocking paths, in order of how much engineering each releases:
+  **P0.2.6** (approve ADRs + choose the SMS vendor) releases P1.1.2, P1.2.1–P1.2.4 and P1.4.2
+  at once, and P1.1.1 once the vendor account exists. **P0.2.5** (pilot interim values)
+  releases P1.3.1 and P3.2.2. **DR-13** (colour guard) releases P0.1.5. **DR-14** (GitHub
+  plan) plus DR-13 closes P0.1.2, which then releases P1.4.3 and P3.4.3.
