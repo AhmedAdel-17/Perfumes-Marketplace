@@ -70,7 +70,15 @@ export async function issueOpsSession(staffId: string): Promise<void> {
  * `platform_staff` — one query, every request.
  */
 export async function readOpsSession(): Promise<OpsSession | null> {
-  const sessionId = openSessionId(secret(), (await cookies()).get(COOKIE)?.value);
+  /*
+   * The cookie is read FIRST, before the secret. `cookies()` is what tells Next
+   * this route depends on the request and must render per request; evaluating
+   * `secret()` first let it throw during a build-time prerender, before Next had
+   * been told, and `next build` failed on a page that was never meant to be
+   * static. Found by the first production build of 22 Sep 2026.
+   */
+  const raw = (await cookies()).get(COOKIE)?.value;
+  const sessionId = openSessionId(secret(), raw);
   if (!sessionId) return null;
 
   const active = await identity.activeOperatorSession(sessionId);
