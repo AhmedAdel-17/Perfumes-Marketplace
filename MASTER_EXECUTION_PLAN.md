@@ -2647,3 +2647,17 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   at once, and P1.1.1 once the vendor account exists. **P0.2.5** (pilot interim values)
   releases P1.3.1 and P3.2.2. **DR-13** (colour guard) releases P0.1.5. **DR-14** (GitHub
   plan) plus DR-13 closes P0.1.2, which then releases P1.4.3 and P3.4.3.
+
+- 2026-09-21 · Claude Code session · P4.6.1 · register discrepancy, no status change · the plan
+  cites "Seller staff roles (S-1)", but `DECISION_REGISTER.md` S-1 is "Seller support inbox"
+  (OPEN), while `docs/OPEN_DECISIONS.md` S-1 is "Seller staff roles" with the four role NAMES
+  decided on 15 Sep 2026 and their permissions still "awaiting confirmation". The register is
+  canonical and says it wins, so as written P4.6.1 depends on a decision about something else.
+  Not resolved here — the founders should either renumber the staff-roles decision in the
+  register or correct P4.6.1's reference. Moot today: P4.6.1 is Phase 4, which opens at GATE 4.
+
+- 2026-09-21 · Claude Code session · DR-13 · finding for the decision · of the 31 hexes, the
+  noir in `Grain.tsx` is already a token (it appears only in a comment); the three stops of the
+  cart-tile gradient in `CartView.tsx:152` (`#2A2019`, `#131010`, `#070606`) are NOT tokens, so
+  fixing that line means adding tokens or mapping to existing ones — a design decision under
+  `CLAUDE.md` §14, not an engineering one.
