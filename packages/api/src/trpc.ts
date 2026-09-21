@@ -10,6 +10,27 @@ import type { Clock, UnitOfWork } from '@diyar/domain';
 import type { ActorContext } from '@diyar/db';
 import { toTRPCError } from './errors';
 import type { MediaStore } from './providers/media';
+import type { ErrorReporter } from './providers/ports';
+import { createLogger, type Logger, type LogSink } from './observability/log';
+
+/**
+ * Correlation and error capture, decided at the composition root (P1.4.3).
+ *
+ * `requestId` is a SOURCE rather than a value, deliberately. In Next 15 reading
+ * a request header is asynchronous, and `api()` is called synchronously from
+ * forty-six places; making it async would touch every one of them for a change
+ * none of them has a stake in. So the root hands over a function, the base
+ * middleware below calls it once per procedure, and the id the middleware
+ * generated for the HTTP request is the id every log line, audit row and error
+ * message of that request carries.
+ */
+export interface Observability {
+  readonly requestId: () => Promise<string>;
+  /** Where log lines go — stdout in the app, an array in a test. */
+  readonly sink: LogSink;
+  /** Where unexpected errors go. The console reporter is a stub; production refuses it. */
+  readonly errors: ErrorReporter;
+}
 
 export interface ApiContext {
   readonly actor: ActorContext;
@@ -122,6 +143,12 @@ export interface ApiContext {
    * failure the switch exists to prevent.
    */
   readonly payoutsEnabled: boolean;
+  /**
+   * Request id, log sink and error reporter. REQUIRED, like `payoutsEnabled`:
+   * a composition root added later must say where its errors go rather than
+   * silently sending them nowhere.
+   */
+  readonly observability: Observability;
   readonly clock: Clock;
 }
 
@@ -135,27 +162,39 @@ export const router = t.router;
 export const middleware = t.middleware;
 
 /**
- * Every procedure runs inside this.
+ * Every procedure runs inside this: it names the request, then maps failures.
  *
  * Domain errors escaping to the transport unmapped would surface as opaque 500s
  * with an English internal message, which breaks the Arabic-errors rule and
  * leaks implementation detail.
+ *
+ * ONE middleware rather than two, because the request id has to be known at the
+ * moment an error is mapped — an unknown error's Arabic message carries it, so
+ * support can find the event from what the customer read out. Resolved here,
+ * once, and handed downstream as `ctx.requestId` and a `ctx.log` already bound to
+ * it, so a router never builds a logger or forgets the id.
+ *
+ * tRPC middlewares do NOT receive downstream failures as thrown exceptions —
+ * `next()` resolves to `{ ok: false, error }`. A try/catch here would be dead
+ * code, which is how the Arabic mapping once silently never applied and raw
+ * English domain messages reached the client. Caught by an API test.
  */
-const mapErrors = middleware(async ({ next }) => {
-  // tRPC middlewares do NOT receive downstream failures as thrown exceptions —
-  // `next()` resolves to `{ ok: false, error }`. A try/catch here is dead code,
-  // which is how the Arabic mapping silently never applied and raw English
-  // domain messages reached the client. Caught by an API test.
-  const result = await next();
+const observed = middleware(async ({ ctx, path, next }) => {
+  const requestId = await ctx.observability.requestId();
+  const log: Logger = createLogger({ request_id: requestId }, ctx.observability.sink);
+
+  const result = await next({ ctx: { ...ctx, requestId, log } });
   if (!result.ok) {
     // tRPC has already wrapped the original in a TRPCError; the domain error we
     // want to translate is underneath it.
-    throw toTRPCError(result.error.cause ?? result.error);
+    throw toTRPCError(result.error.cause ?? result.error, {
+      requestId, path, report: ctx.observability.errors,
+    });
   }
   return result;
 });
 
-export const publicProcedure = t.procedure.use(mapErrors);
+export const publicProcedure = t.procedure.use(observed);
 
 const requireRole = (...roles: ActorContext['role'][]) =>
   middleware(({ ctx, next }) => {

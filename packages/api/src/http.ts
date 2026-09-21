@@ -34,6 +34,7 @@
  *    server-to-server call, neither of which is a browser and neither of which
  *    a cross-origin policy is about. What protects those is authentication.
  */
+import { createLogger, stdoutSink } from './observability/log';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from './routers/index';
 import type { ApiContext } from './trpc';
@@ -149,8 +150,23 @@ export async function handleTrpcRequest(options: TrpcRequestOptions): Promise<Re
      * morning, because in-process callers had a stack trace in the server log
      * and HTTP callers would have had nothing at all.
      */
-    onError({ error, path }) {
-      console.error(`[trpc] ${path ?? '<no path>'}: ${error.code}`, error.cause ?? error);
+    onError({ error, path, ctx }) {
+      /*
+       * Structured, and levelled (P1.4.3). A validation refusal is the boundary
+       * working, so it is a `warn` worth counting; a 5xx is an `error`. An
+       * unexpected error inside a procedure has ALREADY been reported, with its
+       * request id, by the base middleware in trpc.ts — this line exists for
+       * what fails before a procedure runs (a malformed body, an unknown path),
+       * which nothing else sees. Through the context's sink when there is one,
+       * so it lands where every other line of this request does.
+       */
+      const log = createLogger({ transport: 'http' }, ctx?.observability.sink ?? stdoutSink);
+      const serverSide = error.code === 'INTERNAL_SERVER_ERROR';
+      log[serverSide ? 'error' : 'warn']('trpc.http_error', {
+        path: path ?? null,
+        code: error.code,
+        ...(serverSide ? { error: error.cause ?? error } : {}),
+      });
     },
   });
 

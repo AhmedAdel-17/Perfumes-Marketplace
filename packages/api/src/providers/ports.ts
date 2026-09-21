@@ -59,6 +59,31 @@ export interface PaymentGateway extends ExternalProvider {
   authorise(intent: PaymentIntent): Promise<PaymentAuthorisation>;
 }
 
+/**
+ * Where an UNEXPECTED error goes so a person finds out (task P1.4.3).
+ *
+ * A port because the vendor is a vendor: the plan names Sentry
+ * (`@sentry/nextjs`) and `TECH_STACK.md` §6 chooses it, but no project exists
+ * yet, and an adapter that cannot be pointed at a real project cannot be
+ * verified. The console implementation below declares `isStub: true`, so
+ * `assertProductionSafe` refuses to boot a production process holding it —
+ * which turns "we forgot to wire error reporting" from a silent pilot into a
+ * failed deploy. A pilot with no error capture is blind, and this is what stops
+ * it starting that way.
+ *
+ * `capture` is fire-and-forget by contract: reporting an error must never be
+ * the reason a request fails, or takes longer.
+ */
+export interface ErrorReporter extends ExternalProvider {
+  capture(error: unknown, context: {
+    readonly requestId: string;
+    /** The procedure that failed, e.g. `orders.place`. */
+    readonly path?: string;
+    /** Business keys known at the point of failure: `order_ref`, `seller_id`. */
+    readonly fields?: Record<string, unknown>;
+  }): void;
+}
+
 export interface Providers {
   readonly otp: OtpSender;
   readonly payments: PaymentGateway;
@@ -74,6 +99,8 @@ export interface Providers {
    * `isStub: true`, so a production process holding it refuses to start.
    */
   readonly media?: ExternalProvider;
+  /** Error monitoring. The console reporter is a stub; production refuses it. */
+  readonly errors?: ExternalProvider;
 }
 
 export class StubInProductionError extends Error {

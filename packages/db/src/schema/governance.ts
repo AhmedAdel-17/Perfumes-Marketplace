@@ -26,6 +26,12 @@ export const auditLog = pgTable('audit_log', {
   after: text('after'),
   note: text('note'),
   occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+  /**
+   * The request that wrote this entry (migration 0029). Deliberately NEVER set
+   * from code: the database fills it from `app.request_id`, which the Unit of
+   * Work sets per transaction, so no router can forget it.
+   */
+  requestId: uuid('request_id'),
 }, (t) => [
   index('audit_log_entity_idx').on(t.entityTable, t.entityId),
   index('audit_log_occurred_idx').on(t.occurredAt),

@@ -15,6 +15,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { testObservability } from './testing/observability';
 import { FixedClock } from '@diyar/domain';
 import { DrizzleUnitOfWork, schema, type ActorContext, type DiyarDatabase } from '@diyar/db';
 import { applyMigrations } from '@diyar/db/migrate';
@@ -49,12 +50,18 @@ const MAX_STOCK = 25;
  */
 let payoutsEnabled = true;
 
-const caller = (
+/**
+ * What every procedure in this suite writes and reports (P1.4.3). One shared
+ * observer, read by the observability cases at the end of the file.
+ */
+const OBSERVED = testObservability('0f1e2d3c-4b5a-4968-8778-695a4b3c2d1e');
+
+/** The context a request would carry. Separate from `caller` so a case can alter one part of it. */
+const contextFor = (
   actor: ActorContext,
   sellerId: string | null = null,
   platform: { staffId: string; role: string; label?: string } | null = null,
-) => {
-  const ctx: ApiContext = {
+): ApiContext => ({
     actor,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
@@ -67,10 +74,15 @@ const caller = (
     analyticsUow: new DrizzleUnitOfWork(db, { role: 'analytics', id: null }),
     media: MEDIA,
     payoutsEnabled,
+    observability: OBSERVED.observability,
     clock: CLOCK,
-  };
-  return appRouter.createCaller(ctx);
-};
+});
+
+const caller = (
+  actor: ActorContext,
+  sellerId: string | null = null,
+  platform: { staffId: string; role: string; label?: string } | null = null,
+) => appRouter.createCaller(contextFor(actor, sellerId, platform));
 
 beforeAll(async () => {
   pg = new PGlite();
@@ -1864,5 +1876,82 @@ describe('the payout kill switch', () => {
 
     expect(result.payoutId).toBeTruthy();
     expect(await payoutApprovals()).toHaveLength(before + 1);
+  });
+});
+
+/**
+ * Observability (task P1.4.3).
+ *
+ * The claims are about what gets WRITTEN, so the suite's shared observer keeps
+ * every log line and every reported error, and these cases read them back.
+ */
+describe('every request has a name, and it is on everything the request leaves behind', () => {
+  const ANON: ActorContext = { role: 'anon', id: null };
+  const PHONE = '01007776655';
+
+  it('logs orders.place with the request id and the order reference — and no phone', async () => {
+    const before = OBSERVED.lines.length;
+    const placed = await caller(ANON).orders.place({
+      contactName: 'سلمى',
+      contactPhone: PHONE,
+      address: {
+        governorate: 'cairo', city: 'مدينة نصر', area: 'الحي السابع',
+        street: 'شارع عباس العقاد', building: '14', landmark: 'أمام مسجد النور',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+
+    const line = OBSERVED.lines.slice(before).find((l) => l.entry.event === 'orders.place');
+    expect(line, 'orders.place wrote no log line').toBeDefined();
+    expect(line!.entry.request_id).toBe(OBSERVED.requestId);
+    expect(line!.entry.order_ref).toBe(placed.reference);
+    // The whole line, serialised, not just a field: the phone must not be in it
+    // anywhere, under any key, in any form a grep would find.
+    expect(JSON.stringify(line!.entry)).not.toContain(PHONE);
+    expect(JSON.stringify(line!.entry)).not.toContain('عباس العقاد');
+  });
+
+  it('an unexpected error answers in Arabic WITH the request id, and is reported with it', async () => {
+    /*
+     * An induced failure no domain rule anticipates: the database vanishes
+     * mid-request. The customer must get a sentence they can read out to
+     * support, and support must be able to find the event from it.
+     */
+    const broken: ApiContext = {
+      ...contextFor(ANON),
+      uow: { transaction: async () => { throw new Error(`connection reset while reading ${PHONE}`); } },
+    };
+    const before = OBSERVED.reported.length;
+
+    const attempt = appRouter.createCaller(broken).catalogue.published();
+
+    await expect(attempt).rejects.toMatchObject({ code: 'INTERNAL_SERVER_ERROR' });
+    await expect(attempt).rejects.toThrow(/حدث خطأ/);
+    await expect(attempt).rejects.toThrow(OBSERVED.requestId);
+    // Never the internal message: that is for the operator, not the customer.
+    await expect(attempt).rejects.not.toThrow(/connection reset/);
+
+    const report = OBSERVED.reported.slice(before)[0];
+    expect(report, 'the error was not reported').toBeDefined();
+    expect(report!.requestId).toBe(OBSERVED.requestId);
+    expect(report!.path).toBe('catalogue.published');
+  });
+
+  it('a refusal the domain EXPECTED is not reported as an incident', async () => {
+    // Reporting every validation failure would bury the one real error in
+    // noise, and error-rate alerts (09 §4) would fire on customers mistyping.
+    const before = OBSERVED.reported.length;
+    await expect(caller(ANON).orders.place({
+      contactName: 'سلمى', contactPhone: 'not a phone',
+      address: {
+        governorate: 'cairo', city: 'مدينة نصر', area: 'الحي السابع',
+        street: 'شارع', building: '1', landmark: 'x',
+      },
+      lines: [{ productId: ids['dar-al-ward:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    })).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(OBSERVED.reported.length).toBe(before);
   });
 });

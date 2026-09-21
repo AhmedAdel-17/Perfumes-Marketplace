@@ -67,6 +67,14 @@ export const database = (): DiyarDatabase => connection().db;
 /** True when this process is talking to a real Postgres server. */
 export const isProductionDatabase = (): boolean => connection().isRemote;
 
-/** A Unit of Work scoped to the caller. Anonymous by default — the SEO surface. */
-export const unitOfWork = (actor: ActorContext = { role: 'anon', id: null }) =>
-  new DrizzleUnitOfWork(database(), actor);
+/**
+ * A Unit of Work scoped to the caller. Anonymous by default — the SEO surface.
+ *
+ * `requestId`, when given, is stamped on every audit entry the work writes
+ * (migration 0029). It is a source rather than a value because the request id
+ * comes from a header Next only gives up asynchronously.
+ */
+export const unitOfWork = (
+  actor: ActorContext = { role: 'anon', id: null },
+  requestId?: () => Promise<string | null>,
+) => new DrizzleUnitOfWork(database(), actor, 'app_user', requestId);

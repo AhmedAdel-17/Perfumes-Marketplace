@@ -1,9 +1,11 @@
 import type {
+  ErrorReporter,
   OtpSender,
   PaymentAuthorisation,
   PaymentGateway,
   PaymentIntent,
 } from './ports';
+import { createLogger, stdoutSink, type LogSink } from '../observability/log';
 
 /**
  * Development stand-ins for the providers we do not have contracts with yet.
@@ -56,3 +58,28 @@ export const cashOnDelivery: PaymentGateway = {
     return { authorised: true, redirectUrl: null, providerReference: null };
   },
 };
+
+/**
+ * Error reporting, into the structured log and nowhere else (task P1.4.3).
+ *
+ * A STUB, declared, for the reason every other adapter in this file is: an
+ * error written to stdout on a single container is an error somebody might
+ * read, and "might" is not monitoring. `assertProductionSafe` refuses to boot
+ * production holding it. The real adapter is Sentry, and it waits on a project
+ * and a DSN (MASTER_EXECUTION_PLAN P1.4.3, blocked on that).
+ *
+ * It still does the useful half in development: the line carries the request
+ * id, the procedure and the business keys, scrubbed, so a failure in a local run
+ * is findable by the same id the user was shown.
+ */
+export const logErrorReporter = (sink: LogSink = stdoutSink): ErrorReporter => ({
+  name: 'log-errors',
+  isStub: true,
+  capture(error, context) {
+    createLogger({ request_id: context.requestId }, sink).error('error.unhandled', {
+      path: context.path,
+      ...context.fields,
+      error,
+    });
+  },
+});

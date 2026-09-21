@@ -10,6 +10,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { testObservability } from './testing/observability';
 import { FixedClock } from '@diyar/domain';
 import { DrizzleUnitOfWork, schema, type ActorContext, type DiyarDatabase } from '@diyar/db';
 import { applyMigrations } from '@diyar/db/migrate';
@@ -43,6 +44,7 @@ const caller = (actor: ActorContext, platform: { staffId: string; role: string }
     media: MEDIA,
     // This suite does not run payouts; the switch is on so it behaves as development.
     payoutsEnabled: true,
+    observability: testObservability().observability,
     clock: CLOCK,
   };
   return appRouter.createCaller(ctx);

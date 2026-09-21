@@ -9,6 +9,7 @@
  */
 import { assertProductionSafe, cashOnDelivery, consoleOtpSender } from '@diyar/api';
 import { mediaStore } from './core/media';
+import { errorReporter } from './core/api';
 
 export function checkStartup(): void {
   /*
@@ -28,6 +29,9 @@ export function checkStartup(): void {
     otp: consoleOtpSender,
     payments: cashOnDelivery,
     media: mediaStore(),
+    // The SAME reporter the API context uses. Until it is Sentry it is a
+    // declared stub, and a pilot with no error capture is blind (P1.4.3).
+    errors: errorReporter,
   }, process.env.NODE_ENV);
 
   /*

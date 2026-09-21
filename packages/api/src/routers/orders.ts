@@ -92,7 +92,7 @@ export const ordersRouter = router({
 
       const address = Address.create(input.address);
 
-      return ctx.checkoutUow.transaction(async (repos) => {
+      const placed = await ctx.checkoutUow.transaction(async (repos) => {
         // 1. Price from the catalogue. Never from the request.
         const snapshot = await repos.products.snapshotForCart(
           input.lines.map((l) => l.productId),
@@ -228,6 +228,25 @@ export const ordersRouter = router({
           etaDaysMax: Math.max(...shipping.map((s) => s.etaDaysMax)),
         };
       });
+
+      /*
+       * AFTER the transaction, never inside it (P1.4.3). A line written inside
+       * would record an order that a later statement rolled back, and the log
+       * would then disagree with the database about whether a customer's order
+       * exists — which is the one question it is read to answer.
+       *
+       * The order reference and the request id, and NOT the phone: the scrubber
+       * would mask it anyway, but the rule is not to hand it over at all. The
+       * reference is how support finds everything else.
+       */
+      ctx.log.info('orders.place', {
+        order_ref: placed.reference,
+        houses: placed.houseCount,
+        total_piastres: placed.totalPiastres,
+        payment_method: input.paymentMethod,
+      });
+
+      return placed;
     }),
 
   /**

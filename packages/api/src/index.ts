@@ -2,6 +2,7 @@ export * from './trpc';
 export * from './validation';
 export * from './rate-limit';
 export * from './payout-switch';
+export * from './observability/log';
 export * from './errors';
 export * from './shipping';
 export * from './providers/ports';

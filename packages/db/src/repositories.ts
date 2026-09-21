@@ -718,6 +718,9 @@ export interface ActorContext {
 
 export const ANONYMOUS: ActorContext = { role: 'anon', id: null };
 
+/** A request id is a UUID or it is not a request id. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Unit of Work over a real transaction, carrying the actor.
  *
@@ -752,11 +755,21 @@ export class DrizzleUnitOfWork implements UnitOfWork {
      * which role the connection pool was opened with.
      */
     private readonly databaseRole: string = 'app_user',
+    /**
+     * Which request this work belongs to (task P1.4.3).
+     *
+     * A SOURCE, resolved inside `transaction()`, because the composition root
+     * builds its Units of Work synchronously and the request id comes from a
+     * header that Next only gives up asynchronously. Set as `app.request_id`
+     * beside the actor, and migration 0029's column default stamps it on every
+     * audit entry the transaction writes — no router has to remember it.
+     */
+    private readonly requestId: () => Promise<string | null> = async () => null,
   ) {}
 
-  /** A view of the same database as a different actor. */
+  /** A view of the same database as a different actor, in the same request. */
   as(actor: ActorContext): DrizzleUnitOfWork {
-    return new DrizzleUnitOfWork(this.db, actor, this.databaseRole);
+    return new DrizzleUnitOfWork(this.db, actor, this.databaseRole, this.requestId);
   }
 
   async transaction<T>(work: (repos: Repositories) => Promise<T>): Promise<T> {
@@ -765,6 +778,16 @@ export class DrizzleUnitOfWork implements UnitOfWork {
       // Order matters: set the actor while still privileged, then drop the role.
       await t.execute(sql`SELECT set_config('app.actor_role', ${this.actor.role}, true)`);
       await t.execute(sql`SELECT set_config('app.actor_id', ${this.actor.id ?? ''}, true)`);
+      /*
+       * Only a well-formed UUID is ever set. The audit column casts it, so a
+       * malformed value would not be a bad log line — it would make every audit
+       * write in this transaction FAIL, and the trail would start refusing to
+       * record decisions. Anything else is treated as "no request".
+       */
+      const requestId = await this.requestId();
+      if (requestId && UUID.test(requestId)) {
+        await t.execute(sql`SELECT set_config('app.request_id', ${requestId}, true)`);
+      }
       await t.execute(sql.raw(`SET LOCAL ROLE ${this.databaseRole}`));
       return work(repositoriesFor(t));
     });

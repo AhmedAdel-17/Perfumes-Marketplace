@@ -101,7 +101,17 @@ export function errorMessages(error: unknown): string {
   return messages.join('\n');
 }
 
-export const toTRPCError = (error: unknown): TRPCError => {
+/**
+ * Who asked, for an unknown error. Optional so a caller outside a procedure
+ * (a test, a script) can still map an error without inventing a request.
+ */
+export interface ErrorOrigin {
+  readonly requestId: string;
+  readonly path?: string;
+  readonly report?: { capture(error: unknown, context: { requestId: string; path?: string }): void };
+}
+
+export const toTRPCError = (error: unknown, origin?: ErrorOrigin): TRPCError => {
   if (error instanceof TRPCError) return error;
 
   const invalid = asZodError(error);
@@ -133,11 +143,36 @@ export const toTRPCError = (error: unknown): TRPCError => {
    * `cause` carries it to any transport that inspects it; this puts it where a
    * person looking at the server actually looks.
    */
-  console.error('[api] unhandled error:', error);
+  /*
+   * Reported, not merely printed (P1.4.3). This used to be a bare
+   * `console.error` — one of the two lines that were the whole of this
+   * system's observability. The reporter writes a scrubbed, structured line
+   * carrying the request id and the procedure, and in production it is Sentry.
+   * Wrapped so that reporting an error can never become the reason a request
+   * fails differently from how it was already failing.
+   */
+  if (origin?.report) {
+    try {
+      origin.report.capture(error, {
+        requestId: origin.requestId,
+        ...(origin.path !== undefined ? { path: origin.path } : {}),
+      });
+    } catch {
+      // A broken reporter must not replace the customer's error with its own.
+    }
+  }
 
+  /*
+   * The request id is IN the message a customer sees. It is the one thing they
+   * can read out to support, and it is the key every log line and audit row of
+   * this request carries — so "حدث خطأ" stops being a dead end and becomes a
+   * search. Latin characters inside Arabic text, which is how a reference
+   * number is written on a receipt anyway.
+   */
+  const reference = origin ? ` رقم المرجع: ${origin.requestId}` : '';
   return new TRPCError({
     code: 'INTERNAL_SERVER_ERROR',
-    message: 'حدث خطأ. حاول مرّة أخرى.',
+    message: `حدث خطأ. حاول مرّة أخرى.${reference}`,
     cause: error,
   });
 };

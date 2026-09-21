@@ -1,9 +1,46 @@
 import 'server-only';
-import { appRouter, payoutsAreEnabled, type ApiCaller, type ApiContext } from '@diyar/api';
+import { randomUUID } from 'node:crypto';
+import { headers } from 'next/headers';
+import {
+  appRouter, logErrorReporter, payoutsAreEnabled, stdoutSink,
+  type ApiCaller, type ApiContext, type Observability,
+} from '@diyar/api';
 import { systemClock } from '@diyar/domain';
 import type { ActorContext } from '@diyar/db';
 import { unitOfWork } from './db';
 import { mediaStore } from './media';
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The request id for THIS context, resolved at most once (task P1.4.3).
+ *
+ * Read from the header `middleware.ts` set, so every context built during one
+ * HTTP request — a page calling `api()` three times — carries the same id.
+ * Outside a request scope, where `headers()` throws (a script, the startup
+ * check), a fresh UUID stands in: work outside a request is still one unit of
+ * work and still worth a name. A value that is not a UUID is not trusted.
+ */
+function requestIdSource(): () => Promise<string> {
+  let resolved: Promise<string> | null = null;
+  return () => (resolved ??= (async () => {
+    try {
+      const id = (await headers()).get('x-request-id');
+      if (id && UUID.test(id)) return id;
+    } catch {
+      // No request in scope.
+    }
+    return randomUUID();
+  })());
+}
+
+/**
+ * Where this process's errors go: into the structured log, and — once a Sentry
+ * project exists — to Sentry. The log reporter is a declared STUB, and
+ * `instrumentation-node.ts` hands the same instance to `assertProductionSafe`,
+ * so production refuses to start without real error reporting.
+ */
+export const errorReporter = logErrorReporter();
 
 /**
  * Calling the API from the server.
@@ -54,23 +91,28 @@ export function apiContext(
    */
   platform: { staffId: string; role: string; label?: string } | null = null,
 ): ApiContext {
+  // One id for everything this context does — every Unit of Work below stamps
+  // it on the audit entries it writes, and the base middleware on every log line.
+  const requestId = requestIdSource();
+  const observability: Observability = { requestId, sink: stdoutSink, errors: errorReporter };
+
   return {
     actor,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,
     platformLabel: platform?.label ?? null,
-    uow: unitOfWork(actor),
+    uow: unitOfWork(actor, requestId),
     // The checkout service role. Narrow by construction — see migration 0003.
-    checkoutUow: unitOfWork({ role: 'checkout', id: null }),
+    checkoutUow: unitOfWork({ role: 'checkout', id: null }, requestId),
     // The aftercare service role. Narrow by construction — see 0015.
-    aftercareUow: unitOfWork({ role: 'aftercare', id: null }),
+    aftercareUow: unitOfWork({ role: 'aftercare', id: null }, requestId),
     // The intake service role. It can create an application and nothing
     // else — see 0018.
-    intakeUow: unitOfWork({ role: 'intake', id: null }),
+    intakeUow: unitOfWork({ role: 'intake', id: null }, requestId),
     // The analytics service role. It may append a browsing event and cannot
     // read the table back — see 0023.
-    analyticsUow: unitOfWork({ role: 'analytics', id: null }),
+    analyticsUow: unitOfWork({ role: 'analytics', id: null }, requestId),
     // One store per process — the instance `instrumentation.ts` checks.
     media: mediaStore(),
     /*
@@ -85,6 +127,7 @@ export function apiContext(
      * is DR-03's decision and not an engineer's.
      */
     payoutsEnabled: payoutsAreEnabled(process.env.PAYOUTS_ENABLED, process.env.NODE_ENV),
+    observability,
     clock: systemClock,
   };
 }
