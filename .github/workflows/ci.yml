@@ -95,6 +95,13 @@ jobs:
   # while any stub is configured — which, until the SMS sender and Sentry exist,
   # is always. Relaxing that guard for tests is a security-critical change and
   # is recorded as an open question in the plan (P3.4.3), not made here.
+  #
+  # A 4 GB heap for the dev server, because `next dev` restarts ITSELF when the
+  # used heap passes 80% of the limit (next/dist/server/lib/start-server.js),
+  # and a restart throws away every compiled route. With the runner's default
+  # limit, compiling all thirty routes up front crossed that line: on 4ace8f0
+  # both suites saw "approaching the used memory threshold, restarting", and
+  # the audit then timed out waiting for a page that was compiling again.
   e2e:
     name: browser suite
     runs-on: ubuntu-latest
@@ -115,7 +122,7 @@ jobs:
       # production, so this hook cannot exist where it would matter.
       - name: Start the app
         run: |
-          (cd apps/web && OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          (cd apps/web && NODE_OPTIONS=--max-old-space-size=4096 OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
           echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
 
@@ -150,7 +157,7 @@ jobs:
 
       - name: Start the app
         run: |
-          (cd apps/web && OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          (cd apps/web && NODE_OPTIONS=--max-old-space-size=4096 OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
           echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
 
