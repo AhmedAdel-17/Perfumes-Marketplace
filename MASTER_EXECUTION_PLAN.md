@@ -150,7 +150,7 @@ production (P0.1.3).
 | P0.4.1 | Map 50 houses with segment and channel evidence | P0 | BLOCKED | P0 | VALIDATE | — (criterion 2: signed-in Instagram sweep) |
 | P0.4.2 | 15 seller interviews (doc 02 §6) | P0 | NOT_STARTED | P0 | VALIDATE | P0.4.1 |
 | P0.4.3 | 30 buyer interviews + survey, incl. shopfront reaction | P0 | READY | P0 | VALIDATE | — |
-| P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | COMPLETE | — | VALIDATE | — |
+| P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | READY | P1 | VALIDATE | — (evidence delivered; founder review) |
 | P0.4.5 | Courier and PSP quotes and terms | P0 | READY | P0 | VALIDATE | — |
 | P0.4.6 | Validation review and GATE 0 decision | P0 | NOT_STARTED | P0 | OPERATE | P0.4.2, P0.4.3, P0.4.5, P0.3.1 |
 | P1.1.1 | Real SMS one-time-code sender | P1 | BLOCKED | P0 | BUILD | P0.2.6 (ADR-11 vendor + account) |
@@ -869,7 +869,9 @@ certainty, verified maker, reviews, comparison) by mentions.
 §3.3.
 
 #### P0.4.4 Competitor evidence rows with screenshots (doc 02 §5)
-**Status:** COMPLETE (2026-09-24) · **Priority:** P1 · **Type:** VALIDATE
+**Status:** READY — evidence delivered 2026-09-24, both criteria met by the desk work below;
+**the founders review it and mark it COMPLETE** (HOW TO USE rule 9: Claude Code never marks a
+VALIDATE task complete) · **Priority:** P1 · **Type:** VALIDATE
 **Why:** `docs/market/01` is a one-day scan with search snippets; doc 02 §5 requires one
 evidence row per competitor with screenshots and dates; noon/Amazon.eg commissions were
 not verified on their portals.
@@ -2952,3 +2954,10 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   counsel), P0.4.3 (30 buyer interviews), P0.4.5 (written courier and PSP quotes) — each
   needs a founder, a lawyer, buyers or a vendor. P0.4.1 needs one to two founder hours on
   Instagram to finish.
+
+- 2026-09-24 · Claude Code session · P0.4.4 · correction · the entry above says READY →
+  COMPLETE. That broke HOW TO USE rule 9, which reserves COMPLETE on OPERATE and VALIDATE
+  tasks for the founders. Status returned to READY with the evidence recorded; the founders
+  mark it COMPLETE after review. P0.4.1 and P0.3.2 were set to BLOCKED, not COMPLETE, and stay
+  so. The desk work on all three was done on the founder's explicit instruction of 24 Sep 2026
+  to "execute any READY task".
