@@ -45,6 +45,20 @@ export default {
       ],
     }];
   },
+  /*
+   * Development only: keep every compiled route compiled.
+   *
+   * By default `next dev` evicts a page unused for 60 seconds and keeps five.
+   * Found in CI (P3.4.3): the browser suites warm all thirty routes first, and
+   * twenty minutes later `/seller/listings/[id]` compiled AGAIN, for 24 seconds,
+   * under the audit's navigation — which timed out. Eviction had quietly undone
+   * the warm-up, so the warm-up cost memory and bought nothing. Thirty routes
+   * is a small app; there is nothing to evict for. `next build` ignores this.
+   */
+  onDemandEntries: {
+    maxInactiveAge: 24 * 60 * 60 * 1000,
+    pagesBufferLength: 100,
+  },
   // PGlite ships WebAssembly and must not be bundled for the browser. In
   // production this is postgres-js instead; the Drizzle code is identical.
   serverExternalPackages: ['@electric-sql/pglite'],

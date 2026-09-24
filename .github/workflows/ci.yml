@@ -136,9 +136,17 @@ jobs:
         env:
           OTP_OUTBOX: ${{ runner.temp }}/otp.jsonl
 
+      # Memory and every restart, not only the last lines: the restart that
+      # broke 4ace8f0 had scrolled out of a 200-line tail by the time anyone
+      # looked, and "connection refused" alone cannot say who stopped the server.
       - name: Server log, when something failed
         if: failure()
-        run: tail -200 "$RUNNER_TEMP/dev.log"
+        run: |
+          free -m
+          ps -eo rss,args --sort=-rss | head -5 | cut -c1-160
+          grep -n -E 'memory threshold|Ready in|Killed|heap|ECONNRESET' "$RUNNER_TEMP/dev.log" || true
+          sudo dmesg 2>/dev/null | grep -i -E 'out of memory|oom' | tail -5 || true
+          tail -200 "$RUNNER_TEMP/dev.log"
 
   a11y:
     name: accessibility audit
@@ -181,6 +189,14 @@ jobs:
           OTP_OUTBOX: ${{ runner.temp }}/otp.jsonl
           THEME: light
 
+      # Memory and every restart, not only the last lines: the restart that
+      # broke 4ace8f0 had scrolled out of a 200-line tail by the time anyone
+      # looked, and "connection refused" alone cannot say who stopped the server.
       - name: Server log, when something failed
         if: failure()
-        run: tail -200 "$RUNNER_TEMP/dev.log"
+        run: |
+          free -m
+          ps -eo rss,args --sort=-rss | head -5 | cut -c1-160
+          grep -n -E 'memory threshold|Ready in|Killed|heap|ECONNRESET' "$RUNNER_TEMP/dev.log" || true
+          sudo dmesg 2>/dev/null | grep -i -E 'out of memory|oom' | tail -5 || true
+          tail -200 "$RUNNER_TEMP/dev.log"
