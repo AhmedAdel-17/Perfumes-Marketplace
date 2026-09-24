@@ -150,7 +150,7 @@ production (P0.1.3).
 | P0.4.1 | Map 50 houses with segment and channel evidence | P0 | BLOCKED | P0 | VALIDATE | — (criterion 2: signed-in Instagram sweep) |
 | P0.4.2 | 15 seller interviews (doc 02 §6) | P0 | NOT_STARTED | P0 | VALIDATE | P0.4.1 |
 | P0.4.3 | 30 buyer interviews + survey, incl. shopfront reaction | P0 | READY | P0 | VALIDATE | — |
-| P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | READY | P1 | VALIDATE | — |
+| P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | COMPLETE | — | VALIDATE | — |
 | P0.4.5 | Courier and PSP quotes and terms | P0 | READY | P0 | VALIDATE | — |
 | P0.4.6 | Validation review and GATE 0 decision | P0 | NOT_STARTED | P0 | OPERATE | P0.4.2, P0.4.3, P0.4.5, P0.3.1 |
 | P1.1.1 | Real SMS one-time-code sender | P1 | BLOCKED | P0 | BUILD | P0.2.6 (ADR-11 vendor + account) |
@@ -854,7 +854,7 @@ certainty, verified maker, reviews, comparison) by mentions.
 §3.3.
 
 #### P0.4.4 Competitor evidence rows with screenshots (doc 02 §5)
-**Status:** READY · **Priority:** P1 · **Type:** VALIDATE
+**Status:** COMPLETE (2026-09-24) · **Priority:** P1 · **Type:** VALIDATE
 **Why:** `docs/market/01` is a one-day scan with search snippets; doc 02 §5 requires one
 evidence row per competitor with screenshots and dates; noon/Amazon.eg commissions were
 not verified on their portals.
@@ -865,6 +865,28 @@ seller, Fragrantica's Egypt coverage, and every pilot-candidate house's own chan
 **Acceptance criteria:** `docs/market/02` updated with dated, screenshot-backed rows;
 evidence gaps in `docs/market/01` §4 closed or explicitly left open.
 **Reference documents:** doc 02 §5; `docs/market/01–02`.
+
+**Completion evidence.** `docs/market/02` "Evidence rows, 24 September 2026": marketplaces
+(noon, Jumia, Amazon.eg), specialist and multi-brand retailers (Perfume Egypt, Source Beauty,
+Zacshop, RAMFA, Faces, Emarati Scents), a decant seller (Decanted.egy), Fragrantica's Egypt
+page, and the own channels of the 17 S1/S3 houses with web stores. 32 screenshots in
+`docs/market/evidence/2026-09-24/`, captured by headless Chrome on that date.
+
+*Criterion 1 — dated, screenshot-backed rows:* **MET.**
+*Criterion 2 — `01` §4 gaps closed or explicitly left open:* **MET** — `02` §E: four closed
+(rows with screenshots, noon commission, house channels for web-store houses, Fragrantica
+coverage), three left open with the reason (Amazon.eg beauty rate needs a seller login; no
+Arabic review forum found; courier COD fees are P0.4.5's written quotes).
+
+**Facts that change inputs elsewhere.** noon charges fragrance **13 % excl. VAT** (1 Feb
+2026) plus per-shipment fees, and splits customer shipping **per seller** — the pattern
+CLAUDE.md §7 asks for already exists in the market. Jumia: 13 % incl. VAT, 10 EGP minimum,
+charged only on delivered orders. **Perfume Egypt** is a specialist store of Egyptian brands
+with seller onboarding (oud, oils, "alternatives", urgency discounts); the four documents that
+said "no specialist marketplace" now carry a dated correction. Fragrantica lists **34
+Egyptian designers**, 28 of them not yet in the house map. House storefronts show the trust
+gap directly: contradictory and template-placeholder return policies, an invalid TLS
+certificate, an offline store.
 
 #### P0.4.5 Courier and PSP quotes and terms
 **Status:** READY · **Priority:** P0 · **Type:** VALIDATE
@@ -2897,3 +2919,9 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   houses mapped with evidence (criterion 1 met). 16 tagged S1 against ≥ 20 (criterion 2 not
   met); the rest needs a signed-in Instagram sweep, one to two founder hours. Found a specialist
   local-perfume marketplace (Perfume Egypt) that the landscape doc said was not verified.
+
+- 2026-09-24 · Claude Code session · P0.4.4 · READY → COMPLETE · `docs/market/02` evidence
+  rows, 32 screenshots under `docs/market/evidence/2026-09-24/`. Both criteria met. noon's
+  fragrance rate verified at 13 % excl. VAT; Amazon.eg's beauty rate left open (needs a seller
+  login). The "no specialist local-perfume marketplace" statement corrected, dated, in the four
+  documents that made it. Fragrantica's 34 Egyptian designers noted as house-map candidates.

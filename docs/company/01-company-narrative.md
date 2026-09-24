@@ -27,8 +27,10 @@ proof the marketplace will win (doc 02 research rule); it is the reason to test 
 
 Generic marketplaces list fragrance broadly and publish category commissions; imported
 "original" perfume e-tailers compete on authenticity and discounts; local houses are
-discovered through press and social; no verified specialist local-perfume marketplace was
-observed in the scan (`docs/market/`). We do not claim to be first.
+discovered through press and social; the first scan observed no specialist local-perfume
+marketplace, and the dated evidence rows of 24 Sep 2026 found one — Perfume Egypt, oud,
+oils and "alternatives" sold on discount (`docs/market/02` §B). We do not claim to be first,
+and we are not.
 
 ## Product
 

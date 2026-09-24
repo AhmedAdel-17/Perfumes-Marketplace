@@ -31,6 +31,8 @@ as fact. Where a founder decision exists in `docs/OPEN_DECISIONS.md` it is cited
 - AOV ≈ EGP 700 (illustrative only, doc 03 §5).
 - COD dominates; refusal economics decide viability (doc 02 §1, doc 06 §7).
 - No proven specialist competitor exists (doc 02 §1 — "do not market 'first in Egypt'").
+  *Disproved 24 Sep 2026 (P0.4.4): Perfume Egypt — see `docs/market/02` §B. This file is an
+  ingestion snapshot and is otherwise left as it was.*
 
 ## Conflicts found during ingestion
 

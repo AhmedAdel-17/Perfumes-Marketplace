@@ -71,11 +71,10 @@ or supported** (doc 02 §1).
   perfume brands, with more than 1,000 products, nationwide delivery and a "submit your brand"
   page for sellers. It also sells alternatives named after designer scents. Separately,
   **Source Beauty** carries 15 of the 51 mapped houses in a "Made in Egypt" section, beside
-  international brands. Both were page-read, not yet screenshotted. The doc 02 §5 evidence
-  rows are task P0.4.4. Until those exist, every document that says "no verified specialist
-  local-perfume marketplace" is out of date: `PROJECT_MASTER_BLUEPRINT.md`,
-  `brand/02-brand-positioning.md`, `company/01-company-narrative.md`,
-  `architecture/00-ingestion/CURRENT_ASSUMPTIONS.md`. See `docs/market/05-house-map.md` §5.
+  international brands. Screenshot-backed evidence rows for both, and for every player
+  above, are in `docs/market/02` "Evidence rows, 24 September 2026" (P0.4.4). The four
+  documents that restated "none verified" carry a dated correction pointing there. See also
+  `docs/market/05-house-map.md` §5.
 
 ## 3. Patterns
 

@@ -123,7 +123,9 @@ discount-led.
 Observed (18 Sep 2026): generic marketplaces with published commissions; imported
 "original" e-tailers competing on authenticity and discounts; local houses discovered via
 press and social; decant sellers for imported scents; no verified specialist local-perfume
-marketplace found (not proof of absence). Whitespace: structured comparable local data,
+marketplace found (not proof of absence). *Superseded 24 Sep 2026 (P0.4.4):* Perfume Egypt
+is one — oud, oils and "alternatives" from "selected Egyptian brands", with seller
+onboarding — and Source Beauty carries 15 mapped houses (`docs/market/02` §B, `05`). Whitespace: structured comparable local data,
 verified-maker trust, delivery-gated reviews, a seller OS with fair fees, COD done well.
 Not a moat: code, name, being first.
 

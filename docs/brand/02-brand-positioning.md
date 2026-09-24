@@ -39,7 +39,10 @@ consequences: including them widens the value wedge; excluding them keeps "perfu
 "First in Egypt" — doc 02 §1 forbids it until a dated competitor search is complete; the
 `docs/market/` scan found adjacent players (imported-perfume e-tailers, decant sellers,
 generic marketplaces) and **no verified specialist local-perfume marketplace**, which is
-still not proof of absence. "100 % original/authentic" — the language of the importers;
+still not proof of absence. *Superseded 24 Sep 2026:* one exists — Perfume Egypt, a store
+of "selected Egyptian brands" with a join-as-a-brand page, selling oud, oils and
+"alternatives" by urgency discount (`docs/market/02` §B, with screenshots). "First" is now
+not merely unproven but false. "100 % original/authentic" — the language of the importers;
 our claim is *verified maker*, not *authenticated designer goods*.
 
 ## 6. One-line descriptors by audience
