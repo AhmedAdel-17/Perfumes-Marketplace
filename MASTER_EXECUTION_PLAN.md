@@ -147,7 +147,7 @@ production (P0.1.3).
 | P0.3.3 | Seller agreement v1 | P0 | BLOCKED | P0 | OPERATE | P0.2.5, P0.3.1 |
 | P0.3.4 | Customer terms, returns, privacy notice, consent texts v1 | P0 | BLOCKED | P0 | OPERATE | P0.3.1 |
 | P0.3.5 | Prohibited products/claims policy; verification checklist definitions | P0 | BLOCKED | P0 | OPERATE | P0.3.1 |
-| P0.4.1 | Map 50 houses with segment and channel evidence | P0 | READY | P0 | VALIDATE | — |
+| P0.4.1 | Map 50 houses with segment and channel evidence | P0 | BLOCKED | P0 | VALIDATE | — (criterion 2: signed-in Instagram sweep) |
 | P0.4.2 | 15 seller interviews (doc 02 §6) | P0 | NOT_STARTED | P0 | VALIDATE | P0.4.1 |
 | P0.4.3 | 30 buyer interviews + survey, incl. shopfront reaction | P0 | READY | P0 | VALIDATE | — |
 | P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | READY | P1 | VALIDATE | — |
@@ -787,7 +787,8 @@ scanner vocabulary must change, a `BUILD` sub-task is added with a new ID.
 ## 0.4 Validation prep
 
 #### P0.4.1 Map 50 houses with segment and channel evidence
-**Status:** READY · **Priority:** P0 · **Type:** VALIDATE
+**Status:** BLOCKED (2026-09-24, criterion 2 needs a signed-in Instagram sweep; 51 rows done) ·
+**Priority:** P0 · **Type:** VALIDATE
 **Why:** doc 02 §9 week 1. Without a mapped supply the interviews have no sample and the
 cohort has no candidates.
 **Goal:** a sheet of 50 houses: segment (S1–S4), channels observed, apparent order
@@ -796,6 +797,31 @@ route, source of the lead (press lists in `docs/market/01` are a starting point)
 **Depends on:** — · **Blocks:** P0.4.2
 **Acceptance criteria:** 50 rows with evidence links and dates; ≥ 20 tagged S1.
 **Reference documents:** doc 02 §4, §9; `docs/seller-experience/03`; `docs/gtm/02`.
+
+**Completion evidence (desk half).** `docs/market/05-house-map.md`: 51 houses checked on
+24 Sep 2026, each with segment, product type, channels, activity proxy, documentation
+likelihood, a public business contact route, lead source, an evidence link and an evidence
+rank (45 at rank 4 with a live storefront seen, 6 at rank 6). The column rules are written
+down so the founders can re-tag. 17 more names were checked and excluded, with reasons, so
+nobody checks them twice. No house was contacted.
+
+*Criterion 1 — 50 rows with evidence links and dates:* **MET** (51).
+
+*Criterion 2 — ≥ 20 tagged S1:* **NOT MET — 16 primary, 19 counting S3 houses that also
+sell the S1 way.** It was not rounded up. S1 houses live on Instagram, which cannot be browsed
+without an account, and search indexes the press-covered S2/S3 houses. Searching the
+Egyptian store builders (Zammit, Sllr, EasyOrders) found S1 houses the press missed, but it
+also found dormant storefronts and Gulf-brand resellers. **To close it:** a founder spends one
+to two hours, signed in, on the four Instagram/TikTok tag pages linked in §3 of the map, and
+adds rows 52 onward. P0.4.2 can start on the 16 meanwhile if the founders choose.
+
+**Finding that changes a documented conclusion.** `docs/market/01` said no specialist
+local-perfume marketplace was verified. One exists: **Perfume Egypt** (a multi-brand store of
+Egyptian perfume brands with seller onboarding and COD). **Source Beauty** also carries 15 of
+the 51 houses. Recorded in `docs/market/01` with a dated note. The four documents that restate
+"none verified" are named there; they are corrected with the screenshot-backed rows of P0.4.4,
+not before. Other findings: five houses carry claims risk (L8 decides how much of the supply
+is listable), and 20 of 51 lead with mists (B-3 decides whether they are in scope).
 
 #### P0.4.2 15 seller interviews (doc 02 §6)
 **Status:** NOT_STARTED · **Priority:** P0 · **Type:** VALIDATE
@@ -2864,3 +2890,10 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   an OPERATE task. The shortest path back to engineering is **P0.2.4 → P0.2.6** (record X1 and
   kill criteria, then approve ADRs 01–15), which unblocks P1.1.2, P1.2.1–P1.2.4 and P1.4.2 at
   once.
+
+- 2026-09-24 · Claude Code session · P0.4.1 · READY → BLOCKED · `docs/market/05-house-map.md`.
+  Executed on the founder's instruction to "execute any READY task": every READY task is
+  OPERATE or VALIDATE, and this is the first one in index order a desk session can do. 51
+  houses mapped with evidence (criterion 1 met). 16 tagged S1 against ≥ 20 (criterion 2 not
+  met); the rest needs a signed-in Instagram sweep, one to two founder hours. Found a specialist
+  local-perfume marketplace (Perfume Egypt) that the landscape doc said was not verified.

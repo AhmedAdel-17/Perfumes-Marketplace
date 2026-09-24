@@ -66,6 +66,16 @@ or supported** (doc 02 §1).
 
 ### Specialist local-perfume marketplaces
 - **None verified** in this scan. This is not proof of absence (doc 02 §1).
+- **Superseded 24 Sep 2026 (P0.4.1): one found.** [Perfume Egypt](https://perfume-egypt.com/en)
+  (IG @perfumes.egypt.official) describes itself as a curated multi-brand store of Egyptian
+  perfume brands, with more than 1,000 products, nationwide delivery and a "submit your brand"
+  page for sellers. It also sells alternatives named after designer scents. Separately,
+  **Source Beauty** carries 15 of the 51 mapped houses in a "Made in Egypt" section, beside
+  international brands. Both were page-read, not yet screenshotted. The doc 02 §5 evidence
+  rows are task P0.4.4. Until those exist, every document that says "no verified specialist
+  local-perfume marketplace" is out of date: `PROJECT_MASTER_BLUEPRINT.md`,
+  `brand/02-brand-positioning.md`, `company/01-company-narrative.md`,
+  `architecture/00-ingestion/CURRENT_ASSUMPTIONS.md`. See `docs/market/05-house-map.md` §5.
 
 ## 3. Patterns
 
