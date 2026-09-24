@@ -47,7 +47,7 @@ every gate outcome is recorded here.
 | D-8 | Founders' equity, vesting, deadlock (doc 05) | FOUNDERS + LEGAL | complete with counsel before further material work | both founders | P0.2.1 | OPEN |
 | D-10 | Entity and incorporation timing | LEGAL | engage lawyer and accountant now | founders + counsel | P0.2.2 | OPEN |
 | D-9 | Budget and runway | FOUNDERS | 12-month plan; ≥ 6 months at GATE 0 or shrink the test (K13) | both founders | P0.2.3 | OPEN |
-| D-1 | Name DIYAR pending screening | FOUNDERS + LEGAL | screen classes 3 & 35 now; brand strategy name-independent | trademark agent | P0.3.2 | OPEN |
+| D-1 | Name DIYAR pending screening | FOUNDERS + LEGAL | screen classes 3 & 35 now; brand strategy name-independent. **Desk knock-out 24 Sep 2026 (`docs/brand/08`): five prior perfume uses of "Diyar", mostly Gulf; diyar.eg free, diyar.com taken; Arabic search conflates ديار with ديور (Dior)** | trademark agent | P0.3.2 | OPEN |
 | X1 | Record the Phase 0 → Phase 1 sequencing | FOUNDERS | record; run Phase 0 on the product | both founders | P0.2.4 | OPEN |
 | D-4 | Pilot rates and fee model (%, minimum fee, subscription option) | FOUNDERS | pack rates 5 % / 15 % as INTERIM with a minimum-fee field modelled; final after interviews | both founders | P0.2.5 (interim), GATE 4 (final) | OPEN |
 | D-5 | Settlement direction and fund holding | FOUNDERS + LEGAL | INTERIM: invoice COD houses; no fund holding; card only after L14 | both founders + counsel | P0.2.5 (interim), P4.4.1 (final) | OPEN |

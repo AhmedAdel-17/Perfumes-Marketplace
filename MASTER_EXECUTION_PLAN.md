@@ -143,7 +143,7 @@ production (P0.1.3).
 | P0.2.5 | Pilot commercial and policy decisions | P0 | READY | P0 | OPERATE | P0.2.4 |
 | P0.2.6 | Approve ADRs 01–15, FD-1..7, stop mobile (ADR-12) | P0 | READY | P0 | OPERATE | P0.2.4 |
 | P0.3.1 | Engage counsel; request answers L1–L8, L10–L14, L17 | P0 | READY | P0 | OPERATE | — |
-| P0.3.2 | Trademark screening classes 3 & 35; domain (D-1) | P0 | READY | P0 | OPERATE | — |
+| P0.3.2 | Trademark screening classes 3 & 35; domain (D-1) | P0 | BLOCKED | P0 | OPERATE | — (IP agent; D-1) |
 | P0.3.3 | Seller agreement v1 | P0 | BLOCKED | P0 | OPERATE | P0.2.5, P0.3.1 |
 | P0.3.4 | Customer terms, returns, privacy notice, consent texts v1 | P0 | BLOCKED | P0 | OPERATE | P0.3.1 |
 | P0.3.5 | Prohibited products/claims policy; verification checklist definitions | P0 | BLOCKED | P0 | OPERATE | P0.3.1 |
@@ -740,7 +740,8 @@ L8, L14 within 30 days recorded.
 **Reference documents:** `docs/legal/01`, `docs/legal/03`; doc 04 §4; doc 06 §4, §8.
 
 #### P0.3.2 Trademark screening classes 3 & 35; domain (D-1)
-**Status:** READY · **Priority:** P0 · **Type:** OPERATE
+**Status:** BLOCKED (2026-09-24, on an IP agent and decision D-1; the desk knock-out is done) ·
+**Priority:** P0 · **Type:** OPERATE
 **Why:** the name DIYAR is in the code, the doctrine and every document, unscreened. Bio
 links, shoots and stationery branded with an unavailable name are wasted (F18).
 **Goal:** an IP agent screens DIYAR in classes 3 and 35; domain availability checked;
@@ -748,6 +749,20 @@ decision to keep or rename recorded; if kept, filing started.
 **Depends on:** — · **Blocks:** P2.1.7 (bio links carry the name), P8.3.1
 **Acceptance criteria:** written screening result; register D-1 decided.
 **Reference documents:** `docs/brand/01` §17; `DESIGN_DOCTRINE.md` §5.
+
+**Desk half done, 24 Sep 2026:** `docs/brand/08-name-screening-preliminary.md`. Domains from
+registry records: diyar.com, .net, .store, .shop and diyar.com.eg are taken; **diyar.eg and
+getdiyar.com show no registration**; diyareg.com and shopdiyar.com were **registered this
+month** by someone (founders to confirm whether it was them). A knock-out search found
+"Diyar" already used **five times for perfume** — a brand at diyarfragrance.com, a Bahraini
+seller, a Gulf store at diyarperfumes.com (since 2022), a "DIYAR" EDP sold by Alshaya
+Perfumes, a Surrati oil. **An Arabic search for «ديار عطور» returned only Dior (ديور)** —
+one letter apart — which is a discoverability cost and a similarity question for the agent.
+
+*Criterion 1 — written screening result:* **BLOCKED** — needs an IP agent (the document
+lists the four questions to ask). *Criterion 2 — D-1 decided:* **BLOCKED** — the founders'
+decision, after criterion 1. No domain was registered and no filing started: both spend
+money and bind the name before D-1.
 
 #### P0.3.3 Seller agreement v1
 **Status:** BLOCKED (P0.2.5, P0.3.1) · **Priority:** P0 · **Type:** OPERATE
@@ -2925,3 +2940,15 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   fragrance rate verified at 13 % excl. VAT; Amazon.eg's beauty rate left open (needs a seller
   login). The "no specialist local-perfume marketplace" statement corrected, dated, in the four
   documents that made it. Fragrantica's 34 Egyptian designers noted as house-map candidates.
+
+- 2026-09-24 · Claude Code session · P0.3.2 · READY → BLOCKED · desk knock-out in
+  `docs/brand/08`. "Diyar" is already used five times for perfume, mostly in the Gulf; the
+  plain .com/.net/.store/.shop are taken, diyar.eg is not; two variants were registered this
+  month by an unknown party. Arabic search conflates ديار with ديور (Dior). Waits on an IP
+  agent's written screening and the founders' D-1.
+
+- 2026-09-24 · Claude Code session · — · next READY · **none a desk session can advance
+  further.** Remaining READY tasks: P0.2.1–P0.2.6 (founder decisions), P0.3.1 (engage
+  counsel), P0.4.3 (30 buyer interviews), P0.4.5 (written courier and PSP quotes) — each
+  needs a founder, a lawyer, buyers or a vendor. P0.4.1 needs one to two founder hours on
+  Instagram to finish.
