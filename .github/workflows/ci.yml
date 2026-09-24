@@ -98,10 +98,15 @@ jobs:
   #
   # A 4 GB heap for the dev server, because `next dev` restarts ITSELF when the
   # used heap passes 80% of the limit (next/dist/server/lib/start-server.js),
-  # and a restart throws away every compiled route. With the runner's default
-  # limit, compiling all thirty routes up front crossed that line: on 4ace8f0
-  # both suites saw "approaching the used memory threshold, restarting", and
-  # the audit then timed out waiting for a page that was compiling again.
+  # and a restart throws away every compiled route and refuses connections
+  # while it happens.
+  #
+  # NO WARM-UP, on the evidence (24 Sep 2026). Compiling all thirty routes up
+  # front was tried twice: with Next's default page eviction it was undone
+  # within minutes, and with eviction off the server held 4.1 GB on a 7.9 GB
+  # runner and restarted anyway. A route compiling on first visit is instead
+  # handled where it bites — the audit retries a navigation the dev server
+  # aborted, once (scripts/audit.mjs, `visit`).
   e2e:
     name: browser suite
     runs-on: ubuntu-latest
@@ -125,11 +130,6 @@ jobs:
           (cd apps/web && NODE_OPTIONS=--max-old-space-size=4096 OTP_OUTBOX="$RUNNER_TEMP/otp.jsonl" pnpm dev > "$RUNNER_TEMP/dev.log" 2>&1 &)
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3100/ && exit 0; sleep 5; done
           echo "the app did not start"; tail -50 "$RUNNER_TEMP/dev.log"; exit 1
-
-      # Compile every route before a test navigates to one. The dev server
-      # compiles on first request, and the first CI run lost a navigation to it.
-      - name: Warm every route
-        run: node apps/web/scripts/warm.mjs
 
       - name: Browser suite
         run: node apps/web/scripts/e2e.mjs
@@ -173,9 +173,6 @@ jobs:
       # 44pt targets — once per theme. One run signs in twice (a house and an
       # operator), so two runs spend four codes against a limit of five an hour
       # per number, and can share the server.
-      - name: Warm every route
-        run: node apps/web/scripts/warm.mjs
-
       - name: Accessibility audit (noir)
         run: node scripts/audit.mjs
         working-directory: apps/web

@@ -351,6 +351,31 @@ async function auditPage(page, surface, width) {
   }
 }
 
+/**
+ * Open a page and wait for it to settle — retrying ONCE if the dev server
+ * interrupted the navigation.
+ *
+ * WHY (P3.4.3, CI). `next dev` compiles a route on its first request, and on a
+ * CI runner that can take long enough, or reload the page mid-flight, for
+ * `goto` to fail with `net::ERR_ABORTED` or a timeout. That failure is the
+ * server's, not the page's: every surface that got past it passed. Warming
+ * every route beforehand was tried and cost more memory than the runner has.
+ *
+ * Only the navigation is retried, and only once. Every check this audit makes
+ * runs after it, on the page that loaded, and none of them is ever retried —
+ * a second failure is reported exactly as before.
+ */
+async function visit(page, url) {
+  try {
+    await page.goto(url, { waitUntil: 'networkidle' });
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    if (!/ERR_ABORTED|Timeout \d+ms exceeded/.test(message)) throw error;
+    console.log(`  (retrying ${url.replace(BASE, '')} once: ${message.split(String.fromCharCode(10))[0]})`);
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 90_000 });
+  }
+}
+
 const browser = await chromium.launch({ channel: 'chrome' });
 
 try {
@@ -360,7 +385,7 @@ try {
 
   // A basket, so the cart and checkout have something to audit.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await visit(page, `${BASE}/`);
   const slugs = await page.evaluate(async () => {
     const home = await (await fetch('/')).text();
     return [...new Set([...home.matchAll(/\/p\/([a-z-]+)/g)].map((m) => m[1]))];
@@ -368,7 +393,7 @@ try {
   let added = 0;
   for (const slug of slugs) {
     if (added === 2) break;
-    await page.goto(`${BASE}/p/${slug}`, { waitUntil: 'networkidle' });
+    await visit(page, `${BASE}/p/${slug}`);
     const buy = page.locator('button:visible').filter({ hasText: 'أضف إلى الحقيبة' }).first();
     let ok = false;
     for (let i = 0; i < 20; i += 1) {
@@ -428,7 +453,7 @@ try {
   for (const size of WIDTHS) {
     await page.setViewportSize({ width: size.width, height: size.height });
     for (const [surface, path] of publicRoutes) {
-      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+      await visit(page, `${BASE}${path}`);
       await auditPage(page, surface, size.name);
     }
   }
@@ -436,7 +461,7 @@ try {
   /* --------------------------------------------------------------- seller */
   const house = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const seller = await house.newPage();
-  await seller.goto(`${BASE}/seller`, { waitUntil: 'networkidle' });
+  await visit(seller, `${BASE}/seller`);
   await fill(seller, 'رقم الموبايل', '01001112222');
   await seller.locator('button[type="submit"]').click();
   await seller.waitForTimeout(1800);
@@ -452,21 +477,21 @@ try {
       ['seller-payouts', '/seller/payouts'],
       ['seller-returns', '/seller/returns'],
     ]) {
-      await seller.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+      await visit(seller, `${BASE}${path}`);
       await auditPage(seller, surface, size.name);
     }
   }
 
   // One listing editor: the densest form in the product, twenty-four fields.
   // Navigating first, for the reason given at the ops page editor below.
-  await seller.goto(`${BASE}/seller/listings`, { waitUntil: 'networkidle' });
+  await visit(seller, `${BASE}/seller/listings`);
   const firstListing = await seller.locator('a[href^="/seller/listings/"]').first()
     .getAttribute('href', { timeout: 10_000 })
     .catch(() => null);
   if (firstListing) {
     for (const size of WIDTHS) {
       await seller.setViewportSize({ width: size.width, height: size.height });
-      await seller.goto(`${BASE}${firstListing}`, { waitUntil: 'networkidle' });
+      await visit(seller, `${BASE}${firstListing}`);
       await auditPage(seller, 'seller-listing-editor', size.name);
     }
   } else {
@@ -476,7 +501,7 @@ try {
   /* ------------------------------------------------------------------ ops */
   const opsContext = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const ops = await opsContext.newPage();
-  await ops.goto(`${BASE}/ops`, { waitUntil: 'networkidle' });
+  await visit(ops, `${BASE}/ops`);
   await fill(ops, 'رقم الموبايل', '01000000001');
   await ops.locator('button[type="submit"]').click();
   await ops.waitForTimeout(1800);
@@ -508,7 +533,7 @@ try {
   for (const size of WIDTHS) {
     await ops.setViewportSize({ width: size.width, height: size.height });
     for (const [surface, path] of opsRoutes) {
-      await ops.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+      await visit(ops, `${BASE}${path}`);
       await auditPage(ops, surface, size.name);
     }
   }
@@ -518,18 +543,18 @@ try {
   // Navigating first rather than assuming: the loop above leaves the browser on
   // whichever ops route is LAST, and adding one to that list silently moved
   // this lookup onto a page with no content links on it.
-  await ops.goto(`${BASE}/ops/content`, { waitUntil: 'networkidle' });
+  await visit(ops, `${BASE}/ops/content`);
   const firstPage = await ops.locator('a[href^="/ops/content/"]').first()
     .getAttribute('href', { timeout: 10_000 })
     .catch(() => null);
   if (firstPage) {
     for (const size of WIDTHS) {
       await ops.setViewportSize({ width: size.width, height: size.height });
-      await ops.goto(`${BASE}${firstPage}`, { waitUntil: 'networkidle' });
+      await visit(ops, `${BASE}${firstPage}`);
       await auditPage(ops, 'ops-page-editor', size.name);
       // The draft preview renders through the PUBLIC renderer, inside the
       // console's session — a surface of its own, never audited until now.
-      await ops.goto(`${BASE}${firstPage}/preview`, { waitUntil: 'networkidle' });
+      await visit(ops, `${BASE}${firstPage}/preview`);
       await auditPage(ops, 'ops-page-preview', size.name);
     }
   } else {
