@@ -99,7 +99,10 @@ jobs:
   # A 4 GB heap for the dev server, because `next dev` restarts ITSELF when the
   # used heap passes 80% of the limit (next/dist/server/lib/start-server.js),
   # and a restart throws away every compiled route and refuses connections
-  # while it happens.
+  # while it happens. That is also why `dev` runs Turbopack: webpack's compile
+  # cache lives in that heap and reached 3.2 GB in one audit run (a 4 GB limit
+  # restarts at 3.28), so both suites lost requests to restarts on 4d01acd.
+  # Turbopack compiles outside it — 1.65 GB peak over the full browser suite.
   #
   # NO WARM-UP, on the evidence (24 Sep 2026). Compiling all thirty routes up
   # front was tried twice: with Next's default page eviction it was undone

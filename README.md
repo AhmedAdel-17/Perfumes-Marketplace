@@ -66,6 +66,14 @@ triggers and row-level security policies that run in production.
 
 To start from nothing: `pnpm --filter @diyar/web seed -- --fresh`.
 
+`dev` runs **Turbopack**; `build` runs webpack, and CI builds with it. The
+switch was made on measurement (P3.4.3, 24 Sep 2026): `next dev` restarts
+itself once its V8 heap passes 80% of the limit, and webpack keeps its compile
+cache in that heap — 3.2 GB for one accessibility run, enough to restart the
+server in the middle of a browser suite in CI. Turbopack compiles outside it:
+1.65 GB peak across the full suite. If something behaves differently in dev
+and in a build, suspect the bundler first.
+
 ## Checks
 
 ```bash
