@@ -198,7 +198,7 @@ production (P0.1.3).
 | P3.3.3 | Daily exception report | P3 | NOT_STARTED | P0 | BUILD | P3.3.1 |
 | P3.4.1 | Web reads through the API; identity repository | P3 | COMPLETE | — | BUILD | P0.1.1 |
 | P3.4.2 | Sessions table and revocation | P3 | COMPLETE | — | BUILD | P0.1.1 |
-| P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | READY | P1 | BUILD | P0.1.2 |
+| P3.4.3 | Security headers; CI dependency audit; browser suite in CI | P3 | BLOCKED | P1 | BUILD | P0.1.2; P1.4.4 (staging) |
 | P3.4.4 | Payment entity and payment state machine | P3 | NOT_STARTED | P1 | BUILD | P3.1.2 |
 | P4.1.1 | Frontend foundations (R0) | P4 | NOT_STARTED | P1 | BUILD | GATE 4 |
 | P4.2.1 | Trust layer on tiles, product, house, checkout (R1) | P4 | NOT_STARTED | P1 | BUILD | P4.1.1 |
@@ -1839,13 +1839,66 @@ may proceed before GATE 1. Recorded in DR-15.
 **Reference documents:** `docs/architecture/05` §1.
 
 #### P3.4.3 Security headers; CI dependency audit; browser suite in CI
-**Status:** READY (2026-09-21, P0.1.2 complete) · **Priority:** P1 · **Type:** BUILD
+**Status:** BLOCKED (2026-09-24, criterion 1 on P1.4.4; everything buildable is built) ·
+**Priority:** P1 · **Type:** BUILD
 **Goal:** CSP with nonce for the theme script, HSTS, frame-ancestors, referrer policy;
 weekly `pnpm audit:deps` workflow; the Playwright suite and the accessibility audit run in
 CI against a built app on PGlite (code read via a test hook, not the log).
-**Depends on:** P0.1.2 · **Blocks:** none
+**Depends on:** P0.1.2; **P1.4.4 for criterion 1** (added 2026-09-24 — "present in staging"
+needs a staging site, which the `Depends on` column did not say; the same discrepancy as
+P1.4.3) · **Blocks:** none
 **Acceptance criteria:** headers present in staging; CI runs e2e on PR.
 **Reference documents:** `docs/architecture/05` §9; `docs/architecture/10` §3.
+
+**Completion evidence (the built half).** Commits `ec6c142` (the work), `c3ee9af` (a build
+regression of my own from P3.4.2, found by adding the build to CI), then `4ace8f0`,
+`bc00415`, `0ac8cb6`, `4d01acd`, `22e7f70` (making the browser jobs reliable — below).
+- *Headers.* `middleware.ts` mints a per-request nonce and writes the CSP;
+  `core/security-headers.ts` is the policy as a pure function with its own tests: scripts by
+  nonce + `strict-dynamic`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri` and
+  `form-action` self, dev-only `unsafe-eval`/websocket. `next.config.mjs` sends HSTS (two
+  years, subdomains, no preload — the domain is not chosen, D-1), `nosniff`,
+  `strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, a restrictive
+  `Permissions-Policy`. Verified in a browser: all 57 script tags carried the header's nonce,
+  and the remembered-theme script ran under the enforced policy.
+- *Dependency audit.* `.github/workflows/dependency-audit.yml`, weekly and on demand;
+  first run `35663890855` succeeded.
+- *Browser suites in CI.* `e2e` and `a11y` jobs, each with its own server and fresh
+  database. One-time codes come from an OTP outbox file (a declared stub, refused in
+  production), not the log. CI run **`36008659925`** on `22e7f70`: browser suite
+  **126/126**, accessibility audit **no findings** in both themes, verify (typecheck, 1,630
+  tests, `next build`) and guard green.
+
+*Criterion 2 — CI runs e2e on PR:* **MET by configuration, observed on push.** The workflow
+triggers on `pull_request` and on pushes to `main`; the browser jobs have no event filter.
+Only push runs have been observed, because no pull request has been opened yet.
+
+*Criterion 1 — headers present in staging:* **BLOCKED on P1.4.4.** There is no staging site.
+The headers are proven locally and by `security-headers.test.ts`; the check in staging is one
+`curl -I` once P1.4.4 exists.
+
+**Deviation from the goal, recorded rather than resolved: the suites run against `next dev`,
+not a built app.** A built app runs with `NODE_ENV=production`, where `assertProductionSafe`
+refuses to boot while any stub is configured — and the SMS sender, the error reporter and the
+local media store are all stubs until P1.1.1, P1.4.3 and R2 exist. Making the guard pass for
+tests means weakening a security control, which CLAUDE.md §18 reserves for the founders. It
+was NOT done. Options for them: (a) keep testing dev until the real providers land, when the
+guard passes on its own; (b) a test-only flag the guard honours, with its own risk; (c) a
+separate `next start` harness that stubs at a different seam.
+
+**What making CI reliable taught, in order** — kept because each wrong turn looked right:
+1. The first a11y run lost a navigation to a first-visit compile (`ERR_ABORTED`).
+2. Warming every route first (`4ace8f0`) made it worse: `next dev` restarts itself when the V8
+   heap passes 80% of its limit, and warming crossed the runner's default (~2 GB).
+3. A 4 GB heap (`bc00415`) moved the problem: Next evicts pages after 60 s, so warmed routes
+   recompiled mid-suite.
+4. Keeping every page (`0ac8cb6`) held 4.1 GB RSS on a 7.9 GB runner and still restarted.
+5. Warm-up reverted (`4d01acd`); the audit retries a *navigation* the dev server aborted,
+   once — never a check. Both suites still hit restarts: webpack's compile cache lives in that
+   heap, 3.2 GB for one audit run, measured from `.next/trace`.
+6. `dev` switched to **Turbopack** (`22e7f70`), which compiles outside the V8 heap: 1.65 GB
+   peak across the full suite, no restarts, green. `build` stays webpack and CI builds with
+   it; the README says to suspect the bundler first if dev and a build disagree.
 
 #### P3.4.4 Payment entity and payment state machine
 **Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
@@ -2784,3 +2837,30 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
 - 2026-09-22 · Claude Code session · P1.4.3 · repository discrepancy · two of three acceptance
   criteria depend on an external account and on P1.4.4, which the `Depends on` column did not
   say. Corrected, with the original dependency kept.
+
+- 2026-09-24 · Claude Code session · P3.4.3 · READY → BLOCKED · commits `ec6c142`, `c3ee9af`,
+  `4ace8f0`, `bc00415`, `0ac8cb6`, `4d01acd`, `22e7f70`. Built: nonce CSP and static security
+  headers, a weekly dependency-audit workflow, and the browser suite and accessibility audit as
+  CI jobs reading codes from an OTP outbox. CI run `36008659925`: all four jobs green, 126/126,
+  no accessibility findings in either theme. Criterion 2 met by configuration (observed on
+  push; no PR opened yet). Criterion 1 blocked on P1.4.4 — no staging site. The suites run
+  against `next dev`, not a built app, because the production guard refuses stubs; relaxing it
+  is the founders' call and was not done.
+
+- 2026-09-24 · Claude Code session · P3.4.3 · repository discrepancy · "headers present in
+  staging" depends on P1.4.4, which the `Depends on` column did not say. Corrected, with the
+  original dependency kept.
+
+- 2026-09-24 · Claude Code session · — · tooling decision · `dev` now runs Turbopack
+  (`22e7f70`). Measured, not preferred: webpack's compile cache lives in the V8 heap `next dev`
+  watches, reached 3.2 GB in one audit run, and restarted the server mid-suite in CI five runs
+  running. Turbopack peaked at 1.65 GB over the full suite. `build` stays webpack.
+
+- 2026-09-24 · Claude Code session · — · next READY · **none executable in code.** Every
+  remaining BUILD task waits on something only the founders can supply: P1.1.x, P1.2.x, P1.3.1,
+  P1.4.1, P1.4.2 on P0.2.5/P0.2.6 (decisions and ADR approval); P1.4.4 on P0.2.3 (budget);
+  P1.4.3 on a Sentry project; P3.1–P3.3 on P1.x and DR-15; P3.4.4 on P3.1.2; Phase 4+ on
+  GATE 4. The first READY task in index order is **P0.2.1** (founders' agreement with counsel),
+  an OPERATE task. The shortest path back to engineering is **P0.2.4 → P0.2.6** (record X1 and
+  kill criteria, then approve ADRs 01–15), which unblocks P1.1.2, P1.2.1–P1.2.4 and P1.4.2 at
+  once.
