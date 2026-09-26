@@ -18,7 +18,7 @@ or supported** (doc 02 §1).
 | COD first-attempt delivery failure 20–35 % nationally vs 5–15 % for prepaid in comparable markets | SuiteFleet blog, published 27 Jun 2026, page-verified 18 Sep 2026 |
 | Amazon and noon described as anchor marketplaces; B.TECH, Carrefour Egypt, Jumia omnichannel | ResearchAndMarkets Egypt B2C databook headline via Yahoo Finance (search snippet), 2025 |
 | PDPL executive regulations issued Nov 2025 (PM Decree 816/2025); one-year grace; enforcement expected ~Oct 2026 | Kennedys (2026), Baker McKenzie (Jan 2026), Legal500 — accessed 18 Sep 2026 |
-| Paymob card fee cited ~2.75 % + EGP 3 per transaction; T+1 settlement | inai.io / bilixe / Paymob pricing page (search snippets), accessed 18 Sep 2026 |
+| Paymob card fee cited ~2.75 % + EGP 3 per transaction; T+1 settlement | inai.io / bilixe / Paymob pricing page (search snippets), accessed 18 Sep 2026. **Corrected 27 Sep 2026:** Paymob's own pricing page says 2.75 % + 3 EGP, no monthly fee, and settlement **weekly**, not T+1 (standard plan; enterprise terms by negotiation) |
 | Jumia Egypt vendor commissions: "Health and Beauty – All – 13.0 %" (incl. 14 % VAT); minimum commission EGP 10 | Jumia VendorHub commissions page, page-verified 18 Sep 2026. (A search snippet claimed 25 % for "Beauty & Perfumes"; the page as fetched shows 13 % — the page is the source of record.) |
 | noon seller commissions vary 4–27 %; beauty "as high as 15 %"; fee tables on the seller portal | third-party seller guides (search snippets), accessed 18 Sep 2026 — not verified on noon's portal |
 

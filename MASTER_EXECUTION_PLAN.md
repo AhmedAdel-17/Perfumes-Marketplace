@@ -151,7 +151,7 @@ production (P0.1.3).
 | P0.4.2 | 15 seller interviews (doc 02 §6) | P0 | NOT_STARTED | P0 | VALIDATE | P0.4.1 |
 | P0.4.3 | 30 buyer interviews + survey, incl. shopfront reaction | P0 | READY | P0 | VALIDATE | — |
 | P0.4.4 | Competitor evidence rows with screenshots (doc 02 §5) | P0 | READY | P1 | VALIDATE | — (evidence delivered; founder review) |
-| P0.4.5 | Courier and PSP quotes and terms | P0 | READY | P0 | VALIDATE | — |
+| P0.4.5 | Courier and PSP quotes and terms | P0 | BLOCKED | P0 | VALIDATE | — (written quotes from vendors) |
 | P0.4.6 | Validation review and GATE 0 decision | P0 | NOT_STARTED | P0 | OPERATE | P0.4.2, P0.4.3, P0.4.5, P0.3.1 |
 | P1.1.1 | Real SMS one-time-code sender | P1 | BLOCKED | P0 | BUILD | P0.2.6 (ADR-11 vendor + account) |
 | P1.1.2 | Transactional outbox, job ledger, job runner, cron trigger | P1 | NOT_STARTED | P0 | BUILD | P0.2.6 |
@@ -906,7 +906,8 @@ gap directly: contradictory and template-placeholder return policies, an invalid
 certificate, an offline store.
 
 #### P0.4.5 Courier and PSP quotes and terms
-**Status:** READY · **Priority:** P0 · **Type:** VALIDATE
+**Status:** BLOCKED (2026-09-27, on written quotes — a founder contacts the vendors) ·
+**Priority:** P0 · **Type:** VALIDATE
 **Why:** contribution margin cannot be computed without payment and courier costs (A-2);
 D-5 depends on the PSP's position on fund flow; the flat 55 EGP delivery placeholder must
 become a tariff.
@@ -917,6 +918,23 @@ settlement timing, refund mechanics, whether the platform receives customer fund
 **Acceptance criteria:** quotes filed; `docs/economics/02` inputs updated with evidence
 rank 4.
 **Reference documents:** `docs/economics/02`, `docs/legal/03` L14, L18.
+
+**Desk half, 27 Sep 2026.** Published prices only; none of this is a quote.
+- **Paymob** (own pricing page, read by fetch; the page refuses automated browsers, so no
+  screenshot): standard plan **2.75 % + 3 EGP**, no monthly fee, **settlement weekly**. That
+  corrects "T+1" in `docs/market/01`, which came from a search snippet.
+- **Bosta** publishes **no tariff**: its pricing page renders nothing without an account. A
+  leaked "Bosta offer" PDF surfaced in search and was deliberately not used — it is somebody's
+  private commercial terms.
+- Market reference points, already screenshot-backed in `docs/market/02` §A, were added to
+  `docs/economics/02`: noon 45 EGP per pickup up to 0.25 kg and buyer shipping 25 / 12.5 / 0
+  EGP by order value; Amazon.eg Easy Ship from 42 EGP.
+
+*Criteria — quotes filed; inputs at rank 4:* **BLOCKED.** A written quote needs a merchant
+conversation, and Bosta and Paymob both onboard businesses, so the entity question (P0.2.2)
+may come up first. Ask for exactly: tariff by governorate, COD fee, failed-attempt charge,
+remittance cadence, API availability (courier); fees, settlement, refund mechanics, whether
+the platform receives customer funds (L14) (PSP).
 
 #### P0.4.6 Validation review and GATE 0 decision
 **Status:** NOT_STARTED · **Priority:** P0 · **Type:** OPERATE (decision)
@@ -2961,3 +2979,8 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   mark it COMPLETE after review. P0.4.1 and P0.3.2 were set to BLOCKED, not COMPLETE, and stay
   so. The desk work on all three was done on the founder's explicit instruction of 24 Sep 2026
   to "execute any READY task".
+
+- 2026-09-27 · Claude Code session · P0.4.5 · READY → BLOCKED · published prices recorded in
+  `docs/economics/02`: Paymob 2.75 % + 3 EGP with weekly settlement (correcting "T+1" in
+  `docs/market/01`); Bosta publishes no tariff. Written quotes need a founder to contact the
+  vendors. No READY task now has a desk part left.

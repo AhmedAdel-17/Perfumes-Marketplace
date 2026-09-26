@@ -14,9 +14,9 @@ pilot data, with its evidence rank (doc 02 §3).
 | Rate, marketplace | % | agreements (3) | 15 % constant | high |
 | Minimum fee / subscription | EGP | D-4 | none | medium |
 | Payment method mix | % COD vs card | orders (1) | 100 % COD | high (via refusal) |
-| PSP fee | % + EGP | PSP contract (4); cited ~2.75 % + EGP 3 | not contracted | medium |
-| COD collection fee | EGP or % | courier contract (4) | not contracted | medium |
-| Delivery tariff by governorate | EGP | courier contract (4) | flat EGP 55 placeholder | medium (customer pays) |
+| PSP fee | % + EGP | PSP contract (4); **Paymob published list price 2.75 % + EGP 3, no monthly fee, settlement weekly** (paymob.com/en/pricing, read 27 Sep 2026 — a list price, not a quote) | not contracted | medium |
+| COD collection fee | EGP or % | courier contract (4) | not contracted; **Bosta publishes no tariff** (its pricing page renders nothing without an account, 27 Sep 2026) | medium |
+| Delivery tariff by governorate | EGP | courier contract (4) | flat EGP 55 placeholder. Market reference points, not tariffs: noon charges buyers 25 / 12.5 / 0 EGP per seller by order value and sellers 45 EGP per pickup up to 0.25 kg; Amazon.eg Easy Ship from 42 EGP per shipment (`docs/market/02` §A) | medium (customer pays) |
 | First-attempt failure / refusal rate | % | shipments (1); cited 20–35 % national COD | unobservable today | highest |
 | Failed-attempt charge | EGP | courier (4) | unknown | high |
 | Return rate and refund cost | %, EGP | returns (1) | unobservable (state unreachable) | medium |
