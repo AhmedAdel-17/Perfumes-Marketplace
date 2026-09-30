@@ -30,9 +30,14 @@ const source = [
  * `nonce` is this request's Content-Security-Policy nonce (P3.4.3). Without it
  * the policy refuses the script, the remembered theme is never applied, and a
  * visitor who chose paper sees the page flash from black on every navigation.
+ *
+ * `suppressHydrationWarning`: browsers deliberately hide a nonce from the DOM
+ * once the script has been parsed (`nonce=""`), so React always sees the
+ * server's value differ from the client's. It is not a real mismatch — it is the
+ * CSP nonce protection working — and it raised the dev overlay on every page.
  */
 export function ThemeScript({ nonce }: { nonce?: string | undefined }) {
-  return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: source }} />;
+  return <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: source }} />;
 }
 
 /**
