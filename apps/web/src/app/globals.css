@@ -4,8 +4,8 @@
 
 @layer base {
   html {
-    /* Arabic-first, RTL-native. CLAUDE.md §14. */
-    direction: rtl;
+    /* Direction comes from the `dir` attribute the root layout sets per
+       language: RTL for Arabic, LTR for English. */
 
     /*
       The masthead is STICKY, so anything scrolled to lands underneath it.
@@ -47,6 +47,19 @@
     transition:
       background-color theme('transitionDuration.base') theme('transitionTimingFunction.out'),
       color theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+
+  /*
+    The English site's faces (D-3). Headings move from Amiri, which has no Latin
+    of the quality the brand needs, to Bodoni Moda; body text to IBM Plex Sans.
+    Keyed on `lang` so no component needs to know which language it is in.
+  */
+  html[lang='en'] body,
+  html[lang='en'] .font-sans {
+    font-family: theme('fontFamily.sansEn');
+  }
+  html[lang='en'] .font-display {
+    font-family: theme('fontFamily.displayEn');
   }
 
   /* Latin runs inside Arabic keep correct bidi behaviour. */

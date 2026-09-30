@@ -4,6 +4,10 @@ import { Monogram } from './Monogram';
 import { AnnouncementBar } from './AnnouncementBar';
 import { ThemeToggle } from './ThemeToggle';
 import { MastheadNav } from './MastheadNav';
+import { LanguageSwitch } from './LanguageSwitch';
+import { SHELL } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { getLocale } from '@/core/locale';
 
 /**
  * The masthead, shared by every public route.
@@ -19,6 +23,8 @@ import { MastheadNav } from './MastheadNav';
  * running underneath.
  */
 export async function SiteHeader() {
+  const locale = await getLocale();
+  const copy = SHELL[locale];
   return (
     <>
     {/*
@@ -43,8 +49,8 @@ export async function SiteHeader() {
       */}
       <div className="mx-auto flex max-w-contentMax flex-wrap items-center px-5 lg:h-[82px] lg:flex-nowrap lg:px-8">
         <Link
-          href="/"
-          aria-label="ديار — الصفحة الرئيسية"
+          href={localeHref(locale, '/')}
+          aria-label={copy.homeLabel}
           // The wordmark alone renders a 35px line box, under the 44pt floor;
           // `tappable` expands the hit area without touching the type.
           className="tappable group flex h-[58px] items-center gap-3 text-ink transition-opacity duration-base ease-out hover:opacity-press lg:h-auto lg:gap-4"
@@ -63,6 +69,7 @@ export async function SiteHeader() {
         <MastheadNav className="order-last w-full border-t border-line/40 lg:order-none lg:ms-14 lg:w-auto lg:border-0" />
 
         <div className="ms-auto flex items-center gap-4 lg:gap-6">
+          <LanguageSwitch />
           {/*
             From `sm` only, and the footer carries it below that.
 

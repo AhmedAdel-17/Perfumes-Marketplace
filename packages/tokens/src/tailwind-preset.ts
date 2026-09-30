@@ -52,6 +52,11 @@ export const diyarPreset = {
       fontFamily: {
         display: [font.display, 'Amiri Quran', '"Noto Naskh Arabic"', 'serif'],
         latin: [font.displayLatin, 'Georgia', '"Times New Roman"', 'serif'],
+        // The English site's stacks. Each keeps its Arabic face second, because
+        // an English page still carries Arabic — a product name its house has
+        // not yet translated — and that text must not fall to a system font.
+        sansEn: [font.bodyLatin, font.body, '"Segoe UI"', 'system-ui', 'sans-serif'],
+        displayEn: [font.displayLatin, font.display, 'Georgia', 'serif'],
         sans: [
           font.body,
           '"Segoe UI"', '"SF Arabic"', '"Geeza Pro"', '"Noto Naskh Arabic"',

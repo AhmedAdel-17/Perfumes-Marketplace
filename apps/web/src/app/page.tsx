@@ -7,13 +7,18 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
-import { counted, CURRENCY_LABEL, editorial, formatPrice, PERFUME } from '@diyar/i18n';
+import { countedIn, CURRENCY_LABEL, editorialIn, formatPrice, HOME, NOUN } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { getLocale } from '@/core/locale';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const products = await listPublishedProducts();
   const { heroProductId, featuredProductIds } = await api().site.curation();
+  const locale = await getLocale();
+  const copy = HOME[locale];
+  const perfumes = countedIn(locale, products.length, NOUN.perfume, editorialIn(locale));
 
   /*
    * Which product opens the site is a DECISION, and until now it was
@@ -100,7 +105,7 @@ export default async function Home() {
                 on the axis that is actually constrained.
               */}
               <Reveal className="flex w-full items-center justify-center lg:w-[46%]">
-                <Link href={`/p/${hero.slug}`} aria-label={hero.name} className="block">
+                <Link href={localeHref(locale, `/p/${hero.slug}`)} aria-label={hero.name} className="block">
                   <Flacon
                     family={hero.family}
                     house={hero.brandLatin}
@@ -126,23 +131,22 @@ export default async function Home() {
                     the contrast to carry it.
                   */}
                   <h1 className="font-display text-h1 leading-[1.08] tracking-tight lg:text-displayLg xl:text-displayXl">
-                    دور العطور
+                    {copy.headline}
                     <br />
-                    <span className="text-accent">المصرية</span>
+                    <span className="text-accent">{copy.headlineAccent}</span>
                   </h1>
                 </Reveal>
 
                 <Reveal delay={240}>
                   <p className="mt-5 max-w-proseMax text-small leading-relaxed text-ink2 lg:mt-7 lg:text-bodyLg">
                     {/* Arabic inflects a counted noun six ways — @diyar/i18n → plural.ts. */}
-                    {counted(products.length, PERFUME, editorial)} من دور مختارة، بمعلومات
-                    موحّدة وتقييمات موثّقة بالشراء.
+                    {copy.intro(perfumes)}
                   </p>
                 </Reveal>
 
                 <Reveal delay={320}>
                   <Link
-                    href={`/p/${hero.slug}`}
+                    href={localeHref(locale, `/p/${hero.slug}`)}
                     className="tappable mt-7 inline-flex items-baseline gap-3 border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent lg:mt-9"
                   >
                     <span className="font-display text-h4 lg:text-h3Lg">{hero.name}</span>
@@ -170,8 +174,8 @@ export default async function Home() {
         <Reveal as="section" className="border-b border-line/70">
           <div className="mx-auto max-w-contentMax px-5 py-9 lg:px-8 lg:py-[104px]">
             <p className="max-w-[860px] font-display text-h3 leading-[1.5] text-ink lg:text-h1Lg lg:leading-[1.45]">
-              كل دار تصنع عطرها وتشحنه بنفسها.
-              <span className="text-ink3"> نحن نضمن أن ما تقرأه عنه صحيح.</span>
+              {copy.promise}
+              <span className="text-ink3">{copy.promiseSecond}</span>
             </p>
           </div>
         </Reveal>
@@ -180,9 +184,9 @@ export default async function Home() {
         <section className="mx-auto max-w-contentMax px-5 py-8 lg:px-8 lg:py-[88px]">
           <Reveal>
             <div className="mb-6 flex items-baseline justify-between border-b border-line pb-4 lg:mb-9">
-              <h2 className="font-display text-h3 lg:text-h2Lg">كل العطور</h2>
+              <h2 className="font-display text-h3 lg:text-h2Lg">{copy.allPerfumes}</h2>
               <span className="text-caption tracking-label text-ink3 lg:text-small">
-                {counted(products.length, PERFUME, editorial)}
+                {perfumes}
               </span>
             </div>
           </Reveal>
@@ -192,7 +196,7 @@ export default async function Home() {
                until the first house clears verification. Saying so plainly beats
                a grid of skeletons that never fill in. */
             <p className="py-8 text-center text-small leading-relaxed text-ink3">
-              لم تُنشر أي عطور بعد. الدور الأولى قيد التوثيق.
+              {copy.empty}
             </p>
           ) : (
             /*
@@ -221,7 +225,7 @@ export default async function Home() {
           )}
 
           {rest.length === 0 && products.length > 0 && (
-            <p className="mt-8 text-caption text-ink3">دور جديدة تنضم كل أسبوع.</p>
+            <p className="mt-8 text-caption text-ink3">{copy.moreHouses}</p>
           )}
         </section>
       </main>

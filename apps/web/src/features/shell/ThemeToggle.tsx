@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import {
   DEFAULT_THEME, THEME_ATTRIBUTE, THEME_STORAGE_KEY, themes, type ThemeName,
 } from '@diyar/tokens';
+import { SHELL } from '@diyar/i18n';
+import { useLocale } from './LocaleProvider';
 
 /**
  * Noir or paper.
@@ -25,9 +27,9 @@ import {
  * during which neither segment claims to be active. Rendering a guess and
  * correcting it a frame later is how a toggle ends up flickering the wrong way.
  */
-const SEGMENTS: ReadonlyArray<{ theme: ThemeName; label: string; spoken: string }> = [
-  { theme: 'dark', label: 'NOIR', spoken: 'الوضع الداكن' },
-  { theme: 'light', label: 'PAPER', spoken: 'الوضع الفاتح' },
+const SEGMENTS: ReadonlyArray<{ theme: ThemeName; label: string; spoken: 'dark' | 'light' }> = [
+  { theme: 'dark', label: 'NOIR', spoken: 'dark' },
+  { theme: 'light', label: 'PAPER', spoken: 'light' },
 ];
 
 /** Keeps the mobile browser's chrome continuous with the page it frames. */
@@ -37,6 +39,7 @@ function paintBrowserChrome(theme: ThemeName) {
 }
 
 export function ThemeToggle() {
+  const copy = SHELL[useLocale()];
   const [theme, setTheme] = useState<ThemeName | null>(null);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export function ThemeToggle() {
   return (
     <div
       role="group"
-      aria-label="مظهر الموقع"
+      aria-label={copy.appearance}
       className="inline-flex items-center border border-line/70"
     >
       {SEGMENTS.map(({ theme: name, label, spoken }, index) => (
@@ -65,7 +68,7 @@ export function ThemeToggle() {
           type="button"
           onClick={() => choose(name)}
           aria-pressed={theme === null ? undefined : theme === name}
-          aria-label={spoken}
+          aria-label={copy[spoken]}
           className={[
             // 32px tall so the masthead stays quiet; `tappable` carries the
             // 44pt target the doctrine requires without inflating the chrome.

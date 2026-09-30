@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Amiri, Bodoni_Moda, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { Amiri, Bodoni_Moda, IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { directionOf, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { LocaleProvider } from '@/features/shell/LocaleProvider';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
 import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
@@ -45,11 +48,20 @@ const plex = IBM_Plex_Sans_Arabic({
   subsets: ['arabic'], weight: ['400', '500', '600'],
   variable: '--font-plex', display: 'swap',
 });
+/*
+  The English site's body face. Declared on every page but DOWNLOADED only where
+  it is used: the browser fetches a face when an element asks for it, and only
+  `html[lang='en']` does — so the Arabic site pays nothing for it.
+*/
+const plexLatin = IBM_Plex_Sans({
+  subsets: ['latin'], weight: ['400', '500', '600'],
+  variable: '--font-plex-latin', display: 'swap',
+});
 
-export const metadata: Metadata = {
-  title: 'ديار — دور العطور المصرية',
-  description: 'اكتشف وقارن واشترِ من دور العطور المصرية المختارة.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = SHELL[await getLocale()];
+  return { title: copy.siteTitle, description: copy.siteDescription };
+}
 
 export const viewport: Viewport = {
   // The browser chrome matches the page. From the THEME, so it cannot drift
@@ -65,11 +77,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // This request's CSP nonce, minted by middleware.ts. Reading headers() is
   // also what keeps every page dynamic, which a nonce requires.
   const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const locale = await getLocale();
   return (
     <html
-      lang="ar"
-      dir="rtl"
-      className={`${amiri.variable} ${bodoni.variable} ${plex.variable}`}
+      lang={locale}
+      dir={directionOf(locale)}
+      className={`${amiri.variable} ${bodoni.variable} ${plex.variable} ${plexLatin.variable}`}
       /*
         ThemeScript writes `data-theme` onto this element before React hydrates,
         which is the entire point of it — so the server HTML and the client DOM
@@ -83,7 +96,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* First thing in the document: applies the remembered theme before the
             page is painted. See ThemeScript for why this cannot be an effect. */}
         <ThemeScript nonce={nonce} />
-        <CartProvider>{children}</CartProvider>
+        <LocaleProvider locale={locale}>
+          <CartProvider>{children}</CartProvider>
+        </LocaleProvider>
         {/* Sits above everything, catches no clicks. DESIGN_DOCTRINE §2. */}
         <Grain />
       </body>

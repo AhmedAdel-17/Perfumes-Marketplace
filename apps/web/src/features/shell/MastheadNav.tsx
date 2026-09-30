@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { SHELL, stripLocale } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { useLocale } from './LocaleProvider';
 
 /**
  * The three places a customer goes most, in the masthead.
@@ -14,23 +17,25 @@ import { usePathname } from 'next/navigation';
  * (`aria-current`), which is what turns a row of links into orientation.
  */
 const LINKS = [
-  { href: '/houses', label: 'الدور', matches: (path: string) => path === '/houses' || path.startsWith('/house/') },
-  { href: '/search', label: 'ابحث', matches: (path: string) => path === '/search' },
-  { href: '/order', label: 'تتبّع طلبك', matches: (path: string) => path === '/order' },
+  { href: '/houses', label: 'houses', matches: (path: string) => path === '/houses' || path.startsWith('/house/') },
+  { href: '/search', label: 'search', matches: (path: string) => path === '/search' },
+  { href: '/order', label: 'trackYourOrder', matches: (path: string) => path === '/order' },
 ] as const;
 
 export function MastheadNav({ className = '' }: { className?: string }) {
-  const pathname = usePathname() ?? '/';
+  const locale = useLocale();
+  const copy = SHELL[locale];
+  const pathname = stripLocale(usePathname() ?? '/');
 
   return (
-    <nav aria-label="التصفّح" className={className}>
+    <nav aria-label={copy.mainNav} className={className}>
       <ul className="flex items-center gap-6 lg:gap-8">
         {LINKS.map(({ href, label, matches }) => {
           const current = matches(pathname);
           return (
             <li key={href}>
               <Link
-                href={href}
+                href={localeHref(locale, href)}
                 aria-current={current ? 'page' : undefined}
                 className={[
                   'flex min-h-touch min-w-touch items-center justify-start text-body lg:text-bodyLg',
@@ -39,7 +44,7 @@ export function MastheadNav({ className = '' }: { className?: string }) {
                 ].join(' ')}
               >
                 <span className={`border-b pb-1 ${current ? 'border-accent' : 'border-transparent'}`}>
-                  {label}
+                  {copy[label]}
                 </span>
               </Link>
             </li>

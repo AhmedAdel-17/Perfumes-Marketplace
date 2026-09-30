@@ -1,3 +1,4 @@
+import type { Locale } from './locale';
 /**
  * Listing and page vocabularies, in Arabic.
  *
@@ -130,3 +131,57 @@ export const PERFORMANCE_SOURCE_AR = {
   platform_test: 'المصدر: اختبار المنصّة',
   review_aggregate: 'المصدر: متوسّط تقييمات المشترين',
 } as const;
+
+/*
+ * The English site's vocabulary for the same codes (D-3). Each table is checked
+ * against its Arabic twin, so a code added to one and forgotten in the other is
+ * a compile error rather than a blank label.
+ */
+export const SCENT_FAMILY_EN = {
+  oud: 'Oud',
+  amber: 'Amber',
+  woody: 'Woody',
+  floral: 'Floral',
+  fresh: 'Fresh',
+  gourmand: 'Gourmand',
+  musk: 'Musk',
+} as const satisfies Record<keyof typeof SCENT_FAMILY_AR, string>;
+
+export const CONCENTRATION_EN = {
+  parfum: 'Parfum',
+  eau_de_parfum: 'Eau de parfum',
+  eau_de_toilette: 'Eau de toilette',
+  eau_de_cologne: 'Eau de cologne',
+  oil: 'Perfume oil',
+  attar: 'Attar',
+  body_mist: 'Body mist',
+} as const satisfies Record<keyof typeof CONCENTRATION_AR, string>;
+
+export const PERFORMANCE_SOURCE_EN = {
+  seller_provided: 'Source: the house',
+  platform_test: 'Source: DIYAR testing',
+  review_aggregate: 'Source: average of buyer reviews',
+} as const satisfies Record<keyof typeof PERFORMANCE_SOURCE_AR, string>;
+
+export type ScentFamily = keyof typeof SCENT_FAMILY_AR;
+export type Concentration = keyof typeof CONCENTRATION_AR;
+export type PerformanceBand = keyof typeof BAND_AR;
+export type PerformanceSource = keyof typeof PERFORMANCE_SOURCE_AR;
+
+export const SCENT_FAMILY = { ar: SCENT_FAMILY_AR, en: SCENT_FAMILY_EN } as const;
+export const CONCENTRATION = { ar: CONCENTRATION_AR, en: CONCENTRATION_EN } as const;
+export const PERFORMANCE_SOURCE = { ar: PERFORMANCE_SOURCE_AR, en: PERFORMANCE_SOURCE_EN } as const;
+
+/**
+ * A code's label in a locale, or the code itself when it is unknown — a new
+ * enum value the tables have not caught up with shows as its code, visibly
+ * wrong, rather than as an empty space nobody notices.
+ */
+export function labelOf(
+  table: Readonly<Record<Locale, Readonly<Record<string, string>>>>,
+  locale: Locale,
+  code: string | null | undefined,
+): string {
+  if (!code) return '';
+  return table[locale][code] ?? code;
+}

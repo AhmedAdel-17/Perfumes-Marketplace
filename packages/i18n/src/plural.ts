@@ -1,3 +1,4 @@
+import type { Locale } from './locale';
 /**
  * Arabic pluralisation.
  *
@@ -172,4 +173,44 @@ export function counted(
     return forms[category];
   }
   return `${format(count)} ${forms[category]}`;
+}
+
+/**
+ * English needs three forms, not six: nothing, one, and every other count.
+ */
+export interface EnglishForms {
+  readonly zero: string;
+  readonly one: string;
+  readonly other: string;
+}
+
+/** A counted noun in every locale the site speaks. */
+export interface Noun {
+  readonly ar: PluralForms;
+  readonly en: EnglishForms;
+}
+
+export const NOUN = {
+  perfume: { ar: PERFUME, en: { zero: 'No perfumes', one: 'perfume', other: 'perfumes' } },
+  house: { ar: HOUSE, en: { zero: 'No houses', one: 'house', other: 'houses' } },
+  day: { ar: DAY, en: { zero: 'No days', one: 'day', other: 'days' } },
+  order: { ar: ORDER, en: { zero: 'No orders', one: 'order', other: 'orders' } },
+  shipment: { ar: SHIPMENT, en: { zero: 'No shipments', one: 'shipment', other: 'shipments' } },
+  review: { ar: REVIEW, en: { zero: 'No reviews', one: 'review', other: 'reviews' } },
+} as const satisfies Record<string, Noun>;
+
+/**
+ * `counted()`, in the visitor's language. Arabic keeps its own rules (the count
+ * lives inside the word for zero, one and two); English always leads with the
+ * number except for zero, which reads better as a phrase.
+ */
+export function countedIn(
+  locale: Locale,
+  count: number,
+  noun: Noun,
+  format: (n: number) => string,
+): string {
+  if (locale === 'ar') return counted(count, noun.ar, format);
+  if (count === 0) return noun.en.zero;
+  return `${format(count)} ${count === 1 ? noun.en.one : noun.en.other}`;
 }

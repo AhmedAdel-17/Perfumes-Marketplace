@@ -226,8 +226,8 @@ production (P0.1.3).
 | P5.4.3 | Seller subscription tier experiment | P5 | DEFERRED | P2 | BUILD | trigger P3, DR D-4 |
 | P5.5.1 | Search facets, synonyms, trigram index | P5 | NOT_STARTED | P2 | BUILD | P4.9.1, trigger T3 |
 | P5.6.1 | Cohort 2+ onboarding; service-area expansion | P5 | NOT_STARTED | P2 | OPERATE | GATE 5, DR D-7 |
-| P5.6.2 | English locale | P5 | NOT_STARTED | P1 | BUILD | DR D-3 (decided 30 Sep 2026), P5.6.3 |
-| P5.6.3 | Egyptian-Arabic interface copy, moved into the copy layer | P5 | READY | P1 | BUILD | DR V-1 (decided 30 Sep 2026) |
+| P5.6.2 | English locale | P5 | IN_PROGRESS | P1 | BUILD | DR D-3 (decided 30 Sep 2026) |
+| P5.6.3 | Egyptian-Arabic interface copy | P5 | NOT_STARTED | P2 | BUILD | DR V-1 (decided 30 Sep 2026), P5.6.2; paused by the founder 30 Sep 2026 |
 | P5.6.4 | Masthead and footer navigation after founder review | P5 | COMPLETE | P1 | BUILD | founder review 30 Sep 2026 |
 | P5.7.1 | Hires by trigger (ops lead, seller success, engineer) | P5 | NOT_STARTED | P2 | OPERATE | triggers O1/O2/O5 |
 | P5.8.1 | Use-case extraction and procedure builders | P5 | NOT_STARTED | P2 | BUILD | P3.1.5 |
@@ -2314,27 +2314,33 @@ courier tests before any nationwide promise.
 **Reference documents:** `docs/gtm/02`; doc 01 §7.
 
 #### P5.6.2 English locale
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Status:** IN_PROGRESS · **Priority:** P1 · **Type:** BUILD
 **Goal:** English as a full second locale: a language switch in the masthead on every
 screen, left-to-right layout, and English fields for the content people write (product
 names and notes, house bios and stories, CMS pages), which today are Arabic-only in the
 database. British spelling and the `docs/brand/04` §3 vocabulary.
 **Depends on:** decision D-3 (DECIDED 30 Sep 2026, brought forward from Stage 1 by the
-founder) · P5.6.3, so the ~1,700 interface strings are moved into the copy layer once
-**Blocks:** none
-**Acceptance criteria:** every public, seller and ops screen renders in both locales with
+founder) · **Blocks:** P5.6.3
+**Order of work:** English moves every interface string into `packages/i18n`, so P5.6.3
+later edits only the Arabic dictionaries. Steps: (1) locale routing, language switch,
+shell and home page; (2) the rest of the customer site; (3) English fields for product,
+house and CMS content, with `hreflang`; (4) seller portal; (5) ops console; (6) API error
+messages.
+**Acceptance criteria:** no Arabic or English interface literal left in component code
+outside `packages/i18n` (checked by a test); every public, seller and ops screen renders in both locales with
 no Arabic left in the English view except house and product names a house has not yet
 translated; direction, fonts and number formats follow the locale; the choice persists;
 product and storefront pages carry `hreflang`; the browser suite and audit pass in both.
 
-#### P5.6.3 Egyptian-Arabic interface copy, moved into the copy layer
-**Status:** READY · **Priority:** P1 · **Type:** BUILD
-**Goal:** rewrite the interface in Egyptian Arabic (V-1) while moving every string out of
-the components into `packages/i18n`, so each of the ~141 files that holds Arabic is opened
-once for both jobs. Terms, Privacy and Returns stay in simple Modern Standard Arabic.
-**Depends on:** decision V-1 (DECIDED 30 Sep 2026) · **Blocks:** P5.6.2
-**Acceptance criteria:** no Arabic literal left in component code outside the copy layer
-(checked by a test); interface copy reviewed by the founder in Egyptian Arabic; the three
+#### P5.6.3 Egyptian-Arabic interface copy
+**Status:** NOT_STARTED (paused by the founder, 30 Sep 2026) · **Priority:** P2 · **Type:** BUILD
+**Goal:** rewrite the interface in Egyptian Arabic (V-1). Terms, Privacy and Returns stay
+in simple Modern Standard Arabic. A tone sample and three word choices (دار or براند;
+الشنطة, السلة or الحقيبة; plain "you" or حضرتك) were put to the founder on 30 Sep 2026
+and are unanswered; they are the first thing to settle when this resumes.
+**Depends on:** decision V-1 (DECIDED 30 Sep 2026) · P5.6.2, which moves the strings into
+the copy layer · **Blocks:** none
+**Acceptance criteria:** interface copy reviewed by the founder in Egyptian Arabic; the three
 legal pages unchanged; browser suite and audit pass.
 
 #### P5.6.4 Masthead and footer navigation after founder review
@@ -3025,3 +3031,8 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   founder's explicit instruction, as DR-15 did for P3.4.x. P5.6.4 COMPLETE; P5.6.3 READY and
   next; P5.6.2 follows it. A dev-only hydration warning on the theme script's CSP nonce
   was fixed the same day (`d7943af`).
+
+- 2026-09-30 · Claude Code session · P5.6.3 paused, P5.6.2 started · the founder asked
+  for English first. The order is sound: English moves the strings into the copy layer,
+  so the Egyptian rewrite later touches only the Arabic dictionaries. The "no Arabic
+  literal outside the copy layer" check moves to P5.6.2.

@@ -1,5 +1,7 @@
 import { api } from '@/core/api';
 import { ThemeToggle } from './ThemeToggle';
+import { localePath, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 
 /**
  * The footer carries the two facts a buyer needs before they trust a price:
@@ -15,30 +17,33 @@ export async function SiteFooter() {
    * pointing at a 404 on every screen of the site.
    */
   const pages = await api().content.directory();
+  const locale = await getLocale();
+  const copy = SHELL[locale];
+  const to = (path: string) => localePath(locale, path);
 
   return (
     <footer className="mt-8 border-t border-line">
       <div className="mx-auto max-w-contentMax px-5 py-7 lg:px-8 lg:py-8">
         <div className="latin text-h4 tracking-wordmark text-ink">DIYAR</div>
-        <nav className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-1" aria-label="روابط">
+        <nav className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-1" aria-label={copy.footerNav}>
         <a
-          href="/order"
+          href={to('/order')}
           className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          تتبّع طلب
+          {copy.trackAnOrder}
         </a>
         {/* The houses directory. Fixed rather than content-managed: it is a
             section of the site, not a page somebody publishes, and an editor
             archiving it by accident would hide every maker on the marketplace. */}
         <a
-          href="/houses"
+          href={to('/houses')}
           // `min-w-touch` as well as min-h. "الدور" is two narrow glyphs — 34px
           // — so the target passed on height and failed on width, which is the
           // same fault the sign-out control had. A target has TWO dimensions
           // and enforcing one of them is enforcing neither.
           className="tappable inline-flex min-h-touch min-w-touch items-center justify-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          الدور
+          {copy.houses}
         </a>
         {/*
           A way to reach a person, on every screen.
@@ -49,24 +54,24 @@ export async function SiteFooter() {
           contact route at all.
         */}
         <a
-          href="/support"
+          href={to('/support')}
           className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          تواصل معنا
+          {copy.contact}
         </a>
         {/* The recruiting route. A marketplace of independent houses that has
             no way to become one is a marketplace with a fixed number of
             houses. */}
         <a
-          href="/apply"
+          href={to('/apply')}
           className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          انضم كدار
+          {copy.apply}
         </a>
         {pages.map((page) => (
           <a
             key={page.slug}
-            href={`/${page.slug}`}
+            href={to(`/${page.slug}`)}
             className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
           >
             {page.title}
@@ -74,8 +79,7 @@ export async function SiteFooter() {
         ))}
         </nav>
         <p className="mt-5 max-w-proseMax text-body leading-relaxed text-ink3">
-          سوق للعطور المصرية المستقلّة. كل دار تُجهّز طلبها وتشحنه بنفسها، والأسعار
-          بالجنيه المصري شاملة الضريبة.
+          {copy.footerNote}
         </p>
 
         {/* The masthead carries this from `sm` up, where there is room for it.

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { CURRENCY_LABEL, data, editorial, formatNumber, formatPrice, internal } from './numerals';
-import { t } from './index';
 
 describe('the numeral rule — Arabic-Indic is editorial, Western is data', () => {
   it('renders editorial counts in Arabic-Indic', () => {
@@ -66,23 +65,6 @@ describe('one decision point — the rule cannot drift', () => {
 
   it('defaults to data, so an unannotated number is never editorial by accident', () => {
     expect(formatNumber(7)).toBe('7');
-  });
-});
-
-describe('copy layer', () => {
-  it('resolves a nested key', () => {
-    expect(t('cart.title')).toBe('الحقيبة');
-    expect(t('seller.yourNet')).toBe('صافيك');
-  });
-
-  it('throws on a missing key rather than rendering blank', () => {
-    expect(() => t('cart.nope')).toThrow(/Missing copy key/);
-  });
-
-  it('carries the lines that encode policy, not just labels', () => {
-    expect(t('cart.eachHouseShips')).toContain('كل دار تشحن طلبها بنفسها');
-    expect(t('order.yourOrderOurResponsibility')).toContain('مسؤوليتنا');
-    expect(t('seller.weDontChargeForDemandWeDidntCreate')).toContain('لم نصنع طلبه');
   });
 });
 

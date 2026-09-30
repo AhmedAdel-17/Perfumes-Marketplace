@@ -1,3 +1,4 @@
+import type { Locale } from './locale';
 /**
  * Numerals.
  *
@@ -152,3 +153,10 @@ export function internalDate(when: string | Date, options: { time?: boolean } = 
     ...(options.time ? { hour: '2-digit', minute: '2-digit' } as const : {}),
   });
 }
+
+/**
+ * The editorial helper for a locale. Arabic-Indic numerals are an Arabic brand
+ * device; on the English site the same count is plain Western digits.
+ */
+export const editorialIn = (locale: Locale): ((n: number, group?: boolean) => string) =>
+  locale === 'ar' ? editorial : data;

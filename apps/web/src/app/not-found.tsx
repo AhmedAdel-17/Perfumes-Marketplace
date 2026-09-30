@@ -16,13 +16,19 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { SHELL } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { getLocale } from '@/core/locale';
 
-export const metadata: Metadata = {
-  title: 'الصفحة غير موجودة | ديار',
-  // Never indexed. A 404 in a search result is a search result that wastes
-  // somebody's click.
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = SHELL[await getLocale()];
+  return {
+    title: `${copy.notFoundTitle} | ${copy.titleSuffix}`,
+    // Never indexed. A 404 in a search result is a search result that wastes
+    // somebody's click.
+    robots: { index: false, follow: true },
+  };
+}
 
 /*
  * Rendered per request, not baked at build time.
@@ -38,7 +44,9 @@ export const metadata: Metadata = {
  */
 export const dynamic = 'force-dynamic';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const locale = await getLocale();
+  const copy = SHELL[locale];
   return (
     <>
       <SiteHeader />
@@ -47,11 +55,11 @@ export default function NotFound() {
         <div className="latin mb-5 text-micro tracking-label text-accent">404</div>
 
         <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">
-          الصفحة غير موجودة
+          {copy.notFoundTitle}
         </h1>
 
         <p className="mt-5 max-w-proseMax text-bodyLg leading-relaxed text-ink2">
-          ربما تغيّر الرابط، أو لم تعد الصفحة معروضة.
+          {copy.notFoundBody}
         </p>
 
         {/*
@@ -61,16 +69,16 @@ export default function NotFound() {
         */}
         <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
           <Link
-            href="/"
+            href={localeHref(locale, '/')}
             className="tappable inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
           >
-            تصفّح العطور
+            {copy.browsePerfumes}
           </Link>
           <Link
-            href="/order"
+            href={localeHref(locale, '/order')}
             className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
           >
-            تتبّع طلب
+            {copy.trackAnOrder}
           </Link>
         </div>
       </main>
