@@ -1,4 +1,5 @@
 import { GOVERNORATES, type Governorate } from '@diyar/domain';
+import type { Locale } from './locale';
 
 /**
  * Governorate names in Arabic.
@@ -55,3 +56,42 @@ export const GOVERNORATE_OPTIONS: ReadonlyArray<{ value: Governorate; label: str
   ...PRIORITY,
   ...GOVERNORATES.filter((g) => !PRIORITY.includes(g)),
 ].map((value) => ({ value, label: GOVERNORATE_AR[value] }));
+
+export const GOVERNORATE_EN: Readonly<Record<Governorate, string>> = {
+  cairo: 'Cairo',
+  giza: 'Giza',
+  alexandria: 'Alexandria',
+  qalyubia: 'Qalyubia',
+  sharqia: 'Sharqia',
+  dakahlia: 'Dakahlia',
+  beheira: 'Beheira',
+  gharbia: 'Gharbia',
+  monufia: 'Monufia',
+  kafr_el_sheikh: 'Kafr El Sheikh',
+  damietta: 'Damietta',
+  port_said: 'Port Said',
+  ismailia: 'Ismailia',
+  suez: 'Suez',
+  north_sinai: 'North Sinai',
+  south_sinai: 'South Sinai',
+  beni_suef: 'Beni Suef',
+  faiyum: 'Faiyum',
+  minya: 'Minya',
+  asyut: 'Asyut',
+  sohag: 'Sohag',
+  qena: 'Qena',
+  luxor: 'Luxor',
+  aswan: 'Aswan',
+  red_sea: 'Red Sea',
+  new_valley: 'New Valley',
+  matrouh: 'Matrouh',
+};
+
+export const GOVERNORATE = { ar: GOVERNORATE_AR, en: GOVERNORATE_EN } as const;
+
+/** The same select, in a locale. */
+export const governorateOptions = (
+  locale: Locale,
+): ReadonlyArray<{ value: Governorate; label: string }> =>
+  [...PRIORITY, ...GOVERNORATES.filter((g) => !PRIORITY.includes(g))]
+    .map((value) => ({ value, label: GOVERNORATE[locale][value] }));

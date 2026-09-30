@@ -1,7 +1,7 @@
 import {
   REVIEW_DIMENSIONS, formatRating, type ReviewDimension, type ReviewSummary,
 } from '@diyar/domain';
-import { REVIEW_DIMENSION_AR, data as num } from '@diyar/i18n';
+import { REVIEW_DIMENSION, REVIEWS, data as num, type Locale } from '@diyar/i18n';
 
 /**
  * How a rating LOOKS here.
@@ -45,7 +45,7 @@ function Bar({ value }: { value: number | null }) {
  * while scoring fine everywhere else, and a reader who does not know that reads
  * it as another quality score.
  */
-export function DimensionBars({ summary }: { summary: ReviewSummary }) {
+export function DimensionBars({ summary, locale }: { summary: ReviewSummary; locale: Locale }) {
   /*
    * The BAR LIVES INSIDE THE `<dd>`.
    *
@@ -70,7 +70,7 @@ export function DimensionBars({ summary }: { summary: ReviewSummary }) {
         return (
           <div key={dimension} className="grid grid-cols-[1fr_auto] items-baseline gap-x-3">
             <dt className="col-start-1 row-start-1 text-caption text-ink2">
-              {REVIEW_DIMENSION_AR[dimension]}
+              {REVIEW_DIMENSION[locale][dimension]}
             </dt>
             <dd className="col-start-2 row-start-1 tnum text-caption text-ink">
               {value === null ? '—' : formatRating(value)}
@@ -92,7 +92,7 @@ export function DimensionBars({ summary }: { summary: ReviewSummary }) {
  * a bare decimal can reorder into "6.4". The counter on the listing editor had
  * exactly this fault and rendered "160/0".
  */
-export function OverallScore({ summary }: { summary: ReviewSummary }) {
+export function OverallScore({ summary, locale }: { summary: ReviewSummary; locale: Locale }) {
   if (summary.overall === null) return null;
 
   return (
@@ -101,7 +101,7 @@ export function OverallScore({ summary }: { summary: ReviewSummary }) {
         {formatRating(summary.overall)}
       </span>
       <span className="text-caption tracking-label text-ink3">
-        من <span className="tnum">{num(5)}</span>
+        {REVIEWS[locale].outOf} <span className="tnum">{num(5)}</span>
       </span>
     </div>
   );

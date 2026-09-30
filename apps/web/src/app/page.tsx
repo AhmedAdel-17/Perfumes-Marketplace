@@ -218,7 +218,7 @@ export default async function Home() {
             ].join(' ')}>
               {products.map((p, i) => (
                 <Reveal key={p.id} delay={Math.min(i, 3) * 90}>
-                  <ProductTile product={p} />
+                  <ProductTile product={p} locale={locale} />
                 </Reveal>
               ))}
             </div>

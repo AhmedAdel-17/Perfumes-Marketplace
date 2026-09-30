@@ -37,3 +37,24 @@ export const TICKET_PRIORITY_AR = {
   p2: 'مهم',
   p3: 'عادي',
 } as const;
+
+export const SUPPORT_CATEGORY_EN = {
+  order_status: 'Where is my order?',
+  damaged_or_wrong: 'It arrived broken, or not what I ordered',
+  return_or_refund: 'A return or a refund',
+  product_question: 'A question about a perfume',
+  payment: 'A payment problem',
+  seller_conduct: 'A complaint about a house',
+  privacy: 'My personal data',
+  other: 'Something else',
+} as const satisfies Record<keyof typeof SUPPORT_CATEGORY_AR, string>;
+
+export const TICKET_STATUS_EN = {
+  open: 'Open',
+  waiting: 'Waiting for your reply',
+  resolved: 'Resolved',
+  closed: 'Closed',
+} as const satisfies Record<keyof typeof TICKET_STATUS_AR, string>;
+
+export const SUPPORT_CATEGORY = { ar: SUPPORT_CATEGORY_AR, en: SUPPORT_CATEGORY_EN } as const;
+export const TICKET_STATUS = { ar: TICKET_STATUS_AR, en: TICKET_STATUS_EN } as const;

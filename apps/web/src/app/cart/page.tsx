@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { CartView } from '@/features/cart/CartView';
+import { CART, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 
 /**
  * The bag.
@@ -11,12 +13,15 @@ import { CartView } from '@/features/cart/CartView';
  * the page ships the chrome instantly and `CartView` fills it once the store
  * has hydrated and the server has priced it.
  */
-export const metadata: Metadata = {
-  title: 'الحقيبة | ديار',
-  // Nothing here belongs in a search index, and a crawled cart URL is a support
-  // ticket waiting to happen.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: `${CART[locale].title} | ${SHELL[locale].titleSuffix}`,
+    // Nothing here belongs in a search index, and a crawled cart URL is a support
+    // ticket waiting to happen.
+    robots: { index: false, follow: false },
+  };
+}
 
 /*
  * Rendered per request, not baked at build time.
@@ -32,7 +37,8 @@ export const metadata: Metadata = {
  */
 export const dynamic = 'force-dynamic';
 
-export default function CartPage() {
+export default async function CartPage() {
+  const locale = await getLocale();
   return (
     <>
       <SiteHeader />
@@ -41,7 +47,7 @@ export default function CartPage() {
           still the capped phone column it always was. */}
       <main className="mx-auto max-w-phoneMax pb-8 lg:max-w-contentMax lg:px-8 lg:pb-[88px]">
         <h1 className="px-5 pb-5 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-7 lg:pt-9 lg:text-h1Lg">
-          الحقيبة
+          {CART[locale].title}
         </h1>
         <CartView />
       </main>

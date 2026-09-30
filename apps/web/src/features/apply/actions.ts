@@ -1,6 +1,9 @@
 'use server';
 
 import { api } from '@/core/api';
+import { APPLY } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { apiMessage } from '@/core/api-message';
 
 /**
  * A house applying to join.
@@ -36,13 +39,12 @@ export async function submitApplication(input: {
     return { ok: true, slug: created.slug };
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
+    const locale = await getLocale();
     return {
       ok: false,
-      // The router's messages already name every objection at once and are
-      // already Arabic. Anything else gets a neutral sentence.
-      message: message.length > 0 && message.length < 400
-        ? message
-        : 'تعذّر إرسال الطلب. حاول مرة أخرى.',
+      // The router's messages already name every objection at once. Anything
+      // else gets a neutral sentence.
+      message: apiMessage(message, locale, APPLY[locale].failed, 400),
     };
   }
 }

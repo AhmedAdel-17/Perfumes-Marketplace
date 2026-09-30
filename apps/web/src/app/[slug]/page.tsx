@@ -18,6 +18,8 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Blocks } from '@/features/content/Blocks';
 import { api } from '@/core/api';
+import { SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +28,10 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   const page = await api().content.read({ slug });
-  if (!page) return { title: 'ديار' };
+  const suffix = SHELL[await getLocale()].titleSuffix;
+  if (!page) return { title: suffix };
   return {
-    title: `${page.title} | ديار`,
+    title: `${page.title} | ${suffix}`,
     // No description invented from the body. A truncated first paragraph is a
     // worse summary than none, and it is the kind of thing that reads as
     // machine-written on the one surface people meet before the site.
@@ -56,7 +59,7 @@ export default async function ContentPage(
         </h1>
 
         <article className="pb-4">
-          <Blocks blocks={page.blocks} images={page.images} />
+          <Blocks blocks={page.blocks} images={page.images} locale={await getLocale()} />
         </article>
       </main>
       <SiteFooter />

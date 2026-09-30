@@ -5,9 +5,10 @@ import { useEffect, useState, useTransition } from 'react';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import {
-  counted, CURRENCY_LABEL, DAY, editorial, formatPrice, PERFUME, plural, SHIPMENT,
-  data as num,
+  CART, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, NOUN, nounIn, data as num,
 } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { priceCart, type PricedCartResult } from './actions';
 import { useCart } from './CartStore';
 import { PrimaryHighlight, primarySurface, primarySurfaceStyle } from '@/features/shell/primary-surface';
@@ -42,6 +43,9 @@ export function CartView() {
   const [cart, setCart] = useState<PricedCartResult | null>(null);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
+  const locale = useLocale();
+  const copy = CART[locale];
+  const editorialNum = editorialIn(locale);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -56,14 +60,14 @@ export function CartView() {
   }, [entries, hydrated]);
 
   if (!hydrated || (cart === null && !failed)) {
-    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ الحساب</p>;
+    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">{copy.pricing}</p>;
   }
 
   if (failed) {
     return (
       <div className="px-5 py-8 lg:px-0">
         <p className="text-small leading-relaxed text-ink2">
-          تعذّر حساب الحقيبة. تحقّق من اتصالك ثم أعد المحاولة.
+          {copy.failed}
         </p>
       </div>
     );
@@ -74,17 +78,17 @@ export function CartView() {
   if (priced.isEmpty) {
     return (
       <div className="px-5 py-9 text-center lg:px-0 lg:py-[88px]">
-        <p className="font-display text-h3 lg:text-h2Lg">حقيبتك فارغة</p>
+        <p className="font-display text-h3 lg:text-h2Lg">{copy.empty}</p>
         <p className="mt-3 text-small leading-relaxed text-ink3">
           {/* An empty state that only says "empty" is a dead end; it must offer
               the next step, and the next step is the catalogue. */}
-          ابدأ من دور العطور المصرية المختارة.
+          {copy.emptyBody}
         </p>
         <Link
-          href="/"
+          href={localeHref(locale, '/')}
           className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          تصفّح العطور
+          {copy.browse}
         </Link>
       </div>
     );
@@ -99,13 +103,13 @@ export function CartView() {
         <ul className="mx-5 mb-6 border border-line bg-raised p-4 lg:mx-0">
           {priced.adjustments.map((a) => (
             <li key={`${a.productId}-${a.reason}`} className="text-caption leading-relaxed text-ink2">
-              {a.reason === 'no_longer_available' && `${a.productName || 'أحد المنتجات'} لم يعد متاحًا وأُزيل من الحقيبة.`}
-              {a.reason === 'out_of_stock' && `${a.productName} نفد من المخزون وأُزيل من الحقيبة.`}
+              {a.reason === 'no_longer_available' && copy.noLongerAvailable(a.productName || copy.aProduct)}
+              {a.reason === 'out_of_stock' && copy.outOfStock(a.productName)}
               {a.reason === 'quantity_reduced' &&
-                `${a.productName}: المتاح ${num(a.acceptedQuantity)} فقط من أصل ${num(a.requestedQuantity)}.`}
+                copy.quantityReduced(a.productName, num(a.acceptedQuantity), num(a.requestedQuantity))}
               {a.reason === 'price_changed' && a.currentPricePiastres !== undefined && (
                 <>
-                  {`${a.productName}: تغيّر السعر إلى `}
+                  {copy.priceChanged(a.productName)}
                   <span className="tnum">{formatPrice(a.currentPricePiastres)}</span>
                   <span className="latin ms-1 text-micro tracking-label">{CURRENCY_LABEL}</span>
                 </>
@@ -127,9 +131,9 @@ export function CartView() {
             <div className="text-caption text-ink3">
               {/* The noun agrees with the LAST number in the range, so a 10–11
                   day window reads "١٠ إلى ١١ يومًا" rather than "…أيام". */}
-              يصل خلال <span className="tnum">{num(house.etaDaysMin)}</span>–
+              {copy.arrivesIn} <span className="tnum">{num(house.etaDaysMin)}</span>–
               <span className="tnum">{num(house.etaDaysMax)}</span>{' '}
-              {plural(house.etaDaysMax, DAY)}
+              {nounIn(locale, house.etaDaysMax, NOUN.day)}
             </div>
           </div>
 
@@ -147,7 +151,7 @@ export function CartView() {
                   from, so the bottle in the bag is the bottle they chose.
                 */}
                 <Link
-                  href={`/p/${line.slug}`}
+                  href={localeHref(locale, `/p/${line.slug}`)}
                   aria-label={line.name}
                   className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,theme(colors.stage.glow),theme(colors.stage.mid)_52%,theme(colors.stage.deep))]"
                 >
@@ -165,13 +169,13 @@ export function CartView() {
 
                 <div className="min-w-0 flex-1">
                   <Link
-                    href={`/p/${line.slug}`}
+                    href={localeHref(locale, `/p/${line.slug}`)}
                     className="tappable font-display text-h4 leading-tight transition-colors duration-base ease-out hover:text-accent"
                   >
                     {line.name}
                   </Link>
                   <div className="mt-1 text-caption text-ink3">
-                    <span className="tnum">{num(line.volumeMl)}</span> مل
+                    <span className="tnum">{num(line.volumeMl)}</span> {copy.ml}
                   </div>
 
                   <div className="mt-3 flex items-center justify-between gap-3">
@@ -181,6 +185,7 @@ export function CartView() {
                       onChange={(q) => setQuantity(line.productId, q)}
                       onRemove={() => remove(line.productId)}
                       label={line.name}
+                      copy={copy}
                     />
                     <div className="text-bodyLg font-semibold">
                       <span className="tnum">{formatPrice(line.lineTotalPiastres)}</span>
@@ -193,7 +198,7 @@ export function CartView() {
           </ul>
 
           <div className="mt-3 flex justify-between text-caption text-ink3">
-            <span>توصيل هذه الدار</span>
+            <span>{copy.houseDelivery}</span>
             <span>
               <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
               <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
@@ -213,37 +218,37 @@ export function CartView() {
         reads as a rendering fault rather than as a layout.
       */}
       <section className="border-t border-line px-5 pt-5 lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:bg-raised lg:px-7 lg:py-7">
-        <Row label="المنتجات" piastres={priced.merchandisePiastres} />
+        <Row label={copy.products} piastres={priced.merchandisePiastres} />
         {/* "٢ شحنات" is the very mistake @diyar/i18n exists to prevent — two of
             something takes the DUAL, شحنتان, with no numeral in front of it.
             Written here by hand once and caught on screen; it goes through
             counted() like every other counted noun now. */}
         <Row
-          label={`التوصيل · ${counted(priced.houses.length, SHIPMENT, editorial)}`}
+          label={copy.delivery(countedIn(locale, priced.houses.length, NOUN.shipment, editorialNum))}
           piastres={priced.shippingPiastres}
         />
         <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-          <span className="font-display text-h4">الإجمالي</span>
+          <span className="font-display text-h4">{copy.total}</span>
           <span className="text-h3 font-semibold lg:text-h2Lg">
             <span className="tnum">{formatPrice(priced.totalPiastres)}</span>
             <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </span>
         </div>
         <p className="mt-2 text-micro text-ink3">
-          {counted(priced.itemCount, PERFUME, editorial)} · الأسعار شاملة الضريبة
+          {countedIn(locale, priced.itemCount, NOUN.perfume, editorialNum)} · {copy.taxIncluded}
         </p>
 
         {/* A LINK, not a button: it navigates. Identical surface, correct
             element — middle-click and "open in new tab" have to work. */}
         <Link
-          href="/checkout"
+          href={localeHref(locale, '/checkout')}
           style={primarySurfaceStyle}
           className={`${primarySurface} mt-6 w-full`}
         >
           <PrimaryHighlight />
-          متابعة الشراء
+          {copy.checkout}
         </Link>
-        <p className="mt-3 text-center text-micro text-ink3">الدفع عند الاستلام</p>
+        <p className="mt-3 text-center text-micro text-ink3">{copy.cashOnDelivery}</p>
       </section>
       </div>
     </div>
@@ -272,13 +277,14 @@ function Row({ label, piastres }: { label: string; piastres: number }) {
  * separate delete control competing for the same corner.
  */
 function Stepper({
-  quantity, max, onChange, onRemove, label,
+  quantity, max, onChange, onRemove, label, copy,
 }: {
   quantity: number;
   max: number;
   onChange(quantity: number): void;
   onRemove(): void;
   label: string;
+  copy: (typeof CART)[keyof typeof CART];
 }) {
   const base =
     'tappable flex h-[32px] w-[32px] items-center justify-center rounded-pill border border-line text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled disabled:hover:border-line disabled:hover:text-ink';
@@ -288,7 +294,7 @@ function Stepper({
       <button
         type="button"
         className={base}
-        aria-label={quantity === 1 ? `إزالة ${label}` : `إنقاص كمية ${label}`}
+        aria-label={quantity === 1 ? copy.remove(label) : copy.decrease(label)}
         onClick={() => (quantity === 1 ? onRemove() : onChange(quantity - 1))}
       >
         {quantity === 1 ? '×' : '−'}
@@ -300,7 +306,7 @@ function Stepper({
         type="button"
         className={base}
         disabled={quantity >= max}
-        aria-label={`زيادة كمية ${label}`}
+        aria-label={copy.increase(label)}
         onClick={() => onChange(quantity + 1)}
       >
         +

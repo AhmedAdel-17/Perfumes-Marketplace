@@ -3,12 +3,17 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { CheckoutForm } from '@/features/checkout/CheckoutForm';
 import { Track } from '@/features/analytics/Track';
+import { CHECKOUT, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 
-export const metadata: Metadata = {
-  title: 'إتمام الطلب | ديار',
-  // A crawled checkout URL is a support ticket waiting to happen.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: `${CHECKOUT[locale].title} | ${SHELL[locale].titleSuffix}`,
+    // A crawled checkout URL is a support ticket waiting to happen.
+    robots: { index: false, follow: false },
+  };
+}
 
 /*
  * Rendered per request, not baked at build time.

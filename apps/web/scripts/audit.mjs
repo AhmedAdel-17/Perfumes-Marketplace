@@ -222,7 +222,8 @@ async function auditPage(page, surface, width) {
         .filter((t) => t.h < 44 || t.w < 44),
 
       // Anything that draws a bar, fill or connector must anchor from the
-      // correct edge in RTL. Got backwards four times in this project.
+      // reading START — the right in Arabic, the left in English. Got
+      // backwards four times in this project.
       wrongEdgeFills: [...document.querySelectorAll('[style*="width"]')]
         .filter(rendered)
         .filter((el) => {
@@ -230,7 +231,8 @@ async function auditPage(page, surface, width) {
           if (!parent || !/track|meter|bar/i.test(parent.className)) return false;
           const a = el.getBoundingClientRect();
           const b = parent.getBoundingClientRect();
-          return Math.abs(a.right - b.right) > 2;
+          const rtl = document.documentElement.getAttribute('dir') === 'rtl';
+          return rtl ? Math.abs(a.right - b.right) > 2 : Math.abs(a.left - b.left) > 2;
         })
         .map((el) => el.className.slice(0, 40)),
 
@@ -247,8 +249,11 @@ async function auditPage(page, surface, width) {
     };
   });
 
-  if (structural.dir !== 'rtl') record(surface, width, 'rtl', `dir="${structural.dir}"`);
-  if (structural.lang !== 'ar') record(surface, width, 'lang', `lang="${structural.lang}"`);
+  // The English routes are named `en-…`; everything else is the Arabic site.
+  const english = surface.startsWith('en-');
+  const expected = english ? { dir: 'ltr', lang: 'en' } : { dir: 'rtl', lang: 'ar' };
+  if (structural.dir !== expected.dir) record(surface, width, 'direction', `dir="${structural.dir}"`);
+  if (structural.lang !== expected.lang) record(surface, width, 'lang', `lang="${structural.lang}"`);
   if (structural.overflow > 0) record(surface, width, 'overflow', `${structural.overflow}px sideways`);
   if (!structural.title) record(surface, width, 'title', 'empty <title>');
 
@@ -259,7 +264,7 @@ async function auditPage(page, surface, width) {
     record(surface, width, 'tap-target', `${t.label} — ${t.w}×${t.h}`);
   }
   for (const c of structural.wrongEdgeFills) {
-    record(surface, width, 'rtl-fill', `fills from the wrong edge: ${c}`);
+    record(surface, width, 'fill-edge', `fills from the wrong edge: ${c}`);
   }
   for (const e of new Set(structural.leakedEnums)) {
     record(surface, width, 'leaked-enum', e);
@@ -450,13 +455,41 @@ try {
     ['not-found', '/nothing-here'],
   ];
 
+  /*
+   * The English site (P5.6.2): every customer screen again under `/en`.
+   *
+   * A second direction is a second layout. Left-to-right moves every logical
+   * margin, mirrors the evolution curve, and swaps the heading face to Bodoni —
+   * each a place where a contrast, an overflow or a heading order can break
+   * that the Arabic run cannot see. The sign-in screens are left out: the seller
+   * portal and the console are Arabic-only until steps 4 and 5.
+   */
+  const englishRoutes = publicRoutes
+    .filter(([surface]) => !surface.endsWith('-sign-in'))
+    .map(([surface, path]) => [`en-${surface}`, path === '/' ? '/en' : `/en${path}`]);
+
+  /*
+   * A SEPARATE browser for the English run. Opening `/en` sets the cookie that
+   * remembers the language, after which the site — correctly — answers every
+   * Arabic link in English. One shared browser would audit the English site
+   * twice and report the Arabic one as broken.
+   */
+  const englishVisitor = await themed(await browser.newContext({ locale: 'en-GB' }));
+  const englishPage = await englishVisitor.newPage();
+
   for (const size of WIDTHS) {
     await page.setViewportSize({ width: size.width, height: size.height });
     for (const [surface, path] of publicRoutes) {
       await visit(page, `${BASE}${path}`);
       await auditPage(page, surface, size.name);
     }
+    await englishPage.setViewportSize({ width: size.width, height: size.height });
+    for (const [surface, path] of englishRoutes) {
+      await visit(englishPage, `${BASE}${path}`);
+      await auditPage(englishPage, surface, size.name);
+    }
   }
+  await englishVisitor.close();
 
   /* --------------------------------------------------------------- seller */
   const house = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));

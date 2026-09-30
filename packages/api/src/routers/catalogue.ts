@@ -19,10 +19,7 @@
  * gets something it can render without knowing about any of them.
  */
 import { z } from 'zod';
-import {
-  BAND_AR, BAND_EN, BAND_FILL, CONCENTRATION_AR,
-  PERFORMANCE_SOURCE_AR, SCENT_FAMILY_AR,
-} from '@diyar/i18n';
+import { BAND_FILL } from '@diyar/i18n';
 import type { CatalogueProductRow, CataloguePhotoRow } from '@diyar/domain';
 import { EMPTY_QUERY, queryTerms } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
@@ -39,8 +36,12 @@ export interface StorefrontPhoto {
 
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
-  pricePiastres: number; volumeMl: number; familyLabel: string;
-  /** Raw scent-family token key — drives the flacon render. */
+  pricePiastres: number; volumeMl: number;
+  /**
+   * Scent-family CODE. It drives the flacon render, and the storefront turns it
+   * into words in the visitor's language — labels are presentation, and an API
+   * that answered in Arabic could never serve the English site.
+   */
   family: string;
   /**
    * The primary photograph, when the house has uploaded a VERIFIED one.
@@ -53,15 +54,26 @@ export interface ProductCard {
   photo: StorefrontPhoto | null;
 }
 
+/**
+ * A performance band as codes: which band, how full its meter is, and where
+ * the claim came from (doc 06 §4). Words are the storefront's job.
+ */
+export interface PerformanceReading {
+  band: string;
+  fill: number;
+  source: string;
+}
+
 export interface ProductDetail extends ProductCard {
   brandName: string;
   houseSlug: string;
-  concentrationLabel: string;
+  /** Concentration code; the storefront words it per language. */
+  concentration: string;
   notesTop: string[];
   notesHeart: string[];
   notesBase: string[];
-  longevity: { ar: string; en: string; fill: number; source: string } | null;
-  projection: { ar: string; en: string; fill: number; source: string } | null;
+  longevity: PerformanceReading | null;
+  projection: PerformanceReading | null;
   fulfilmentHours: number;
   inStock: boolean;
 }
@@ -113,7 +125,6 @@ const toCard = (
   brandLatin: latin(row.brandName, row.brandNameEn),
   pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
   volumeMl: row.volumeMl,
-  familyLabel: SCENT_FAMILY_AR[row.scentFamily as keyof typeof SCENT_FAMILY_AR] ?? '',
   family: row.scentFamily ?? 'amber',
   photo: photos.get(row.id) ?? null,
 });
@@ -122,15 +133,12 @@ const toCard = (
  * A performance band, with the three things a meter needs and the one thing
  * doc 06 §4 requires: where the claim came from.
  */
-const band = (value: string | null, source: string | null) => {
+const band = (value: string | null, source: string | null): PerformanceReading | null => {
   if (!value) return null;
   return {
-    ar: BAND_AR[value as keyof typeof BAND_AR] ?? value,
-    en: BAND_EN[value as keyof typeof BAND_EN] ?? value.toUpperCase(),
+    band: value,
     fill: BAND_FILL[value as keyof typeof BAND_FILL] ?? 50,
-    source: PERFORMANCE_SOURCE_AR[
-      (source ?? 'seller_provided') as keyof typeof PERFORMANCE_SOURCE_AR
-    ] ?? PERFORMANCE_SOURCE_AR.seller_provided,
+    source: source ?? 'seller_provided',
   };
 };
 
@@ -161,8 +169,7 @@ export const catalogueRouter = router({
         ...toCard(row, map),
         brandName: row.brandName,
         houseSlug: row.houseSlug ?? '',
-        concentrationLabel:
-          CONCENTRATION_AR[row.concentration as keyof typeof CONCENTRATION_AR] ?? '',
+        concentration: row.concentration ?? '',
         notesTop: [...row.notesTop],
         notesHeart: [...row.notesHeart],
         notesBase: [...row.notesBase],

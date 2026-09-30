@@ -26,6 +26,7 @@ export const SHELL = defineMessages(
     notFoundTitle: 'الصفحة غير موجودة',
     notFoundBody: 'ربما تغيّر الرابط، أو لم تعد الصفحة معروضة.',
     browsePerfumes: 'تصفّح العطور',
+    imagePlaceholder: 'صورة',
   },
   {
     siteTitle: 'DIYAR — Egyptian perfume houses',
@@ -51,5 +52,6 @@ export const SHELL = defineMessages(
     notFoundTitle: 'Page not found',
     notFoundBody: 'The link may have changed, or the page is no longer shown.',
     browsePerfumes: 'Browse perfumes',
+    imagePlaceholder: 'Image',
   },
 );

@@ -2221,6 +2221,70 @@ try {
     }
   });
 
+
+  /* ======================================================= the English site */
+  group('the English site: its own URLs, its own direction, the same shop');
+
+  const englishContext = await browser.newContext({ viewport: DESKTOP, locale: 'en-GB' });
+  const english = await englishContext.newPage();
+  try {
+    await test('/en is English and left to right, and the masthead speaks it', async () => {
+      await english.goto(`${BASE}/en`, { waitUntil: 'networkidle' });
+      const root = await english.evaluate(() => ({
+        lang: document.documentElement.lang, dir: document.documentElement.dir, title: document.title,
+      }));
+      equal(root.lang, 'en', 'lang on /en');
+      equal(root.dir, 'ltr', 'dir on /en');
+      assert(root.title.includes('DIYAR'), `title: ${root.title}`);
+      const nav = await english.locator('header nav').innerText();
+      assert(/Houses/.test(nav) && /Search/.test(nav) && /Track your order/.test(nav), `masthead: ${nav}`);
+      assert(!/[؀-ۿ]/.test(nav), `Arabic left in the English masthead: ${nav}`);
+    });
+
+    await test('the switch changes language, and the choice is remembered', async () => {
+      await english.goto(`${BASE}/houses`, { waitUntil: 'networkidle' });
+      // Having opened /en, this visitor's Arabic link is answered in English.
+      assert(new URL(english.url()).pathname === '/en/houses', `followed to ${english.url()}`);
+
+      await english.locator('header a[hreflang="ar"]').click();
+      await english.waitForURL((url) => url.pathname === '/houses', { timeout: 15_000 });
+      equal(await english.evaluate(() => document.documentElement.lang), 'ar', 'lang after switching');
+
+      await english.goto(`${BASE}/houses`, { waitUntil: 'networkidle' });
+      equal(new URL(english.url()).pathname, '/houses', 'an Arabic choice stays Arabic');
+
+      await english.locator('header a[hreflang="en"]').click();
+      await english.waitForURL((url) => url.pathname === '/en/houses', { timeout: 15_000 });
+      equal(await english.evaluate(() => document.documentElement.dir), 'ltr', 'dir after switching back');
+    });
+
+    await test('an order is placed from start to finish in English', async () => {
+      await english.goto(`${BASE}/en/p/${inStock[0]}`, { waitUntil: 'networkidle' });
+      const add = english.locator('button:visible').filter({ hasText: 'Add to bag' }).first();
+      await add.waitFor({ state: 'visible', timeout: 10_000 });
+      for (let i = 0; i < 25 && await add.isDisabled(); i += 1) await english.waitForTimeout(300);
+      await add.click();
+      await english.waitForTimeout(500);
+
+      await english.goto(`${BASE}/en/checkout`, { waitUntil: 'networkidle' });
+      await english.waitForTimeout(1500);
+      await fill(english, 'Full name', 'Mariam Khalil');
+      await fill(english, 'Mobile number', `012${String(Date.now()).slice(-8)}`);
+      await fill(english, 'City', 'Mohandessin');
+      await fill(english, 'Area', 'Dokki');
+      await fill(english, 'Street', 'El Bahraa Street');
+      await fill(english, 'Building number', '21');
+      await english.locator('button[type="submit"]').click();
+      await english.waitForTimeout(4000);
+
+      const text = await english.locator('main').innerText();
+      assert(text.includes('Your order is placed'), `confirmation: ${text.slice(0, 200)}`);
+      assert(/DY-[A-Z0-9]{8}/.test(text), 'the confirmation carries a reference');
+    });
+  } finally {
+    await englishContext.close();
+  }
+
   if (sellerContext) await sellerContext.close();
   if (opsContext) await opsContext.close();
 } finally {

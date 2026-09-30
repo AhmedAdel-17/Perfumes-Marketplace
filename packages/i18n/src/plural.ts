@@ -214,3 +214,9 @@ export function countedIn(
   if (count === 0) return noun.en.zero;
   return `${format(count)} ${count === 1 ? noun.en.one : noun.en.other}`;
 }
+
+/** The bare noun for a count, in a locale — for sentences that place the number themselves. */
+export function nounIn(locale: Locale, count: number, noun: Noun): string {
+  if (locale === 'ar') return plural(count, noun.ar);
+  return count === 1 ? noun.en.one : noun.en.other;
+}

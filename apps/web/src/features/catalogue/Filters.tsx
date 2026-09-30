@@ -18,22 +18,14 @@ import {
   activeFilterCount, catalogueQueryToSearch, parseCatalogueQuery, SCENT_FAMILIES, SORTS,
   type CatalogueQuery, type ScentFamily, type Sort,
 } from '@diyar/domain';
-import { data as num } from '@diyar/i18n';
+import { data as num, SCENT_FAMILY, SEARCH } from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { useLocale } from '@/features/shell/LocaleProvider';
 
-const FAMILY_AR: Record<ScentFamily, string> = {
-  oud: 'عود',
-  amber: 'عنبر',
-  woody: 'خشبي',
-  floral: 'زهري',
-  fresh: 'منعش',
-  gourmand: 'حلو',
-  musk: 'مسك',
-};
-
-const SORT_AR: Record<Sort, string> = {
-  newest: 'الأحدث',
-  price_asc: 'الأقل سعرًا',
-  price_desc: 'الأعلى سعرًا',
+const SORT_KEY: Record<Sort, 'newest' | 'priceAsc' | 'priceDesc'> = {
+  newest: 'newest',
+  price_asc: 'priceAsc',
+  price_desc: 'priceDesc',
 };
 
 const chip = (on: boolean) => [
@@ -49,13 +41,16 @@ export function Filters({ query, houses }: {
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const locale = useLocale();
+  const copy = SEARCH[locale];
+  const families: Readonly<Record<ScentFamily, string>> = SCENT_FAMILY[locale];
 
   /** Rewrite the URL from a changed query. One path for every control. */
   const apply = (next: CatalogueQuery) => startTransition(() => {
     // `replace`, not `push`: a customer ticking four boxes should press back
     // once to leave the search, not four times to walk backwards through their
     // own filtering.
-    router.replace(`/search${catalogueQueryToSearch(next)}`, { scroll: false });
+    router.replace(localeHref(locale, `/search${catalogueQueryToSearch(next)}`), { scroll: false });
   });
 
   const toggle = <T extends string>(list: readonly T[], value: T): T[] =>
@@ -66,7 +61,7 @@ export function Filters({ query, houses }: {
   return (
     <form
       method="get"
-      action="/search"
+      action={localeHref(locale, '/search')}
       // Submitting normally still works: the inputs are named exactly as the
       // parser reads them, so a browser with no JavaScript produces the same URL
       // this component would have written.
@@ -95,21 +90,21 @@ export function Filters({ query, houses }: {
           key={params.toString()}
           maxLength={120}
           type="search"
-          aria-label="ابحث عن عطر أو دار"
-          placeholder="ابحث عن عطر أو دار"
+          aria-label={copy.fieldLabel}
+          placeholder={copy.fieldLabel}
           className="h-control w-full rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink2 focus:outline-none focus-visible:border-accent"
         />
         <button
           type="submit"
           className="tappable flex h-control min-w-touch items-center justify-center rounded-sm border border-line px-5 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          بحث
+          {copy.submit}
         </button>
       </div>
 
       {/* --------------------------------------------------- the families */}
       <fieldset className="mt-6">
-        <legend className="mb-2.5 text-caption tracking-label text-ink3">العائلة</legend>
+        <legend className="mb-2.5 text-caption tracking-label text-ink3">{copy.family}</legend>
         <div className="flex flex-wrap gap-2">
           {SCENT_FAMILIES.map((family) => (
             <button
@@ -120,7 +115,7 @@ export function Filters({ query, houses }: {
               onClick={() => apply({ ...query, families: toggle(query.families, family) })}
               className={chip(query.families.includes(family))}
             >
-              {FAMILY_AR[family]}
+              {families[family]}
             </button>
           ))}
         </div>
@@ -129,7 +124,7 @@ export function Filters({ query, houses }: {
       {/* ----------------------------------------------------- the houses */}
       {houses.length > 1 && (
         <fieldset className="mt-6">
-          <legend className="mb-2.5 text-caption tracking-label text-ink3">الدار</legend>
+          <legend className="mb-2.5 text-caption tracking-label text-ink3">{copy.house}</legend>
           <div className="flex flex-wrap gap-2">
             {houses.map((house) => (
               <button
@@ -150,7 +145,7 @@ export function Filters({ query, houses }: {
       {/* ------------------------------------------------------ the price */}
       <fieldset className="mt-6">
         <legend className="mb-2.5 text-caption tracking-label text-ink3">
-          السعر بالجنيه
+          {copy.price}
         </legend>
         <div className="flex flex-wrap items-center gap-3">
           {(['minEgp', 'maxEgp'] as const).map((bound) => (
@@ -160,8 +155,8 @@ export function Filters({ query, houses }: {
               min={0}
               inputMode="numeric"
               defaultValue={query[bound] ?? ''}
-              aria-label={bound === 'minEgp' ? 'أقل سعر' : 'أعلى سعر'}
-              placeholder={bound === 'minEgp' ? 'من' : 'إلى'}
+              aria-label={bound === 'minEgp' ? copy.minPrice : copy.maxPrice}
+              placeholder={bound === 'minEgp' ? copy.from : copy.to}
               onBlur={(event) => {
                 const raw = event.target.value.trim();
                 const value = raw === '' ? null : Number(raw);
@@ -179,7 +174,7 @@ export function Filters({ query, houses }: {
             onClick={() => apply({ ...query, inStockOnly: !query.inStockOnly })}
             className={chip(query.inStockOnly)}
           >
-            المتاح فقط
+            {copy.inStockOnly}
           </button>
         </div>
       </fieldset>
@@ -188,7 +183,7 @@ export function Filters({ query, houses }: {
       <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <label htmlFor="sort" className="text-caption tracking-label text-ink3">
-            الترتيب
+            {copy.sort}
           </label>
           <select
             id="sort"
@@ -198,7 +193,7 @@ export function Filters({ query, houses }: {
             className="h-control rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
           >
             {SORTS.map((sort) => (
-              <option key={sort} value={sort}>{SORT_AR[sort]}</option>
+              <option key={sort} value={sort}>{copy[SORT_KEY[sort]]}</option>
             ))}
           </select>
         </div>
@@ -214,7 +209,7 @@ export function Filters({ query, houses }: {
             })}
             className="tappable flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
           >
-            مسح الفلاتر (<span className="tnum">{num(count)}</span>)
+            {copy.clear(num(count))}
           </button>
         )}
       </div>

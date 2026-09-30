@@ -1,4 +1,4 @@
-import { CURRENCY_LABEL, formatPrice } from '@diyar/i18n';
+import { CURRENCY_LABEL, formatPrice, PRODUCT, type Locale } from '@diyar/i18n';
 import { AddToBag } from '@/features/cart/AddToBag';
 import { primarySurface } from '@/features/shell/primary-surface';
 
@@ -16,12 +16,15 @@ export function BuyBlock({
   pricePiastres,
   inStock,
   variant,
+  locale,
 }: {
   productId: string;
   pricePiastres: number;
   inStock: boolean;
   variant: 'bar' | 'inline';
+  locale: Locale;
 }) {
+  const copy = PRODUCT[locale];
   const price = (
     <div>
       <div className={variant === 'bar' ? 'text-h4 font-semibold' : 'text-h3 font-semibold lg:text-h2Lg'}>
@@ -29,7 +32,7 @@ export function BuyBlock({
         <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
       </div>
       <div className="mt-1 text-micro text-ink3 lg:text-caption">
-        {inStock ? 'متاح الآن' : 'غير متاح حاليًا'}
+        {inStock ? copy.inStock : copy.outOfStock}
       </div>
     </div>
   );

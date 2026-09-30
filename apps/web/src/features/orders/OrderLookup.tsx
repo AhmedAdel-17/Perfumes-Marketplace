@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import {
-  CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, stateCopy, data as num,
+  CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, ORDERS, stateCopy, data as num,
 } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { Field } from '@/features/checkout/Field';
 import { lookupOrder, type OrderLookupResult } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
@@ -29,6 +30,7 @@ export function OrderLookup() {
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [order, setOrder] = useState<OrderLookupResult>(null);
+  const copy = ORDERS[useLocale()];
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -55,26 +57,26 @@ export function OrderLookup() {
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
       <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
-        اكتب رقم الطلب ورقم الموبايل الذي طلبت به.
+        {copy.intro}
       </p>
 
       <Field
-        label="رقم الطلب" value={reference} onChange={setReference} required
-        maxLength={20} hint="مثل DY-4KK3YMDK"
+        label={copy.reference} value={reference} onChange={setReference} required
+        maxLength={20} hint={copy.referenceHint}
       />
       <Field
-        label="رقم الموبايل" value={phone} onChange={setPhone} required
+        label={copy.phone} value={phone} onChange={setPhone} required
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
       />
 
       {searched && !order && (
         <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-ink2">
-          لا يوجد طلب مطابق. تأكّد من رقم الطلب ورقم الموبايل.
+          {copy.notFound}
         </p>
       )}
 
       <PrimaryButton type="submit" disabled={searching} fill="full">
-      {searching ? '…جارٍ البحث' : 'تتبّع الطلب'}
+      {searching ? copy.searching : copy.track}
     </PrimaryButton>
     </form>
   );
@@ -87,15 +89,17 @@ function OrderDetail({
   phone: string;
   onBack(): void;
 }) {
+  const locale = useLocale();
+  const words = ORDERS[locale];
   return (
     <div className="px-5 lg:px-0">
       <div className="border border-line bg-raised p-5">
-        <div className="text-caption tracking-label text-ink3">رقم الطلب</div>
+        <div className="text-caption tracking-label text-ink3">{words.reference}</div>
         <div className="latin mt-2 select-all text-h3 tracking-[3px] text-accent lg:text-h2Lg">
           {order.reference}
         </div>
         <div className="mt-3 text-caption text-ink3">
-          باسم {order.contactName} · الدفع عند الاستلام
+          {words.placedBy(order.contactName)}
         </div>
       </div>
 
@@ -109,7 +113,7 @@ function OrderDetail({
         most of the time.
       */}
       {order.houses.map((house) => {
-        const copy = stateCopy(house.state);
+        const copy = stateCopy(house.state, locale);
         const position = journeyIndex(house.state);
 
         return (
@@ -128,7 +132,7 @@ function OrderDetail({
             <p className="mt-2 text-small leading-relaxed text-ink2">{copy.detail}</p>
 
             {position !== null && (
-              <ol className="mt-5 flex gap-1.5" aria-label="مراحل الطلب">
+              <ol className="mt-5 flex gap-1.5" aria-label={words.stages}>
                 {CUSTOMER_JOURNEY.map((step, index) => (
                   <li
                     key={step}
@@ -138,7 +142,7 @@ function OrderDetail({
                       index <= position ? 'bg-accent' : 'bg-line',
                     ].join(' ')}
                   >
-                    <span className="sr-only">{stateCopy(step).label}</span>
+                    <span className="sr-only">{stateCopy(step, locale).label}</span>
                   </li>
                 ))}
               </ol>
@@ -146,7 +150,7 @@ function OrderDetail({
 
             {house.trackingNumber && (
               <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
-                <span className="text-caption text-ink3">رقم الشحنة</span>
+                <span className="text-caption text-ink3">{words.trackingNumber}</span>
                 {/* Selectable, because the customer will paste it into the
                     courier's own tracking page. */}
                 <span className="latin tnum select-all text-small text-ink">
@@ -171,7 +175,7 @@ function OrderDetail({
                 </li>
               ))}
               <li className="flex justify-between py-1.5 text-caption text-ink3">
-                <span>التوصيل</span>
+                <span>{words.delivery}</span>
                 <span>
                   <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
                   <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
@@ -183,7 +187,7 @@ function OrderDetail({
       })}
 
       <div className="mt-7 flex items-baseline justify-between border-t border-line pt-5">
-        <span className="font-display text-h4">الإجمالي عند الاستلام</span>
+        <span className="font-display text-h4">{words.totalOnDelivery}</span>
         <span className="text-h3 font-semibold lg:text-h2Lg">
           <span className="tnum">{formatPrice(order.totalPiastres)}</span>
           <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
@@ -203,7 +207,7 @@ function OrderDetail({
         onClick={onBack}
         className="tappable mt-8 border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
       >
-        تتبّع طلب آخر
+        {words.trackAnother}
       </button>
     </div>
   );

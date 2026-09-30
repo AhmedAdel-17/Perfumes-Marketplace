@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { MESSAGE_MAX, SUBJECT_MAX, SUPPORT_CATEGORIES, type SupportCategory } from '@diyar/domain';
-import { SUPPORT_CATEGORY_AR, TICKET_STATUS_AR } from '@diyar/i18n';
+import { CONTACT, SUPPORT_CATEGORY, TICKET_STATUS } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { Field } from '@/features/checkout/Field';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { findTicket, openTicket, type TicketResult } from './actions';
@@ -34,6 +35,8 @@ export function SupportForm() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
+  const locale = useLocale();
+  const copy = CONTACT[locale];
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -54,12 +57,12 @@ export function SupportForm() {
     return (
       <div className="px-5 lg:px-0">
         <div className="border border-line bg-raised p-5">
-          <div className="text-caption tracking-label text-ink3">رقم الرسالة</div>
+          <div className="text-caption tracking-label text-ink3">{copy.reference}</div>
           <div className="latin mt-2 select-all text-h3 tracking-[3px] text-accent lg:text-h2Lg">
             {sent}
           </div>
           <p className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2">
-            احتفظ بهذا الرقم. نردّ على الرسائل خلال يوم عمل، وسنتصل بك على{' '}
+            {copy.keepReference}{' '}
             <span className="latin tnum">{phone}</span>.
           </p>
         </div>
@@ -69,7 +72,7 @@ export function SupportForm() {
           onClick={() => { setSent(null); setSubject(''); setMessage(''); }}
           className="tappable mt-7 border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          أرسل رسالة أخرى
+          {copy.sendAnother}
         </button>
       </div>
     );
@@ -78,7 +81,7 @@ export function SupportForm() {
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
       <fieldset className="mb-6">
-        <legend className="mb-3 text-caption tracking-label text-ink3">عن ماذا تسأل؟</legend>
+        <legend className="mb-3 text-caption tracking-label text-ink3">{copy.topic}</legend>
 
         {/*
           Radios, not a select. Eight options is a list somebody can read in one
@@ -100,29 +103,29 @@ export function SupportForm() {
                 onChange={() => setCategory(option)}
                 className="h-4 w-4 accent-accent"
               />
-              <span className="text-small text-ink2">{SUPPORT_CATEGORY_AR[option]}</span>
+              <span className="text-small text-ink2">{SUPPORT_CATEGORY[locale][option]}</span>
             </label>
           ))}
         </div>
       </fieldset>
 
-      <Field label="الاسم" value={name} onChange={setName} required maxLength={80} />
+      <Field label={copy.name} value={name} onChange={setName} required maxLength={80} />
       <Field
-        label="رقم الموبايل" value={phone} onChange={setPhone} required
+        label={copy.phone} value={phone} onChange={setPhone} required
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
-        hint="سنردّ عليك على هذا الرقم"
+        hint={copy.phoneHint}
       />
       <Field
-        label="رقم الطلب" value={orderReference} onChange={setOrderReference}
+        label={copy.orderReference} value={orderReference} onChange={setOrderReference}
         maxLength={20}
         // Said plainly, because a form that looks like it needs an order number
         // loses the person who does not have one yet.
-        hint="اختياري — اتركه فارغًا إن لم تكن قد طلبت بعد"
+        hint={copy.orderReferenceHint}
       />
-      <Field label="العنوان" value={subject} onChange={setSubject} required maxLength={SUBJECT_MAX} />
+      <Field label={copy.subject} value={subject} onChange={setSubject} required maxLength={SUBJECT_MAX} />
 
       <label className="mb-5 block">
-        <span className="text-caption tracking-label text-ink3">رسالتك</span>
+        <span className="text-caption tracking-label text-ink3">{copy.message}</span>
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value.slice(0, MESSAGE_MAX))}
@@ -145,7 +148,7 @@ export function SupportForm() {
       )}
 
       <PrimaryButton type="submit" disabled={sending} fill="full">
-        {sending ? '…جارٍ الإرسال' : 'أرسل'}
+        {sending ? copy.sending : copy.send}
       </PrimaryButton>
     </form>
   );
@@ -158,6 +161,8 @@ export function TicketLookup() {
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [ticket, setTicket] = useState<TicketResult>(null);
+  const locale = useLocale();
+  const copy = CONTACT[locale];
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -170,7 +175,7 @@ export function TicketLookup() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
-      <Field label="رقم الرسالة" value={reference} onChange={setReference} required maxLength={20} hint="مثل DS-4KK3YMDK" />
+      <Field label={copy.reference} value={reference} onChange={setReference} required maxLength={20} hint={copy.referenceHint} />
       {/*
         "الذي أرسلت به", not just "رقم الموبايل".
 
@@ -182,7 +187,7 @@ export function TicketLookup() {
         filling the wrong field and passing.
       */}
       <Field
-        label="رقم الموبايل الذي أرسلت به" value={phone} onChange={setPhone} required
+        label={copy.phoneYouUsed} value={phone} onChange={setPhone} required
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
       />
 
@@ -190,7 +195,7 @@ export function TicketLookup() {
         // The same message for a wrong phone and an unknown reference. Telling
         // them apart says which half somebody got right.
         <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-ink2">
-          لا توجد رسالة مطابقة.
+          {copy.notFound}
         </p>
       )}
 
@@ -199,7 +204,7 @@ export function TicketLookup() {
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="text-small text-ink">{ticket.subject}</span>
             <span className="text-caption text-accent">
-              {TICKET_STATUS_AR[ticket.status as keyof typeof TICKET_STATUS_AR] ?? ticket.status}
+              {TICKET_STATUS[locale][ticket.status as keyof (typeof TICKET_STATUS)['ar']] ?? ticket.status}
             </span>
           </div>
           <p className="mt-3 whitespace-pre-line text-small leading-relaxed text-ink2">
@@ -214,7 +219,7 @@ export function TicketLookup() {
       )}
 
       <PrimaryButton type="submit" disabled={searching} fill="full">
-        {searching ? '…جارٍ البحث' : 'ابحث'}
+        {searching ? copy.searching : copy.find}
       </PrimaryButton>
     </form>
   );

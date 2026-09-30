@@ -2332,6 +2332,27 @@ no Arabic left in the English view except house and product names a house has no
 translated; direction, fonts and number formats follow the locale; the choice persists;
 product and storefront pages carry `hreflang`; the browser suite and audit pass in both.
 
+**Progress (30 Sep 2026):**
+- *Step 1 — done* (`cd064d5`). `/en` routing by middleware rewrite, language switch in the
+  masthead, remembered choice (cookie), `lang`/`dir` per locale, Bodoni Moda + IBM Plex
+  Sans on the English site, message catalogues per screen with `en` type-checked against
+  `ar`. The unused `ar.ts` dictionary and `t()` removed.
+- *Step 2 — done.* Every customer screen: home, houses, house, product (notes, curve
+  mirrored left to right, meters, reviews), search and filters, bag, checkout and
+  confirmation, order tracking with its review and return panels, contact, apply, CMS
+  pages, 404. The catalogue API now returns codes (family, concentration, band, source)
+  and the storefront words them per locale. Guard: `apps/web/src/copy-layer.test.ts`
+  fails on Arabic in customer-site code; seller and ops are listed as not yet translated.
+  Browser suite 129/129 (three new English tests: URL and direction, switch round trip,
+  a complete English order); audit now visits every customer screen under `/en` too, in its
+  own browser, and is clean in both themes at every width.
+- *Interim until step 6:* API refusals are still Arabic text, so an English visitor gets
+  the screen's own English sentence instead (`apps/web/src/core/api-message.ts`, to be
+  deleted by step 6).
+- *Still Arabic on the English site until step 3:* product names, scent notes, house
+  bios and stories, CMS page bodies, the announcement bar, review bodies (reviews stay in
+  the language they were written in).
+
 #### P5.6.3 Egyptian-Arabic interface copy
 **Status:** NOT_STARTED (paused by the founder, 30 Sep 2026) · **Priority:** P2 · **Type:** BUILD
 **Goal:** rewrite the interface in Egyptian Arabic (V-1). Terms, Privacy and Returns stay

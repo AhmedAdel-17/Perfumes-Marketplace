@@ -1,23 +1,27 @@
 /**
  * How the perfume evolves over eight hours.
  *
- * Three overlapping area paths — top, heart, base — read RIGHT TO LEFT, because
- * the whole interface is RTL and time should run in the reading direction.
+ * Three overlapping area paths — top, heart, base — read in the reading
+ * direction: right to left in Arabic, left to right in English (the SVG is
+ * mirrored there), because time should run the way the eye does.
  *
  * The shapes are derived from how many notes each tier carries, so a product
  * with a heavy base renders a different curve from one with a bright opening.
  * Nothing here is a fixed illustration.
  */
 /** Label and theme channels, in pyramid order. One list feeds legend and areas. */
+import { PRODUCT, type Locale } from '@diyar/i18n';
+
 const TIERS = [
-  ['القمة', 'var(--c-note-top)'],
-  ['القلب', 'var(--c-note-heart)'],
-  ['القاعدة', 'var(--c-note-base)'],
+  ['topNotes', 'var(--c-note-top)'],
+  ['heartNotes', 'var(--c-note-heart)'],
+  ['baseNotes', 'var(--c-note-base)'],
 ] as const;
 
 export function EvolutionCurve({
-  topCount, heartCount, baseCount,
-}: { topCount: number; heartCount: number; baseCount: number }) {
+  topCount, heartCount, baseCount, locale,
+}: { topCount: number; heartCount: number; baseCount: number; locale: Locale }) {
+  const copy = PRODUCT[locale];
   // Weight each tier's peak by how many notes it declares, clamped so a single
   // note still reads and eight notes do not blow out the panel.
   const peak = (n: number, min: number, max: number) =>
@@ -42,16 +46,19 @@ export function EvolutionCurve({
         {TIERS.map(([label, channels]) => (
           <span key={label} className="flex items-center gap-2 text-micro text-ink3">
             <i aria-hidden className="block h-[2px] w-3" style={{ background: `rgb(${channels})` }} />
-            {label}
+            {copy[label]}
           </span>
         ))}
       </div>
 
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="h-[84px] w-full"
+        // The paths are drawn with time running right to left, for Arabic. On
+        // the English site the same drawing is mirrored so time runs left to
+        // right, matching the reading direction and the hour labels below.
+        className="h-[84px] w-full ltr:-scale-x-100"
         role="img"
-        aria-label={`منحنى تطوّر العطر على مدار ثماني ساعات`}
+        aria-label={copy.curveLabel}
       >
         {/* Base — lingers longest, so it stretches furthest left (latest). */}
         <path
@@ -81,7 +88,7 @@ export function EvolutionCurve({
         chart at all.
       */}
       <div className="mt-2 flex justify-between text-micro text-ink3">
-        <span>الرشّة</span>
+        <span>{copy.spray}</span>
         <span className="tnum">2h</span>
         <span className="tnum">4h</span>
         <span className="tnum">6h</span>

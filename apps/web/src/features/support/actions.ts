@@ -2,6 +2,9 @@
 
 import type { SupportCategory } from '@diyar/domain';
 import { api } from '@/core/api';
+import { CONTACT } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { apiMessage } from '@/core/api-message';
 
 /**
  * Reaching a person.
@@ -35,12 +38,8 @@ export async function openTicket(input: {
     return { ok: true, reference: created.reference };
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    return {
-      ok: false,
-      message: message.length > 0 && message.length < 300
-        ? message
-        : 'تعذّر إرسال رسالتك. حاول مرة أخرى.',
-    };
+    const locale = await getLocale();
+    return { ok: false, message: apiMessage(message, locale, CONTACT[locale].failed) };
   }
 }
 

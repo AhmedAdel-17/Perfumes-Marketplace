@@ -2,6 +2,9 @@
 
 import type { ReturnReason } from '@diyar/domain';
 import { api } from '@/core/api';
+import { RETURNS } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { apiMessage } from '@/core/api-message';
 
 /**
  * Asking to send something back, without an account.
@@ -72,14 +75,12 @@ export async function requestReturn(input: {
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
+    const locale = await getLocale();
     return {
       ok: false,
-      // The router's messages are already Arabic and already name every
-      // objection at once. Anything unexpected gets a neutral sentence rather
-      // than an English stack trace.
-      message: message.length > 0 && message.length < 300
-        ? message
-        : 'تعذّر إرسال طلب الإرجاع. حاول مرة أخرى.',
+      // The router's messages name every objection at once. Anything
+      // unexpected gets a neutral sentence rather than a stack trace.
+      message: apiMessage(message, locale, RETURNS[locale].failed),
     };
   }
 }

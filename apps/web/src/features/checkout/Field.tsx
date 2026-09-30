@@ -1,7 +1,8 @@
 'use client';
 
 import { useId } from 'react';
-import { westernDigits } from '@diyar/i18n';
+import { CHECKOUT, westernDigits } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 
 /**
  * One form field.
@@ -58,12 +59,13 @@ export function Field({
    * prose, and a name or a street must keep whatever numerals it was given.
    */
   const digitsAsData = inputMode === 'tel' || inputMode === 'numeric';
+  const optional = CHECKOUT[useLocale()].optional;
 
   return (
     <div className="mb-5">
       <label htmlFor={id} className="mb-2 block text-caption tracking-label text-ink2">
         {label}
-        {!required && <span className="text-ink3"> — اختياري</span>}
+        {!required && <span className="text-ink3">{optional}</span>}
       </label>
 
       <input

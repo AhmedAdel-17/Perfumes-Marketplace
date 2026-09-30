@@ -5,6 +5,8 @@ import { APPLICATION_NOTE_MAX, houseSlug } from '@diyar/domain';
 import { Field } from '@/features/checkout/Field';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { submitApplication } from './actions';
+import { APPLY } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 
 /**
  * A house applying to join.
@@ -31,6 +33,7 @@ export function ApplyForm() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const copy = APPLY[useLocale()];
 
   // Computed by the DOMAIN's function — the same one the router uses to build
   // the real slug. A preview drawn by a second implementation would eventually
@@ -57,15 +60,12 @@ export function ApplyForm() {
     return (
       <div className="px-5 lg:px-0">
         <div className="border border-line bg-raised p-5">
-          <h2 className="font-display text-h3">وصلنا طلبك</h2>
+          <h2 className="font-display text-h3">{copy.received}</h2>
           <p className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2">
-            سنراجعه ونتصل بك على <span className="latin tnum">{phone}</span> خلال
-            أسبوع. المراجعة ثمانية بنود — هويّة المسؤول، ملكية حساب التحويل،
-            المسؤولية عن المنتج، الملصقات، إثبات ما يُذكر في الوصف، طريق الإرجاع،
-            القدرة على التجهيز، ومسؤول الخصوصية — ونمرّ عليها معك.
+            {copy.willCall(phone)}
           </p>
           <p className="mt-3 text-caption leading-relaxed text-ink3">
-            لا نطلب أي رسوم للانضمام، ولا ندخل الدار للبيع قبل انتهاء المراجعة.
+            {copy.noFees}
           </p>
         </div>
       </div>
@@ -74,15 +74,15 @@ export function ApplyForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
-      <Field label="اسم الدار" value={tradingName} onChange={setTradingName} required maxLength={120} />
+      <Field label={copy.houseName} value={tradingName} onChange={setTradingName} required maxLength={120} />
 
       <Field
-        label="الاسم بالحروف اللاتينية"
+        label={copy.latinName}
         value={latinName}
         onChange={setLatinName}
         required
         maxLength={120}
-        hint="كما يظهر على الزجاجة — منه يُبنى عنوان متجرك"
+        hint={copy.latinNameHint}
       />
 
       {/*
@@ -92,24 +92,24 @@ export function ApplyForm() {
       */}
       {slug.length > 0 && (
         <p className="-mt-3 mb-5 text-caption text-ink3">
-          عنوان متجرك سيكون{' '}
+          {copy.yourAddress}{' '}
           <span className="latin select-all text-ink2">diyar.eg/house/{slug}</span>
         </p>
       )}
 
-      <Field label="اسم المسؤول" value={ownerName} onChange={setOwnerName} required maxLength={120} />
+      <Field label={copy.ownerName} value={ownerName} onChange={setOwnerName} required maxLength={120} />
       <Field
-        label="رقم الموبايل" value={phone} onChange={setPhone} required
+        label={copy.phone} value={phone} onChange={setPhone} required
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
       />
       <Field
-        label="البريد الإلكتروني" value={email} onChange={setEmail}
-        maxLength={160} hint="اختياري"
+        label={copy.email} value={email} onChange={setEmail}
+        maxLength={160} hint={copy.optional}
       />
-      <Field label="المدينة" value={city} onChange={setCity} required maxLength={80} />
+      <Field label={copy.city} value={city} onChange={setCity} required maxLength={80} />
 
       <label className="mb-5 block">
-        <span className="text-caption tracking-label text-ink3">عن دارك</span>
+        <span className="text-caption tracking-label text-ink3">{copy.about}</span>
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value.slice(0, APPLICATION_NOTE_MAX))}
@@ -119,7 +119,7 @@ export function ApplyForm() {
           className="mt-2 block w-full resize-y border border-line bg-raised p-3 text-small leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
         />
         <span className="mt-1 block text-micro leading-relaxed text-ink3">
-          ماذا تصنع، ومنذ متى، وكم زجاجة في الشهر تقريبًا. فقرة تكفي.
+          {copy.aboutHint}
         </span>
         <span dir="ltr" className="tnum mt-1 block text-end text-micro text-ink3">
           {note.length}/{APPLICATION_NOTE_MAX}
@@ -133,7 +133,7 @@ export function ApplyForm() {
       )}
 
       <PrimaryButton type="submit" disabled={sending} fill="full">
-        {sending ? '…جارٍ الإرسال' : 'أرسل الطلب'}
+        {sending ? copy.sending : copy.send}
       </PrimaryButton>
     </form>
   );

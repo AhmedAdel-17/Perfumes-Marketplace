@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
-  counted, CURRENCY_LABEL, DAY, editorial, formatPrice, GOVERNORATE_OPTIONS,
-  plural, SHIPMENT, data as num } from '@diyar/i18n';
+  CHECKOUT, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, governorateOptions,
+  NOUN, nounIn, data as num, type Locale,
+} from '@diyar/i18n';
+import { localeHref } from '@/core/href';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { priceCart, type PricedCartResult } from '@/features/cart/actions';
 import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
@@ -39,10 +42,13 @@ const PHONE = /^(?:\+20|0)1[0125]\d{8}$/;
 export function CheckoutForm() {
   const { entries, hydrated, clear } = useCart();
   const [cart, setCart] = useState<PricedCartResult | null>(null);
+  const locale = useLocale();
+  const copy = CHECKOUT[locale];
+  const governorates = governorateOptions(locale);
 
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
-  const [governorate, setGovernorate] = useState<string>(GOVERNORATE_OPTIONS[0]!.value);
+  const [governorate, setGovernorate] = useState<string>(governorates[0]!.value);
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
   const [street, setStreet] = useState('');
@@ -64,12 +70,12 @@ export function CheckoutForm() {
 
   const validate = (): boolean => {
     const next: Errors = {};
-    if (contactName.trim().length < 2) next.contactName = 'اكتب الاسم كاملًا';
-    if (!PHONE.test(contactPhone.trim())) next.contactPhone = 'رقم موبايل مصري غير صحيح';
-    if (!city.trim()) next.city = 'مطلوب';
-    if (!area.trim()) next.area = 'مطلوب';
-    if (!street.trim()) next.street = 'مطلوب';
-    if (!building.trim()) next.building = 'مطلوب';
+    if (contactName.trim().length < 2) next.contactName = copy.errorName;
+    if (!PHONE.test(contactPhone.trim())) next.contactPhone = copy.errorPhone;
+    if (!city.trim()) next.city = copy.errorRequired;
+    if (!area.trim()) next.area = copy.errorRequired;
+    if (!street.trim()) next.street = copy.errorRequired;
+    if (!building.trim()) next.building = copy.errorRequired;
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -101,13 +107,13 @@ export function CheckoutForm() {
     setSubmitting(false);
   };
 
-  if (result?.ok) return <Confirmation result={result} />;
+  if (result?.ok) return <Confirmation result={result} locale={locale} />;
 
   if (!hydrated || cart === null) {
     return (
       <>
-        <Heading />
-        <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ التحضير</p>
+        <Heading title={copy.title} />
+        <p className="px-5 py-8 text-small text-ink3 lg:px-0">{copy.preparing}</p>
       </>
     );
   }
@@ -115,13 +121,13 @@ export function CheckoutForm() {
   if (cart.isEmpty) {
     return (
       <div className="px-5 py-9 text-center lg:px-0">
-        <Heading />
-        <p className="font-display text-h3">حقيبتك فارغة</p>
+        <Heading title={copy.title} />
+        <p className="font-display text-h3">{copy.empty}</p>
         <Link
-          href="/"
+          href={localeHref(locale, '/')}
           className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          تصفّح العطور
+          {copy.browse}
         </Link>
       </div>
     );
@@ -149,13 +155,13 @@ export function CheckoutForm() {
       noValidate
       className="px-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px] lg:px-0"
     >
-      <Heading />
+      <Heading title={copy.title} />
       {result && !result.ok && (
         <div role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small leading-relaxed text-ink lg:col-span-12">
           {result.message}
           {result.reason === 'cart_changed' && (
-            <Link href="/cart" className="tappable mt-3 block text-accent underline">
-              راجع الحقيبة
+            <Link href={localeHref(locale, '/cart')} className="tappable mt-3 block text-accent underline">
+              {copy.reviewBag}
             </Link>
           )}
         </div>
@@ -163,34 +169,34 @@ export function CheckoutForm() {
 
       <div className="lg:col-span-7">
       <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">بيانات التواصل</h2>
+        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.contact}</h2>
         <Field
-          label="الاسم بالكامل" value={contactName} onChange={setContactName}
+          label={copy.fullName} value={contactName} onChange={setContactName}
           error={errors.contactName} required autoComplete="name" maxLength={80}
         />
         <Field
-          label="رقم الموبايل" value={contactPhone} onChange={setContactPhone}
+          label={copy.phone} value={contactPhone} onChange={setContactPhone}
           error={errors.contactPhone} required type="tel" inputMode="tel"
           autoComplete="tel" maxLength={14}
-          hint="سيتواصل معك المندوب على هذا الرقم"
+          hint={copy.phoneHint}
         />
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">عنوان التوصيل</h2>
+        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.address}</h2>
         <SelectField
-          label="المحافظة" value={governorate} onChange={setGovernorate}
-          options={GOVERNORATE_OPTIONS}
+          label={copy.governorate} value={governorate} onChange={setGovernorate}
+          options={governorates}
         />
         <div className="grid gap-x-4 sm:grid-cols-2">
-          <Field label="المدينة" value={city} onChange={setCity} error={errors.city} required autoComplete="address-level2" />
-          <Field label="المنطقة" value={area} onChange={setArea} error={errors.area} required />
+          <Field label={copy.city} value={city} onChange={setCity} error={errors.city} required autoComplete="address-level2" />
+          <Field label={copy.area} value={area} onChange={setArea} error={errors.area} required />
         </div>
-        <Field label="الشارع" value={street} onChange={setStreet} error={errors.street} required autoComplete="address-line1" />
+        <Field label={copy.street} value={street} onChange={setStreet} error={errors.street} required autoComplete="address-line1" />
         <div className="grid gap-x-4 sm:grid-cols-3">
-          <Field label="رقم العقار" value={building} onChange={setBuilding} error={errors.building} required maxLength={40} />
-          <Field label="الدور" value={floor} onChange={setFloor} maxLength={20} />
-          <Field label="الشقة" value={apartment} onChange={setApartment} maxLength={20} />
+          <Field label={copy.building} value={building} onChange={setBuilding} error={errors.building} required maxLength={40} />
+          <Field label={copy.floor} value={floor} onChange={setFloor} maxLength={20} />
+          <Field label={copy.apartment} value={apartment} onChange={setApartment} maxLength={20} />
         </div>
         {/*
           Optional in the schema, load-bearing in reality: doc 03 §4 makes failed
@@ -198,13 +204,13 @@ export function CheckoutForm() {
           courier arrive without phoning. A cost control wearing a UX costume.
         */}
         <Field
-          label="علامة مميزة" value={landmark} onChange={setLandmark} maxLength={200}
-          hint="يساعد المندوب على الوصول دون اتصال"
+          label={copy.landmark} value={landmark} onChange={setLandmark} maxLength={200}
+          hint={copy.landmarkHint}
         />
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">الدفع</h2>
+        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.payment}</h2>
         {/*
           One method, presented as a statement rather than a radio group with a
           single option. Cash on delivery needs no gateway and no approvals, so
@@ -212,23 +218,23 @@ export function CheckoutForm() {
           here when Paymob is connected.
         */}
         <div className="border border-line bg-raised p-4">
-          <div className="text-bodyLg">الدفع عند الاستلام</div>
+          <div className="text-bodyLg">{copy.cashOnDelivery}</div>
           <p className="mt-2 text-caption leading-relaxed text-ink3">
-            تدفع نقدًا للمندوب عند تسليم الشحنة. كل دار تشحن طلبها بنفسها.
+            {copy.cashOnDeliveryBody}
           </p>
         </div>
       </section>
       </div>
 
       <div className="lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:border-line lg:bg-raised lg:p-7">
-        <Summary cart={cart} />
+        <Summary cart={cart} locale={locale} />
 
         <PrimaryButton type="submit" disabled={submitting} fill="full">
-          {submitting ? '…جارٍ تأكيد الطلب' : 'تأكيد الطلب'}
+          {submitting ? copy.placing : copy.place}
         </PrimaryButton>
 
         <p className="mt-3 pb-8 text-center text-micro leading-relaxed text-ink3 lg:pb-0">
-          بتأكيد الطلب فأنت توافق على شروط البيع وسياسة الإرجاع.
+          {copy.agreement}
         </p>
       </div>
     </form>
@@ -243,15 +249,16 @@ export function CheckoutForm() {
  * states is a page a screen-reader user cannot orient in. Keeping it in one
  * component is also what stops the four copies drifting apart.
  */
-function Heading() {
+function Heading({ title }: { title: string }) {
   return (
     <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:col-span-12 lg:px-0 lg:pb-8 lg:pt-9 lg:text-h1Lg">
-      إتمام الطلب
+      {title}
     </h1>
   );
 }
 
-function Summary({ cart }: { cart: PricedCartResult }) {
+function Summary({ cart, locale }: { cart: PricedCartResult; locale: Locale }) {
+  const copy = CHECKOUT[locale];
   return (
     // The rule separates the summary from the form on a phone. Inside the
     // desktop panel the panel's own border already does that job, and two
@@ -266,7 +273,7 @@ function Summary({ cart }: { cart: PricedCartResult }) {
               {' · '}
               <span className="tnum">{num(house.etaDaysMin)}</span>–
               <span className="tnum">{num(house.etaDaysMax)}</span>{' '}
-              {plural(house.etaDaysMax, DAY)}
+              {nounIn(locale, house.etaDaysMax, NOUN.day)}
             </span>
           </span>
           <span>
@@ -288,14 +295,14 @@ function Summary({ cart }: { cart: PricedCartResult }) {
       */}
       <div className="mt-4 border-t border-line pt-4">
         <div className="flex justify-between py-1 text-small text-ink2">
-          <span>المنتجات</span>
+          <span>{copy.products}</span>
           <span>
             <span className="tnum">{formatPrice(cart.merchandisePiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </span>
         </div>
         <div className="flex justify-between py-1 text-small text-ink2">
-          <span>التوصيل · {counted(cart.houses.length, SHIPMENT, editorial)}</span>
+          <span>{copy.delivery(countedIn(locale, cart.houses.length, NOUN.shipment, editorialIn(locale)))}</span>
           <span>
             <span className="tnum">{formatPrice(cart.shippingPiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
@@ -304,7 +311,7 @@ function Summary({ cart }: { cart: PricedCartResult }) {
       </div>
 
       <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-        <span className="font-display text-h4">الإجمالي</span>
+        <span className="font-display text-h4">{copy.total}</span>
         <span className="text-h3 font-semibold lg:text-h2Lg">
           <span className="tnum">{formatPrice(cart.totalPiastres)}</span>
           <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
@@ -314,7 +321,10 @@ function Summary({ cart }: { cart: PricedCartResult }) {
   );
 }
 
-function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true }> }) {
+function Confirmation(
+  { result, locale }: { result: Extract<PlaceOrderResult, { ok: true }>; locale: Locale },
+) {
+  const copy = CHECKOUT[locale];
   return (
     // Capped at the prose measure. The page frame is the full content width so
     // the checkout can hold two columns; a confirmation is one short column of
@@ -322,12 +332,12 @@ function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true
     // one §4b describes, made on the same page.
     <div className="max-w-proseMax px-5 py-9 lg:px-0 lg:py-[72px]">
       <div className="latin mb-4 text-micro tracking-label text-accent">ORDER CONFIRMED</div>
-      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">تم استلام طلبك</h1>
+      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.confirmedTitle}</h1>
 
       <p className="mt-5 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
         {result.houseCount > 1
-          ? 'كل دار ستؤكّد طلبها وتشحنه بنفسها، لذا قد تصل الشحنات في أيام مختلفة.'
-          : 'ستؤكّد الدار طلبها وتجهّزه للشحن.'}
+          ? copy.confirmedManyHouses
+          : copy.confirmedOneHouse}
       </p>
 
       {/*
@@ -336,45 +346,45 @@ function Confirmation({ result }: { result: Extract<PlaceOrderResult, { ok: true
         character can be misheard.
       */}
       <div className="mt-7 border border-line bg-raised p-5">
-        <div className="text-caption tracking-label text-ink3">رقم الطلب</div>
+        <div className="text-caption tracking-label text-ink3">{copy.reference}</div>
         <div className="latin mt-2 select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
           {result.reference}
         </div>
         <p className="mt-3 text-caption leading-relaxed text-ink3">
-          احتفظ به لمتابعة الطلب. ستحتاج إليه مع رقم موبايلك.
+          {copy.referenceHint}
         </p>
       </div>
 
       <dl className="mt-6 border-t border-line pt-5">
         <div className="flex justify-between py-1.5 text-small text-ink2">
-          <dt>الإجمالي عند الاستلام</dt>
+          <dt>{copy.totalOnDelivery}</dt>
           <dd>
             <span className="tnum">{formatPrice(result.totalPiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </dd>
         </div>
         <div className="flex justify-between py-1.5 text-small text-ink2">
-          <dt>الوصول المتوقّع</dt>
+          <dt>{copy.expectedArrival}</dt>
           <dd>
             <span className="tnum">{num(result.etaDaysMin)}</span>–
             <span className="tnum">{num(result.etaDaysMax)}</span>{' '}
-            {plural(result.etaDaysMax, DAY)}
+            {nounIn(locale, result.etaDaysMax, NOUN.day)}
           </dd>
         </div>
       </dl>
 
       <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
         <Link
-          href="/order"
+          href={localeHref(locale, '/order')}
           className="tappable border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          تتبّع الطلب
+          {copy.track}
         </Link>
         <Link
-          href="/"
+          href={localeHref(locale, '/')}
           className="tappable border-b border-line pb-2 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          متابعة التصفّح
+          {copy.keepBrowsing}
         </Link>
       </div>
     </div>

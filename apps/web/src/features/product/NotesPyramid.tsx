@@ -1,3 +1,4 @@
+import { PRODUCT, type Locale } from '@diyar/i18n';
 import { NOTE_ICON } from './note-icons';
 
 /**
@@ -16,14 +17,15 @@ import { NOTE_ICON } from './note-icons';
  * be written as a real translucent colour.
  */
 const TIERS = [
-  { key: 'top', en: 'TOP', ar: 'القمة', when: 'أول ٣٠ دقيقة', channels: 'var(--c-note-top)' },
-  { key: 'heart', en: 'HEART', ar: 'القلب', when: 'ساعتان', channels: 'var(--c-note-heart)' },
-  { key: 'base', en: 'BASE', ar: 'القاعدة', when: 'حتى ٨ ساعات', channels: 'var(--c-note-base)' },
+  { key: 'top', en: 'TOP', name: 'topNotes', when: 'topWhen', channels: 'var(--c-note-top)' },
+  { key: 'heart', en: 'HEART', name: 'heartNotes', when: 'heartWhen', channels: 'var(--c-note-heart)' },
+  { key: 'base', en: 'BASE', name: 'baseNotes', when: 'baseWhen', channels: 'var(--c-note-base)' },
 ] as const;
 
 export function NotesPyramid({
-  top, heart, base,
-}: { top: string[]; heart: string[]; base: string[] }) {
+  top, heart, base, locale,
+}: { top: string[]; heart: string[]; base: string[]; locale: Locale }) {
+  const copy = PRODUCT[locale];
   const notes: Record<string, string[]> = { top, heart, base };
 
   return (
@@ -65,7 +67,7 @@ export function NotesPyramid({
                   <Icon />
                 </span>
               </div>
-              <div className="mt-2 text-center text-micro text-ink3">{tier.when}</div>
+              <div className="mt-2 text-center text-micro text-ink3">{copy[tier.when]}</div>
             </div>
 
             <div className="flex-1 ps-5 pt-3">
@@ -87,7 +89,7 @@ export function NotesPyramid({
                 scale are different decisions and this is why they are separate
                 properties.
               */}
-              <h2 className="mb-3 font-display text-h4">{tier.ar}</h2>
+              <h2 className="mb-3 font-display text-h4">{copy[tier.name]}</h2>
               <ul className="flex flex-wrap gap-2">
                 {list.map((note) => (
                   <li

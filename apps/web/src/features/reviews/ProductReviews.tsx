@@ -1,4 +1,6 @@
-import { counted, data as num, REVIEW, VERIFIED_PURCHASE_AR } from '@diyar/i18n';
+import { countedIn, data as num, NOUN, REVIEWS } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { localeHref } from '@/core/href';
 import { formatRating } from '@diyar/domain';
 import { api } from '@/core/api';
 import { DimensionBars, OverallScore } from './Ratings';
@@ -25,15 +27,17 @@ export async function ProductReviews({
   productName: string;
 }) {
   const { summary, reviews } = await api().reviews.forProduct({ productId, limit: 20 });
+  const locale = await getLocale();
+  const copy = REVIEWS[locale];
 
   return (
     <section id="reviews" className="mt-8 border-t border-line px-5 pt-7 lg:mt-[96px] lg:px-0 lg:pt-9">
-      <h2 className="font-display text-h3 lg:text-h2Lg">التقييمات</h2>
+      <h2 className="font-display text-h3 lg:text-h2Lg">{copy.heading}</h2>
 
       {summary.count === 0 ? (
         <div className="mt-4 max-w-proseMax">
           <p className="text-small leading-relaxed text-ink2 lg:text-bodyLg">
-            لم يكتب أحد عن {productName} بعد.
+            {copy.noneYet(productName)}
           </p>
           {/*
             The invitation says WHY the section is empty, which is the honest
@@ -42,21 +46,20 @@ export async function ProductReviews({
             than unhappy ones.
           */}
           <p className="mt-2 text-caption leading-relaxed text-ink3">
-            كل تقييم هنا مكتوب بعد استلام الطلب فعلًا — لا نقبل غير ذلك، ولذلك تتأخر
-            التقييمات الأولى.
+            {copy.onlyAfterDelivery}
           </p>
         </div>
       ) : (
         <>
           <div className="mt-5 lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-5">
-              <OverallScore summary={summary} />
+              <OverallScore summary={summary} locale={locale} />
               <p className="mt-2 text-caption tracking-label text-ink3">
-                {counted(summary.count, REVIEW, num)}
+                {countedIn(locale, summary.count, NOUN.review, num)}
                 {' · '}
-                {VERIFIED_PURCHASE_AR}
+                {copy.verifiedPurchase}
               </p>
-              <DimensionBars summary={summary} />
+              <DimensionBars summary={summary} locale={locale} />
             </div>
 
             <ol className="mt-8 lg:col-span-7 lg:mt-0">
@@ -85,10 +88,10 @@ export async function ProductReviews({
                     once per review as a plain fact rather than as a prize.
                   */}
                   <div className="mt-1 text-micro tracking-label text-ink3">
-                    {VERIFIED_PURCHASE_AR}
+                    {copy.verifiedPurchase}
                     {' · '}
                     <time dateTime={review.createdAt}>
-                      {new Date(review.createdAt).toLocaleDateString('ar-EG', {
+                      {new Date(review.createdAt).toLocaleDateString(copy.dateLocale, {
                         year: 'numeric', month: 'long',
                       })}
                     </time>
@@ -107,15 +110,15 @@ export async function ProductReviews({
       )}
 
       <p className="mt-7 text-caption leading-relaxed text-ink3">
-        اشتريت هذا العطر؟{' '}
+        {copy.boughtIt}{' '}
         <a
-          href="/order"
+          href={localeHref(locale, '/order')}
           // `inline-flex min-h-touch`: a caption-sized link is a 34px line box,
           // and `tappable` alone lands short of the floor. The label stays small
           // while the TARGET is a target.
           className="tappable inline-flex min-h-touch items-center border-b border-accent/50 text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
         >
-          افتح صفحة تتبّع الطلب لكتابة تقييمك
+          {copy.openTracking}
         </a>
       </p>
     </section>

@@ -45,3 +45,24 @@ export const VERIFIED_PURCHASE_AR = 'شراء موثّق';
 
 /** What an unreviewed perfume says. Never "٠ من ٥". */
 export const NO_REVIEWS_YET_AR = 'لا توجد تقييمات بعد';
+
+export const REVIEW_DIMENSION_EN = {
+  scent: 'Scent',
+  longevity: 'Longevity',
+  projection: 'Projection',
+  value: 'Value for money',
+  packaging: 'Packaging',
+  descriptionAccuracy: 'Matches the description',
+} as const satisfies Record<keyof typeof REVIEW_DIMENSION_AR, string>;
+
+export const REVIEW_DIMENSION_PROMPT_EN = {
+  scent: 'Did you like the scent itself?',
+  longevity: 'How long did it last on you?',
+  projection: 'Could people around you smell it?',
+  value: 'Is it worth its price?',
+  packaging: 'Did it arrive in good condition and well packed?',
+  descriptionAccuracy: 'Was it as described on the page?',
+} as const satisfies Record<keyof typeof REVIEW_DIMENSION_PROMPT_AR, string>;
+
+export const REVIEW_DIMENSION = { ar: REVIEW_DIMENSION_AR, en: REVIEW_DIMENSION_EN } as const;
+export const REVIEW_DIMENSION_PROMPT = { ar: REVIEW_DIMENSION_PROMPT_AR, en: REVIEW_DIMENSION_PROMPT_EN } as const;

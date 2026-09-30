@@ -3,6 +3,9 @@
 import { classifyApiError } from '@diyar/api';
 import { api } from '@/core/api';
 import type { CartEntry } from '@/features/cart/CartStore';
+import { CHECKOUT } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { apiMessage } from '@/core/api-message';
 
 /**
  * Place the order.
@@ -61,12 +64,14 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     // read one field. `conflict` is the one the customer can act on: something
     // in the basket moved between the bag and this button.
     const failure = classifyApiError(error);
+    const locale = await getLocale();
+    const fallback = CHECKOUT[locale].failed;
     if (failure.kind === 'conflict') {
-      return { ok: false, reason: 'cart_changed', message: failure.message };
+      return { ok: false, reason: 'cart_changed', message: apiMessage(failure.message, locale, fallback) };
     }
     if (failure.kind === 'invalid') {
-      return { ok: false, reason: 'invalid', message: failure.message };
+      return { ok: false, reason: 'invalid', message: apiMessage(failure.message, locale, fallback) };
     }
-    return { ok: false, reason: 'failed', message: 'تعذّر إتمام الطلب. حاول مرّة أخرى.' };
+    return { ok: false, reason: 'failed', message: fallback };
   }
 }

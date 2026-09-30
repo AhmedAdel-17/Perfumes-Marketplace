@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import type { ReturnReason } from '@diyar/domain';
 import {
-  CURRENCY_LABEL, RETURN_REASON_AR, RETURN_REASON_DETAIL_AR, RETURN_STATE_AR,
+  CURRENCY_LABEL, RETURN_REASON, RETURN_REASON_DETAIL, RETURN_STATE, RETURNS,
   data as num, formatPrice,
 } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import {
   requestReturn, returnableItems,
@@ -31,6 +32,8 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
   const [items, setItems] = useState<ReturnableItem[] | null>(null);
   const [existing, setExisting] = useState<ExistingReturn[]>([]);
   const [open, setOpen] = useState<string | null>(null);
+  const locale = useLocale();
+  const copy = RETURNS[locale];
 
   const load = async () => {
     const result = await returnableItems(reference, phone);
@@ -58,7 +61,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
 
   return (
     <section className="mt-8 border-t border-line pt-6">
-      <h2 className="font-display text-h4 lg:text-h3">إرجاع منتج</h2>
+      <h2 className="font-display text-h4 lg:text-h3">{copy.heading}</h2>
 
       {existing.length > 0 && (
         <ul className="mt-4">
@@ -67,15 +70,15 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="text-small text-ink">{row.productName ?? row.brandName}</span>
                 <span className="text-caption text-accent">
-                  {RETURN_STATE_AR[row.state as keyof typeof RETURN_STATE_AR] ?? row.state}
+                  {RETURN_STATE[locale][row.state as keyof (typeof RETURN_STATE)['ar']] ?? row.state}
                 </span>
               </div>
               <p className="mt-1 text-caption text-ink3">
-                {RETURN_REASON_AR[row.reason as ReturnReason] ?? row.reason}
+                {RETURN_REASON[locale][row.reason as ReturnReason] ?? row.reason}
               </p>
               {row.refundPiastres !== null && (
                 <p className="mt-2 text-caption text-ink2">
-                  المبلغ المردود{' '}
+                  {copy.refunded}{' '}
                   <span className="tnum">{formatPrice(row.refundPiastres)}</span>
                   <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
                 </p>
@@ -88,7 +91,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
       {returnable.length > 0 && (
         <>
           <p className="mt-4 max-w-proseMax text-caption leading-relaxed text-ink3">
-            الدار هي من تراجع الطلب. لن يُردّ أي مبلغ قبل أن تصل العبوة إلينا ونفحصها.
+            {copy.houseReviews}
           </p>
 
           <ul className="mt-3">
@@ -98,9 +101,9 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
                   <div>
                     <div className="text-small text-ink">{item.productName}</div>
                     <div className="text-caption text-ink3">
-                      {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> مل
+                      {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                       {item.daysLeft !== null && item.daysLeft > 0 && (
-                        <> · باقٍ <span className="tnum">{num(item.daysLeft)}</span> يوم</>
+                        <> · {copy.daysLeft(num(item.daysLeft), item.daysLeft === 1)}</>
                       )}
                     </div>
                   </div>
@@ -111,7 +114,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
                     aria-expanded={open === item.lineItemId}
                     className="tappable min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
                   >
-                    {open === item.lineItemId ? 'إغلاق' : 'اطلب الإرجاع'}
+                    {open === item.lineItemId ? copy.close : copy.request}
                   </button>
                 </div>
 
@@ -144,6 +147,8 @@ function ReturnForm({
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const locale = useLocale();
+  const copy = RETURNS[locale];
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -161,7 +166,7 @@ function ReturnForm({
   return (
     <form onSubmit={onSubmit} noValidate className="mt-4 border border-line bg-raised p-4 lg:p-5">
       <fieldset>
-        <legend className="text-caption tracking-label text-ink3">ما المشكلة؟</legend>
+        <legend className="text-caption tracking-label text-ink3">{copy.whatIsWrong}</legend>
 
         <div className="mt-2">
           {/*
@@ -184,9 +189,9 @@ function ReturnForm({
                 className="mt-1 h-4 w-4 accent-accent"
               />
               <span>
-                <span className="block text-small text-ink">{RETURN_REASON_AR[option]}</span>
+                <span className="block text-small text-ink">{RETURN_REASON[locale][option]}</span>
                 <span className="block text-caption leading-relaxed text-ink3">
-                  {RETURN_REASON_DETAIL_AR[option]}
+                  {RETURN_REASON_DETAIL[locale][option]}
                 </span>
               </span>
             </label>
@@ -195,7 +200,7 @@ function ReturnForm({
       </fieldset>
 
       <label className="mt-4 block">
-        <span className="text-caption tracking-label text-ink3">اشرح باختصار</span>
+        <span className="text-caption tracking-label text-ink3">{copy.explain}</span>
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value.slice(0, 1_000))}
@@ -210,7 +215,7 @@ function ReturnForm({
           bottle and look at it.
         */}
         <span className="mt-1 block text-micro leading-relaxed text-ink3">
-          الدار ستقرأ هذا السطر قبل أن ترسل من يستلم العبوة.
+          {copy.houseReads}
         </span>
       </label>
 
@@ -226,11 +231,11 @@ function ReturnForm({
           fill="full"
           disabled={saving || reason === null || note.trim().length === 0}
         >
-          {saving ? '…جارٍ الإرسال' : 'أرسل طلب الإرجاع'}
+          {saving ? copy.sending : copy.send}
         </PrimaryButton>
         {(reason === null || note.trim().length === 0) && (
           <p className="mt-2 text-caption text-ink3">
-            {reason === null ? 'اختر سبب الإرجاع.' : 'اكتب سطرًا يوضّح المشكلة.'}
+            {reason === null ? copy.chooseReason : copy.writeLine}
           </p>
         )}
       </div>

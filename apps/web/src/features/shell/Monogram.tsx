@@ -23,7 +23,7 @@ export function Monogram({ size = 28, className = '' }: { size?: number; classNa
       height={size}
       className={className}
       role="img"
-      aria-label="ديار"
+      aria-label="DIYAR"
       fill="none"
     >
       {/* The diamond: a rotated square, drawn as a path so the corners stay

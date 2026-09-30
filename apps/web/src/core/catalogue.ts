@@ -27,7 +27,7 @@ import { api } from './api';
  */
 
 export type {
-  HouseDetail, ProductCard, ProductDetail, SearchResult, StorefrontPhoto,
+  HouseDetail, PerformanceReading, ProductCard, ProductDetail, SearchResult, StorefrontPhoto,
 } from '@diyar/api';
 
 export const listPublishedProducts = () => api().catalogue.published();

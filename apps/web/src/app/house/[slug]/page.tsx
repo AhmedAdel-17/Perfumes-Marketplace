@@ -17,8 +17,10 @@
  */
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { counted, editorial, PERFUME } from '@diyar/i18n';
-import { GOVERNORATE_AR } from '@diyar/i18n';
+import {
+  countedIn, editorialIn, GOVERNORATE, HOUSES, NOUN, SHELL,
+} from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 import type { Governorate } from '@diyar/domain';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
@@ -34,13 +36,15 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   const house = await findHouseBySlug(slug);
-  if (!house) return { title: 'ديار' };
+  const locale = await getLocale();
+  const suffix = SHELL[locale].titleSuffix;
+  if (!house) return { title: suffix };
 
   return {
-    title: `${house.name} | ديار`,
+    title: `${house.name} | ${suffix}`,
     // The house's OWN words where it has them. A generated description on a
     // page about a maker is the one place a template sentence is most obvious.
-    description: house.bio ?? `${house.name} — دار عطور مصرية مستقلّة على ديار.`,
+    description: house.bio ?? HOUSES[locale].houseFallbackDescription(house.name),
     openGraph: { title: house.name, ...(house.bio ? { description: house.bio } : {}) },
   };
 }
@@ -51,6 +55,9 @@ export default async function HousePage(
   const { slug } = await params;
   const house = await findHouseBySlug(slug);
   if (!house) notFound();
+  const locale = await getLocale();
+  const copy = HOUSES[locale];
+  const editorialNum = editorialIn(locale);
 
   return (
     <>
@@ -88,13 +95,13 @@ export default async function HousePage(
                   <>
                     <span aria-hidden className="text-line">·</span>
                     {/* Editorial numerals: a founding year is prose, not data. */}
-                    <span>منذ {editorial(house.foundedYear, false)}</span>
+                    <span>{copy.since(editorialNum(house.foundedYear, false))}</span>
                   </>
                 )}
                 {house.products.length > 0 && (
                   <>
                     <span aria-hidden className="text-line">·</span>
-                    <span>{counted(house.products.length, PERFUME, editorial)}</span>
+                    <span>{countedIn(locale, house.products.length, NOUN.perfume, editorialNum)}</span>
                   </>
                 )}
               </div>
@@ -124,7 +131,7 @@ export default async function HousePage(
             */}
             <div className="mx-auto max-w-contentMax px-5 py-10 lg:px-8 lg:py-14">
               <div className="max-w-proseMax">
-                <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">الحكاية</h2>
+                <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.story}</h2>
                 {/*
                   Paragraphs split on a blank line, the same rule the editorial
                   blocks follow. A house writes its story in a textarea and a
@@ -143,7 +150,7 @@ export default async function HousePage(
 
         {/* --------------------------------------------------- the perfumes */}
         <section className="mx-auto max-w-contentMax px-5 py-10 lg:px-8 lg:py-14">
-          <h2 className="mb-7 font-display text-h3 lg:mb-9 lg:text-h2Lg">العطور</h2>
+          <h2 className="mb-7 font-display text-h3 lg:mb-9 lg:text-h2Lg">{copy.perfumes}</h2>
 
           {house.products.length === 0 ? (
             /*
@@ -153,12 +160,12 @@ export default async function HousePage(
              * a page that otherwise works reads as a loading failure, and the
              * visitor refreshes instead of leaving.
              */
-            <p className="text-bodyLg text-ink2">لا توجد عطور معروضة من هذه الدار حاليًا.</p>
+            <p className="text-bodyLg text-ink2">{copy.noPerfumes}</p>
           ) : (
             <div className="grid grid-cols-2 gap-x-4 gap-y-9 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
               {house.products.map((product, index) => (
                 <Reveal key={product.id} delay={index * 60}>
-                  <ProductTile product={product} />
+                  <ProductTile product={product} locale={locale} />
                 </Reveal>
               ))}
             </div>
@@ -169,7 +176,7 @@ export default async function HousePage(
         {house.serviceGovernorates.length > 0 && (
           <section className="border-t border-line/70">
             <div className="mx-auto max-w-contentMax px-5 py-9 lg:px-8 lg:py-11">
-              <h2 className="mb-4 font-display text-h4">يوصّل إلى</h2>
+              <h2 className="mb-4 font-display text-h4">{copy.deliversTo}</h2>
               {/*
                 Stated before checkout, not at it.
 
@@ -185,7 +192,7 @@ export default async function HousePage(
                      covers a governorate added to the database ahead of the
                      copy layer — showing the code is ugly and showing nothing
                      is a lie about where the house delivers. */
-                  .map((code) => GOVERNORATE_AR[code as Governorate] ?? code)
+                  .map((code) => GOVERNORATE[locale][code as Governorate] ?? code)
                   .join(' · ')}
               </p>
             </div>

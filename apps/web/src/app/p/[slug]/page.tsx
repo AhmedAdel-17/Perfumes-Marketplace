@@ -15,7 +15,11 @@ import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
-import { DAY, data as num, plural } from '@diyar/i18n';
+import {
+  CONCENTRATION, data as num, labelOf, NOUN, nounIn, PRODUCT, SHELL,
+} from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { localeHref } from '@/core/href';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,15 +35,20 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   const product = await findProductBySlug(slug);
-  if (!product) return { title: 'غير موجود' };
+  const locale = await getLocale();
+  const copy = PRODUCT[locale];
+  if (!product) return { title: copy.notFound };
 
   return {
-    title: `${product.name} — ${product.brandName} | ديار`,
-    description: `${product.name} من ${product.brandName}. ${product.concentrationLabel}، ${product.volumeMl} مل.`,
+    title: `${product.name} — ${product.brandName} | ${SHELL[locale].titleSuffix}`,
+    description: copy.metaDescription(
+      product.name, product.brandName,
+      labelOf(CONCENTRATION, locale, product.concentration), String(product.volumeMl),
+    ),
     openGraph: {
       title: `${product.name} — ${product.brandName}`,
       type: 'website',
-      locale: 'ar_EG',
+      locale: locale === 'ar' ? 'ar_EG' : 'en_GB',
     },
   };
 }
@@ -54,6 +63,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // used to compute its own and promised a day earlier than every screen after
   // it — see `arrivalWindow`.
   const arrival = arrivalWindow(product.fulfilmentHours);
+  const locale = await getLocale();
+  const copy = PRODUCT[locale];
 
   return (
     <>
@@ -167,7 +178,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   {product.name}
                 </h1>
                 <p className="mt-2 text-small text-ink2 lg:mt-3 lg:text-bodyLg">
-                  <span className="tnum">{num(product.volumeMl)}</span> مل · {product.concentrationLabel}
+                  <span className="tnum">{num(product.volumeMl)}</span> {copy.ml} · {labelOf(CONCENTRATION, locale, product.concentration)}
                 </p>
               </div>
 
@@ -178,6 +189,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     pricePiastres={product.pricePiastres}
                     inStock={product.inStock}
                     variant="inline"
+                    locale={locale}
                   />
                 </div>
 
@@ -187,6 +199,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     top={product.notesTop}
                     heart={product.notesHeart}
                     base={product.notesBase}
+                    locale={locale}
                   />
                 </div>
 
@@ -210,6 +223,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 topCount={product.notesTop.length}
                 heartCount={product.notesHeart.length}
                 baseCount={product.notesBase.length}
+                locale={locale}
               />
             </div>
 
@@ -217,8 +231,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {(product.longevity || product.projection) && (
                 <section className="mt-8 lg:mt-0">
                   <h2 className="latin mb-4 text-micro tracking-label text-ink3">PERFORMANCE</h2>
-                  {product.longevity && <PerformanceMeter label="الثبات" band={product.longevity} />}
-                  {product.projection && <PerformanceMeter label="الانتشار" band={product.projection} />}
+                  {product.longevity && <PerformanceMeter label={copy.longevity} band={product.longevity} locale={locale} />}
+                  {product.projection && <PerformanceMeter label={copy.projection} band={product.projection} locale={locale} />}
                 </section>
               )}
 
@@ -237,20 +251,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   end with a heading that said THE HOUSE.
                 */}
                 <Link
-                  href={`/house/${product.houseSlug}`}
+                  href={localeHref(locale, `/house/${product.houseSlug}`)}
                   className="tappable group inline-flex min-h-touch items-baseline gap-3"
                 >
                   <span className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3">
                     {product.brandName}
                   </span>
                   <span className="text-caption text-ink3 transition-colors duration-base ease-out group-hover:text-accent">
-                    كل عطورها ←
+                    {copy.allItsPerfumes}
                   </span>
                 </Link>
                 <p className="mt-2 text-caption leading-relaxed text-ink3 lg:text-small">
-                  تُجهّز الدار وتشحن طلبها بنفسها. يصل خلال{' '}
-                  <span className="tnum">{num(arrival.min)}</span> إلى{' '}
-                  <span className="tnum">{num(arrival.max)}</span> {plural(arrival.max, DAY)}.
+                  {copy.shipsItself(num(arrival.min), num(arrival.max), nounIn(locale, arrival.max, NOUN.day))}
                 </p>
               </section>
             </div>
@@ -270,7 +282,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {others.length > 0 && (
             <section className="mt-8 lg:mt-[96px]">
               <h2 className="mb-4 px-5 font-display text-h3 lg:mb-6 lg:px-0 lg:text-h2Lg">
-                من دور أخرى
+                {copy.fromOtherHouses}
               </h2>
 
               {/*
@@ -289,7 +301,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     than the thing it is suggesting about. */}
                 {others.map((p) => (
                   <div key={p.id} className="w-[148px] flex-none lg:w-full lg:max-w-[240px]">
-                    <ProductTile product={p} />
+                    <ProductTile product={p} locale={locale} />
                   </div>
                 ))}
               </div>
@@ -305,6 +317,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         pricePiastres={product.pricePiastres}
         inStock={product.inStock}
         variant="bar"
+        locale={locale}
       />
 
       {/* Product structured data — this page is an acquisition surface. */}

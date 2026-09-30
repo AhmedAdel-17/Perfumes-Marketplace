@@ -1,5 +1,9 @@
 'use server';
 
+import { REVIEWS } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { apiMessage } from '@/core/api-message';
+
 import { revalidatePath } from 'next/cache';
 import type { Ratings } from '@diyar/domain';
 import { api } from '@/core/api';
@@ -74,14 +78,12 @@ export async function submitReview(input: {
     return { ok: true, productSlug: recorded.productSlug };
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
+    const locale = await getLocale();
     return {
       ok: false,
-      // The router's messages are already Arabic and already deliberately
-      // undifferentiated. Anything unexpected gets the same neutral sentence
-      // rather than an English stack trace.
-      message: message.length > 0 && message.length < 200
-        ? message
-        : 'تعذّر حفظ التقييم. حاول مرة أخرى.',
+      // The router's messages are deliberately undifferentiated. Anything
+      // unexpected gets the same neutral sentence rather than a stack trace.
+      message: apiMessage(message, locale, REVIEWS[locale].saveFailed),
     };
   }
 }

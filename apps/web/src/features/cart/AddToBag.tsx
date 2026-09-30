@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { PrimaryHighlight, primarySurfaceStyle } from '@/features/shell/primary-surface';
 import { recordBrowsing } from '@/features/analytics/record';
+import { PRODUCT } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { useCart } from './CartStore';
 
 /**
@@ -31,6 +33,7 @@ export function AddToBag({
 }) {
   const { add, hydrated } = useCart();
   const [confirmed, setConfirmed] = useState(false);
+  const copy = PRODUCT[useLocale()];
 
   const onClick = () => {
     add({ productId, quantity: 1, seenPricePiastres: pricePiastres });
@@ -53,7 +56,7 @@ export function AddToBag({
       className={className}
     >
       <PrimaryHighlight />
-      {!inStock ? 'غير متاح حاليًا' : confirmed ? 'أُضيف إلى الحقيبة' : 'أضف إلى الحقيبة'}
+      {!inStock ? copy.outOfStock : confirmed ? copy.added : copy.addToBag}
     </button>
   );
 }

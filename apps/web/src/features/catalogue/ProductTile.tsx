@@ -2,7 +2,10 @@ import Link from 'next/link';
 import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
-import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
+import {
+  CURRENCY_LABEL, formatPrice, labelOf, data as num, PRODUCT, SCENT_FAMILY, type Locale,
+} from '@diyar/i18n';
+import { localeHref } from '@/core/href';
 
 /**
  * One product in a grid or a rail.
@@ -20,9 +23,9 @@ import { CURRENCY_LABEL, formatPrice, data as num } from '@diyar/i18n';
  * The flacon is sized in PERCENTAGES of its frame, so the same component reads
  * correctly in a 148px rail card and a 300px desktop cell.
  */
-export function ProductTile({ product }: { product: ProductCard }) {
+export function ProductTile({ product, locale }: { product: ProductCard; locale: Locale }) {
   return (
-    <Link href={`/p/${product.slug}`} className="group block focus-visible:outline-none">
+    <Link href={localeHref(locale, `/p/${product.slug}`)} className="group block focus-visible:outline-none">
       <div className="relative aspect-[4/5] overflow-hidden bg-plate">
         <div className="absolute inset-0 bg-[radial-gradient(70%_56%_at_52%_22%,theme(colors.stage.glow)_0%,theme(colors.stage.mid)_48%,theme(colors.stage.deep)_88%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(52%_42%_at_52%_20%,rgba(196,160,96,.20),transparent_70%)] opacity-0 transition-opacity duration-slow ease-out group-hover:opacity-100" />
@@ -67,7 +70,7 @@ export function ProductTile({ product }: { product: ProductCard }) {
         {product.name}
       </div>
       <div className="mt-1.5 text-caption text-ink3 lg:text-small">
-        <span className="tnum">{num(product.volumeMl)}</span> مل · {product.familyLabel}
+        <span className="tnum">{num(product.volumeMl)}</span> {PRODUCT[locale].ml} · {labelOf(SCENT_FAMILY, locale, product.family)}
       </div>
       <div className="mt-2.5 text-bodyLg font-semibold">
         <span className="tnum">{formatPrice(product.pricePiastres)}</span>

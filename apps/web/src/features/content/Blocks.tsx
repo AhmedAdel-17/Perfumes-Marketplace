@@ -16,6 +16,7 @@ import type {
   Block, BlockKind, CallToActionBlock, HeadingBlock, ImageBlock, NoteListBlock,
   PassageBlock, PullQuoteBlock,
 } from '@diyar/domain';
+import { localePath, SHELL, type Locale } from '@diyar/i18n';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 
 /** A verified editorial image, as the API hands it over: an address and its real size. */
@@ -120,7 +121,9 @@ function NoteList({ block }: { block: NoteListBlock }) {
   );
 }
 
-function ContentImage({ block, image }: { block: ImageBlock; image: ContentImageView | undefined }) {
+function ContentImage(
+  { block, image, locale }: { block: ImageBlock; image: ContentImageView | undefined; locale: Locale },
+) {
   /*
    * `mediaKey`, not a URL — the origin of an asset is infrastructure, not
    * content, and a stored URL is a stored decision about hosting that outlives
@@ -154,7 +157,7 @@ function ContentImage({ block, image }: { block: ImageBlock; image: ContentImage
           role="img"
           aria-label={block.alt}
         >
-          <span className="text-micro tracking-label text-ink3">صورة</span>
+          <span className="text-micro tracking-label text-ink3">{SHELL[locale].imagePlaceholder}</span>
         </div>
       )}
       {block.caption && (
@@ -170,11 +173,12 @@ function Divider() {
   return <hr className="mx-auto mt-12 w-16 border-0 border-t border-accent/40" aria-hidden />;
 }
 
-function CallToAction({ block }: { block: CallToActionBlock }) {
+function CallToAction({ block, locale }: { block: CallToActionBlock; locale: Locale }) {
   return (
     <div className="mt-10">
       <a
-        href={block.href}
+        // An editor writes `/returns`; on the English site that is `/en/returns`.
+        href={localePath(locale, block.href)}
         className="tappable inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
       >
         {block.label}
@@ -191,25 +195,33 @@ function CallToAction({ block }: { block: CallToActionBlock }) {
  * published page.
  */
 const RENDERERS: {
-  [K in BlockKind]: (block: Extract<Block, { kind: K }>, key: number, images: ContentImages) => React.ReactNode;
+  [K in BlockKind]: (
+    block: Extract<Block, { kind: K }>, key: number, images: ContentImages, locale: Locale,
+  ) => React.ReactNode;
 } = {
   heading: (block, key) => <Heading key={key} block={block} />,
   passage: (block, key) => <Passage key={key} block={block} />,
   pull_quote: (block, key) => <PullQuote key={key} block={block} />,
   note_list: (block, key) => <NoteList key={key} block={block} />,
-  image: (block, key, images) => <ContentImage key={key} block={block} image={images[block.mediaKey]} />,
+  image: (block, key, images, locale) => (
+    <ContentImage key={key} block={block} image={images[block.mediaKey]} locale={locale} />
+  ),
   divider: (_block, key) => <Divider key={key} />,
-  call_to_action: (block, key) => <CallToAction key={key} block={block} />,
+  call_to_action: (block, key, _images, locale) => <CallToAction key={key} block={block} locale={locale} />,
 };
 
-export function Blocks({ blocks, images }: { blocks: readonly Block[]; images: ContentImages }) {
+export function Blocks(
+  { blocks, images, locale }: { blocks: readonly Block[]; images: ContentImages; locale: Locale },
+) {
   return (
     <>
       {blocks.map((block, index) => {
         // The cast is the one place the discriminated union has to be
         // re-associated with its renderer; every other site is checked.
-        const render = RENDERERS[block.kind] as (b: Block, k: number, i: ContentImages) => React.ReactNode;
-        return render(block, index, images);
+        const render = RENDERERS[block.kind] as (
+          b: Block, k: number, i: ContentImages, l: Locale,
+        ) => React.ReactNode;
+        return render(block, index, images, locale);
       })}
     </>
   );

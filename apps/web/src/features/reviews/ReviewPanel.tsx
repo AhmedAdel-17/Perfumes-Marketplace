@@ -5,8 +5,9 @@ import {
   REVIEW_BODY_MAX, REVIEW_DIMENSIONS, type Ratings, type ReviewDimension,
 } from '@diyar/domain';
 import {
-  REVIEW_DIMENSION_AR, REVIEW_DIMENSION_PROMPT_AR, data as num,
+  REVIEW_DIMENSION, REVIEW_DIMENSION_PROMPT, REVIEWS, data as num,
 } from '@diyar/i18n';
+import { useLocale } from '@/features/shell/LocaleProvider';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { RatingInput } from './RatingInput';
 import { reviewableItems, submitReview, type ReviewableItem } from './actions';
@@ -27,6 +28,7 @@ import { reviewableItems, submitReview, type ReviewableItem } from './actions';
 export function ReviewPanel({ reference, phone }: { reference: string; phone: string }) {
   const [items, setItems] = useState<ReviewableItem[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const locale = useLocale();
 
   useEffect(() => {
     let live = true;
@@ -44,14 +46,15 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
   if (items === null || items.length === 0) return null;
 
   const unreviewed = items.filter((item) => !item.reviewed);
+  const copy = REVIEWS[locale];
 
   return (
     <section className="mt-8 border-t border-line pt-6">
-      <h2 className="font-display text-h4 lg:text-h3">قيّم ما وصلك</h2>
+      <h2 className="font-display text-h4 lg:text-h3">{copy.rateWhatArrived}</h2>
       <p className="mt-2 max-w-proseMax text-caption leading-relaxed text-ink3">
         {unreviewed.length === 0
-          ? 'شكرًا — قيّمت كل ما وصلك من هذا الطلب.'
-          : 'تقييمك يظهر على صفحة العطر باسمك الأول فقط، ولا يمكن للدار حذفه.'}
+          ? copy.allReviewed
+          : copy.howShown}
       </p>
 
       <ul className="mt-4">
@@ -61,12 +64,12 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
               <div>
                 <div className="text-small text-ink">{item.productName}</div>
                 <div className="text-caption text-ink3">
-                  {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> مل
+                  {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                 </div>
               </div>
 
               {item.reviewed ? (
-                <span className="text-caption text-accent">تم التقييم</span>
+                <span className="text-caption text-accent">{copy.reviewed}</span>
               ) : (
                 <button
                   type="button"
@@ -74,7 +77,7 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
                   aria-expanded={open === item.lineItemId}
                   className="tappable min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
                 >
-                  {open === item.lineItemId ? 'إغلاق' : 'اكتب تقييمك'}
+                  {open === item.lineItemId ? copy.close : copy.write}
                 </button>
               )}
             </div>
@@ -118,6 +121,8 @@ function ReviewForm({
   const [incentive, setIncentive] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const locale = useLocale();
+  const copy = REVIEWS[locale];
 
   const missing = REVIEW_DIMENSIONS.filter((d) => scores[d] === null);
 
@@ -152,8 +157,8 @@ function ReviewForm({
       {REVIEW_DIMENSIONS.map((dimension) => (
         <RatingInput
           key={dimension}
-          label={REVIEW_DIMENSION_AR[dimension]}
-          prompt={REVIEW_DIMENSION_PROMPT_AR[dimension]}
+          label={REVIEW_DIMENSION[locale][dimension]}
+          prompt={REVIEW_DIMENSION_PROMPT[locale][dimension]}
           value={scores[dimension]}
           onChange={(value) => setScores((current) => ({ ...current, [dimension]: value }))}
         />
@@ -161,7 +166,7 @@ function ReviewForm({
 
       <label className="mt-5 block">
         <span className="text-caption tracking-label text-ink3">
-          اكتب رأيك (اختياري)
+          {copy.yourWords}
         </span>
         <textarea
           value={body}
@@ -193,7 +198,7 @@ function ReviewForm({
           className="mt-1 h-4 w-4 accent-accent"
         />
         <span className="text-caption leading-relaxed text-ink2">
-          حصلت على هذا العطر كعيّنة أو هدية أو مقابل نشر.
+          {copy.incentive}
         </span>
       </label>
 
@@ -212,11 +217,11 @@ function ReviewForm({
       */}
       <div className="mt-5">
         <PrimaryButton type="submit" disabled={saving || missing.length > 0} fill="full">
-          {saving ? '…جارٍ الحفظ' : 'أرسل التقييم'}
+          {saving ? copy.saving : copy.submit}
         </PrimaryButton>
         {missing.length > 0 && (
           <p className="mt-2 text-caption text-ink3">
-            باقي {missing.map((d) => REVIEW_DIMENSION_AR[d]).join('، ')}.
+            {copy.remaining(missing.map((d) => REVIEW_DIMENSION[locale][d]).join(copy.listSeparator))}
           </p>
         )}
       </div>

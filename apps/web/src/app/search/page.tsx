@@ -9,7 +9,9 @@
  * bookmarkable, and correct after a reload or a back press.
  */
 import type { Metadata } from 'next';
-import { counted, editorial, PERFUME } from '@diyar/i18n';
+import { countedIn, editorialIn, NOUN, SEARCH, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
+import { localeHref } from '@/core/href';
 import { activeFilterCount, isEmptyQuery, parseCatalogueQuery } from '@diyar/domain';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
@@ -19,12 +21,15 @@ import { ProductTile } from '@/features/catalogue/ProductTile';
 import { Filters } from '@/features/catalogue/Filters';
 import { searchCatalogue } from '@/core/catalogue';
 
-export const metadata: Metadata = {
-  title: 'ابحث | ديار',
-  // A filtered catalogue is thousands of near-identical pages to a crawler, and
-  // every one of them competes with the ones worth ranking.
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: `${SEARCH[locale].metaTitle} | ${SHELL[locale].titleSuffix}`,
+    // A filtered catalogue is thousands of near-identical pages to a crawler,
+    // and every one of them competes with the ones worth ranking.
+    robots: { index: false, follow: true },
+  };
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +53,8 @@ export default async function SearchPage(
    */
   const filters = activeFilterCount(query);
   const searched = query.text.trim() !== '';
+  const locale = await getLocale();
+  const copy = SEARCH[locale];
 
   return (
     <>
@@ -64,7 +71,7 @@ export default async function SearchPage(
 
       <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[88px]">
         <header className="pb-7 pt-8 lg:pb-8 lg:pt-12">
-          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">العطور</h1>
+          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
         </header>
 
         <Filters query={query} houses={houses} />
@@ -77,15 +84,15 @@ export default async function SearchPage(
           the one number they actually want.
         */}
         <p className="py-6 text-caption text-ink3 lg:py-7" aria-live="polite">
-          {counted(products.length, PERFUME, editorial)}
+          {countedIn(locale, products.length, NOUN.perfume, editorialIn(locale))}
         </p>
 
         {products.length === 0 ? (
           <div className="pb-12">
             <p className="text-bodyLg leading-relaxed text-ink2">
               {isEmptyQuery(query)
-                ? 'لا توجد عطور معروضة حاليًا.'
-                : 'لا يوجد عطر مطابق. جرّب توسيع الفلاتر أو كلمة أقصر.'}
+                ? copy.nothingPublished
+                : copy.noMatch}
             </p>
             {/*
               An empty result offers the way out rather than only the bad news.
@@ -94,10 +101,10 @@ export default async function SearchPage(
             */}
             {!isEmptyQuery(query) && (
               <a
-                href="/search"
+                href={localeHref(locale, '/search')}
                 className="tappable mt-6 inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
               >
-                اعرض كل العطور
+                {copy.showAll}
               </a>
             )}
           </div>
@@ -105,7 +112,7 @@ export default async function SearchPage(
           <div className="grid grid-cols-2 gap-x-4 gap-y-9 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
             {products.map((product, index) => (
               <Reveal key={product.id} delay={Math.min(index, 6) * 60}>
-                <ProductTile product={product} />
+                <ProductTile product={product} locale={locale} />
               </Reveal>
             ))}
           </div>

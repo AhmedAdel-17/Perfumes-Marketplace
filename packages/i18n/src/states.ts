@@ -1,3 +1,4 @@
+import type { Locale } from './locale';
 /**
  * What a sub-order's state means to the CUSTOMER.
  *
@@ -88,14 +89,27 @@ export const CUSTOMER_JOURNEY: readonly string[] = [
   'delivered',
 ];
 
-export function stateCopy(state: string): StateCopy {
-  return (
-    SUB_ORDER_STATE_AR[state] ?? {
-      label: 'قيد المتابعة',
-      detail: 'جارٍ تحديث حالة الطلب.',
-      terminal: false,
-    }
-  );
+export const SUB_ORDER_STATE_EN: Readonly<Record<string, StateCopy>> = {
+  placed: { label: 'Received', detail: 'Your order arrived and was sent to the house.', terminal: false },
+  awaiting_seller: { label: 'Under review', detail: 'The house is checking the order and confirming the perfume is in stock.', terminal: false },
+  confirmed: { label: 'Confirmed', detail: 'The house confirmed the order and started preparing it.', terminal: false },
+  dispatched: { label: 'On its way', detail: 'The house handed the parcel to the courier.', terminal: false },
+  delivered: { label: 'Delivered', detail: 'The parcel was received.', terminal: true },
+  rejected: { label: 'Declined by the house', detail: 'The house could not fulfil this part of the order. You will not be charged for it.', terminal: true },
+  cancelled: { label: 'Cancelled', detail: 'This part of the order was cancelled.', terminal: true },
+  refused: { label: 'Delivery refused', detail: 'The parcel was not accepted and went back to the house.', terminal: true },
+  returned: { label: 'Returned', detail: 'The return arrived and is being inspected.', terminal: true },
+};
+
+const UNKNOWN_STATE: Readonly<Record<Locale, StateCopy>> = {
+  ar: { label: 'قيد المتابعة', detail: 'جارٍ تحديث حالة الطلب.', terminal: false },
+  en: { label: 'In progress', detail: 'The order status is being updated.', terminal: false },
+};
+
+/** Arabic by default: the seller portal and console are Arabic-only for now. */
+export function stateCopy(state: string, locale: Locale = 'ar'): StateCopy {
+  const table = locale === 'ar' ? SUB_ORDER_STATE_AR : SUB_ORDER_STATE_EN;
+  return table[state] ?? UNKNOWN_STATE[locale];
 }
 
 /** How far along the journey this state is, or null if it left the journey. */

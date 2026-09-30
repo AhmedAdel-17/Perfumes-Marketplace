@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
+import { ORDERS, SHELL } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { OrderLookup } from '@/features/orders/OrderLookup';
 
-export const metadata: Metadata = {
-  title: 'تتبّع الطلب | ديار',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: `${ORDERS[locale].title} | ${SHELL[locale].titleSuffix}`,
+    robots: { index: false, follow: false },
+  };
+}
 
 /*
  * Rendered per request, not baked at build time.
@@ -22,13 +27,14 @@ export const metadata: Metadata = {
  */
 export const dynamic = 'force-dynamic';
 
-export default function OrderPage() {
+export default async function OrderPage() {
+  const locale = await getLocale();
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[720px] lg:px-8 lg:pb-[88px]">
         <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-8 lg:pt-9 lg:text-h1Lg">
-          تتبّع الطلب
+          {ORDERS[locale].title}
         </h1>
         <OrderLookup />
       </main>
