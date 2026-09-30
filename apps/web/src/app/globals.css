@@ -21,11 +21,11 @@
       header intercepted the pointer, which is the same fault a customer meets
       as "I pressed it and nothing happened".
 
-      The values are the masthead's own heights (58px, 82px from `lg`) plus a
-      little air, so the thing scrolled to arrives below it rather than against
-      it.
+      The values are the masthead's own heights plus a little air, so the
+      thing scrolled to arrives below it rather than against it: 58px and a
+      44px row of links below `lg`, one 82px row from it.
     */
-    scroll-padding-top: 74px;
+    scroll-padding-top: 118px;
   }
 
   @media (min-width: 1024px) {

@@ -26,7 +26,7 @@ export function BagLink() {
       // The label plus its badge is a 22px line box; `tappable` alone adds 16
       // and still lands under the floor. min-h-touch is the honest fix — the
       // TARGET is 44, while the visible label stays small.
-      className="tappable flex min-h-touch items-center gap-2 text-caption tracking-label text-ink transition-colors duration-base ease-out hover:text-accent"
+      className="tappable flex min-h-touch items-center gap-2 text-body text-ink transition-colors duration-base ease-out hover:text-accent"
       aria-label={`الحقيبة، ${itemCount} من المنتجات`}
     >
       <span>الحقيبة</span>

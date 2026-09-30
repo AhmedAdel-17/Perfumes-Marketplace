@@ -3,6 +3,7 @@ import { BagLink } from '@/features/cart/BagLink';
 import { Monogram } from './Monogram';
 import { AnnouncementBar } from './AnnouncementBar';
 import { ThemeToggle } from './ThemeToggle';
+import { MastheadNav } from './MastheadNav';
 
 /**
  * The masthead, shared by every public route.
@@ -32,19 +33,21 @@ export async function SiteHeader() {
     */}
     <AnnouncementBar />
     <header className="sticky top-0 z-40 border-b border-line/60 bg-ground/[.72] backdrop-blur-xl">
-      <div className="mx-auto flex h-[58px] max-w-contentMax items-center justify-between px-5 lg:h-[82px] lg:px-8">
-        {/*
-          DESIGN_DOCTRINE law I is subtraction, and the note below says links
-          appear here as they become real. Search is now real: the route exists,
-          it works without JavaScript, and it is the control a customer reaches
-          for once a catalogue stops fitting on one screen.
-        */}
+      {/*
+        ONE row from `lg`; below it, the links wrap to a second row of their own.
+
+        A single set of links in the DOM at every width, placed by `order`
+        rather than rendered twice and hidden once — two copies is two things
+        to keep in step, and a screen reader that finds both hears the
+        navigation twice.
+      */}
+      <div className="mx-auto flex max-w-contentMax flex-wrap items-center px-5 lg:h-[82px] lg:flex-nowrap lg:px-8">
         <Link
           href="/"
           aria-label="ديار — الصفحة الرئيسية"
           // The wordmark alone renders a 35px line box, under the 44pt floor;
           // `tappable` expands the hit area without touching the type.
-          className="tappable group flex items-center gap-3 text-ink transition-opacity duration-base ease-out hover:opacity-press lg:gap-4"
+          className="tappable group flex h-[58px] items-center gap-3 text-ink transition-opacity duration-base ease-out hover:opacity-press lg:h-auto lg:gap-4"
         >
           <Monogram
             size={26}
@@ -53,28 +56,13 @@ export async function SiteHeader() {
           <span className="latin text-h4 tracking-wordmark lg:text-h3Lg">DIYAR</span>
         </Link>
 
-        <div className="flex items-center gap-4 lg:gap-6">
-          {/* The one piece of orientation a first-time visitor needs. It gives
-              way to the bag on a phone, where there is room for one of them. */}
-          <span className="hidden text-caption tracking-label text-ink3 lg:block">
-            دور العطور المصرية
-          </span>
-          {/*
-            The route existed and nothing pointed at it, which is the same as
-            not having built it. A search screen a customer cannot reach is a
-            URL, not a feature.
+        {/*
+          No tagline beside the links: small grey text next to real links reads
+          as a link that does nothing.
+        */}
+        <MastheadNav className="order-last w-full border-t border-line/40 lg:order-none lg:ms-14 lg:w-auto lg:border-0" />
 
-            A LINK rather than an expanding search field: a field in the
-            masthead costs the row width it needs on every screen and every
-            page, and the screen it leads to has a better one. Law I is
-            subtraction.
-          */}
-          <Link
-            href="/search"
-            className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
-          >
-            ابحث
-          </Link>
+        <div className="ms-auto flex items-center gap-4 lg:gap-6">
           {/*
             From `sm` only, and the footer carries it below that.
 

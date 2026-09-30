@@ -57,7 +57,7 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="مظهر الموقع"
-      className="flex items-center border border-line/70"
+      className="inline-flex items-center border border-line/70"
     >
       {SEGMENTS.map(({ theme: name, label, spoken }, index) => (
         <button
@@ -67,9 +67,9 @@ export function ThemeToggle() {
           aria-pressed={theme === null ? undefined : theme === name}
           aria-label={spoken}
           className={[
-            // 28px tall so the masthead stays quiet; `tappable` carries the
+            // 32px tall so the masthead stays quiet; `tappable` carries the
             // 44pt target the doctrine requires without inflating the chrome.
-            'tappable latin flex h-[28px] items-center px-2.5 text-micro tracking-label',
+            'tappable latin flex h-[32px] items-center px-3 text-caption tracking-label',
             'transition-colors duration-base ease-out active:opacity-press',
             index === 1 ? 'border-s border-line/70' : '',
             theme === name ? 'text-ink' : 'text-ink3 hover:text-ink2',

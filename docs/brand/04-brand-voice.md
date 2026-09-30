@@ -5,17 +5,20 @@
 1. **Say the fact, then the feeling.** "يصل خلال ٣ إلى ٤ أيام" before any adjective.
 2. **Name the source.** A performance band says who measured it; a fee says who receives it.
 3. **Answer "what now".** Every state message ends with the next thing that happens.
-4. **Address a person.** Second person singular, courteous, Egyptian-neutral Modern
-   Standard Arabic with everyday words; no dialect slang in the interface, no classical
-   flourish.
+4. **Address a person.** Second person singular, courteous, in **Egyptian Arabic** — the
+   way a good Cairo shop assistant speaks, not street slang and not classical flourish.
+   *Changed 30 Sep 2026 by founder decision V-1 (`DECISION_REGISTER.md`); this line
+   previously required Modern Standard Arabic.*
 5. **Count correctly.** Six plural forms through `counted()` (FACT, enforced).
 6. **Never shout.** No exclamation marks, no capitals in Latin labels beyond small caps, no
    urgency.
 
 ## 2. Arabic voice (primary)
 
-- Register: فصحى مبسّطة — the Arabic of a good newspaper feature, not a legal notice and
-  not a chat.
+- Register: **Egyptian Arabic** in the interface (buttons, labels, messages, product and
+  house pages, seller portal, ops console) — polite and clear, never a chat. **Terms,
+  Privacy and Returns stay in فصحى مبسّطة** until counsel has reviewed them: they are
+  contracts. (V-1, 30 Sep 2026.)
 - Direct address: **أنت** implied; verbs in second person; avoid passive where a person
   acts ("أكّدت الدار طلبك", not "تم تأكيد الطلب" — except in system logs).
 - Houses are **دور** (singular دار); perfumes are **عطور**; a listing is **عطر** not "منتج"
@@ -25,7 +28,7 @@
 - Latin inside Arabic (house wordmarks, EGP, notes in Latin) isolated with bidi isolation
   (FACT practice).
 
-## 3. English voice (secondary; D-3 open)
+## 3. English voice (second locale; D-3 decided 30 Sep 2026)
 
 Used today only for Latin labels (small caps: MAISON NOUR, EGP, TOP · HEART · BASE) and
 for investor/partner material. If English becomes a full locale: British spelling, same

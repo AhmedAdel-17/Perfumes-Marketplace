@@ -66,7 +66,8 @@ every gate outcome is recorded here.
 | ADR-05 | Own OTP identity, no Supabase Auth | FOUNDERS (security-critical) | keep | both founders | P0.2.6 | OPEN |
 | ADR-11 | Notification vendor (SMS aggregator + fallback; WhatsApp later) | TECHNICAL + FOUNDERS (cost) | one aggregator + Twilio fallback; open the account | technical founder | P0.2.6 | OPEN |
 | GTM-1 | Pilot offer (shoot subsidy, onboarding help) | FOUNDERS | approve within D-9 | both founders | P0.2.3 | OPEN |
-| D-3 | English locale | DEFER | Arabic only through Stage 0 | — | Stage 1 | DEFERRED |
+| D-3 | English locale | FOUNDERS | Build now: Arabic and English, with a language switch on every screen | Ahmed (founder) | P5.6.2 | DECIDED 30 Sep 2026 |
+| V-1 | Interface Arabic register | FOUNDERS | Egyptian Arabic across the interface; Terms, Privacy and Returns stay in simple Modern Standard Arabic (contracts, pending counsel review) | Ahmed (founder) | P5.6.3 | DECIDED 30 Sep 2026 |
 | M-2 | Review-aggregate bands threshold | PRODUCT | 10 verified reviews | product | P4.9.1 | OPEN |
 | C-1 | Return cost policy by reason | LEGAL + FOUNDERS | fault → seller/courier; change of mind → customer, if lawful | counsel + founders | P0.2.5 (interim) | OPEN |
 | C-2 | Failed-delivery cost allocation by reason code | FOUNDERS | per code; courier fault → courier | both founders | P0.2.5 (interim) | OPEN |
@@ -124,3 +125,13 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
 - 2026-09-18 · register created · Claude Code (planning) · — · consolidates the blueprint
   register, `OPEN_DECISIONS.md` and twelve new red-team decisions · P0.2.x tasks in
   `MASTER_EXECUTION_PLAN.md`.
+
+- 2026-09-30 · D-3 · Ahmed (founder) · English locale un-deferred: build it now, with a
+  language switch · founder review of the running site found an Arabic-only product too
+  narrow for the audience · P5.6.2 brought forward, after P5.6.3.
+
+- 2026-09-30 · V-1 · Ahmed (founder) · the interface speaks Egyptian Arabic; the three legal
+  pages stay in simple Modern Standard Arabic · the product is for Egyptians, and the
+  approved mockups (`design-reference/marketplace.html`) already use Egyptian Arabic;
+  contracts stay formal until counsel reviews them · supersedes `docs/brand/04` §1.4 and §2
+  (corrected the same day) · P5.6.3.

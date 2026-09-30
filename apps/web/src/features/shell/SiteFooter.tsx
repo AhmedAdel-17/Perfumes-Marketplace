@@ -20,13 +20,10 @@ export async function SiteFooter() {
     <footer className="mt-8 border-t border-line">
       <div className="mx-auto max-w-contentMax px-5 py-7 lg:px-8 lg:py-8">
         <div className="latin text-h4 tracking-wordmark text-ink">DIYAR</div>
-        <nav className="mt-1 flex flex-wrap items-center gap-x-6" aria-label="روابط">
+        <nav className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-1" aria-label="روابط">
         <a
           href="/order"
-          // A 10.5px label is a 33px line box. `tappable` adds 16 and still lands
-          // short, so the TARGET gets a floor while the label stays small — the
-          // same fix the bag link needed.
-          className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
           تتبّع طلب
         </a>
@@ -39,7 +36,7 @@ export async function SiteFooter() {
           // — so the target passed on height and failed on width, which is the
           // same fault the sign-out control had. A target has TWO dimensions
           // and enforcing one of them is enforcing neither.
-          className="tappable inline-flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable inline-flex min-h-touch min-w-touch items-center justify-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
           الدور
         </a>
@@ -53,7 +50,7 @@ export async function SiteFooter() {
         */}
         <a
           href="/support"
-          className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
           تواصل معنا
         </a>
@@ -62,7 +59,7 @@ export async function SiteFooter() {
             houses. */}
         <a
           href="/apply"
-          className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
           انضم كدار
         </a>
@@ -70,13 +67,13 @@ export async function SiteFooter() {
           <a
             key={page.slug}
             href={`/${page.slug}`}
-            className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+            className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
           >
             {page.title}
           </a>
         ))}
         </nav>
-        <p className="mt-4 max-w-proseMax text-small leading-relaxed text-ink3">
+        <p className="mt-5 max-w-proseMax text-body leading-relaxed text-ink3">
           سوق للعطور المصرية المستقلّة. كل دار تُجهّز طلبها وتشحنه بنفسها، والأسعار
           بالجنيه المصري شاملة الضريبة.
         </p>
