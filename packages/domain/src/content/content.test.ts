@@ -24,6 +24,8 @@ const page = (over: Partial<ContentPage> = {}): ContentPage => ({
     { kind: 'passage', text: 'دور عطور مصرية.' },
   ],
   publishedRevisionId: null,
+  titleEn: null,
+  draftBlocksEn: [],
   ...over,
 });
 
@@ -308,4 +310,34 @@ describe('slugs', () => {
       expect(isUsableSlug(slug)).toBe(false);
     },
   );
+});
+
+/* ------------------------------------------------------ the English half */
+
+describe('the English half of a page (D-3)', () => {
+  const inReview = (over: Partial<ContentPage> = {}) => page({ state: 'in_review', ...over });
+
+  it('an untranslated page publishes — the English site shows the Arabic', () => {
+    expect('moved' in movePage(inReview(), 'published', 'publisher', clock, NONE)).toBe(true);
+  });
+
+  it('a started translation is held to the same rules, and says it is the English', () => {
+    const broken = inReview({
+      titleEn: 'About',
+      draftBlocksEn: [
+        { kind: 'heading', level: 3, text: 'Out of order' },
+        { kind: 'passage', text: 'Body' },
+      ],
+    });
+    expect(movePage(broken, 'published', 'publisher', clock, NONE))
+      .toEqual({ objections: [{ code: 'heading_order', blockIndex: 0, inEnglish: true }] });
+  });
+
+  it('a complete translation publishes with the Arabic', () => {
+    const translated = inReview({
+      titleEn: 'About',
+      draftBlocksEn: [{ kind: 'heading', level: 2, text: 'Who we are' }, { kind: 'passage', text: 'Body' }],
+    });
+    expect('moved' in movePage(translated, 'published', 'publisher', clock, NONE)).toBe(true);
+  });
 });

@@ -12,6 +12,7 @@ const days = (n: number) => new Date(NOW.getTime() + n * 86_400_000);
 const announcement = (over: Partial<Announcement> = {}): Announcement => ({
   id: 'a1',
   message: 'التوصيل متأخر بسبب العيد',
+  messageEn: null,
   href: null,
   startsAt: hours(-1),
   endsAt: hours(24),

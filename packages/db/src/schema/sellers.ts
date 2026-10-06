@@ -33,6 +33,9 @@ export const sellers = pgTable('sellers', {
   slug: text('slug').notNull(),
   bio: text('bio'),
   story: text('story'),
+  /** English bio and story (0030). Optional; the storefront falls back to the Arabic. */
+  bioEn: text('bio_en'),
+  storyEn: text('story_en'),
   foundedYear: integer('founded_year'),
   city: text('city'),
   serviceGovernorates: governorate('service_governorates').array(),

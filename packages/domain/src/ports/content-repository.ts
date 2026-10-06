@@ -20,6 +20,9 @@ export interface ContentRevision {
   readonly pageId: string;
   readonly title: string;
   readonly blocks: readonly Block[];
+  /** The English half, frozen with the Arabic. Empty when it was not translated. */
+  readonly titleEn: string | null;
+  readonly blocksEn: readonly Block[];
   readonly publishedBy: string;
   readonly publishedAt: Date;
 }
@@ -29,6 +32,8 @@ export interface LivePage {
   readonly slug: string;
   readonly title: string;
   readonly blocks: readonly Block[];
+  readonly titleEn: string | null;
+  readonly blocksEn: readonly Block[];
   readonly publishedAt: Date;
 }
 
@@ -52,12 +57,17 @@ export interface ContentRepository {
   findLive(slug: string): Promise<LivePage | null>;
 
   /** Every page a visitor could reach, for the sitemap and the footer. */
-  listLive(): Promise<Array<{ slug: string; title: string }>>;
+  listLive(): Promise<Array<{ slug: string; title: string; titleEn: string | null }>>;
 
   create(input: { slug: string; title: string }): Promise<ContentPage>;
 
   /** Save work in progress. Never touches what is being served. */
-  saveDraft(id: string, input: { title: string; blocks: readonly Block[] }): Promise<void>;
+  saveDraft(id: string, input: {
+    title: string;
+    blocks: readonly Block[];
+    titleEn?: string | null;
+    blocksEn?: readonly Block[];
+  }): Promise<void>;
 
   /** Move the page. The caller has already asked the state machine whether it may. */
   setState(id: string, state: PageState): Promise<void>;

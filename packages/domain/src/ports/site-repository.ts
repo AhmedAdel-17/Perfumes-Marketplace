@@ -31,6 +31,8 @@ export interface SiteRepository {
 
   post(input: {
     message: string;
+    /** Optional English line (D-3). */
+    messageEn?: string | null;
     href: string | null;
     startsAt: Date;
     endsAt: Date;

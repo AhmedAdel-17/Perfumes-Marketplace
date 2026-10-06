@@ -68,6 +68,8 @@ export type ListingField = (typeof LISTING_FIELDS)[number];
  */
 export interface ListingDraft {
   name?: string | null;
+  /** Optional English name (D-3). Never required to publish. */
+  nameEn?: string | null;
   slug?: string | null;
   sku?: string | null;
   brandId?: string | null;

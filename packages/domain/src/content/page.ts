@@ -84,6 +84,9 @@ export interface ContentPage {
   readonly state: PageState;
   /** What an editor is working on. Always present, even for a published page. */
   readonly draftBlocks: readonly Block[];
+  /** The English title and draft (D-3). Null and empty until translated. */
+  readonly titleEn: string | null;
+  readonly draftBlocksEn: readonly Block[];
   /** The immutable revision the site serves. Null until first published. */
   readonly publishedRevisionId: string | null;
 }
@@ -126,7 +129,19 @@ export function movePage(
    * before they have finished the first sentence.
    */
   if (to === 'published') {
-    const objections = objectionsToPublishing(page.draftBlocks, verifiedImageKeys);
+    /*
+     * The English half is held to the same rules, but only when it exists: a
+     * page nobody has translated yet publishes in Arabic and the English site
+     * shows the Arabic, marked as Arabic. A HALF-written English page is not
+     * an untranslated page, though — it would go live broken, so it objects.
+     */
+    const objections: PublishObjection[] = [
+      ...objectionsToPublishing(page.draftBlocks, verifiedImageKeys),
+      ...(page.draftBlocksEn.length > 0
+        ? objectionsToPublishing(page.draftBlocksEn, verifiedImageKeys)
+          .map((objection) => ({ ...objection, inEnglish: true as const }))
+        : []),
+    ];
     if (objections.length > 0) return { objections };
   }
 

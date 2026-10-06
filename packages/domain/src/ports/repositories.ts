@@ -11,6 +11,7 @@ import type { ContentRepository } from './content-repository';
 import type { ContentImageRepository } from './content-image-repository';
 import type { AnalyticsRepository } from './analytics-repository';
 import type { CatalogueReadModel } from './catalogue-read-model';
+import type { NoteGlossaryRepository } from './note-glossary';
 import type { IdentityRepository } from './identity-repository';
 /**
  * Repository ports.
@@ -85,6 +86,8 @@ export interface CatalogueSnapshot {
   readonly sellerId: string;
   readonly slug: string;
   readonly name: string;
+  /** The house's English name for the perfume, or null (D-3). Display only. */
+  readonly nameEn: string | null;
   readonly brandName: string;
   readonly brandLatin: string;
   readonly sku: string;
@@ -467,6 +470,8 @@ export interface Repositories {
    * media, and nothing in it is ever written back.
    */
   readonly catalogue: CatalogueReadModel;
+  /** The platform's English names for scent notes (0030). Written by the platform only. */
+  readonly glossary: NoteGlossaryRepository;
   /**
    * Who is signing in, and are they still allowed to be.
    *

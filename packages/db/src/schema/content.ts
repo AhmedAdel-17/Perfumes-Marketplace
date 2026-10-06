@@ -31,6 +31,10 @@ export const contentPages = pgTable('content_pages', {
    */
   draftBlocks: jsonb('draft_blocks').$type<Block[]>().default(sql`'[]'::jsonb`).notNull(),
 
+  /** The English title and draft (0030). Empty until somebody translates it. */
+  titleEn: text('title_en'),
+  draftBlocksEn: jsonb('draft_blocks_en').$type<Block[]>().default(sql`'[]'::jsonb`).notNull(),
+
   /** Null until first published. The FK is declared in 0009 — the two tables
    *  reference each other, so Drizzle cannot express it in one direction. */
   publishedRevisionId: uuid('published_revision_id'),
@@ -49,6 +53,9 @@ export const contentRevisions = pgTable('content_revisions', {
    *  rename what was published under the old name. */
   title: text('title').notNull(),
   blocks: jsonb('blocks').$type<Block[]>().notNull(),
+  /** The English half, snapshotted with the Arabic — possibly empty (0030). */
+  titleEn: text('title_en'),
+  blocksEn: jsonb('blocks_en').$type<Block[]>().default(sql`'[]'::jsonb`).notNull(),
 
   publishedBy: uuid('published_by').notNull().references(() => platformStaff.id),
   publishedAt: timestamp('published_at', { withTimezone: true }).defaultNow().notNull(),

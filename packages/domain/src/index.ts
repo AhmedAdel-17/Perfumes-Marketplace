@@ -16,6 +16,7 @@ export * from './specifications/index';
 export * from './ports/clock';
 export * from './ports/repositories';
 export * from './ports/catalogue-read-model';
+export * from './ports/note-glossary';
 export * from './ports/identity-repository';
 export * from './ports/repository-contract';
 export * from './ports/content-contract';

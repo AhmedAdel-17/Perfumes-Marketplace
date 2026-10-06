@@ -186,7 +186,7 @@ export const contentContract: readonly ContentContractCase[] = [
 
       equal(
         await uow.transaction((r) => r.content.listLive()),
-        [{ slug: 'about', title: 'عن ديار' }],
+        [{ slug: 'about', title: 'عن ديار', titleEn: null }],
         'the live directory',
       );
     },

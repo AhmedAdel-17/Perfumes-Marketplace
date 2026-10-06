@@ -29,6 +29,8 @@ export interface CatalogueProductRow {
   readonly id: string;
   readonly slug: string;
   readonly name: string;
+  /** The house's own English name for the perfume, when it has given one. */
+  readonly nameEn: string | null;
   readonly pricePiastres: number;
   readonly promoPricePiastres: number | null;
   readonly volumeMl: number;
@@ -72,6 +74,9 @@ export interface CatalogueHouseRow {
   readonly tradingName: string;
   readonly bio: string | null;
   readonly story: string | null;
+  /** The same two in English (0030), when somebody has written them. */
+  readonly bioEn: string | null;
+  readonly storyEn: string | null;
   readonly foundedYear: number | null;
   readonly city: string | null;
   readonly serviceGovernorates: readonly string[];
@@ -130,6 +135,15 @@ export interface CatalogueReadModel {
   /** Every live house with something to sell, for the directory. */
   houses(): Promise<CatalogueHouseSummary[]>;
 
+  /**
+   * English names for the given Arabic notes, from the platform's glossary.
+   *
+   * Only the notes asked for, and only those that have an entry: a note the
+   * glossary does not know yet is simply absent, and the storefront shows the
+   * Arabic for it.
+   */
+  noteGlossary(notes: readonly string[]): Promise<ReadonlyMap<string, string>>;
+
   /** The catalogue, narrowed. Ordering and filtering happen in SQL. */
   search(criteria: CatalogueSearchCriteria): Promise<CatalogueProductRow[]>;
 
@@ -141,7 +155,7 @@ export interface CatalogueReadModel {
    * traps you, because picking one house makes every other house vanish from
    * the list you would use to switch.
    */
-  houseFilterOptions(): Promise<Array<{ slug: string; name: string }>>;
+  houseFilterOptions(): Promise<Array<{ slug: string; name: string; nameEn: string | null }>>;
 
   /**
    * The verified primary photograph of each product, in ONE query.

@@ -29,6 +29,8 @@ export const ANNOUNCEMENT_MAX_DAYS = 90;
 export interface Announcement {
   readonly id: string;
   readonly message: string;
+  /** The same notice in English (D-3), or null — the English site then shows the Arabic. */
+  readonly messageEn: string | null;
   readonly href: string | null;
   readonly startsAt: Date;
   readonly endsAt: Date;

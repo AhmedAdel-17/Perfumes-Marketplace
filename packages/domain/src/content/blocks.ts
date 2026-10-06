@@ -195,7 +195,7 @@ export function isEmptyBlock(block: Block): boolean {
  * gives up somewhere around the third. Every form on this site reports every
  * fault at once, and the console is not exempt because its users are staff.
  */
-export type PublishObjection =
+export type PublishObjection = (
   | { code: 'empty_document'; blockIndex?: undefined }
   | { code: 'empty_block'; blockIndex: number }
   | { code: 'too_many_blocks'; blockIndex?: undefined }
@@ -204,7 +204,11 @@ export type PublishObjection =
   | { code: 'missing_alt'; blockIndex: number }
   /** A key with no verified upload behind it (`content_images`, 0022). */
   | { code: 'unverified_image'; blockIndex: number }
-  | { code: 'over_length'; blockIndex: number };
+  | { code: 'over_length'; blockIndex: number }
+) & {
+  /** Set when the fault is in the page's ENGLISH blocks rather than its Arabic ones. */
+  readonly inEnglish?: true;
+};
 
 /**
  * Every image key these blocks name, each once, blank keys excluded.

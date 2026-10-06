@@ -223,6 +223,11 @@ describe('no policy is protection in name only', () => {
     // "free delivery from Sunday" readable on Thursday is a discount announced
     // three days early to whoever happened to be looking.
     'site_curation',
+
+    // The English names of scent notes (0030). The whole table is what the
+    // English storefront prints beside every perfume — "Bergamot" for برغموت —
+    // and holds nothing but that pair and who last edited it.
+    'note_glossary',
   ]);
 
   it('admits everyone only where the data is genuinely public', () => {
