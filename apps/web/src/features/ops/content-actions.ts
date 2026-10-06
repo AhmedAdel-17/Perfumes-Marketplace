@@ -50,12 +50,12 @@ export async function createPage(slug: string, title: string): Promise<ContentRe
 }
 
 export async function savePageDraft(
-  id: string, title: string, blocks: Block[],
+  id: string, title: string, blocks: Block[], titleEn: string, blocksEn: Block[],
 ): Promise<ContentResult> {
   const call = await caller();
   if (!call) return EXPIRED;
   try {
-    const { objections } = await call.content.saveDraft({ id, title, blocks });
+    const { objections } = await call.content.saveDraft({ id, title, blocks, titleEn, blocksEn });
     revalidatePath(`/ops/content/${id}`);
     return { ok: true, objections };
   } catch (error) {

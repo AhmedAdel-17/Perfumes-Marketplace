@@ -58,6 +58,11 @@ const MOVE_LABELS: Record<PageState, string> = {
  * message that only diagnoses leaves the reader to guess the remedy.
  */
 function objectionText(objection: PublishObjection): string {
+  const text = objectionTextIn(objection);
+  return objection.inEnglish ? `النسخة الإنجليزية: ${text}` : text;
+}
+
+function objectionTextIn(objection: PublishObjection): string {
   const where = objection.blockIndex === undefined
     ? '' : ` — العنصر رقم ${objection.blockIndex + 1}`;
 
@@ -432,6 +437,8 @@ export function PageEditor({ page }: {
     state: PageState;
     isLive: boolean;
     blocks: Block[];
+    titleEn: string | null;
+    blocksEn: Block[];
     images: ContentImages;
     canMoveTo: PageState[];
     objections: PublishObjection[];
@@ -439,6 +446,18 @@ export function PageEditor({ page }: {
 }) {
   const [title, setTitle] = useState(page.title);
   const [blocks, setBlocks] = useState<Block[]>(page.blocks);
+  /*
+   * The English half (D-3), edited in the same editor behind a switch. One
+   * draft, two languages, saved together and published together — so an
+   * English page can never go live ahead of, or behind, the Arabic it
+   * translates. Empty English means "not translated": the site shows Arabic.
+   */
+  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const [titleEn, setTitleEn] = useState(page.titleEn ?? '');
+  const [blocksEn, setBlocksEn] = useState<Block[]>(page.blocksEn);
+  const english = language === 'en';
+  const current = english ? blocksEn : blocks;
+  const setCurrent = english ? setBlocksEn : setBlocks;
   // Grows as images are uploaded, so a new picture shows before the next save.
   const [images, setImages] = useState<ContentImages>(page.images);
   const [state, setState] = useState<PageState>(page.state);
@@ -457,21 +476,21 @@ export function PageEditor({ page }: {
   const [pending, startTransition] = useTransition();
 
   /** Any edit invalidates the last save, so the button stops claiming success. */
-  const edit = (next: Block[]) => { setBlocks(next); setSaved(false); };
+  const edit = (next: Block[]) => { setCurrent(next); setSaved(false); };
 
   const replace = (index: number, block: Block) =>
-    edit(blocks.map((b, i) => (i === index ? block : b)));
+    edit(current.map((b, i) => (i === index ? block : b)));
 
   const move = (index: number, by: -1 | 1) => {
     const to = index + by;
-    if (to < 0 || to >= blocks.length) return;
-    const next = [...blocks];
+    if (to < 0 || to >= current.length) return;
+    const next = [...current];
     [next[index], next[to]] = [next[to]!, next[index]!];
     edit(next);
   };
 
   const save = () => startTransition(async () => {
-    const result = await savePageDraft(page.id, title, blocks);
+    const result = await savePageDraft(page.id, title, blocks, titleEn, blocksEn);
     setMessage(result.ok ? null : result.message ?? 'تعذّر الحفظ.');
     setObjections(result.objections ?? []);
     setSaved(result.ok);
@@ -486,7 +505,7 @@ export function PageEditor({ page }: {
      * revision and show the editor their unsaved text next to the word
      * "published". Two writes, but the alternative is a lie.
      */
-    const write = await savePageDraft(page.id, title, blocks);
+    const write = await savePageDraft(page.id, title, blocks, titleEn, blocksEn);
     if (!write.ok) {
       setMessage(write.message ?? 'تعذّر الحفظ.');
       return;
@@ -532,12 +551,60 @@ export function PageEditor({ page }: {
         )}
       </div>
 
-      <Text id="page-title" label="عنوان الصفحة" value={title} maxLength={160}
-        onChange={(v) => { setTitle(v); setSaved(false); }} />
+      {/* ----------------------------------------------------- the language */}
+      <div role="group" aria-label="لغة المحتوى" className="mb-6 inline-flex border border-line/70">
+        {(['ar', 'en'] as const).map((code) => (
+          <button
+            key={code}
+            type="button"
+            aria-pressed={language === code}
+            onClick={() => setLanguage(code)}
+            className={[
+              'flex min-h-touch items-center px-5 text-small transition-colors duration-base ease-out',
+              code === 'en' ? 'border-s border-line/70' : '',
+              language === code ? 'bg-raised text-ink' : 'text-ink3 hover:text-ink2',
+            ].join(' ')}
+          >
+            {code === 'ar' ? 'العربية' : 'English'}
+          </button>
+        ))}
+      </div>
+
+      {english && (
+        <p className="mb-5 max-w-proseMax text-caption leading-relaxed text-ink3">
+          النسخة الإنجليزية اختيارية. إن تُركت فارغة يعرض الموقع الإنجليزي هذه الصفحة بالعربية.
+          تُحفظ وتُنشر مع العربية في الخطوة نفسها.
+        </p>
+      )}
+
+      {english && blocksEn.length === 0 && blocks.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            // The same structure, to be translated in place: a translator
+            // replaces the words rather than rebuilding the page.
+            setBlocksEn(JSON.parse(JSON.stringify(blocks)) as Block[]);
+            if (!titleEn) setTitleEn(title);
+            setSaved(false);
+          }}
+          className="tappable mb-6 flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+        >
+          ابدأ من النسخة العربية
+        </button>
+      )}
+
+      <div dir={english ? 'ltr' : undefined} lang={english ? 'en' : undefined}>
+      <Text
+        id="page-title"
+        label={english ? 'عنوان الصفحة بالإنجليزية' : 'عنوان الصفحة'}
+        value={english ? titleEn : title}
+        maxLength={160}
+        onChange={(v) => { (english ? setTitleEn : setTitle)(v); setSaved(false); }}
+      />
 
       {/* ------------------------------------------------------- the blocks */}
       <ol className="mt-7">
-        {blocks.map((block, index) => (
+        {current.map((block, index) => (
           <li key={index} className="mb-4 border border-line bg-raised p-4">
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-3">
               <span className="text-caption tracking-label text-ink2">
@@ -554,7 +621,7 @@ export function PageEditor({ page }: {
                 </button>
                 <button
                   type="button" aria-label={`تحريك العنصر ${index + 1} لأسفل`}
-                  disabled={index === blocks.length - 1}
+                  disabled={index === current.length - 1}
                   onClick={() => move(index, 1)}
                   className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled"
                 >
@@ -562,7 +629,7 @@ export function PageEditor({ page }: {
                 </button>
                 <button
                   type="button" aria-label={`حذف العنصر ${index + 1}`}
-                  onClick={() => edit(blocks.filter((_, i) => i !== index))}
+                  onClick={() => edit(current.filter((_, i) => i !== index))}
                   className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-danger"
                 >
                   حذف
@@ -587,13 +654,15 @@ export function PageEditor({ page }: {
           <button
             key={kind}
             type="button"
-            disabled={blocks.length >= LIMITS.blocksPerPage}
-            onClick={() => edit([...blocks, emptyBlock(kind)])}
+            disabled={current.length >= LIMITS.blocksPerPage}
+            onClick={() => edit([...current, emptyBlock(kind)])}
             className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
           >
             + {KIND_LABELS[kind]}
           </button>
         ))}
+      </div>
+
       </div>
 
       {/* ----------------------------------------------------- objections */}

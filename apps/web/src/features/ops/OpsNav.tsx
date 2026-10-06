@@ -28,6 +28,7 @@ const DESTINATIONS = [
   { key: 'houses', href: '/ops/houses', label: 'الدور' },
   { key: 'content', href: '/ops/content', label: 'المحتوى' },
   { key: 'site', href: '/ops/site', label: 'الموقع' },
+  { key: 'notes', href: '/ops/notes', label: 'قاموس النفحات' },
   // Last, because these are where the work is READ rather than done: what the
   // business is doing, and who decided what.
   { key: 'insights', href: '/ops/insights', label: 'التقارير' },

@@ -62,7 +62,7 @@ export default async function OpsPageEditor(
           </a>
         </div>
       </header>
-      <PageEditor page={{ ...page, blocks: [...page.blocks] }} />
+      <PageEditor page={{ ...page, blocks: [...page.blocks], blocksEn: [...page.blocksEn] }} />
       <div className="px-5 lg:px-0">
         <RevisionHistory pageId={id} revisions={revisions} />
       </div>

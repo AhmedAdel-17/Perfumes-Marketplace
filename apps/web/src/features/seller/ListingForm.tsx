@@ -110,7 +110,7 @@ const RETURN_LABELS: Record<(typeof RETURN_ELIGIBILITIES)[number], string> = {
 };
 
 const FIELD_LABELS: Record<string, string> = {
-  name: 'اسم العطر', slug: 'المسار', sku: 'رمز المنتج', brandId: 'الدار',
+  name: 'اسم العطر', nameEn: 'الاسم بالإنجليزية', slug: 'المسار', sku: 'رمز المنتج', brandId: 'الدار',
   pricePiastres: 'السعر', promoPricePiastres: 'سعر العرض', volumeMl: 'الحجم',
   stock: 'المخزون', fulfilmentHours: 'مدة التجهيز',
   concentration: 'التركيز', form: 'الشكل', genderPositioning: 'التوجّه',
@@ -330,7 +330,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   /** Only the fields the schema accepts. The rest is read-only context. */
   const payload = (): Draft => {
     const keys = [
-      'name', 'sku', 'pricePiastres', 'promoPricePiastres', 'volumeMl', 'stock',
+      'name', 'nameEn', 'sku', 'pricePiastres', 'promoPricePiastres', 'volumeMl', 'stock',
       'fulfilmentHours', 'concentration', 'form', 'genderPositioning', 'scentFamily',
       'notesTop', 'notesHeart', 'notesBase', 'seasons', 'dayNight', 'occasions',
       'projectionBand', 'longevityBand', 'performanceSource', 'responsiblePartyName',
@@ -404,6 +404,21 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             <input
               id="f-name" value={String(draft.name ?? '')} maxLength={160}
               onChange={(e) => set('name', e.target.value)} className={control}
+            />
+          </Row>
+          {/*
+            Optional. The English site shows this name when it is filled and the
+            Arabic one when it is not — so a house that has no English name
+            loses nothing by leaving it empty.
+          */}
+          <Row
+            label={`${FIELD_LABELS.nameEn!} (اختياري)`}
+            htmlFor="f-name-en"
+            hint="كما تكتبه الدار على الزجاجة أو في حسابها — يظهر في النسخة الإنجليزية من الموقع"
+          >
+            <input
+              id="f-name-en" value={String(draft.nameEn ?? '')} maxLength={160} dir="ltr" lang="en"
+              onChange={(e) => set('nameEn', e.target.value)} className={control}
             />
           </Row>
           <Row label={FIELD_LABELS.sku!} htmlFor="f-sku" hint="رمزك الداخلي، حروف لاتينية وأرقام">

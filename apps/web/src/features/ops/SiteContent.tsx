@@ -18,6 +18,7 @@ import { endAnnouncement, postAnnouncement, setCuration } from './site-actions';
 export interface AnnouncementRow {
   id: string;
   message: string;
+  messageEn: string | null;
   href: string | null;
   startsAt: string;
   endsAt: string;
@@ -72,6 +73,7 @@ export function SiteContent({ announcements, products, curation }: {
 
   const now = new Date();
   const [message, setMessage] = useState('');
+  const [messageEn, setMessageEn] = useState('');
   const [href, setHref] = useState('');
   const [startsAt, setStartsAt] = useState(toLocalInput(now));
   const [endsAt, setEndsAt] = useState(toLocalInput(new Date(now.getTime() + 3 * 86_400_000)));
@@ -85,6 +87,7 @@ export function SiteContent({ announcements, products, curation }: {
   const post = () => startTransition(async () => {
     const result = await postAnnouncement({
       message,
+      messageEn: messageEn.trim() === '' ? null : messageEn.trim(),
       href: href.trim() === '' ? null : href.trim(),
       // Back through the same local-time correction, so the instant sent is the
       // instant that was typed.
@@ -93,7 +96,7 @@ export function SiteContent({ announcements, products, curation }: {
     });
     setObjections(result.objections ?? []);
     setError(result.message ?? null);
-    if (result.ok) { setMessage(''); setHref(''); router.refresh(); }
+    if (result.ok) { setMessage(''); setMessageEn(''); setHref(''); router.refresh(); }
   });
 
   const end = (id: string) => startTransition(async () => {
@@ -133,6 +136,9 @@ export function SiteContent({ announcements, products, curation }: {
               <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line py-4">
                 <div className="min-w-0">
                   <div className="text-body text-ink">{a.message}</div>
+                  {a.messageEn && (
+                    <div dir="ltr" lang="en" className="text-small text-ink2">{a.messageEn}</div>
+                  )}
                   <div className="mt-1 text-caption text-ink3">
                     <span className="tnum">{when(a.startsAt)}</span>
                     {' ← '}
@@ -197,6 +203,24 @@ export function SiteContent({ announcements, products, curation }: {
           <input
             id="ann-message" value={message} maxLength={ANNOUNCEMENT_MAX_LENGTH}
             onChange={(e) => setMessage(e.target.value)} className={field}
+          />
+        </div>
+
+        {/*
+          The same notice for the English site — optional. Left empty, English
+          visitors read the Arabic line, marked as Arabic.
+        */}
+        <div className="mb-3">
+          <label htmlFor="ann-message-en" className="mb-1.5 block text-caption tracking-label text-ink3">
+            النص بالإنجليزية — اختياري{' '}
+            <span dir="ltr" className="tnum latin">
+              {num(messageEn.length)}/{num(ANNOUNCEMENT_MAX_LENGTH)}
+            </span>
+          </label>
+          <input
+            id="ann-message-en" value={messageEn} maxLength={ANNOUNCEMENT_MAX_LENGTH}
+            dir="ltr" lang="en"
+            onChange={(e) => setMessageEn(e.target.value)} className={field}
           />
         </div>
 

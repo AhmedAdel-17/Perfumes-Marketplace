@@ -32,7 +32,7 @@ async function caller() {
 const EXPIRED: SiteResult = { ok: false, message: 'انتهت الجلسة. سجّل الدخول من جديد.' };
 
 export async function postAnnouncement(input: {
-  message: string; href: string | null; startsAt: string; endsAt: string;
+  message: string; messageEn: string | null; href: string | null; startsAt: string; endsAt: string;
 }): Promise<SiteResult> {
   const call = await caller();
   if (!call) return EXPIRED;
