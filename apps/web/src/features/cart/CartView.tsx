@@ -5,7 +5,8 @@ import { useEffect, useState, useTransition } from 'react';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import {
-  CART, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, NOUN, nounIn, data as num,
+  CART, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, langAttrs, languageOf, NOUN, nounIn,
+  data as num, pick,
 } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { useLocale } from '@/features/shell/LocaleProvider';
@@ -126,7 +127,7 @@ export function CartView() {
           <div className="mb-4 flex items-baseline justify-between">
             <div>
               <div className="latin text-micro tracking-label text-accent">{house.brandLatin}</div>
-              <div className="mt-1 font-display text-h4">{house.brandName}</div>
+              <div {...langAttrs(locale, languageOf(house.brandName))} className="mt-1 font-display text-h4">{house.brandName}</div>
             </div>
             <div className="text-caption text-ink3">
               {/* The noun agrees with the LAST number in the range, so a 10–11
@@ -152,7 +153,7 @@ export function CartView() {
                 */}
                 <Link
                   href={localeHref(locale, `/p/${line.slug}`)}
-                  aria-label={line.name}
+                  aria-label={pick(locale, line.name, line.nameEn).text}
                   className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,theme(colors.stage.glow),theme(colors.stage.mid)_52%,theme(colors.stage.deep))]"
                 >
                   {line.photo ? (
@@ -170,9 +171,10 @@ export function CartView() {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={localeHref(locale, `/p/${line.slug}`)}
+                    {...langAttrs(locale, pick(locale, line.name, line.nameEn).lang)}
                     className="tappable font-display text-h4 leading-tight transition-colors duration-base ease-out hover:text-accent"
                   >
-                    {line.name}
+                    {pick(locale, line.name, line.nameEn).text}
                   </Link>
                   <div className="mt-1 text-caption text-ink3">
                     <span className="tnum">{num(line.volumeMl)}</span> {copy.ml}
@@ -184,7 +186,7 @@ export function CartView() {
                       max={line.maxQuantity}
                       onChange={(q) => setQuantity(line.productId, q)}
                       onRemove={() => remove(line.productId)}
-                      label={line.name}
+                      label={pick(locale, line.name, line.nameEn).text}
                       copy={copy}
                     />
                     <div className="text-bodyLg font-semibold">

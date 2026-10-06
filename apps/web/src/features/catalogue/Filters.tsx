@@ -18,7 +18,7 @@ import {
   activeFilterCount, catalogueQueryToSearch, parseCatalogueQuery, SCENT_FAMILIES, SORTS,
   type CatalogueQuery, type ScentFamily, type Sort,
 } from '@diyar/domain';
-import { data as num, SCENT_FAMILY, SEARCH } from '@diyar/i18n';
+import { langAttrs, data as num, pick, SCENT_FAMILY, SEARCH } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { useLocale } from '@/features/shell/LocaleProvider';
 
@@ -36,7 +36,7 @@ const chip = (on: boolean) => [
 
 export function Filters({ query, houses }: {
   query: CatalogueQuery;
-  houses: Array<{ slug: string; name: string }>;
+  houses: Array<{ slug: string; name: string; nameEn: string | null }>;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -135,7 +135,9 @@ export function Filters({ query, houses }: {
                 onClick={() => apply({ ...query, houses: toggle(query.houses, house.slug) })}
                 className={chip(query.houses.includes(house.slug))}
               >
-                {house.name}
+                <span {...langAttrs(locale, pick(locale, house.name, house.nameEn).lang)}>
+                  {pick(locale, house.name, house.nameEn).text}
+                </span>
               </button>
             ))}
           </div>

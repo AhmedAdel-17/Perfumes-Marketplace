@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
-  CHECKOUT, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, governorateOptions,
+  CHECKOUT, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, governorateOptions, langAttrs, languageOf,
   NOUN, nounIn, data as num, type Locale,
 } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
@@ -268,7 +268,7 @@ function Summary({ cart, locale }: { cart: PricedCartResult; locale: Locale }) {
       {cart.houses.map((house) => (
         <div key={house.sellerId} className="mb-3 flex justify-between text-small text-ink2">
           <span>
-            {house.brandName}
+            <span {...langAttrs(locale, languageOf(house.brandName))}>{house.brandName}</span>
             <span className="text-ink3">
               {' · '}
               <span className="tnum">{num(house.etaDaysMin)}</span>–

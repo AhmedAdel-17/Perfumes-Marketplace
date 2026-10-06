@@ -18,20 +18,38 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Blocks } from '@/features/content/Blocks';
 import { api } from '@/core/api';
-import { SHELL } from '@diyar/i18n';
+import { langAttrs, SHELL, type Locale } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 
 export const dynamic = 'force-dynamic';
+
+type Page = NonNullable<Awaited<ReturnType<ReturnType<typeof api>['content']['read']>>>;
+
+/**
+ * Which half of a page a visitor reads.
+ *
+ * The English half when the page is English and the published revision has
+ * one; otherwise the Arabic, WHOLE — title and blocks together, marked as
+ * Arabic. Mixing an English title over Arabic blocks would be a page in two
+ * languages that is complete in neither.
+ */
+function served(page: Page, locale: Locale) {
+  if (locale === 'en' && page.blocksEn.length > 0) {
+    return { title: page.titleEn ?? page.title, blocks: page.blocksEn, lang: 'en' as const };
+  }
+  return { title: page.title, blocks: page.blocks, lang: 'ar' as const };
+}
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
   const { slug } = await params;
   const page = await api().content.read({ slug });
-  const suffix = SHELL[await getLocale()].titleSuffix;
+  const locale = await getLocale();
+  const suffix = SHELL[locale].titleSuffix;
   if (!page) return { title: suffix };
   return {
-    title: `${page.title} | ${suffix}`,
+    title: `${served(page, locale).title} | ${suffix}`,
     // No description invented from the body. A truncated first paragraph is a
     // worse summary than none, and it is the kind of thing that reads as
     // machine-written on the one surface people meet before the site.
@@ -44,6 +62,8 @@ export default async function ContentPage(
   const { slug } = await params;
   const page = await api().content.read({ slug });
   if (!page) notFound();
+  const locale = await getLocale();
+  const shown = served(page, locale);
 
   return (
     <>
@@ -54,13 +74,15 @@ export default async function ContentPage(
           domain refuses to publish a document whose first heading is a level 3
           for exactly this reason — the outline has to start somewhere.
         */}
-        <h1 className="pb-2 pt-7 font-display text-h1 leading-heading lg:pb-3 lg:pt-9 lg:text-h1Lg">
-          {page.title}
-        </h1>
+        <div {...langAttrs(locale, shown.lang)}>
+          <h1 className="pb-2 pt-7 font-display text-h1 leading-heading lg:pb-3 lg:pt-9 lg:text-h1Lg">
+            {shown.title}
+          </h1>
 
-        <article className="pb-4">
-          <Blocks blocks={page.blocks} images={page.images} locale={await getLocale()} />
-        </article>
+          <article className="pb-4">
+            <Blocks blocks={shown.blocks} images={page.images} locale={locale} />
+          </article>
+        </div>
       </main>
       <SiteFooter />
     </>

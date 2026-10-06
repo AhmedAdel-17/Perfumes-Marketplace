@@ -46,3 +46,37 @@ export function localePath(locale: Locale, path: string): string {
   if (locale === DEFAULT_LOCALE) return bare;
   return bare === '/' ? EN_PREFIX : bare.startsWith('/?') ? `${EN_PREFIX}${bare.slice(1)}` : `${EN_PREFIX}${bare}`;
 }
+
+/** A piece of content, and the language it is actually in. */
+export interface Picked {
+  readonly text: string;
+  readonly lang: Locale;
+}
+
+/**
+ * The English version of a piece of content when the page is English and one
+ * exists; otherwise the Arabic, labelled as Arabic. Content — a perfume's name,
+ * a house's story — is written by people, so a translation may simply not
+ * exist yet, and the page must say which language it is showing.
+ */
+export function pick(locale: Locale, ar: string, en: string | null | undefined): Picked {
+  if (locale === 'en' && en && en.trim() !== '') return { text: en, lang: 'en' };
+  return { text: ar, lang: 'ar' };
+}
+
+/**
+ * `lang` and `dir` for an element whose text is in `text` on a page in `page`,
+ * or nothing when they agree. An Arabic sentence on the English page needs both:
+ * `lang` for screen readers and fonts, `dir` so its punctuation lands on the
+ * right side.
+ */
+export function langAttrs(page: Locale, text: Locale): { lang?: Locale; dir?: 'rtl' | 'ltr' } {
+  return page === text ? {} : { lang: text, dir: directionOf(text) };
+}
+
+/**
+ * The language a piece of free text is written in, as far as this site cares:
+ * Arabic if it contains Arabic letters, English otherwise. For text nobody
+ * labelled — a customer's review is written in whichever language they chose.
+ */
+export const languageOf = (text: string): Locale => (/[؀-ۿ]/.test(text) ? 'ar' : 'en');

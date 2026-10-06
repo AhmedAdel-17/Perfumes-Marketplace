@@ -49,6 +49,7 @@ export const AUDIT_ENTITY_AR = {
   sub_orders: 'شحنة',
   payouts: 'دفعة',
   content_pages: 'صفحة',
+  note_glossary: 'قاموس النفحات',
 } as const;
 
 /** Every field a router writes into `before` / `after`. */
@@ -60,6 +61,8 @@ export const AUDIT_FIELD_AR = {
   hidden: 'الظهور',
   control: 'البند',
   slug: 'الرابط',
+  ar: 'النفحة',
+  en: 'الاسم بالإنجليزية',
   reference: 'المرجع',
   costBearer: 'التكلفة على',
   refundPiastres: 'المبلغ المردود',

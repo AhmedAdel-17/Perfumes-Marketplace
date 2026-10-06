@@ -1,4 +1,4 @@
-import { PRODUCT, type Locale } from '@diyar/i18n';
+import { langAttrs, pick, PRODUCT, type Locale } from '@diyar/i18n';
 import { NOTE_ICON } from './note-icons';
 
 /**
@@ -23,8 +23,15 @@ const TIERS = [
 ] as const;
 
 export function NotesPyramid({
-  top, heart, base, locale,
-}: { top: string[]; heart: string[]; base: string[]; locale: Locale }) {
+  top, heart, base, english, locale,
+}: {
+  top: string[];
+  heart: string[];
+  base: string[];
+  /** English names from the platform glossary, keyed by the Arabic note. */
+  english: Readonly<Record<string, string>>;
+  locale: Locale;
+}) {
   const copy = PRODUCT[locale];
   const notes: Record<string, string[]> = { top, heart, base };
 
@@ -91,14 +98,18 @@ export function NotesPyramid({
               */}
               <h2 className="mb-3 font-display text-h4">{copy[tier.name]}</h2>
               <ul className="flex flex-wrap gap-2">
-                {list.map((note) => (
-                  <li
-                    key={note}
-                    className="tappable flex h-touch items-center gap-2 border border-line bg-raised px-3 text-small"
-                  >
-                    {note}
-                  </li>
-                ))}
+                {list.map((note) => {
+                  const shown = pick(locale, note, english[note]);
+                  return (
+                    <li
+                      key={note}
+                      {...langAttrs(locale, shown.lang)}
+                      className="tappable flex h-touch items-center gap-2 border border-line bg-raised px-3 text-small"
+                    >
+                      {shown.text}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

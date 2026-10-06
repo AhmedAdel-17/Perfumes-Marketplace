@@ -7,7 +7,9 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
-import { countedIn, CURRENCY_LABEL, editorialIn, formatPrice, HOME, NOUN } from '@diyar/i18n';
+import {
+  countedIn, CURRENCY_LABEL, editorialIn, formatPrice, HOME, langAttrs, NOUN, pick,
+} from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { getLocale } from '@/core/locale';
 
@@ -35,6 +37,7 @@ export default async function Home() {
     ? products.find((p) => p.id === heroProductId)
     : undefined;
   const hero = curated ?? products[0];
+  const heroName = hero ? pick(locale, hero.name, hero.nameEn) : null;
 
   /*
    * Featured products lead the grid, in the order they were curated, and the
@@ -105,7 +108,7 @@ export default async function Home() {
                 on the axis that is actually constrained.
               */}
               <Reveal className="flex w-full items-center justify-center lg:w-[46%]">
-                <Link href={localeHref(locale, `/p/${hero.slug}`)} aria-label={hero.name} className="block">
+                <Link href={localeHref(locale, `/p/${hero.slug}`)} aria-label={heroName!.text} className="block">
                   <Flacon
                     family={hero.family}
                     house={hero.brandLatin}
@@ -149,7 +152,7 @@ export default async function Home() {
                     href={localeHref(locale, `/p/${hero.slug}`)}
                     className="tappable mt-7 inline-flex items-baseline gap-3 border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent lg:mt-9"
                   >
-                    <span className="font-display text-h4 lg:text-h3Lg">{hero.name}</span>
+                    <span {...langAttrs(locale, heroName!.lang)} className="font-display text-h4 lg:text-h3Lg">{heroName!.text}</span>
                     <span className="latin text-caption tracking-label text-accent">
                       {hero.brandLatin}
                     </span>

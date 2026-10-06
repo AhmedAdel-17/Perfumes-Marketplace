@@ -1,6 +1,6 @@
 import { api } from '@/core/api';
 import { ThemeToggle } from './ThemeToggle';
-import { localePath, SHELL } from '@diyar/i18n';
+import { langAttrs, localePath, pick, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 
 /**
@@ -74,7 +74,9 @@ export async function SiteFooter() {
             href={to(`/${page.slug}`)}
             className="tappable inline-flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
           >
-            {page.title}
+            <span {...langAttrs(locale, pick(locale, page.title, page.titleEn).lang)}>
+              {pick(locale, page.title, page.titleEn).text}
+            </span>
           </a>
         ))}
         </nav>

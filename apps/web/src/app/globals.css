@@ -62,6 +62,21 @@
     font-family: theme('fontFamily.displayEn');
   }
 
+  /*
+    Arabic content on the English site — a perfume or a page nobody has
+    translated yet — keeps the Arabic faces. It is marked `lang="ar"` where it
+    is rendered, and falling through the English stacks would set it in
+    whatever Arabic font the device happens to have.
+  */
+  html[lang='en'] [lang='ar'],
+  html[lang='en'] [lang='ar'] .font-sans {
+    font-family: theme('fontFamily.sans');
+  }
+  html[lang='en'] [lang='ar'].font-display,
+  html[lang='en'] [lang='ar'] .font-display {
+    font-family: theme('fontFamily.display');
+  }
+
   /* Latin runs inside Arabic keep correct bidi behaviour. */
   .latin {
     font-family: var(--font-bodoni), serif;

@@ -11,14 +11,18 @@
  * the honest way to stop showing something.
  */
 import { api } from '@/core/api';
+import { langAttrs, localePath, pick } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 
 export async function AnnouncementBar() {
   const announcement = await api().site.announcement();
   if (!announcement) return null;
+  const locale = await getLocale();
+  const message = pick(locale, announcement.message, announcement.messageEn);
 
   const body = (
-    <span className="text-caption leading-relaxed text-accent lg:text-small">
-      {announcement.message}
+    <span {...langAttrs(locale, message.lang)} className="text-caption leading-relaxed text-accent lg:text-small">
+      {message.text}
     </span>
   );
 
@@ -35,7 +39,7 @@ export async function AnnouncementBar() {
     >
       {announcement.href ? (
         <a
-          href={announcement.href}
+          href={localePath(locale, announcement.href)}
           className="tappable inline-flex min-h-touch items-center justify-center underline decoration-accent/40 underline-offset-4 transition-colors duration-base ease-out hover:decoration-accent"
         >
           {body}

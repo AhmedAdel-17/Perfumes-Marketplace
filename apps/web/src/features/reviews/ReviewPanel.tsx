@@ -5,7 +5,7 @@ import {
   REVIEW_BODY_MAX, REVIEW_DIMENSIONS, type Ratings, type ReviewDimension,
 } from '@diyar/domain';
 import {
-  REVIEW_DIMENSION, REVIEW_DIMENSION_PROMPT, REVIEWS, data as num,
+  langAttrs, languageOf, REVIEW_DIMENSION, REVIEW_DIMENSION_PROMPT, REVIEWS, data as num,
 } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
@@ -62,7 +62,7 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
           <li key={item.lineItemId} className="border-t border-line py-4 first:border-t-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
               <div>
-                <div className="text-small text-ink">{item.productName}</div>
+                <div {...langAttrs(locale, languageOf(item.productName))} className="text-small text-ink">{item.productName}</div>
                 <div className="text-caption text-ink3">
                   {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                 </div>

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Amiri, Bodoni_Moda, IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
-import { directionOf, SHELL } from '@diyar/i18n';
-import { getLocale } from '@/core/locale';
+import { directionOf, localePath, SHELL } from '@diyar/i18n';
+import { getLocale, getPath } from '@/core/locale';
 import { LocaleProvider } from '@/features/shell/LocaleProvider';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
@@ -60,7 +60,26 @@ const plexLatin = IBM_Plex_Sans({
 
 export async function generateMetadata(): Promise<Metadata> {
   const copy = SHELL[await getLocale()];
-  return { title: copy.siteTitle, description: copy.siteDescription };
+  /*
+   * Every page names its twin in the other language (`hreflang`), so a search
+   * engine indexes both and sends each visitor to the one they read. Absolute
+   * URLs are required, so the base is this request's own origin: the site is
+   * served from whichever host it is deployed on, and hard-coding one here
+   * would point a staging site's alternates at production.
+   */
+  const request = await headers();
+  const host = request.get('x-forwarded-host') ?? request.get('host') ?? 'localhost:3100';
+  const proto = request.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
+  const path = (await getPath()).split('?')[0] ?? '/';
+  return {
+    title: copy.siteTitle,
+    description: copy.siteDescription,
+    metadataBase: new URL(`${proto}://${host}`),
+    alternates: {
+      canonical: localePath(await getLocale(), path),
+      languages: { ar: localePath('ar', path), en: localePath('en', path) },
+    },
+  };
 }
 
 export const viewport: Viewport = {

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import {
-  CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, ORDERS, stateCopy, data as num,
+  CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, langAttrs, languageOf, ORDERS,
+  stateCopy, data as num,
 } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
 import { Field } from '@/features/checkout/Field';
@@ -119,7 +120,7 @@ function OrderDetail({
         return (
           <section key={house.reference} className="mt-7 border-t border-line pt-6">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-h4 lg:text-h3">{house.brandName}</h2>
+              <h2 {...langAttrs(locale, languageOf(house.brandName))} className="font-display text-h4 lg:text-h3">{house.brandName}</h2>
               <span
                 className={statusPill(
                   copy.terminal && house.state !== 'delivered' ? 'danger' : 'accent',
@@ -162,7 +163,7 @@ function OrderDetail({
             <ul className="mt-5">
               {house.items.map((item) => (
                 <li key={item.name} className="flex justify-between py-1.5 text-small text-ink2">
-                  <span>
+                  <span {...langAttrs(locale, languageOf(item.name))}>
                     {item.name}
                     {item.quantity > 1 && (
                       <span className="text-ink3"> × <span className="tnum">{num(item.quantity)}</span></span>

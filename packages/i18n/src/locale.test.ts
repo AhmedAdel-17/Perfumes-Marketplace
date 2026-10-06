@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { directionOf, isEnglishPath, localePath, stripLocale } from './locale';
+import { directionOf, isEnglishPath, langAttrs, localePath, pick, stripLocale } from './locale';
 import { defineMessages } from './messages';
 import { countedIn, NOUN } from './plural';
 import { data, editorial, editorialIn } from './numerals';
@@ -63,5 +63,25 @@ describe('message catalogues', () => {
   it('refuses a function message translated as a plain string', () => {
     // @ts-expect-error — a message that takes a count must stay a function.
     defineMessages({ count: (n: string) => `${n} عطور` }, { count: 'perfumes' });
+  });
+});
+
+describe('picking content in a language', () => {
+  it('shows the English when the page is English and there is some', () => {
+    expect(pick('en', 'ليل القاهرة', 'Cairo Night')).toEqual({ text: 'Cairo Night', lang: 'en' });
+  });
+
+  it('falls back to the Arabic, and says so, when there is none', () => {
+    expect(pick('en', 'ليل القاهرة', null)).toEqual({ text: 'ليل القاهرة', lang: 'ar' });
+    expect(pick('en', 'ليل القاهرة', '  ')).toEqual({ text: 'ليل القاهرة', lang: 'ar' });
+  });
+
+  it('always shows the Arabic on the Arabic page', () => {
+    expect(pick('ar', 'ليل القاهرة', 'Cairo Night')).toEqual({ text: 'ليل القاهرة', lang: 'ar' });
+  });
+
+  it('marks Arabic on an English page with both lang and direction', () => {
+    expect(langAttrs('en', 'ar')).toEqual({ lang: 'ar', dir: 'rtl' });
+    expect(langAttrs('en', 'en')).toEqual({});
   });
 });

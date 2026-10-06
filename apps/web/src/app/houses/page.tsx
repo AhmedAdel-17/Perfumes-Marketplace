@@ -12,7 +12,7 @@
  */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { countedIn, editorialIn, HOUSES, NOUN, SHELL } from '@diyar/i18n';
+import { countedIn, editorialIn, HOUSES, langAttrs, NOUN, pick, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { localeHref } from '@/core/href';
 import { SiteHeader } from '@/features/shell/SiteHeader';
@@ -62,8 +62,11 @@ export default async function HousesPage() {
                     className="tappable group flex min-h-touch flex-wrap items-baseline justify-between gap-x-6 gap-y-2 py-6 lg:py-8"
                   >
                     <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                      <span className="font-display text-h3 transition-colors duration-base ease-out group-hover:text-accent lg:text-h2Lg">
-                        {house.name}
+                      <span
+                        {...langAttrs(locale, pick(locale, house.name, house.nameEn).lang)}
+                        className="font-display text-h3 transition-colors duration-base ease-out group-hover:text-accent lg:text-h2Lg"
+                      >
+                        {pick(locale, house.name, house.nameEn).text}
                       </span>
                       <span className="latin text-micro tracking-label text-accent lg:text-caption">
                         {house.latin}

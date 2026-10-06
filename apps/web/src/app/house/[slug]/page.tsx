@@ -18,7 +18,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import {
-  countedIn, editorialIn, GOVERNORATE, HOUSES, NOUN, SHELL,
+  countedIn, editorialIn, GOVERNORATE, HOUSES, langAttrs, NOUN, pick, SHELL,
 } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import type { Governorate } from '@diyar/domain';
@@ -40,12 +40,14 @@ export async function generateMetadata(
   const suffix = SHELL[locale].titleSuffix;
   if (!house) return { title: suffix };
 
+  const name = pick(locale, house.name, house.nameEn).text;
+  const bio = pick(locale, house.bio ?? '', house.bioEn).text || null;
   return {
-    title: `${house.name} | ${suffix}`,
+    title: `${name} | ${suffix}`,
     // The house's OWN words where it has them. A generated description on a
     // page about a maker is the one place a template sentence is most obvious.
-    description: house.bio ?? HOUSES[locale].houseFallbackDescription(house.name),
-    openGraph: { title: house.name, ...(house.bio ? { description: house.bio } : {}) },
+    description: bio ?? HOUSES[locale].houseFallbackDescription(name),
+    openGraph: { title: name, ...(bio ? { description: bio } : {}) },
   };
 }
 
@@ -58,6 +60,9 @@ export default async function HousePage(
   const locale = await getLocale();
   const copy = HOUSES[locale];
   const editorialNum = editorialIn(locale);
+  const name = pick(locale, house.name, house.nameEn);
+  const bio = house.bio ? pick(locale, house.bio, house.bioEn) : null;
+  const story = house.story ? pick(locale, house.story, house.storyEn) : null;
 
   return (
     <>
@@ -78,8 +83,8 @@ export default async function HousePage(
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="font-display text-h1 leading-heading lg:text-displayLg">
-                {house.name}
+              <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1 leading-heading lg:text-displayLg">
+                {name.text}
               </h1>
             </Reveal>
 
@@ -107,10 +112,10 @@ export default async function HousePage(
               </div>
             </Reveal>
 
-            {house.bio && (
+            {bio && (
               <Reveal delay={240}>
-                <p className="mt-6 max-w-proseMax text-bodyLg leading-relaxed text-ink2 lg:mt-8">
-                  {house.bio}
+                <p {...langAttrs(locale, bio.lang)} className="mt-6 max-w-proseMax text-bodyLg leading-relaxed text-ink2 lg:mt-8">
+                  {bio.text}
                 </p>
               </Reveal>
             )}
@@ -118,7 +123,7 @@ export default async function HousePage(
         </section>
 
         {/* ------------------------------------------------------ the story */}
-        {house.story && (
+        {story && (
           <section className="border-b border-line/70">
             {/*
               The same container as every other section, with the MEASURE
@@ -137,9 +142,9 @@ export default async function HousePage(
                   blocks follow. A house writes its story in a textarea and a
                   single newline there is a soft wrap, not a break.
                 */}
-                {house.story.split(/\n\s*\n/).map((paragraph, index) => (
+                {story.text.split(/\n\s*\n/).map((paragraph, index) => (
                   // eslint-disable-next-line react/no-array-index-key
-                  <p key={index} className="mt-4 text-bodyLg leading-relaxed text-ink2">
+                  <p key={index} {...langAttrs(locale, story.lang)} className="mt-4 text-bodyLg leading-relaxed text-ink2">
                     {paragraph.trim()}
                   </p>
                 ))}

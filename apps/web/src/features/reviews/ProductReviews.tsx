@@ -1,4 +1,4 @@
-import { countedIn, data as num, NOUN, REVIEWS } from '@diyar/i18n';
+import { countedIn, data as num, langAttrs, languageOf, NOUN, REVIEWS } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { localeHref } from '@/core/href';
 import { formatRating } from '@diyar/domain';
@@ -66,7 +66,7 @@ export async function ProductReviews({
               {reviews.map((review) => (
                 <li key={review.id} className="border-t border-line py-5 first:border-t-0 first:pt-0">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-small text-ink">{review.authorName}</span>
+                    <span {...langAttrs(locale, languageOf(review.authorName))} className="text-small text-ink">{review.authorName}</span>
                     <span
                       dir="ltr"
                       className="tnum text-caption text-accent"
@@ -98,7 +98,11 @@ export async function ProductReviews({
                   </div>
 
                   {review.body && (
-                    <p className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2">
+                    // A review stays in the language it was written in, marked as such.
+                    <p
+                      {...langAttrs(locale, languageOf(review.body))}
+                      className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2"
+                    >
                       {review.body}
                     </p>
                   )}

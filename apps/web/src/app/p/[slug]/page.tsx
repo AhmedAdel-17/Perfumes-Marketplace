@@ -16,7 +16,7 @@ import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
 import {
-  CONCENTRATION, data as num, labelOf, NOUN, nounIn, PRODUCT, SHELL,
+  CONCENTRATION, data as num, labelOf, langAttrs, NOUN, nounIn, pick, PRODUCT, SHELL,
 } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { localeHref } from '@/core/href';
@@ -38,15 +38,17 @@ export async function generateMetadata(
   const locale = await getLocale();
   const copy = PRODUCT[locale];
   if (!product) return { title: copy.notFound };
+  const name = pick(locale, product.name, product.nameEn).text;
+  const house = pick(locale, product.brandName, product.brandNameEn).text;
 
   return {
-    title: `${product.name} — ${product.brandName} | ${SHELL[locale].titleSuffix}`,
+    title: `${name} — ${house} | ${SHELL[locale].titleSuffix}`,
     description: copy.metaDescription(
-      product.name, product.brandName,
+      name, house,
       labelOf(CONCENTRATION, locale, product.concentration), String(product.volumeMl),
     ),
     openGraph: {
-      title: `${product.name} — ${product.brandName}`,
+      title: `${name} — ${house}`,
       type: 'website',
       locale: locale === 'ar' ? 'ar_EG' : 'en_GB',
     },
@@ -65,6 +67,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const arrival = arrivalWindow(product.fulfilmentHours);
   const locale = await getLocale();
   const copy = PRODUCT[locale];
+  const name = pick(locale, product.name, product.nameEn);
+  const house = pick(locale, product.brandName, product.brandNameEn);
 
   return (
     <>
@@ -174,8 +178,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="latin mb-2 text-caption tracking-label text-accent">
                   {product.brandLatin}
                 </div>
-                <h1 className="font-display text-h1 leading-[1.1] tracking-tight lg:text-displayLg">
-                  {product.name}
+                <h1
+                  {...langAttrs(locale, name.lang)}
+                  className="font-display text-h1 leading-[1.1] tracking-tight lg:text-displayLg"
+                >
+                  {name.text}
                 </h1>
                 <p className="mt-2 text-small text-ink2 lg:mt-3 lg:text-bodyLg">
                   <span className="tnum">{num(product.volumeMl)}</span> {copy.ml} · {labelOf(CONCENTRATION, locale, product.concentration)}
@@ -199,6 +206,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     top={product.notesTop}
                     heart={product.notesHeart}
                     base={product.notesBase}
+                    english={product.noteEnglish}
                     locale={locale}
                   />
                 </div>
@@ -254,8 +262,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   href={localeHref(locale, `/house/${product.houseSlug}`)}
                   className="tappable group inline-flex min-h-touch items-baseline gap-3"
                 >
-                  <span className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3">
-                    {product.brandName}
+                  <span
+                    {...langAttrs(locale, house.lang)}
+                    className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3"
+                  >
+                    {house.text}
                   </span>
                   <span className="text-caption text-ink3 transition-colors duration-base ease-out group-hover:text-accent">
                     {copy.allItsPerfumes}
@@ -276,7 +287,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             other perfumes between them and that decision is an invitation to
             stop deciding.
           */}
-          <ProductReviews productId={product.id} productName={product.name} />
+          <ProductReviews productId={product.id} productName={name.text} />
 
           {/* -------------------------------------------------------- others */}
           {others.length > 0 && (
@@ -327,8 +338,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Product',
-            name: product.name,
-            brand: { '@type': 'Brand', name: product.brandName },
+            name: name.text,
+            brand: { '@type': 'Brand', name: house.text },
             offers: {
               '@type': 'Offer',
               priceCurrency: 'EGP',

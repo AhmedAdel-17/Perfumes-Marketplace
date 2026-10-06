@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReturnReason } from '@diyar/domain';
 import {
-  CURRENCY_LABEL, RETURN_REASON, RETURN_REASON_DETAIL, RETURN_STATE, RETURNS,
+  CURRENCY_LABEL, langAttrs, languageOf, RETURN_REASON, RETURN_REASON_DETAIL, RETURN_STATE, RETURNS,
   data as num, formatPrice,
 } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
@@ -68,7 +68,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
           {existing.map((row) => (
             <li key={row.id} className="border border-line bg-raised p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="text-small text-ink">{row.productName ?? row.brandName}</span>
+                <span {...langAttrs(locale, languageOf(row.productName ?? row.brandName))} className="text-small text-ink">{row.productName ?? row.brandName}</span>
                 <span className="text-caption text-accent">
                   {RETURN_STATE[locale][row.state as keyof (typeof RETURN_STATE)['ar']] ?? row.state}
                 </span>
@@ -99,7 +99,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
               <li key={item.lineItemId} className="border-t border-line py-4 first:border-t-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
                   <div>
-                    <div className="text-small text-ink">{item.productName}</div>
+                    <div {...langAttrs(locale, languageOf(item.productName))} className="text-small text-ink">{item.productName}</div>
                     <div className="text-caption text-ink3">
                       {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                       {item.daysLeft !== null && item.daysLeft > 0 && (
