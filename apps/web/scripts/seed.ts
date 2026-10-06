@@ -15,6 +15,7 @@ import { applyMigrations } from '@diyar/db/migrate';
  * could never exist in the real system.
  */
 import { PGlite } from '@electric-sql/pglite';
+import { seedEnglish } from './seed-english';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -227,6 +228,10 @@ async function main() {
   const existing = await pg.query<{ n: number }>(`SELECT count(*)::int n FROM products`);
   if (existing.rows[0]!.n > 0) {
     console.log(`\n· ${existing.rows[0]!.n} products already present — nothing to do`);
+    // Except the English half, which a database seeded before it existed lacks.
+    const staff = (await pg.query<{ id: string }>(
+      `SELECT id FROM platform_staff WHERE auth_user_id = $1`, [PLATFORM])).rows[0];
+    if (staff) await seedEnglish(pg, staff.id);
     await pg.close();
     return;
   }
@@ -709,6 +714,8 @@ async function main() {
   console.log('  the one-time code is printed to the dev server console.');
   for (const house of houses) console.log(`    ${house.phone}  ${house.name}`);
   console.log(String.fromCharCode(10) + '  Operations console — /ops. Sign in with 01000000001.');
+
+  await seedEnglish(pg, staffId);
   await pg.close();
 }
 

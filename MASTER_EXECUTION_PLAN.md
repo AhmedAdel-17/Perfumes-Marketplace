@@ -2346,12 +2346,25 @@ product and storefront pages carry `hreflang`; the browser suite and audit pass 
   Browser suite 129/129 (three new English tests: URL and direction, switch round trip,
   a complete English order); audit now visits every customer screen under `/en` too, in its
   own browser, and is clean in both themes at every width.
+- *Step 3 — done.* Migration 0030: English bio and story on `sellers`, `message_en` on
+  announcements, `title_en`/`draft_blocks_en` on CMS pages and `title_en`/`blocks_en` on
+  every published revision (so a translation is versioned and immutable like its original),
+  and a platform-kept `note_glossary` instead of per-product English notes (controlled
+  vocabulary, CLAUDE.md §4; houses need not write English). `products.name_en` (0000) is
+  now written from the listing editor, checked for prohibited claims and searchable.
+  English is optional everywhere and outside the publish gate; untranslated content shows
+  in Arabic marked `lang="ar" dir="rtl"`. A half-written English page refuses to publish
+  like a broken Arabic one. Editors: English name in the seller listing form; an
+  Arabic/English switch in the ops page editor with "start from the Arabic"; an English
+  line for announcements; a new ops screen `/ops/notes` (every edit audited). `hreflang`
+  alternates on every page. The seed carries English for the seeded catalogue, houses,
+  glossary and the five CMS pages — the legal pages open by stating that the Arabic
+  governs — and backfills an existing local database without overwriting anything.
+  Not translated: order lines already placed keep the names they were ordered under.
 - *Interim until step 6:* API refusals are still Arabic text, so an English visitor gets
   the screen's own English sentence instead (`apps/web/src/core/api-message.ts`, to be
   deleted by step 6).
-- *Still Arabic on the English site until step 3:* product names, scent notes, house
-  bios and stories, CMS page bodies, the announcement bar, review bodies (reviews stay in
-  the language they were written in).
+- Reviews stay in the language they were written in, marked with it.
 
 #### P5.6.3 Egyptian-Arabic interface copy
 **Status:** NOT_STARTED (paused by the founder, 30 Sep 2026) · **Priority:** P2 · **Type:** BUILD

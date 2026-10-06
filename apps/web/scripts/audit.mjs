@@ -550,6 +550,7 @@ try {
     ['ops-content', '/ops/content'],
     ['ops-moderation', '/ops/moderation'],
     ['ops-site', '/ops/site'],
+    ['ops-notes', '/ops/notes'],
     // The aftercare consoles. They shipped with end-to-end coverage and were
     // never added here, so no width or theme had ever been audited on them.
     ['ops-reviews', '/ops/reviews'],

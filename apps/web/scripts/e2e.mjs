@@ -2281,6 +2281,56 @@ try {
       assert(text.includes('Your order is placed'), `confirmation: ${text.slice(0, 200)}`);
       assert(/DY-[A-Z0-9]{8}/.test(text), 'the confirmation carries a reference');
     });
+
+    await test('English CONTENT: the perfume, its notes and its house read in English', async () => {
+      await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+      const h1 = await english.locator('h1').innerText();
+      equal(h1.trim(), 'Cairo Night', 'the English name');
+      const main = await english.locator('main').innerText();
+      assert(main.includes('Bergamot') && main.includes('Damask rose'), 'notes through the glossary');
+      assert(main.includes('Maison Nour'), 'the house by its own Latin name');
+
+      // The Arabic page is untouched by any of it.
+      await english.goto(`${BASE}/p/layl-al-qahira?lang=ar`, { waitUntil: 'networkidle' });
+      equal((await english.locator('h1').innerText()).trim(), 'ليل القاهرة', 'the Arabic name');
+    });
+
+    await test('a house page and an editorial page read in English', async () => {
+      await english.goto(`${BASE}/en/house/maison-nour`, { waitUntil: 'networkidle' });
+      const house = await english.locator('main').innerText();
+      assert(house.includes('A small perfume house in downtown Cairo'), `the English bio: ${house.slice(0, 200)}`);
+
+      await english.goto(`${BASE}/en/terms`, { waitUntil: 'networkidle' });
+      equal((await english.locator('h1').innerText()).trim(), 'Terms of sale', 'the English title');
+      const terms = await english.locator('main').innerText();
+      assert(terms.includes('the Arabic version governs'), 'a translated contract says which text binds');
+    });
+
+    await test('untranslated content shows in Arabic, marked as Arabic', async () => {
+      // A note with no glossary entry, on a fresh listing's page, is the case
+      // every new house starts in. Here: the review body, written in Arabic.
+      await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+      const marked = await english.locator('main [lang="ar"][dir="rtl"]').count();
+      assert(marked > 0, 'Arabic content on the English page carries lang and dir');
+    });
+
+    await test('an operator names a note in English, and the storefront prints it', async () => {
+      assert(ops, 'the operator session from earlier in the run');
+      await ops.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
+      const row = ops.locator('li', { has: ops.locator('label', { hasText: /^هيل$/ }) });
+      await row.locator('input').fill('Green cardamom');
+      await row.locator('button', { hasText: 'حفظ' }).click();
+      await row.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
+
+      await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+      const main = await english.locator('main').innerText();
+      assert(main.includes('Green cardamom'), 'the new name on the product page');
+
+      // And the change is on the record.
+      await ops.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
+      const audit = await ops.locator('main').innerText();
+      assert(audit.includes('قاموس النفحات'), 'the glossary edit in the audit log');
+    });
   } finally {
     await englishContext.close();
   }
