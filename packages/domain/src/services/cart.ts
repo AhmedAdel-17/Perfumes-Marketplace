@@ -64,6 +64,7 @@ export interface PricedCartLine {
   readonly productId: string;
   readonly slug: string;
   readonly name: string;
+  readonly nameEn: string | null;
   readonly brandName: string;
   readonly brandLatin: string;
   readonly sku: string;
@@ -193,6 +194,7 @@ export class CartPricer {
         productId: item.productId,
         slug: item.slug,
         name: item.name,
+        nameEn: item.nameEn,
         brandName: item.brandName,
         brandLatin: item.brandLatin,
         sku: item.sku,

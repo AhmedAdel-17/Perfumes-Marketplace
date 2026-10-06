@@ -46,6 +46,8 @@ export const newListingSchema = z.object({
  */
 export const listingDraftSchema = z.object({
   name: z.string().trim().min(1).max(160).nullish(),
+  // Empty means "no English name": the storefront then shows the Arabic one.
+  nameEn: z.string().trim().max(160).nullish().transform((v) => (v === '' ? null : v)),
   sku: z.string().trim().min(1).max(60).nullish(),
 
   // Money as integer piastres, never a float — the same rule as everywhere.

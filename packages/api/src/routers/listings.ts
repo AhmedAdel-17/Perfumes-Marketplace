@@ -92,6 +92,7 @@ export const listingsRouter = router({
           gaps: listingGaps({ ...listing, primaryImage }),
           claims: inspectClaims(
             listing.name ?? '',
+            listing.nameEn ?? '',
             ...(listing.notesTop ?? []),
             ...(listing.notesHeart ?? []),
             ...(listing.notesBase ?? []),
@@ -129,6 +130,7 @@ export const listingsRouter = router({
           gaps: listingGaps({ ...merged, primaryImage }),
           claims: inspectClaims(
             input.draft.name ?? '',
+            input.draft.nameEn ?? '',
             ...(input.draft.notesTop ?? []),
             ...(input.draft.notesHeart ?? []),
             ...(input.draft.notesBase ?? []),
@@ -151,6 +153,7 @@ export const listingsRouter = router({
         const gaps = listingGaps({ ...listing, primaryImage });
         const claims = inspectClaims(
           listing.name ?? '',
+          listing.nameEn ?? '',
           ...(listing.notesTop ?? []),
           ...(listing.notesHeart ?? []),
           ...(listing.notesBase ?? []),

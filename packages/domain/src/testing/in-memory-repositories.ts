@@ -441,6 +441,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
               sellerId: p.sellerId,
               slug: p.slug,
               name: p.name,
+              nameEn: null,
               brandName: seller?.tradingName ?? '',
               brandLatin: (seller?.tradingName ?? '').toUpperCase(),
               sku: p.sku,
@@ -816,6 +817,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           slug: page.slug,
           title: revision.title,
           blocks: revision.blocks,
+          titleEn: revision.titleEn,
+          blocksEn: revision.blocksEn,
           publishedAt: revision.publishedAt,
         };
       },
@@ -826,6 +829,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           .map((p) => ({
             slug: p.slug,
             title: contentRevisions.get(p.publishedRevisionId!)?.title ?? p.title,
+            titleEn: contentRevisions.get(p.publishedRevisionId!)?.titleEn ?? null,
           }))
           .sort((a, b) => a.slug.localeCompare(b.slug));
       },
@@ -837,16 +841,24 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           title,
           state: 'draft',
           draftBlocks: [],
+          titleEn: null,
+          draftBlocksEn: [],
           publishedRevisionId: null,
         };
         contentPages.set(page.id, page);
         return page;
       },
 
-      async saveDraft(id, { title, blocks }) {
+      async saveDraft(id, { title, blocks, titleEn, blocksEn }) {
         const page = contentPages.get(id);
         if (!page) throw new Error(`No content page ${id}`);
-        contentPages.set(id, { ...page, title, draftBlocks: [...blocks] });
+        contentPages.set(id, {
+          ...page,
+          title,
+          draftBlocks: [...blocks],
+          ...(titleEn !== undefined ? { titleEn } : {}),
+          ...(blocksEn !== undefined ? { draftBlocksEn: [...blocksEn] } : {}),
+        });
       },
 
       async setState(id, state) {
@@ -865,6 +877,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           pageId: id,
           title: page.title,
           blocks: [...page.draftBlocks],
+          titleEn: page.titleEn,
+          blocksEn: [...page.draftBlocksEn],
           publishedBy,
           // Each revision is a distinct instant, so `revisions()` can order
           // them. A fixed clock would make two publishes indistinguishable and
@@ -887,7 +901,11 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         if (!page) return null;
 
         contentPages.set(pageId, {
-          ...page, title: revision.title, draftBlocks: [...revision.blocks],
+          ...page,
+          title: revision.title,
+          draftBlocks: [...revision.blocks],
+          titleEn: revision.titleEn,
+          draftBlocksEn: [...revision.blocksEn],
         });
         return revision;
       },
@@ -1057,6 +1075,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         const announcement: Announcement = {
           id: `ann-${fixture.announcementCounter}`,
           message: input.message,
+          messageEn: input.messageEn ?? null,
           href: input.href,
           startsAt: input.startsAt,
           endsAt: input.endsAt,
@@ -1781,6 +1800,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       publishedProductsForHouse: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
       houses: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
       search: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
+      noteGlossary: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
       houseFilterOptions: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
       primaryPhotos: refuse('CatalogueReadModel', 'catalogue-read-model.test.ts'),
     } as unknown as Repositories['catalogue'];
@@ -1795,10 +1815,21 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       revokeAllSessions: refuse('IdentityRepository', 'identity-repository.test.ts'),
     } as unknown as Repositories['identity'];
 
+    /*
+     * The glossary is exercised against real Postgres
+     * (`packages/db/src/note-glossary.test.ts`), where its RLS lives; a fake
+     * here would only prove the fake.
+     */
+    const glossary = {
+      entries: refuse('NoteGlossaryRepository', 'note-glossary.test.ts'),
+      set: refuse('NoteGlossaryRepository', 'note-glossary.test.ts'),
+      remove: refuse('NoteGlossaryRepository', 'note-glossary.test.ts'),
+    } as unknown as Repositories['glossary'];
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
-      analytics, catalogue, identity,
+      analytics, catalogue, glossary, identity,
     };
   }
 }

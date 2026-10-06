@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
   imageKeysIn, isUsableSlug, movePage, nextStates, objectionsToPublishing, PAGE_STATES,
-  type ContentImage, type ContentRole, type PublishObjection,
+  type Block, type ContentImage, type ContentRole, type PublishObjection,
 } from '@diyar/domain';
 import type { MediaStore } from '../providers/media';
 import { platformProcedure, publicProcedure, router } from '../trpc';
@@ -66,6 +66,22 @@ const imagesOut = (images: readonly ContentImage[], media: MediaStore) =>
     { url: media.publicUrl(image.storageKey), width: image.width, height: image.height },
   ]));
 
+/**
+ * What stands between a draft and publishing, in both languages. The English
+ * half is checked only when it has been started — the same rule `movePage`
+ * applies — and its objections say so.
+ */
+const objectionsFor = (
+  blocks: readonly Block[],
+  blocksEn: readonly Block[],
+  verified: ReadonlySet<string>,
+): PublishObjection[] => [
+  ...objectionsToPublishing(blocks, verified),
+  ...(blocksEn.length > 0
+    ? objectionsToPublishing(blocksEn, verified).map((o) => ({ ...o, inEnglish: true as const }))
+    : []),
+];
+
 export const contentRouter = router({
   /** What a visitor is served. Never a draft, by construction. */
   read: publicProcedure
@@ -76,7 +92,14 @@ export const contentRouter = router({
       // the key (0022), so this cannot hand out a draft's upload.
       const served = await ctx.uow.transaction(async (r) => {
         const live = await r.content.findLive(input.slug);
-        return live ? { live, images: await r.contentImages.findByKeys(imageKeysIn(live.blocks)) } : null;
+        return live
+          ? {
+            live,
+            images: await r.contentImages.findByKeys(
+              imageKeysIn([...live.blocks, ...live.blocksEn]),
+            ),
+          }
+          : null;
       });
       if (!served) return null;
       const { live: page, images } = served;
@@ -84,6 +107,10 @@ export const contentRouter = router({
         slug: page.slug,
         title: page.title,
         blocks: page.blocks,
+        // The English half, when this revision has one. The storefront shows
+        // the Arabic, marked as Arabic, when it does not.
+        titleEn: page.titleEn,
+        blocksEn: page.blocksEn,
         images: imagesOut(images, ctx.media),
         publishedAt: page.publishedAt.toISOString(),
       };
@@ -123,7 +150,12 @@ export const contentRouter = router({
       const found = await ctx.uow.transaction(async (r) => {
         const draft = await r.content.findById(input.id);
         return draft
-          ? { page: draft, images: await r.contentImages.findByKeys(imageKeysIn(draft.draftBlocks)) }
+          ? {
+            page: draft,
+            images: await r.contentImages.findByKeys(
+              imageKeysIn([...draft.draftBlocks, ...draft.draftBlocksEn]),
+            ),
+          }
           : null;
       });
       if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
@@ -139,12 +171,14 @@ export const contentRouter = router({
         // — a published page pulled back to draft is still on the site.
         isLive: page.publishedRevisionId !== null && page.state !== 'archived',
         blocks: page.draftBlocks,
+        titleEn: page.titleEn,
+        blocksEn: page.draftBlocksEn,
         // So the editor shows each uploaded picture, not a key.
         images: imagesOut(images, ctx.media),
         canMoveTo: nextStates(page.state, role),
         // Shown while editing, so an editor learns what will block publishing
         // before they ask to publish rather than after.
-        objections: objectionsToPublishing(page.draftBlocks, keysOf(images)),
+        objections: objectionsFor(page.draftBlocks, page.draftBlocksEn, keysOf(images)),
       };
     }),
 
@@ -172,18 +206,32 @@ export const contentRouter = router({
       id: z.string().uuid(),
       title: pageTitleSchema,
       blocks: blocksSchema,
+      // Both optional: a save from the Arabic tab leaves the English as it was.
+      // An empty English title means "not translated", stored as null.
+      titleEn: z.string().trim().max(160).nullish()
+        .transform((value) => (value === '' ? null : value)),
+      blocksEn: blocksSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const images = await ctx.uow.transaction(async (r) => {
+      const { images, blocksEn } = await ctx.uow.transaction(async (r) => {
         const page = await r.content.findById(input.id);
         if (!page) throw new TRPCError({ code: 'NOT_FOUND', message: 'الصفحة غير موجودة' });
-        await r.content.saveDraft(input.id, { title: input.title, blocks: input.blocks });
-        return r.contentImages.findByKeys(imageKeysIn(input.blocks));
+        await r.content.saveDraft(input.id, {
+          title: input.title,
+          blocks: input.blocks,
+          ...(input.titleEn !== undefined ? { titleEn: input.titleEn } : {}),
+          ...(input.blocksEn !== undefined ? { blocksEn: input.blocksEn } : {}),
+        });
+        const english = input.blocksEn ?? page.draftBlocksEn;
+        return {
+          blocksEn: english,
+          images: await r.contentImages.findByKeys(imageKeysIn([...input.blocks, ...english])),
+        };
       });
 
       // Returned so the console can show what still stands between this draft
       // and being publishable, without a second round trip.
-      return { objections: objectionsToPublishing(input.blocks, keysOf(images)) };
+      return { objections: objectionsFor(input.blocks, blocksEn, keysOf(images)) };
     }),
 
   move: platformProcedure
@@ -204,7 +252,9 @@ export const contentRouter = router({
         // working state and not an error.
         // Looked up in the transaction that publishes, from the draft that will
         // be frozen — not from what the console last saw.
-        const verified = keysOf(await r.contentImages.findByKeys(imageKeysIn(page.draftBlocks)));
+        const verified = keysOf(await r.contentImages.findByKeys(
+          imageKeysIn([...page.draftBlocks, ...page.draftBlocksEn]),
+        ));
         const result = movePage(page, input.to, role, ctx.clock, verified);
         if ('objections' in result) {
           return {
@@ -269,6 +319,7 @@ export const contentRouter = router({
           title: rev.title,
           publishedAt: rev.publishedAt.toISOString(),
           blockCount: rev.blocks.length,
+          hasEnglish: rev.blocksEn.length > 0,
           // Which one the site is serving right now. Without it the history is
           // a list of dates and an operator has to infer "current" from the
           // top row — which is wrong the moment a page is rolled back.
@@ -301,6 +352,8 @@ export const contentRouter = router({
         slug: page.slug,
         title: page.title,
         blocks: page.draftBlocks,
+        titleEn: page.titleEn,
+        blocksEn: page.draftBlocksEn,
         images: imagesOut(images, ctx.media),
         state: page.state,
       };
@@ -328,6 +381,8 @@ export const contentRouter = router({
         return {
           title: revision.title,
           blocks: revision.blocks,
+          titleEn: revision.titleEn,
+          blocksEn: revision.blocksEn,
           publishedAt: revision.publishedAt.toISOString(),
         };
       });

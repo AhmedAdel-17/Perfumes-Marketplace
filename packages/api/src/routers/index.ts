@@ -6,6 +6,7 @@ import { cartRouter } from './cart';
 import { catalogueRouter } from './catalogue';
 import { contentRouter } from './content';
 import { contentImagesRouter } from './content-images';
+import { glossaryRouter } from './glossary';
 import { insightsRouter } from './insights';
 import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
@@ -25,6 +26,7 @@ export const appRouter = router({
   catalogue: catalogueRouter,
   content: contentRouter,
   contentImages: contentImagesRouter,
+  glossary: glossaryRouter,
   insights: insightsRouter,
   listings: listingsRouter,
   orders: ordersRouter,

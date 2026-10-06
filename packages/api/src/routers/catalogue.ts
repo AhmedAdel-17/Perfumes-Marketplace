@@ -36,6 +36,8 @@ export interface StorefrontPhoto {
 
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
+  /** The house's English name for the perfume, or null — the storefront then shows `name`. */
+  nameEn: string | null;
   pricePiastres: number; volumeMl: number;
   /**
    * Scent-family CODE. It drives the flacon render, and the storefront turns it
@@ -66,6 +68,13 @@ export interface PerformanceReading {
 
 export interface ProductDetail extends ProductCard {
   brandName: string;
+  /** The house's Latin name as it writes it ("Maison Nour"), or null. */
+  brandNameEn: string | null;
+  /**
+   * English names for this product's notes, from the platform glossary, keyed
+   * by the Arabic note. A note with no entry is absent and shown in Arabic.
+   */
+  noteEnglish: Readonly<Record<string, string>>;
   houseSlug: string;
   /** Concentration code; the storefront words it per language. */
   concentration: string;
@@ -84,8 +93,12 @@ export interface HouseDetail {
   slug: string;
   name: string;
   latin: string;
+  /** The house's Latin name as it writes it, for the English storefront. */
+  nameEn: string | null;
   bio: string | null;
   story: string | null;
+  bioEn: string | null;
+  storyEn: string | null;
   foundedYear: number | null;
   city: string | null;
   /** Where it delivers. Empty means it has not said, not that it delivers nowhere. */
@@ -96,7 +109,7 @@ export interface HouseDetail {
 export interface SearchResult {
   products: ProductCard[];
   /** Every live house with something published, for the filter panel. */
-  houses: Array<{ slug: string; name: string }>;
+  houses: Array<{ slug: string; name: string; nameEn: string | null }>;
   total: number;
 }
 
@@ -122,6 +135,7 @@ const toCard = (
   id: row.id,
   slug: row.slug,
   name: row.name,
+  nameEn: row.nameEn,
   brandLatin: latin(row.brandName, row.brandNameEn),
   pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
   volumeMl: row.volumeMl,
@@ -159,7 +173,11 @@ export const catalogueRouter = router({
       const result = await ctx.uow.transaction(async (r) => {
         const row = await r.catalogue.productBySlug(input.slug);
         if (!row) return null;
-        return { row, photos: await r.catalogue.primaryPhotos([row.id]) };
+        return {
+          row,
+          photos: await r.catalogue.primaryPhotos([row.id]),
+          glossary: await r.catalogue.noteGlossary([...row.notesTop, ...row.notesHeart, ...row.notesBase]),
+        };
       });
       if (!result) return null;
 
@@ -168,6 +186,8 @@ export const catalogueRouter = router({
       return {
         ...toCard(row, map),
         brandName: row.brandName,
+        brandNameEn: row.brandNameEn,
+        noteEnglish: Object.fromEntries(result.glossary),
         houseSlug: row.houseSlug ?? '',
         concentration: row.concentration ?? '',
         notesTop: [...row.notesTop],
@@ -198,8 +218,11 @@ export const catalogueRouter = router({
         slug: house.slug,
         name: house.tradingName,
         latin: latin(house.brandName ?? house.tradingName, house.brandNameEn),
+        nameEn: house.brandNameEn,
         bio: house.bio,
         story: house.story,
+        bioEn: house.bioEn,
+        storyEn: house.storyEn,
         foundedYear: house.foundedYear,
         city: house.city,
         serviceGovernorates: [...house.serviceGovernorates],
@@ -214,6 +237,7 @@ export const catalogueRouter = router({
       slug: h.slug,
       name: h.name,
       latin: latin(h.brandName, h.brandNameEn),
+      nameEn: h.brandNameEn,
       city: h.city,
       count: h.publishedCount,
     }));

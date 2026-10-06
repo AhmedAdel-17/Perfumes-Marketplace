@@ -20,6 +20,7 @@ const product = (over: Partial<CatalogueSnapshot> = {}): CatalogueSnapshot => ({
   sellerId: 's1',
   slug: 'layl',
   name: 'ليل القاهرة',
+  nameEn: null,
   brandName: 'ميزون نور',
   brandLatin: 'MAISON NOUR',
   sku: 'NUR-LQ-50',

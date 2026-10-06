@@ -36,7 +36,7 @@ export const siteRouter = router({
     const live = await ctx.uow.transaction((r) => r.site.currentAnnouncements(now));
     const current = showing(live, now);
     if (!current) return null;
-    return { id: current.id, message: current.message, href: current.href };
+    return { id: current.id, message: current.message, messageEn: current.messageEn, href: current.href };
   }),
 
   curation: publicProcedure.query(async ({ ctx }) =>
@@ -55,6 +55,7 @@ export const siteRouter = router({
     return all.map((a) => ({
       id: a.id,
       message: a.message,
+      messageEn: a.messageEn,
       href: a.href,
       startsAt: a.startsAt.toISOString(),
       endsAt: a.endsAt.toISOString(),
@@ -75,6 +76,9 @@ export const siteRouter = router({
   post: platformProcedure
     .input(z.object({
       message: z.string().trim().min(1).max(ANNOUNCEMENT_MAX_LENGTH),
+      // Optional; empty means the English site shows the Arabic line.
+      messageEn: z.string().trim().max(ANNOUNCEMENT_MAX_LENGTH).nullish()
+        .transform((value) => (value ? value : null)),
       href: z.string().nullable(),
       startsAt: z.string().datetime(),
       endsAt: z.string().datetime(),
@@ -100,6 +104,7 @@ export const siteRouter = router({
 
       await ctx.uow.transaction((r) => r.site.post({
         message: input.message.trim(),
+        messageEn: input.messageEn ?? null,
         href: input.href,
         startsAt,
         endsAt,

@@ -21,6 +21,7 @@ const toRecord = (row: Row): ListingRecord => ({
   sellerId: row.sellerId,
   state: row.status as ListingState,
   name: row.name,
+  nameEn: row.nameEn,
   slug: row.slug,
   sku: row.sku,
   brandId: row.brandId,
@@ -65,6 +66,8 @@ const sent = (value: unknown): boolean => value !== undefined && value !== null;
 
 const writableColumns = (input: ListingDraft) => ({
   ...(sent(input.name) ? { name: input.name! } : {}),
+  // Nullable, so null is written: clearing the English name is a real edit.
+  ...(input.nameEn !== undefined ? { nameEn: input.nameEn } : {}),
   ...(sent(input.sku) ? { sku: input.sku! } : {}),
   ...(sent(input.pricePiastres) ? { pricePiastres: input.pricePiastres! } : {}),
   ...(input.promoPricePiastres !== undefined
@@ -177,7 +180,7 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
 
     const next = { ...current, ...input };
     const searchText = foldArabic([
-      next?.name ?? '', next?.sku ?? '',
+      next?.name ?? '', next?.nameEn ?? '', next?.sku ?? '',
       brand?.name ?? '', brand?.nameEn ?? '',
       ...(next?.notesTop ?? []), ...(next?.notesHeart ?? []), ...(next?.notesBase ?? []),
     ].join(' '));
@@ -226,6 +229,7 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
         sellerId: schema.products.sellerId,
         brandName: schema.brands.name,
         name: schema.products.name,
+        nameEn: schema.products.nameEn,
         slug: schema.products.slug,
         pricePiastres: schema.products.pricePiastres,
         volumeMl: schema.products.volumeMl,
@@ -256,6 +260,7 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
       // same words a moderator will read.
       claimText: [
         row.name,
+        row.nameEn ?? '',
         ...(row.notesTop ?? []),
         ...(row.notesHeart ?? []),
         ...(row.notesBase ?? []),

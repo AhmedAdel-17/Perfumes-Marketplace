@@ -11,6 +11,7 @@ type Row = typeof schema.announcements.$inferSelect;
 const toAnnouncement = (row: Row): Announcement => ({
   id: row.id,
   message: row.message,
+  messageEn: row.messageEn,
   href: row.href,
   startsAt: row.startsAt,
   endsAt: row.endsAt,

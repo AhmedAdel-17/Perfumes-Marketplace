@@ -54,6 +54,7 @@ export const cartRouter = router({
             productId: l.productId,
             slug: l.slug,
             name: l.name,
+            nameEn: l.nameEn,
             brandName: l.brandName,
             brandLatin: l.brandLatin,
             volumeMl: l.volumeMl,

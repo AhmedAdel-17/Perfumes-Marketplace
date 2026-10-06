@@ -30,6 +30,7 @@ import { returnRepository } from './return-repository';
 import { supportRepository } from './support-repository';
 import { applicationRepository } from './application-repository';
 import { catalogueReadModel } from './catalogue-read-model';
+import { noteGlossaryRepository } from './note-glossary-repository';
 import { identityRepository } from './identity-repository';
 import { auditTrail } from './audit-trail';
 import { ownerReportRepository, settlementFacts } from './owner-report-repository';
@@ -186,6 +187,7 @@ const productRepository = (db: Executor): ProductRepository => ({
       sellerId: r.p.sellerId,
       slug: r.p.slug,
       name: r.p.name,
+      nameEn: r.p.nameEn,
       brandName: r.brandName,
       brandLatin: (r.brandEn ?? r.brandName).toUpperCase(),
       sku: r.p.sku,
@@ -688,6 +690,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   contentImages: contentImageRepository(db),
   analytics: analyticsRepository(db),
   catalogue: catalogueReadModel(db),
+  glossary: noteGlossaryRepository(db),
   identity: identityRepository(db),
 });
 

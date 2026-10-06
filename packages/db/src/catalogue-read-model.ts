@@ -33,6 +33,7 @@ const toRow = (
   id: p.id,
   slug: p.slug,
   name: p.name,
+  nameEn: p.nameEn,
   pricePiastres: p.pricePiastres,
   promoPricePiastres: p.promoPricePiastres,
   volumeMl: p.volumeMl,
@@ -63,6 +64,16 @@ const toRow = (
 const payable = sql`coalesce(${schema.products.promoPricePiastres}, ${schema.products.pricePiastres})`;
 
 export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
+  async noteGlossary(notes) {
+    const wanted = [...new Set(notes)];
+    if (wanted.length === 0) return new Map();
+    const rows = await db
+      .select({ ar: schema.noteGlossary.ar, en: schema.noteGlossary.en })
+      .from(schema.noteGlossary)
+      .where(inArray(schema.noteGlossary.ar, wanted));
+    return new Map(rows.map((row) => [row.ar, row.en]));
+  },
+
   async publishedProducts() {
     const rows = await db
       .select({ p: schema.products, brandName: schema.brands.name, brandEn: schema.brands.nameEn })
@@ -117,6 +128,8 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
       tradingName: house.s.tradingName,
       bio: house.s.bio,
       story: house.s.story,
+      bioEn: house.s.bioEn,
+      storyEn: house.s.storyEn,
       foundedYear: house.s.foundedYear,
       city: house.s.city,
       serviceGovernorates: house.s.serviceGovernorates ?? [],
@@ -204,9 +217,15 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
 
   async houseFilterOptions() {
     return db
-      .selectDistinct({ slug: schema.sellers.slug, name: schema.sellers.tradingName })
+      .selectDistinct({
+        slug: schema.sellers.slug,
+        name: schema.sellers.tradingName,
+        // The house's Latin name, for the English filter panel.
+        nameEn: schema.brands.nameEn,
+      })
       .from(schema.sellers)
       .innerJoin(schema.products, eq(schema.products.sellerId, schema.sellers.id))
+      .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
       .where(eq(schema.sellers.status, 'live'))
       .orderBy(asc(schema.sellers.tradingName));
   },

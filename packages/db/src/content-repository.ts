@@ -19,6 +19,8 @@ const toPage = (row: PageRow): ContentPage => ({
   title: row.title,
   state: row.state as PageState,
   draftBlocks: row.draftBlocks,
+  titleEn: row.titleEn,
+  draftBlocksEn: row.draftBlocksEn,
   publishedRevisionId: row.publishedRevisionId,
 });
 
@@ -27,6 +29,8 @@ const toRevision = (row: RevisionRow): ContentRevision => ({
   pageId: row.pageId,
   title: row.title,
   blocks: row.blocks,
+  titleEn: row.titleEn,
+  blocksEn: row.blocksEn,
   publishedBy: row.publishedBy,
   publishedAt: row.publishedAt,
 });
@@ -66,6 +70,8 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
         slug: schema.contentPages.slug,
         title: schema.contentRevisions.title,
         blocks: schema.contentRevisions.blocks,
+        titleEn: schema.contentRevisions.titleEn,
+        blocksEn: schema.contentRevisions.blocksEn,
         publishedAt: schema.contentRevisions.publishedAt,
       })
       .from(schema.contentPages)
@@ -84,7 +90,11 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
 
   async listLive() {
     return db
-      .select({ slug: schema.contentPages.slug, title: schema.contentRevisions.title })
+      .select({
+        slug: schema.contentPages.slug,
+        title: schema.contentRevisions.title,
+        titleEn: schema.contentRevisions.titleEn,
+      })
       .from(schema.contentPages)
       .innerJoin(
         schema.contentRevisions,
@@ -103,9 +113,17 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
     return toPage(row!);
   },
 
-  async saveDraft(id, { title, blocks }) {
+  async saveDraft(id, { title, blocks, titleEn, blocksEn }) {
     await db.update(schema.contentPages)
-      .set({ title, draftBlocks: blocks as Block[], updatedAt: new Date() })
+      .set({
+        title,
+        draftBlocks: blocks as Block[],
+        // Absent means "not touched": an editor saving only the Arabic tab
+        // must not blank the English one.
+        ...(titleEn !== undefined ? { titleEn } : {}),
+        ...(blocksEn !== undefined ? { draftBlocksEn: blocksEn as Block[] } : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(schema.contentPages.id, id));
   },
 
@@ -139,6 +157,8 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
       pageId: id,
       title: page.title,
       blocks: page.draftBlocks,
+      titleEn: page.titleEn,
+      blocksEn: page.draftBlocksEn,
       publishedBy,
     }).returning();
 
@@ -170,6 +190,8 @@ export const contentRepository = (db: DiyarDatabase): ContentRepository => ({
       .set({
         title: revision.title,
         draftBlocks: revision.blocks,
+        titleEn: revision.titleEn,
+        draftBlocksEn: revision.blocksEn,
         updatedAt: new Date(),
       })
       .where(eq(schema.contentPages.id, pageId));
