@@ -3070,3 +3070,30 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   for English first. The order is sound: English moves the strings into the copy layer,
   so the Egyptian rewrite later touches only the Arabic dictionaries. The "no Arabic
   literal outside the copy layer" check moves to P5.6.2.
+
+- 2026-10-15 · Claude Code session · dev-server fix (no task ID; it unblocks P5.1.3
+  verification) · the first request to a route right after `next dev` started answered
+  500, "frame.join is not a function". That message was a secondary failure, and it hid
+  the real one. On a cold compile, React's async debug info for a slow server component
+  goes over its size budget and is sent with its stack replaced by a placeholder STRING.
+  React's dev Flight decoder (`buildFakeCallStack`) then walks the string as an array of
+  frames. The bug was there before P5.1.3 (confirmed with the identity work stashed). It is
+  not fixed upstream in 15.5.28 or 16.4.1. Fixed with a pnpm patch,
+  `patches/next@15.5.25.patch` (`patchedDependencies` in pnpm-workspace.yaml, which records
+  the reasoning and the removal condition). It guards the SSR runtime and the browser client
+  `next dev --turbopack` loads, and is dev-only: `next build` never runs that code. The patch
+  is about 900 KB because one of its lines is a 451 KB minified line. The guard is tested in
+  `apps/web/src/next-dev-stack-patch.test.ts`, which fails against the unpatched runtime.
+  Delete the patch, the test and the workspace entry together when an upgrade ships the
+  guard. Two e2e tests that read as flaky were fixed in the same pass.
+  (1) "tracking an arrived order offers a review…" waited a fixed 2500 ms. It now waits for
+  the order and BOTH panels, because otherwise an absence check later in the test could pass
+  without checking anything.
+  (2) "an operator names a note in English…" was never flaky. It reused the `ops` session
+  that "signing out ends the session for good" had already revoked, so it failed on every
+  run. It now signs in its own operator.
+  Verified: `pnpm -r typecheck` clean; `pnpm -r test` 1,661 pass; e2e 133/133 on two
+  consecutive cold-server runs with a fresh seed; every main route answers 200 on its first
+  compile. One cold run before those two failed nearly every test, with ECONNRESET in the
+  server log. It did not happen again in two attempts and its cause is not established. If
+  it comes back, start from that run.

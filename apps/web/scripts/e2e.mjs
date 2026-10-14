@@ -1105,7 +1105,21 @@ try {
     await fill(reviewer, 'رقم الطلب', REVIEW_REF);
     await fill(reviewer, 'رقم الموبايل', REVIEW_PHONE);
     await reviewer.locator('button[type="submit"]').click();
-    await reviewer.waitForTimeout(2500);
+    // Wait for what the callers READ, not for a clock. This was a fixed 2.5 s,
+    // which a cold compile outran, failing a test now and then (15 Oct 2026).
+    // The review and return panels each fetch their own data after the order
+    // renders and show nothing until they have it, so all three are awaited:
+    // the reference (printed once the lookup answers — an input's value is not
+    // innerText) and both panel headings. Without the panels, a test that
+    // asserts something is ABSENT from them passes before they exist.
+    await reviewer.waitForFunction(
+      (ref) => {
+        const text = document.querySelector('main')?.innerText ?? '';
+        return text.includes(ref) && text.includes('قيّم ما وصلك') && text.includes('إرجاع منتج');
+      },
+      REVIEW_REF,
+      { timeout: 20_000 },
+    );
   };
 
   await test('a reviewed perfume shows its rating, and a MASKED byline', async () => {
@@ -2315,21 +2329,33 @@ try {
     });
 
     await test('an operator names a note in English, and the storefront prints it', async () => {
-      assert(ops, 'the operator session from earlier in the run');
-      await ops.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
-      const row = ops.locator('li', { has: ops.locator('label', { hasText: /^هيل$/ }) });
-      await row.locator('input').fill('Green cardamom');
-      await row.locator('button', { hasText: 'حفظ' }).click();
-      await row.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
+      /*
+       * Its OWN operator session. The shared `ops` page is signed out — and its
+       * session revoked — by "signing out ends the session for good", long
+       * before this group runs; reusing it here sent the glossary to the
+       * sign-in screen and failed every run, which read as a flake.
+       */
+      const editorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+      const editor = await editorContext.newPage();
+      try {
+        await signIn(editor, '/ops', OPERATOR, '/ops/queue');
+        await editor.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
+        const row = editor.locator('li', { has: editor.locator('label', { hasText: /^هيل$/ }) });
+        await row.locator('input').fill('Green cardamom');
+        await row.locator('button', { hasText: 'حفظ' }).click();
+        await row.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
 
-      await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
-      const main = await english.locator('main').innerText();
-      assert(main.includes('Green cardamom'), 'the new name on the product page');
+        await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+        const main = await english.locator('main').innerText();
+        assert(main.includes('Green cardamom'), 'the new name on the product page');
 
-      // And the change is on the record.
-      await ops.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
-      const audit = await ops.locator('main').innerText();
-      assert(audit.includes('قاموس النفحات'), 'the glossary edit in the audit log');
+        // And the change is on the record.
+        await editor.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
+        const audit = await editor.locator('main').innerText();
+        assert(audit.includes('قاموس النفحات'), 'the glossary edit in the audit log');
+      } finally {
+        await editorContext.close();
+      }
     });
   } finally {
     await englishContext.close();

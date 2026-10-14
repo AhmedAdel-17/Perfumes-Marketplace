@@ -32,3 +32,21 @@ overrides:
   # `drizzle-kit export`, which loads the schema through this loader. Remove when
   # drizzle-kit drops @esbuild-kit — `pnpm why @esbuild-kit/core-utils` shows it.
   "@esbuild-kit/core-utils>esbuild": "^0.25.0"
+
+# A guard in React's dev-only Flight client, as compiled into Next. On the FIRST
+# render of a route after the dev server starts, React's async debug info can
+# exceed its size budget and arrive with its stack replaced by a placeholder
+# string ("This object has been omitted by React…"); `buildFakeCallStack` then
+# calls `frame.join` on a character and the page answers 500
+# ("frame.join is not a function"). The patch returns early when the stack, or a
+# frame of it, is not an array — the same result as an empty stack — in the two
+# copies a `next dev --turbopack` loads: the server runtime and the browser
+# client. Development only; `next build` loads neither file.
+#
+# The patch is ~900 KB because the server copy sits on one minified 451 KB line.
+# Verified unfixed upstream in next 15.5.28 and 16.4.1 (15 Oct 2026). Remove when
+# a Next upgrade ships a guarded `buildFakeCallStack`: pnpm refuses an unused or
+# non-applying patch, so upgrading Next forces this to be re-checked.
+# `apps/web/src/next-dev-stack-patch.test.ts` fails if the guard goes missing.
+patchedDependencies:
+  next@15.5.25: patches/next@15.5.25.patch
