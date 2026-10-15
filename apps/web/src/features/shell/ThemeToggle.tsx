@@ -51,7 +51,26 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<ThemeName | null>(null);
 
   useEffect(() => {
-    const attribute = document.documentElement.getAttribute(THEME_ATTRIBUTE);
+    const root = document.documentElement;
+    let attribute = root.getAttribute(THEME_ATTRIBUTE);
+    /*
+     * The theme script did not run. Next serves some pages — the 404s, in
+     * development at least — as an empty error shell that React renders on the
+     * client, and a <script> React inserts never executes, so a Noir visitor
+     * met a paper 404. Apply the remembered choice here instead: later than
+     * the script would have, so the page switches once after loading, but it
+     * switches to what the visitor chose rather than staying on the default.
+     */
+    if (attribute !== 'light' && attribute !== 'dark') {
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        if (stored === 'light' || stored === 'dark') {
+          root.setAttribute(THEME_ATTRIBUTE, stored);
+          paintBrowserChrome(stored);
+          attribute = stored;
+        }
+      } catch { /* storage refused: the default stands */ }
+    }
     setTheme(attribute === 'light' || attribute === 'dark' ? attribute : DEFAULT_THEME);
   }, []);
 

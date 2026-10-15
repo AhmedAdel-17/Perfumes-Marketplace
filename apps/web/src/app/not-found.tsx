@@ -16,6 +16,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { PageHead } from '@/features/shell/PageHead';
 import { SHELL } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { getLocale } from '@/core/locale';
@@ -52,11 +53,7 @@ export default async function NotFound() {
       <SiteHeader />
 
       <main className="mx-auto flex min-h-[52vh] max-w-proseMax flex-col justify-center px-5 py-14 lg:px-0">
-        <div className="latin mb-5 text-micro tracking-label text-accent">404</div>
-
-        <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">
-          {copy.notFoundTitle}
-        </h1>
+        <PageHead kicker="404" title={copy.notFoundTitle} flush />
 
         <p className="mt-5 max-w-proseMax text-bodyLg leading-relaxed text-ink2">
           {copy.notFoundBody}
@@ -70,15 +67,15 @@ export default async function NotFound() {
         <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
           <Link
             href={localeHref(locale, '/')}
-            className="tappable inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+            className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
           >
-            {copy.browsePerfumes}
+            <span className="border-b border-current">{copy.browsePerfumes}</span>
           </Link>
           <Link
             href={localeHref(locale, '/order')}
-            className="tappable inline-flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+            className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink2 transition-colors duration-base ease-out hover:text-accent"
           >
-            {copy.trackAnOrder}
+            <span className="border-b border-current">{copy.trackAnOrder}</span>
           </Link>
         </div>
       </main>

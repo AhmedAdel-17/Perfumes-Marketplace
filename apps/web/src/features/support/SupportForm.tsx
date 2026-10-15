@@ -56,12 +56,13 @@ export function SupportForm() {
   if (sent) {
     return (
       <div className="px-5 lg:px-0">
-        <div className="border border-line bg-raised p-5">
-          <div className="text-caption tracking-label text-ink3">{copy.reference}</div>
+        <div className="border border-ink bg-raised p-5">
+          {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+          <div className="text-body text-ink2">{copy.reference}</div>
           <div className="latin mt-2 select-all text-h3 tracking-[3px] text-accent lg:text-h2Lg">
             {sent}
           </div>
-          <p className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2">
+          <p className="mt-3 max-w-proseMax text-body leading-relaxed text-ink2">
             {copy.keepReference}{' '}
             <span className="latin tnum">{phone}</span>.
           </p>
@@ -81,7 +82,8 @@ export function SupportForm() {
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
       <fieldset className="mb-6">
-        <legend className="mb-3 text-caption tracking-label text-ink3">{copy.topic}</legend>
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <legend className="mb-3 text-body text-ink2">{copy.topic}</legend>
 
         {/*
           Radios, not a select. Eight options is a list somebody can read in one
@@ -103,7 +105,7 @@ export function SupportForm() {
                 onChange={() => setCategory(option)}
                 className="h-4 w-4 accent-accent"
               />
-              <span className="text-small text-ink2">{SUPPORT_CATEGORY[locale][option]}</span>
+              <span className="text-body text-ink">{SUPPORT_CATEGORY[locale][option]}</span>
             </label>
           ))}
         </div>
@@ -125,24 +127,24 @@ export function SupportForm() {
       <Field label={copy.subject} value={subject} onChange={setSubject} required maxLength={SUBJECT_MAX} />
 
       <label className="mb-5 block">
-        <span className="text-caption tracking-label text-ink3">{copy.message}</span>
+        <span className="text-body text-ink2">{copy.message}</span>
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value.slice(0, MESSAGE_MAX))}
           rows={6}
           maxLength={MESSAGE_MAX}
           required
-          className="mt-2 block w-full resize-y border border-line bg-raised p-3 text-small leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+          className="mt-2 block w-full resize-y border border-line bg-sunken p-3 text-body leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus:border-ink focus-visible:border-accent"
         />
         {/* `dir="ltr"` isolates the counter: in an RTL paragraph "2000/40"
             reorders and renders as "40/2000". */}
-        <span dir="ltr" className="tnum mt-1 block text-end text-micro text-ink3">
+        <span dir="ltr" className="tnum mt-1 block text-end text-small text-ink3">
           {message.length}/{MESSAGE_MAX}
         </span>
       </label>
 
       {error && (
-        <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-danger">
+        <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-body leading-relaxed text-danger">
           {error}
         </p>
       )}
@@ -194,24 +196,24 @@ export function TicketLookup() {
       {searched && !ticket && (
         // The same message for a wrong phone and an unknown reference. Telling
         // them apart says which half somebody got right.
-        <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-ink2">
+        <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-body leading-relaxed text-ink">
           {copy.notFound}
         </p>
       )}
 
       {ticket && (
-        <div className="mb-6 border border-line bg-raised p-5">
+        <div className="mb-6 border border-ink bg-raised p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <span className="text-small text-ink">{ticket.subject}</span>
-            <span className="text-caption text-accent">
+            <span className="text-body text-ink">{ticket.subject}</span>
+            <span className="text-small text-accent">
               {TICKET_STATUS[locale][ticket.status as keyof (typeof TICKET_STATUS)['ar']] ?? ticket.status}
             </span>
           </div>
-          <p className="mt-3 whitespace-pre-line text-small leading-relaxed text-ink2">
+          <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-ink2">
             {ticket.message}
           </p>
           {ticket.nextAction && (
-            <p className="mt-4 border-t border-line pt-3 text-small leading-relaxed text-ink">
+            <p className="mt-4 border-t border-line pt-3 text-body leading-relaxed text-ink">
               {ticket.nextAction}
             </p>
           )}

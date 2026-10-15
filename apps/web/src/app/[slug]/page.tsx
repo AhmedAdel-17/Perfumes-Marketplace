@@ -16,6 +16,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { PageHead } from '@/features/shell/PageHead';
 import { Blocks } from '@/features/content/Blocks';
 import { api } from '@/core/api';
 import { langAttrs, SHELL, type Locale } from '@diyar/i18n';
@@ -68,16 +69,14 @@ export default async function ContentPage(
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-phoneMax px-5 pb-9 lg:max-w-proseMax lg:px-0 lg:pb-[88px]">
+      <main className="mx-auto max-w-phoneMax px-5 pb-9 lg:max-w-proseMax lg:px-0 lg:pb-[104px]">
         {/*
           The one h1 on the page, so a block can only ever open a section. The
           domain refuses to publish a document whose first heading is a level 3
           for exactly this reason — the outline has to start somewhere.
         */}
         <div {...langAttrs(locale, shown.lang)}>
-          <h1 className="pb-2 pt-7 font-display text-h1 leading-heading lg:pb-3 lg:pt-9 lg:text-h1Lg">
-            {shown.title}
-          </h1>
+          <PageHead kicker={SHELL[locale].pageKicker} title={shown.title} />
 
           <article className="pb-4">
             <Blocks blocks={shown.blocks} images={page.images} locale={locale} />

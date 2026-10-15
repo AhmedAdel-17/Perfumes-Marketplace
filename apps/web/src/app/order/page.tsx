@@ -3,6 +3,7 @@ import { ORDERS, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { PageHead } from '@/features/shell/PageHead';
 import { OrderLookup } from '@/features/orders/OrderLookup';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -34,13 +35,7 @@ export default async function OrderPage() {
       <SiteHeader />
       <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[720px] lg:px-8 lg:pb-[104px]">
         {/* Identity v2: the register's page head, ruled at full strength. */}
-        <header className="mx-5 mb-6 border-b border-ink pb-4 pt-8 lg:mx-0 lg:mb-8 lg:pt-12">
-          <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
-            {ORDERS[locale].kicker.toUpperCase()}
-            <span aria-hidden="true" className="h-px w-12 bg-current" />
-          </span>
-          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{ORDERS[locale].title}</h1>
-        </header>
+        <PageHead kicker={ORDERS[locale].kicker} title={ORDERS[locale].title} className="mx-5 mb-6 lg:mx-0 lg:mb-8" />
         <OrderLookup />
       </main>
       <SiteFooter />

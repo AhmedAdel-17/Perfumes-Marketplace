@@ -59,12 +59,12 @@ export function ApplyForm() {
   if (sent) {
     return (
       <div className="px-5 lg:px-0">
-        <div className="border border-line bg-raised p-5">
+        <div className="border border-ink bg-raised p-5">
           <h2 className="font-display text-h3">{copy.received}</h2>
-          <p className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2">
+          <p className="mt-3 max-w-proseMax text-body leading-relaxed text-ink2">
             {copy.willCall(phone)}
           </p>
-          <p className="mt-3 text-caption leading-relaxed text-ink3">
+          <p className="mt-3 text-small leading-relaxed text-ink3">
             {copy.noFees}
           </p>
         </div>
@@ -91,7 +91,7 @@ export function ApplyForm() {
         than after we have approved them.
       */}
       {slug.length > 0 && (
-        <p className="-mt-3 mb-5 text-caption text-ink3">
+        <p className="-mt-3 mb-5 text-small text-ink3">
           {copy.yourAddress}{' '}
           <span className="latin select-all text-ink2">diyar.eg/house/{slug}</span>
         </p>
@@ -104,30 +104,31 @@ export function ApplyForm() {
       />
       <Field
         label={copy.email} value={email} onChange={setEmail}
-        maxLength={160} hint={copy.optional}
+        maxLength={160}
       />
       <Field label={copy.city} value={city} onChange={setCity} required maxLength={80} />
 
       <label className="mb-5 block">
-        <span className="text-caption tracking-label text-ink3">{copy.about}</span>
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <span className="text-body text-ink2">{copy.about}</span>
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value.slice(0, APPLICATION_NOTE_MAX))}
           rows={6}
           maxLength={APPLICATION_NOTE_MAX}
           required
-          className="mt-2 block w-full resize-y border border-line bg-raised p-3 text-small leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+          className="mt-2 block w-full resize-y border border-line bg-sunken p-3 text-body leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus:border-ink focus-visible:border-accent"
         />
-        <span className="mt-1 block text-micro leading-relaxed text-ink3">
+        <span className="mt-1 block text-small leading-relaxed text-ink3">
           {copy.aboutHint}
         </span>
-        <span dir="ltr" className="tnum mt-1 block text-end text-micro text-ink3">
+        <span dir="ltr" className="tnum mt-1 block text-end text-small text-ink3">
           {note.length}/{APPLICATION_NOTE_MAX}
         </span>
       </label>
 
       {error && (
-        <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-danger">
+        <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-body leading-relaxed text-danger">
           {error}
         </p>
       )}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
+import { PageHead } from '@/features/shell/PageHead';
 import { ApplyForm } from '@/features/apply/ApplyForm';
 import { APPLY, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
@@ -24,32 +25,29 @@ export default async function ApplyPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[720px] lg:px-8 lg:pb-[88px]">
-        <h1 className="px-5 pb-3 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-4 lg:pt-9 lg:text-h1Lg">
-          {copy.title}
-        </h1>
+      <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[720px] lg:px-8 lg:pb-[104px]">
+        <PageHead kicker={copy.kicker} title={copy.title} className="mx-5 mb-6 lg:mx-0 lg:mb-8">
+          <p className="mt-4 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">{copy.intro}</p>
+        </PageHead>
 
         <div className="mb-8 max-w-proseMax px-5 lg:px-0">
-          <p className="text-small leading-relaxed text-ink2 lg:text-bodyLg">
-            {copy.intro}
-          </p>
 
           {/*
             The terms, before the form rather than after it. A page that asks a
             maker for their details and only then explains what joining costs
             them is a page that collected the details under false pretences.
           */}
-          <ul className="mt-5 border-t border-line">
-            <li className="border-b border-line py-3 text-caption leading-relaxed text-ink2">
+          <ul className="border border-ink bg-raised px-4">
+            <li className="border-b border-line py-3 text-body leading-relaxed text-ink2 last:border-b-0">
               {copy.termFees}
             </li>
-            <li className="border-b border-line py-3 text-caption leading-relaxed text-ink2">
+            <li className="border-b border-line py-3 text-body leading-relaxed text-ink2 last:border-b-0">
               {copy.termReview}
             </li>
-            <li className="border-b border-line py-3 text-caption leading-relaxed text-ink2">
+            <li className="border-b border-line py-3 text-body leading-relaxed text-ink2 last:border-b-0">
               {copy.termNoCopies}
             </li>
-            <li className="border-b border-line py-3 text-caption leading-relaxed text-ink2">
+            <li className="border-b border-line py-3 text-body leading-relaxed text-ink2 last:border-b-0">
               {copy.termReviews}
             </li>
           </ul>

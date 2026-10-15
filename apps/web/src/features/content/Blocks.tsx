@@ -79,12 +79,13 @@ function PullQuote({ block }: { block: PullQuoteBlock }) {
    * the day it stopped being.
    */
   return (
-    <figure className="mt-10 border-s-2 border-accent/60 ps-6 lg:mt-12 lg:ps-8">
+    <figure className="mt-10 border-s-2 border-accent ps-6 lg:mt-12 lg:ps-8">
       <blockquote className="font-display text-h4 leading-heading text-ink lg:text-h3">
         {block.text}
       </blockquote>
+      {/* No tracking on the attribution: Arabic on the Arabic site (CLAUDE.md §15). */}
       {block.attribution && (
-        <figcaption className="mt-3 text-caption tracking-label text-ink3">
+        <figcaption className="mt-3 text-small text-ink3">
           {block.attribution}
         </figcaption>
       )}
@@ -113,7 +114,7 @@ function NoteList({ block }: { block: NoteListBlock }) {
             {item.term}
           </dt>
           {item.detail && (
-            <dd className="text-small leading-relaxed text-ink2">{item.detail}</dd>
+            <dd className="text-body leading-relaxed text-ink2">{item.detail}</dd>
           )}
         </div>
       ))}
@@ -157,11 +158,11 @@ function ContentImage(
           role="img"
           aria-label={block.alt}
         >
-          <span className="text-micro tracking-label text-ink3">{SHELL[locale].imagePlaceholder}</span>
+          <span className="text-small text-ink3">{SHELL[locale].imagePlaceholder}</span>
         </div>
       )}
       {block.caption && (
-        <figcaption className="mt-3 text-caption text-ink3">{block.caption}</figcaption>
+        <figcaption className="mt-3 text-small text-ink3">{block.caption}</figcaption>
       )}
     </figure>
   );
@@ -170,7 +171,7 @@ function ContentImage(
 function Divider() {
   // Decorative: it separates, it does not say anything, so it is hidden from a
   // screen reader rather than announced as a horizontal rule.
-  return <hr className="mx-auto mt-12 w-16 border-0 border-t border-accent/40" aria-hidden />;
+  return <hr className="mx-auto mt-12 w-16 border-0 border-t border-accent" aria-hidden />;
 }
 
 function CallToAction({ block, locale }: { block: CallToActionBlock; locale: Locale }) {
@@ -179,9 +180,9 @@ function CallToAction({ block, locale }: { block: CallToActionBlock; locale: Loc
       <a
         // An editor writes `/returns`; on the English site that is `/en/returns`.
         href={localePath(locale, block.href)}
-        className="tappable inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+        className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
       >
-        {block.label}
+        <span className="border-b border-current">{block.label}</span>
       </a>
     </div>
   );

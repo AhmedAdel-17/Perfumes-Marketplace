@@ -4,6 +4,7 @@ import { defineMessages } from '../messages';
 export const CONTACT = defineMessages(
   {
     title: 'تواصل معنا',
+    kicker: 'Customer care',
     metaDescription: 'اسأل عن طلبك أو عن عطر قبل أن تشتريه.',
     intro: 'اكتب لنا عن طلبك، أو اسأل عن عطر قبل أن تشتريه. نردّ خلال يوم عمل.',
     followUp: 'تابع رسالة سابقة',
@@ -29,6 +30,7 @@ export const CONTACT = defineMessages(
   },
   {
     title: 'Contact us',
+    kicker: 'Customer care',
     metaDescription: 'Ask about your order, or about a perfume before you buy it.',
     intro: 'Write to us about your order, or ask about a perfume before you buy it. We reply within one working day.',
     followUp: 'Follow up an earlier message',

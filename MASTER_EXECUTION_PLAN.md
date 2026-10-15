@@ -3313,3 +3313,28 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Note: an audit run straight after the e2e suite cannot sign in, because the
   in-process login-code rate limit (DEBT_REGISTER #2) is spent. Restart the server
   between them.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 8 and last: support, apply,
+  the editorial pages and the 404. Phase B (customer screens) is complete.
+  - `PageHead` (features/shell) is the register's page head: a Latin kicker that
+    says something the title does not, the title, children, and a full-strength
+    rule. It is used here and on the bag and tracking pages, which had copies of the
+    same markup. Kickers: "Customer care", "For houses", "Information", "404".
+  - The terms on the apply page are a ruled panel, before the form.
+  - Forms are set into the paper and alerts are ruled in danger.
+  - Editorial quotes and rules are at full strength.
+  Fixes:
+  - Letterspaced Arabic legends and labels on support and apply, and in editorial
+    figcaptions.
+  - Below-floor sizes.
+  - Half-alpha accents.
+  - Apply's email field said "optional" twice (Field already marks it).
+  - A Noir visitor met a paper 404. Next serves the 404s as an empty error shell
+    that React renders on the client, so ThemeScript never runs (observed in dev,
+    with no server error logged). ThemeToggle now applies the remembered theme on
+    mount when the attribute is missing; this was verified on three 404 routes.
+  Verified: audit (support, apply, the three legal pages and the 404 with their
+  English twins, plus cart and order-lookup) has no findings in light and dark at
+  all six widths; e2e 133/133; typecheck clean; unit tests 1,675 pass; guard clean.
+  Phase B gate: the FULL `audit.mjs` (every customer, seller and ops surface, at all
+  six widths) has no findings in light and dark, from a fresh seed.

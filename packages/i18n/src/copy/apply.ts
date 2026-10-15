@@ -4,6 +4,7 @@ import { defineMessages } from '../messages';
 export const APPLY = defineMessages(
   {
     title: 'انضم كدار',
+    kicker: 'For houses',
     metaDescription: 'ديار سوق للعطور المصرية المستقلّة. اعرض دارك على من يبحث عنها.',
     intro: 'ديار سوق للعطور المصرية المستقلّة. الدار تضع اسمها على الزجاجة، وتجهّز طلباتها وتشحنها بنفسها، ونحن نعرضها ونحصّل الثمن ونفصل في النزاع حين يقع.',
     termFees: 'لا رسوم انضمام ولا اشتراك شهري. عمولة على البيع فقط.',
@@ -21,7 +22,6 @@ export const APPLY = defineMessages(
     ownerName: 'اسم المسؤول',
     phone: 'رقم الموبايل',
     email: 'البريد الإلكتروني',
-    optional: 'اختياري',
     city: 'المدينة',
     about: 'عن دارك',
     aboutHint: 'ماذا تصنع، ومنذ متى، وكم زجاجة في الشهر تقريبًا. فقرة تكفي.',
@@ -31,6 +31,7 @@ export const APPLY = defineMessages(
   },
   {
     title: 'Join as a house',
+    kicker: 'For houses',
     metaDescription: 'DIYAR is a marketplace for independent Egyptian perfume. Put your house in front of the people looking for it.',
     intro: 'DIYAR is a marketplace for independent Egyptian perfume. A house puts its name on the bottle and prepares and ships its own orders; we show it, collect the payment, and settle disputes when they happen.',
     termFees: 'No joining fee and no monthly subscription. A commission on sales only.',
@@ -48,7 +49,6 @@ export const APPLY = defineMessages(
     ownerName: 'Responsible person',
     phone: 'Mobile number',
     email: 'Email',
-    optional: 'Optional',
     city: 'City',
     about: 'About your house',
     aboutHint: 'What you make, since when, and roughly how many bottles a month. A paragraph is enough.',

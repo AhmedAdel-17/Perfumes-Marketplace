@@ -28,6 +28,8 @@ export const SHELL = defineMessages(
     notFoundBody: 'ربما تغيّر الرابط، أو لم تعد الصفحة معروضة.',
     browsePerfumes: 'تصفّح العطور',
     imagePlaceholder: 'صورة',
+    // The editorial pages' kicker. Latin in both languages.
+    pageKicker: 'Information',
     // The line above the masthead (identity v2): two facts a first-time buyer
     // asks before anything else — how they pay, and whether anyone checked.
     // Latin in both languages: it qualifies the Latin wordmark beside it.
@@ -66,6 +68,7 @@ export const SHELL = defineMessages(
     notFoundBody: 'The link may have changed, or the page is no longer shown.',
     browsePerfumes: 'Browse perfumes',
     imagePlaceholder: 'Image',
+    pageKicker: 'Information',
     descriptor: 'Egyptian perfume houses',
     codNote: 'Cash on delivery · Cairo & Giza',
     verifiedNote: 'Every house is verified before it can sell',
