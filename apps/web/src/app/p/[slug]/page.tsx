@@ -1,22 +1,25 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { findProductBySlug, listPublishedProducts } from '@/core/catalogue';
+import { findHouseBySlug, findProductBySlug, listPublishedProducts } from '@/core/catalogue';
+import { api } from '@/core/api';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
-import { PerformanceMeter } from '@/features/product/PerformanceMeter';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { BuyBlock } from '@/features/product/BuyBlock';
-import { ProductTile } from '@/features/catalogue/ProductTile';
+import { BandReading } from '@/features/catalogue/BandReading';
+import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
 import { ProductReviews } from '@/features/reviews/ProductReviews';
+import { SectionHead } from '@/features/shell/SectionHead';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
 import {
-  CONCENTRATION, data as num, labelOf, langAttrs, NOUN, nounIn, pick, PRODUCT, SHELL,
+  CONCENTRATION, data as num, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn, pick, PRODUCT,
+  SCENT_FAMILY, SHELL, type Locale,
 } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { localeHref } from '@/core/href';
@@ -60,15 +63,38 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await findProductBySlug(slug);
   if (!product) notFound();
 
-  const others = (await listPublishedProducts()).filter((p) => p.slug !== slug).slice(0, 4);
+  const [catalogue, houseDetail, locale] = await Promise.all([
+    listPublishedProducts(),
+    product.houseSlug ? findHouseBySlug(product.houseSlug) : Promise.resolve(null),
+    getLocale(),
+  ]);
+  /*
+   * "From other houses" means OTHER HOUSES. It used to drop only this perfume,
+   * so a house with three listings showed two of its own under a heading that
+   * said otherwise. The card carries the brand's Latin name and not the house,
+   * and a house trades under one brand, so the brand is the test.
+   */
+  const others = catalogue.filter((p) => p.brandLatin !== product.brandLatin).slice(0, 4);
+  const ratings = others.length > 0
+    ? await api().reviews.summaries({ productIds: others.map((p) => p.id) })
+    : {};
+
   // The SAME window the bag, the checkout and the confirmation quote. This page
   // used to compute its own and promised a day earlier than every screen after
   // it — see `arrivalWindow`.
   const arrival = arrivalWindow(product.fulfilmentHours);
-  const locale = await getLocale();
   const copy = PRODUCT[locale];
   const name = pick(locale, product.name, product.nameEn);
   const house = pick(locale, product.brandName, product.brandNameEn);
+  const days = nounIn(locale, arrival.max, NOUN.day);
+
+  // Each fact its own span: the city is whatever the house typed, usually
+  // Arabic, and on the English page it has to be marked as such.
+  const houseFacts: Array<{ text: string; lang: Locale }> = [];
+  if (houseDetail?.city) houseFacts.push({ text: houseDetail.city, lang: languageOf(houseDetail.city) });
+  if (houseDetail?.foundedYear) {
+    houseFacts.push({ text: HOUSES[locale].since(num(houseDetail.foundedYear, false)), lang: locale });
+  }
 
   return (
     <>
@@ -86,178 +112,100 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       */}
       <Track key={product.id} event="product_view" productId={product.id} />
 
+      {/*
+        Visual identity v2. The layout is design-reference/product.html's (the
+        bottle, then the name, the price, the notes, the evolution, the
+        performance); the finish is 04-laboratoire's, which wins where the two
+        disagree (CLAUDE.md §12): the perfume printed as a specimen sheet, every
+        figure ruled into a row, every band with its source.
+      */}
       <main className="pb-[92px] lg:pb-0">
-        {/*
-            Below 1024 the page is the phone design, capped so a tablet gets a
-            comfortable centred column instead of a 900px-wide stretch of what
-            was drawn for 390px. The two-column layout starts where there is
-            genuinely room for two columns, not one pixel earlier.
-          */}
-        <div className="mx-auto max-w-phoneMax lg:max-w-contentMax lg:px-8 lg:pt-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+        <div className="mx-auto max-w-contentMax px-5 pt-5 lg:px-8 lg:pt-8">
+          <div className="grid gap-7 lg:grid-cols-12 lg:gap-8">
             {/* ------------------------------------------------------ media
                 In RTL the first grid child lands on the RIGHT, which is where
                 the eye starts — so the bottle leads and the copy follows it,
                 the same order a phone reads top to bottom. */}
             <div className="lg:col-span-7">
-              <div className="lg:sticky lg:top-[100px]">
-                {/*
-                  A lit scene, in four layers: an ambient ground, a warm key
-                  light above and behind the flacon, the flacon itself, and a
-                  vignette that closes the corners. Collapse these into one
-                  gradient and the panel goes flat — which is exactly what it
-                  did before.
-                */}
-                {/* Dark in both themes, and deliberately NOT scoped with
-                    `data-theme`: nothing inside paints with a colour role — the
-                    stage is literal gradients and the flacon's own glass — while
-                    the fade at its foot must continue the PAGE ground, which on
-                    paper is paper. Scoping the plate would have made that fade
-                    noir and put back the seam it exists to remove. */}
-                <div className="relative h-[408px] overflow-hidden lg:h-[664px] lg:rounded-sm">
-                  <div className="absolute inset-0 bg-[radial-gradient(72%_58%_at_50%_22%,theme(colors.stage.glow)_0%,theme(colors.stage.mid)_46%,theme(colors.stage.deep)_84%)]" />
-                  <div className="absolute inset-0 bg-[radial-gradient(38%_30%_at_50%_10%,rgba(206,168,100,.16),transparent_74%)]" />
-
+              <div className="border border-ink bg-raised lg:sticky lg:top-[100px]">
+                <div className="latin flex justify-between border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
+                  <span>{copy.specimen.toUpperCase()}</span>
+                  <span>{product.brandLatin}</span>
+                </div>
+                <div className="relative aspect-[4/5] overflow-hidden bg-plate lg:aspect-auto lg:h-[620px]">
                   {product.photo ? (
-                    /*
-                     * The house's own photograph, full-bleed on the plate. The
-                     * vignette and the foot fade below still apply, so a real
-                     * photograph sits in the same lit scene the illustration did
-                     * and the title reads over it on a phone. `priority`: this is
-                     * the largest paint on the page.
-                     */
-                    <ProductPhoto
-                      photo={product.photo}
-                      priority
-                      sizes="(min-width: 1024px) 58vw, 100vw"
-                    />
+                    // `priority`: the largest paint on the page.
+                    <ProductPhoto photo={product.photo} priority sizes="(min-width: 1024px) 58vw, 100vw" />
                   ) : (
-                    <Reveal className="absolute inset-0 flex items-start justify-center pt-3 lg:items-center lg:pt-0">
+                    <Reveal className="absolute inset-0 flex items-center justify-center">
                       <Flacon
                         family={product.family}
                         house={product.brandLatin}
                         uid={`hero-${product.id}`}
-                        className="h-[80%] w-auto drop-shadow-[0_34px_64px_rgba(0,0,0,.55)] lg:h-[92%]"
+                        className="h-[84%] w-auto"
                       />
                     </Reveal>
                   )}
-
-                  <div className="absolute inset-0 bg-[radial-gradient(124%_104%_at_50%_44%,transparent_40%,rgba(6,5,5,.58)_100%)]" />
-
-                  {/* Fades the plate into the page so the title can sit over it
-                      on a phone without a hard seam. */}
-                  {/*
-                      The fade exists ONLY to give the overlaid title a ground to
-                      sit on, so it is measured in PIXELS from the bottom, not in
-                      percentages of the plate. As a percentage it climbed a third
-                      of the way up the image and swallowed the flacon's base and
-                      cast shadow — the two things that make the object sit on a
-                      surface rather than float. */}
-                  <div
-                    className="absolute inset-0 lg:hidden"
-                    style={{
-                      // Built from the THEME: this fade exists to continue the
-                      // page background, so if that background ever moves — a
-                      // new palette, the other theme — and this does not, the
-                      // seam becomes visible.
-                      backgroundImage:
-                        'linear-gradient(to top,rgb(var(--c-ground)) 0px,rgb(var(--c-ground)) 44px,' +
-                        'rgb(var(--c-ground) / .87) 82px,transparent 142px)',
-                    }}
-                  />
                 </div>
               </div>
             </div>
 
             {/* ---------------------------------------------------- details */}
             <div className="lg:col-span-5">
-              {/* On a phone this block is pulled UP over the gradient above,
-                  which gives the overlaid title of the original design with a
-                  single h1 in the document rather than one per breakpoint. */}
-              <div className="relative z-10 -mt-[84px] px-5 lg:mt-0 lg:px-0">
-                <div className="latin mb-2 text-caption tracking-label text-accent">
-                  {product.brandLatin}
-                </div>
-                <h1
-                  {...langAttrs(locale, name.lang)}
-                  className="font-display text-h1 leading-[1.1] tracking-tight lg:text-displayLg"
+              <div className="latin mb-2 text-caption tracking-label text-accent">{product.brandLatin}</div>
+              <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1 leading-heading lg:text-h1Lg">
+                {name.text}
+              </h1>
+              <p className="mt-2 text-body text-ink2 lg:mt-3 lg:text-bodyLg">
+                <Link
+                  href={localeHref(locale, `/house/${product.houseSlug}`)}
+                  className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
                 >
-                  {name.text}
-                </h1>
-                <p className="mt-2 text-small text-ink2 lg:mt-3 lg:text-bodyLg">
-                  <span className="tnum">{num(product.volumeMl)}</span> {copy.ml} · {labelOf(CONCENTRATION, locale, product.concentration)}
-                </p>
+                  <span {...langAttrs(locale, house.lang)} className="border-b border-current">{house.text}</span>
+                </Link>
+                {houseFacts.map((fact) => (
+                  <span key={fact.text}>
+                    {' · '}
+                    <span {...langAttrs(locale, fact.lang)}>{fact.text}</span>
+                  </span>
+                ))}
+              </p>
+
+              <div className="mt-6 lg:mt-7">
+                <BuyBlock
+                  productId={product.id}
+                  pricePiastres={product.pricePiastres}
+                  inStock={product.inStock}
+                  variant="inline"
+                  locale={locale}
+                />
               </div>
 
-              <div className="px-5 lg:px-0">
-                <div className="mt-7 lg:mt-8">
-                  <BuyBlock
-                    productId={product.id}
-                    pricePiastres={product.pricePiastres}
-                    inStock={product.inStock}
-                    variant="inline"
-                    locale={locale}
-                  />
-                </div>
-
-                {/* ------------------------------------------------- pyramid */}
-                <div className="pt-6 lg:pt-8">
-                  <NotesPyramid
-                    top={product.notesTop}
-                    heart={product.notesHeart}
-                    base={product.notesBase}
-                    english={product.noteEnglish}
-                    locale={locale}
-                  />
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-          {/*
-            Below the split, full width.
-
-            The evolution curve, the performance bands and the house block used
-            to sit inside the 5-of-12 detail column, which made that column run
-            four times the height of the media beside it and squeezed a
-            time-series chart into 380 pixels. A chart of eight hours needs
-            width more than any other element on this page, and the column it
-            was in was the narrowest place available.
-          */}
-          <div className="mt-8 px-5 lg:mt-[72px] lg:grid lg:grid-cols-12 lg:gap-8 lg:px-0">
-            <div className="lg:col-span-7">
-              <EvolutionCurve
-                topCount={product.notesTop.length}
-                heartCount={product.notesHeart.length}
-                baseCount={product.notesBase.length}
-                locale={locale}
-              />
-            </div>
-
-            <div className="lg:col-span-5">
-              {(product.longevity || product.projection) && (
-                <section className="mt-8 lg:mt-0">
-                  <h2 className="latin mb-4 text-micro tracking-label text-ink3">PERFORMANCE</h2>
-                  {product.longevity && <PerformanceMeter label={copy.longevity} band={product.longevity} locale={locale} />}
-                  {product.projection && <PerformanceMeter label={copy.projection} band={product.projection} locale={locale} />}
-                </section>
-              )}
+              {/* The label: the same rows, in the same order, as every specimen. */}
+              <dl className="mt-6 border-t border-ink text-body lg:mt-0 lg:border-t-0 lg:text-bodyLg">
+                <Row label={copy.family}>{labelOf(SCENT_FAMILY, locale, product.family)}</Row>
+                {product.concentration && (
+                  <Row label={copy.concentration}>{labelOf(CONCENTRATION, locale, product.concentration)}</Row>
+                )}
+                <Row label={copy.size}><span className="tnum">{num(product.volumeMl)}</span> {copy.ml}</Row>
+                {product.longevity && (
+                  <Row label={copy.longevity}>
+                    <BandReading kind="longevity" reading={product.longevity} locale={locale} />
+                  </Row>
+                )}
+                {product.projection && (
+                  <Row label={copy.projection}>
+                    <BandReading kind="projection" reading={product.projection} locale={locale} />
+                  </Row>
+                )}
+                <Row label={copy.delivery}>{copy.arrives(num(arrival.min), num(arrival.max), days)}</Row>
+              </dl>
 
               {/* Brand independence (doc 01 §6): the seller stays visible
                   everywhere. Never flatten houses into anonymous SKUs. */}
-              <section className="mt-8 border border-line bg-raised p-4 lg:p-5">
-                <div className="latin mb-2 text-micro tracking-label text-accent">THE HOUSE</div>
-                {/*
-                  A LINK, at last.
-
-                  The house's name has been on this page since the first
-                  version, as text, going nowhere — on a marketplace whose whole
-                  argument is that the maker is named. The block is what a
-                  customer presses when they have decided they like a house and
-                  want to see what else it makes, and until now that was a dead
-                  end with a heading that said THE HOUSE.
-                */}
+              <section aria-labelledby="the-house" className="mt-7 border border-line bg-raised p-5">
+                <div className="latin mb-2 text-micro tracking-label text-accent">{copy.theHouse.toUpperCase()}</div>
+                <h2 id="the-house" className="sr-only">{house.text}</h2>
                 <Link
                   href={localeHref(locale, `/house/${product.houseSlug}`)}
                   className="tappable group inline-flex min-h-touch items-baseline gap-3"
@@ -268,54 +216,68 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   >
                     {house.text}
                   </span>
-                  <span className="text-caption text-ink3 transition-colors duration-base ease-out group-hover:text-accent">
+                  <span className="text-small text-ink2 transition-colors duration-base ease-out group-hover:text-accent">
                     {copy.allItsPerfumes}
                   </span>
                 </Link>
-                <p className="mt-2 text-caption leading-relaxed text-ink3 lg:text-small">
-                  {copy.shipsItself(num(arrival.min), num(arrival.max), nounIn(locale, arrival.max, NOUN.day))}
+                <p className="mt-2 text-small leading-relaxed text-ink2 lg:text-body">
+                  {copy.shipsItself(num(arrival.min), num(arrival.max), days)}
                 </p>
               </section>
             </div>
           </div>
 
+          {/* ------------------------------------------------------ 01 notes */}
+          <section aria-labelledby="notes" className="mt-9 lg:mt-[104px]">
+            <SectionHead id="notes" index={copy.notesIndex} title={copy.notesTitle} />
+            <p className="-mt-3 mb-7 max-w-proseMax text-body leading-relaxed text-ink2 lg:mb-8 lg:text-bodyLg">{copy.notesLede}</p>
+            <NotesPyramid
+              top={product.notesTop}
+              heart={product.notesHeart}
+              base={product.notesBase}
+              english={product.noteEnglish}
+              locale={locale}
+            />
+            <div className="mt-8 lg:w-7/12">
+              <EvolutionCurve
+                topCount={product.notesTop.length}
+                heartCount={product.notesHeart.length}
+                baseCount={product.notesBase.length}
+                locale={locale}
+              />
+            </div>
+          </section>
+
           {/*
-            ------------------------------------------------------- reviews
+            --------------------------------------------------- 02 reviews
 
             Above the suggestions from other houses, deliberately. A customer
             reading reviews is still deciding about THIS bottle; putting four
             other perfumes between them and that decision is an invitation to
             stop deciding.
           */}
-          <ProductReviews productId={product.id} productName={name.text} />
+          <div className="mt-9 lg:mt-[104px]">
+            <ProductReviews productId={product.id} productName={name.text} index={copy.reviewsIndex} />
+          </div>
 
-          {/* -------------------------------------------------------- others */}
+          {/* -------------------------------------------------- 03 others */}
           {others.length > 0 && (
-            <section className="mt-8 lg:mt-[96px]">
-              <h2 className="mb-4 px-5 font-display text-h3 lg:mb-6 lg:px-0 lg:text-h2Lg">
-                {copy.fromOtherHouses}
-              </h2>
-
+            <section aria-labelledby="others" className="mt-9 pb-9 lg:mt-[104px] lg:pb-[104px]">
+              <SectionHead id="others" index={copy.othersIndex} title={copy.fromOtherHouses} />
               {/*
                 A rail that scrolls on a phone and a grid that does not on a
                 desktop: horizontal scrolling with a mouse is a penalty, not a
-                gesture.
-
-                The tiles are capped in WIDTH rather than sharing the row, so a
-                short list of suggestions stays a rail instead of becoming a
-                second catalogue.
+                gesture. A rail card has a SIZE, not a share of the width, so a
+                short list stays a rail rather than two giant cards that dwarf
+                the perfume being viewed.
               */}
-              <div className="flex gap-3 overflow-x-auto px-5 pb-2 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
-                {/* A rail tile has a SIZE, not a share of the width. Letting two
-                    of them divide 1240px produced a pair of 740px-tall bottles
-                    that dwarfed the product being viewed — a suggestion louder
-                    than the thing it is suggesting about. */}
+              <ul className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0">
                 {others.map((p) => (
-                  <div key={p.id} className="w-[148px] flex-none lg:w-full lg:max-w-[240px]">
-                    <ProductTile product={p} locale={locale} />
-                  </div>
+                  <li key={p.id} className="w-[200px] flex-none lg:w-auto">
+                    <SpecimenCard product={p} locale={locale} rating={ratings[p.id]} sizes="(min-width: 1024px) 25vw, 200px" />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
         </div>
@@ -352,5 +314,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         }}
       />
     </>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[96px_1fr] items-baseline gap-3 border-b border-line py-3 lg:grid-cols-[132px_1fr]">
+      <dt className="text-ink3">{label}</dt>
+      <dd>{children}</dd>
+    </div>
   );
 }

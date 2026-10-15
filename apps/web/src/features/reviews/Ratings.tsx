@@ -100,7 +100,7 @@ export function OverallScore({ summary, locale }: { summary: ReviewSummary; loca
       <span dir="ltr" className="tnum font-display text-h1 leading-none text-ink lg:text-h1Lg">
         {formatRating(summary.overall)}
       </span>
-      <span className="text-caption tracking-label text-ink3">
+      <span className="text-small text-ink3">
         {REVIEWS[locale].outOf} <span className="tnum">{num(5)}</span>
       </span>
     </div>

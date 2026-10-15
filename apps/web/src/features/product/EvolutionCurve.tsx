@@ -36,15 +36,25 @@ export function EvolutionCurve({
   const y = (v: number) => H - v;
 
   return (
-    <section className="mx-5 mt-8 border border-line bg-raised p-4 pt-5">
-      <div className="mb-3 flex gap-4">
+    <figure className="border border-line bg-raised p-4 pt-5 lg:p-6">
+      {/*
+        "An illustration, not a measurement", stated on the panel itself. The
+        shapes are weighted by how many notes each tier lists — nobody measured
+        this perfume's evolution — and on a page whose every other figure names
+        its source, an unlabelled chart would read as data (CLAUDE.md §4).
+      */}
+      <figcaption className="mb-4">
+        <h3 className="text-bodyLg font-medium lg:text-h4">{copy.curveTitle}</h3>
+        <p className="mt-1 text-small text-ink3">{copy.curveIllustrative}</p>
+      </figcaption>
+      <div className="mb-3 flex flex-wrap gap-4">
         {/* From the THEME. These were three retyped hexes, one of which was
             still the OLD base colour after that token was raised to clear its
             contrast floor — a legend disagreeing with the chart it labels. The
             areas below had the same three values a THIRD time, as rgba(), which
             the hex-only drift guard could not see. */}
         {TIERS.map(([label, channels]) => (
-          <span key={label} className="flex items-center gap-2 text-micro text-ink3">
+          <span key={label} className="flex items-center gap-2 text-small text-ink3">
             <i aria-hidden className="block h-[2px] w-3" style={{ background: `rgb(${channels})` }} />
             {copy[label]}
           </span>
@@ -56,7 +66,11 @@ export function EvolutionCurve({
         // The paths are drawn with time running right to left, for Arabic. On
         // the English site the same drawing is mirrored so time runs left to
         // right, matching the reading direction and the hour labels below.
-        className="h-[84px] w-full ltr:-scale-x-100"
+        // Stretched to the panel rather than letterboxed inside it: the chart
+        // is a SHAPE over eight hours, not a figure with proportions to keep,
+        // and kept at 320×84 it sat as a small band in a wide empty box.
+        preserveAspectRatio="none"
+        className="h-[96px] w-full ltr:-scale-x-100 lg:h-[128px]"
         role="img"
         aria-label={copy.curveLabel}
       >
@@ -87,13 +101,13 @@ export function EvolutionCurve({
         opening notes — a chart that actively misinforms, which is worse than no
         chart at all.
       */}
-      <div className="mt-2 flex justify-between text-micro text-ink3">
+      <div className="mt-2 flex justify-between text-small text-ink3">
         <span>{copy.spray}</span>
         <span className="tnum">2h</span>
         <span className="tnum">4h</span>
         <span className="tnum">6h</span>
         <span className="tnum">8h</span>
       </div>
-    </section>
+    </figure>
   );
 }

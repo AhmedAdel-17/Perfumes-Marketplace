@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
-import { LongevityReading } from './LongevityReading';
+import { BandReading } from './BandReading';
 import {
   CONCENTRATION, CURRENCY_LABEL, data as num, formatPrice, HOME, labelOf, langAttrs, pick,
   PRODUCT, SCENT_FAMILY, type Locale,
@@ -23,7 +23,7 @@ export interface CardRating {
  * The idea the identity is built on is that the catalogue schema IS the look:
  * family, strength and longevity are printed as a label's rows, in the same
  * order on every card, so a grid of them can be read across like a register.
- * Longevity always carries its source — see LongevityReading.
+ * Longevity always carries its source — see BandReading.
  *
  * The rows step aside below `sm`. Two columns at 360px leave a card about 160px
  * wide, where three label rows become three lines of wrapped fragments; the
@@ -82,7 +82,7 @@ export function SpecimenCard({
         {strength && <Row label={copy.strength}>{strength}</Row>}
         {product.longevity && (
           <Row label={PRODUCT[locale].longevity}>
-            <LongevityReading reading={product.longevity} locale={locale} meter={false} />
+            <BandReading kind="longevity" reading={product.longevity} locale={locale} meter={false} />
           </Row>
         )}
       </dl>

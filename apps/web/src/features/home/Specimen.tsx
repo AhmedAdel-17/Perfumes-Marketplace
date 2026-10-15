@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { HouseDetail, ProductDetail } from '@/core/catalogue';
 import { AddToBag } from '@/features/cart/AddToBag';
-import { LongevityReading } from '@/features/catalogue/LongevityReading';
+import { BandReading } from '@/features/catalogue/BandReading';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { primarySurface } from '@/features/shell/primary-surface';
@@ -108,7 +108,7 @@ export function Specimen({
         {product.notesBase.length > 0 && <Row label={words.baseNotes}>{notes(product.notesBase)}</Row>}
         {product.longevity && (
           <Row label={words.longevity}>
-            <LongevityReading reading={product.longevity} locale={locale} />
+            <BandReading kind="longevity" reading={product.longevity} locale={locale} />
           </Row>
         )}
         <Row label={copy.delivery}>{copy.arrives(num(arrival.min), num(arrival.max))}</Row>

@@ -3171,3 +3171,24 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   - there is no "read the full standard" link, because no such page exists.
   Verified: audit (home, en-home) has no findings in light and dark at all six
   widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 2: the product page.
+  Layout from product.html, finish from 04-laboratoire (CLAUDE.md §12), printed as a
+  specimen sheet: the photograph in a ruled frame; name, house, city and founding year;
+  the buy block; then label rows for family, concentration, size, longevity and
+  projection (each band with its source, on a 4-segment meter) and delivery; then the
+  house panel. Numbered sections follow: 01 notes, 02 reviews, 03 from other houses.
+  The notes are three ruled tiers whose chips search for the note, replacing the orbs
+  and the spine. The evolution curve is now labelled on the panel as an illustration,
+  not a measurement, because it is drawn from note counts and not measured.
+  Fixes:
+  - "From other houses" listed the same house's other perfumes; it now filters by
+    brand.
+  - Arabic review metadata was letterspaced; that is removed.
+  - The curve's labels were set below reading size.
+  Cleanup: PerformanceMeter and note-icons were removed (unused), and
+  LongevityReading was generalised to BandReading (longevity and projection).
+  SectionHead moved to the shell.
+  Verified: audit (product, en-product) has no findings in light and dark at all six
+  widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.
+  Founder decision, 15 Oct 2026: keep the curve, labelled as an illustration.

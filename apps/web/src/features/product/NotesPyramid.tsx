@@ -1,20 +1,23 @@
+import Link from 'next/link';
 import { langAttrs, pick, PRODUCT, type Locale } from '@diyar/i18n';
-import { NOTE_ICON } from './note-icons';
+import { localeHref } from '@/core/href';
 
 /**
- * The notes pyramid.
+ * The notes, tier by tier (visual identity v2).
  *
- * A vertical spine with three glowing orbs — top, heart, base — matching
- * design-reference/product.html. The spine is a gradient through the three tier
- * colours and is positioned with LOGICAL properties: in RTL, inline-start is the
- * right edge, which is where the orbs sit. Getting that backwards put the spine
- * 350px away from its own nodes once already (DESIGN_DOCTRINE §4a).
+ * Laboratoire prints the pyramid the way it prints everything else: as a
+ * register. Three ruled columns from `lg`, stacked below it, each with the
+ * tier's name, when it is smelled, and its notes. The glowing orbs and the
+ * gradient spine of the first identity are gone — they were the pyramid
+ * illustrated, and this is the pyramid stated.
  *
- * Driven entirely by product data, and coloured from the THEME rather than from
- * a palette import: `--c-note-*` is declared once per theme in theme.ts, so the
- * pyramid restates itself on paper without this file knowing there are two
- * themes. It holds channels (`194 168 92`), which is what lets the glow below
- * be written as a real translucent colour.
+ * The tier colours survive as a single dot each. They are data-visualisation
+ * roles (`--c-note-*`, theme.ts) and the evolution curve below uses the same
+ * three, so the dot is the legend that ties a tier to its band of the chart.
+ *
+ * EVERY NOTE IS A SEARCH, as on the home page's index: `/search?q=<the note as
+ * the house wrote it>`, because search already matches notes and the visitor
+ * who likes saffron here is one press from every other perfume that has it.
  */
 const TIERS = [
   { key: 'top', en: 'TOP', name: 'topNotes', when: 'topWhen', channels: 'var(--c-note-top)' },
@@ -36,85 +39,35 @@ export function NotesPyramid({
   const notes: Record<string, string[]> = { top, heart, base };
 
   return (
-    <section className="relative px-5">
-      <div
-        aria-hidden
-        className="absolute bottom-[34px] top-2 w-[2px] opacity-[.55]"
-        style={{
-          insetInlineStart: 'calc(20px + 47px)',
-          background:
-            'linear-gradient(to bottom,' +
-            'rgb(var(--c-note-top)) 0%,rgb(var(--c-note-top)) 18%,' +
-            'rgb(var(--c-note-heart)) 44%,rgb(var(--c-note-heart)) 58%,' +
-            'rgb(var(--c-note-base)) 84%,rgb(var(--c-note-base)) 100%)',
-        }}
-      />
-
-      {TIERS.map((tier, i) => {
-        const Icon = NOTE_ICON[tier.key];
-        const list = notes[tier.key] ?? [];
-        return (
-          <div key={tier.key} className={`relative flex ${i === TIERS.length - 1 ? 'pb-2' : 'pb-7'}`}>
-            <div className="relative w-[96px] flex-none pt-[2px]">
-              <div className="relative flex h-[96px] w-[96px] items-center justify-center rounded-pill">
-                <span
-                  aria-hidden
-                  className="absolute inset-0 rounded-pill"
-                  /* `${var}2E` — a hex alpha glued to a var() call — is not a
-                     colour, so this gradient silently produced nothing and the
-                     orbs sat unlit for as long as the component has existed.
-                     Channels are what make a translucent tier expressible. */
-                  style={{ background: `radial-gradient(circle,rgb(${tier.channels} / .18) 0%,transparent 68%)` }}
-                />
-                <span
-                  aria-hidden
-                  className="absolute inset-[14px] rounded-pill border border-ink/[.13]"
-                />
-                <span className="relative z-[2]" style={{ color: `rgb(${tier.channels})` }}>
-                  <Icon />
-                </span>
-              </div>
-              <div className="mt-2 text-center text-micro text-ink3">{copy[tier.when]}</div>
-            </div>
-
-            <div className="flex-1 ps-5 pt-3">
-              <div className="mb-1 flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="block h-[6px] w-[6px] rounded-pill"
-                  style={{ background: `rgb(${tier.channels})` }}
-                />
-                <span className="latin text-micro tracking-label" style={{ color: `rgb(${tier.channels})` }}>
-                  {tier.en}
-                </span>
-              </div>
-              {/*
-                h2, not h3. The product name is the h1 and these tiers are its
-                direct children — h1 → h3 leaves a screen reader announcing a
-                level that has no parent, and the reader cannot tell whether it
-                missed something. The SIZE is unchanged; heading level and type
-                scale are different decisions and this is why they are separate
-                properties.
-              */}
-              <h2 className="mb-3 font-display text-h4">{copy[tier.name]}</h2>
-              <ul className="flex flex-wrap gap-2">
-                {list.map((note) => {
-                  const shown = pick(locale, note, english[note]);
-                  return (
-                    <li
-                      key={note}
-                      {...langAttrs(locale, shown.lang)}
-                      className="tappable flex h-touch items-center gap-2 border border-line bg-raised px-3 text-small"
-                    >
-                      {shown.text}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+    <div className="grid gap-7 lg:grid-cols-3 lg:gap-8">
+      {TIERS.filter((tier) => (notes[tier.key] ?? []).length > 0).map((tier) => (
+        <div key={tier.key}>
+          <div className="mb-3 flex items-center justify-between gap-3 border-b border-line pb-2">
+            <span className="flex items-center gap-2">
+              <span aria-hidden="true" className="block h-[6px] w-[6px] rounded-pill" style={{ background: `rgb(${tier.channels})` }} />
+              <span className="latin text-micro tracking-label text-ink2">{tier.en}</span>
+            </span>
+            <span className="text-small text-ink3">{copy[tier.when]}</span>
           </div>
-        );
-      })}
-    </section>
+          <h3 className="mb-4 font-display text-h4 lg:text-h3">{copy[tier.name]}</h3>
+          <ul className="flex flex-wrap gap-2">
+            {(notes[tier.key] ?? []).map((note) => {
+              const shown = pick(locale, note, english[note]);
+              return (
+                <li key={note}>
+                  <Link
+                    href={localeHref(locale, `/search?q=${encodeURIComponent(note)}`)}
+                    aria-label={copy.searchNote(shown.text)}
+                    className="inline-flex h-touch items-center border border-line bg-raised px-4 text-body transition-colors duration-quick ease-out hover:border-ink hover:bg-ink hover:text-ground lg:text-bodyLg"
+                  >
+                    <span {...langAttrs(locale, shown.lang)}>{shown.text}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }

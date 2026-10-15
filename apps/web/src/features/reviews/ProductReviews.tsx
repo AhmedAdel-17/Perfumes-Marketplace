@@ -4,6 +4,7 @@ import { localeHref } from '@/core/href';
 import { formatRating } from '@diyar/domain';
 import { api } from '@/core/api';
 import { DimensionBars, OverallScore } from './Ratings';
+import { SectionHead } from '@/features/shell/SectionHead';
 
 /**
  * What people who bought it said.
@@ -22,17 +23,20 @@ import { DimensionBars, OverallScore } from './Ratings';
 export async function ProductReviews({
   productId,
   productName,
+  index,
 }: {
   productId: string;
   productName: string;
+  /** The section's number on the page that holds it. */
+  index: string;
 }) {
   const { summary, reviews } = await api().reviews.forProduct({ productId, limit: 20 });
   const locale = await getLocale();
   const copy = REVIEWS[locale];
 
   return (
-    <section id="reviews" className="mt-8 border-t border-line px-5 pt-7 lg:mt-[96px] lg:px-0 lg:pt-9">
-      <h2 className="font-display text-h3 lg:text-h2Lg">{copy.heading}</h2>
+    <section id="reviews" aria-labelledby="reviews-title">
+      <SectionHead id="reviews-title" index={index} title={copy.heading} />
 
       {summary.count === 0 ? (
         <div className="mt-4 max-w-proseMax">
@@ -54,7 +58,9 @@ export async function ProductReviews({
           <div className="mt-5 lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-5">
               <OverallScore summary={summary} locale={locale} />
-              <p className="mt-2 text-caption tracking-label text-ink3">
+              {/* No tracking: this line is Arabic on the Arabic site, and
+                  letterspacing breaks the joins (CLAUDE.md §15). */}
+              <p className="mt-2 text-small text-ink3">
                 {countedIn(locale, summary.count, NOUN.review, num)}
                 {' · '}
                 {copy.verifiedPurchase}
@@ -87,7 +93,7 @@ export async function ProductReviews({
                     it is a structural fact about the schema, so it is stated
                     once per review as a plain fact rather than as a prize.
                   */}
-                  <div className="mt-1 text-micro tracking-label text-ink3">
+                  <div className="mt-1 text-small text-ink3">
                     {copy.verifiedPurchase}
                     {' · '}
                     <time dateTime={review.createdAt}>
@@ -120,9 +126,9 @@ export async function ProductReviews({
           // `inline-flex min-h-touch`: a caption-sized link is a 34px line box,
           // and `tappable` alone lands short of the floor. The label stays small
           // while the TARGET is a target.
-          className="tappable inline-flex min-h-touch items-center border-b border-accent/50 text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          {copy.openTracking}
+          <span className="border-b border-current">{copy.openTracking}</span>
         </a>
       </p>
     </section>

@@ -4,7 +4,7 @@ import { api } from '@/core/api';
 import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
 import { HouseTable } from '@/features/home/HouseTable';
 import { NoteIndex } from '@/features/home/NoteIndex';
-import { SectionHead } from '@/features/home/SectionHead';
+import { SectionHead } from '@/features/shell/SectionHead';
 import { Specimen } from '@/features/home/Specimen';
 import { VerificationChecks } from '@/features/home/VerificationChecks';
 import { primarySurface } from '@/features/shell/primary-surface';
