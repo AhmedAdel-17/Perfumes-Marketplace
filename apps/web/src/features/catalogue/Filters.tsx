@@ -12,7 +12,7 @@
  * disabled and it degrades to exactly the same URLs. The client code only makes
  * it feel immediate.
  */
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import {
   activeFilterCount, catalogueQueryToSearch, parseCatalogueQuery, SCENT_FAMILIES, SORTS,
@@ -28,18 +28,49 @@ const SORT_KEY: Record<Sort, 'newest' | 'priceAsc' | 'priceDesc'> = {
   price_desc: 'priceDesc',
 };
 
+/*
+ * Identity v2: square, ruled, and a pressed filter is INKED rather than tinted —
+ * the same reversal the note chips use, so "selected" looks the same on every
+ * screen. `aria-pressed` carries the state for a screen reader; the fill is not
+ * the only signal, because the label also moves from ink2 to ground.
+ */
+/**
+ * The form's id. The search box sits in the page head, OUTSIDE this element,
+ * and joins the form through the `form` attribute — so it is still one GET
+ * form, one URL, and it still works with JavaScript off.
+ */
+export const FILTERS_FORM = 'catalogue-filters';
+
 const chip = (on: boolean) => [
-  'tappable flex min-h-touch items-center rounded-sm border px-4 text-small',
-  'transition-colors duration-base ease-out',
-  on ? 'border-accent text-accent' : 'border-line text-ink hover:border-ink2',
+  'tappable flex min-h-touch items-center border px-4 text-body',
+  'transition-colors duration-quick ease-out',
+  on ? 'border-ink bg-ink text-ground' : 'border-line bg-raised text-ink hover:border-ink',
 ].join(' ');
+
+/*
+ * One scrolling row per group on a phone, wrapping from `lg`. Stacked and
+ * wrapped, eight families and the houses filled the whole first screen of a
+ * phone before a single perfume appeared; as rows they take a line each.
+ * Bled to the screen edge so a half-visible chip says "there is more".
+ */
+// `min-w-0` on each fieldset: a fieldset's minimum width is its content's by
+// default, so a scrolling row inside one would widen the page instead.
+const chipRow = '-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0 [&>*]:flex-none';
+
+/** A field cut into the paper: the `sunken` well, a hairline, ink on focus. */
+export const field = 'border border-line bg-sunken text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink focus:outline-none';
+
+/*
+ * Legends are Arabic on the Arabic site, so they are never letterspaced
+ * (CLAUDE.md §15) — the first identity tracked them and broke the joins.
+ */
+const legend = 'mb-3 block w-full border-b border-line pb-2 text-small text-ink3';
 
 export function Filters({ query, houses }: {
   query: CatalogueQuery;
   houses: Array<{ slug: string; name: string; nameEn: string | null }>;
 }) {
   const router = useRouter();
-  const params = useSearchParams();
   const [pending, startTransition] = useTransition();
   const locale = useLocale();
   const copy = SEARCH[locale];
@@ -60,52 +91,23 @@ export function Filters({ query, houses }: {
 
   return (
     <form
+      id={FILTERS_FORM}
       method="get"
       action={localeHref(locale, '/search')}
       // Submitting normally still works: the inputs are named exactly as the
       // parser reads them, so a browser with no JavaScript produces the same URL
       // this component would have written.
-      className="border-b border-line pb-7"
+      className="flex flex-col gap-5 lg:gap-7"
       onSubmit={(event) => {
         event.preventDefault();
         const text = new FormData(event.currentTarget).get('q');
         apply({ ...query, text: typeof text === 'string' ? text : '' });
       }}
     >
-      {/*
-        ------------------------------------------------------ the box
-
-        CAPPED, not full width. At the container's 1240px the field and its
-        button ended up a thousand pixels apart, which reads as two unrelated
-        controls — and a search box that wide is harder to scan than a short
-        one, because the eye has no idea where the text will start.
-      */}
-      <div className="flex max-w-[540px] gap-3">
-        <input
-          name="q"
-          defaultValue={query.text}
-          // The key resets the field when the URL changes underneath it — a
-          // cleared search must clear the box, and an uncontrolled input keeps
-          // whatever was typed otherwise.
-          key={params.toString()}
-          maxLength={120}
-          type="search"
-          aria-label={copy.fieldLabel}
-          placeholder={copy.fieldLabel}
-          className="h-control w-full rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink2 focus:outline-none focus-visible:border-accent"
-        />
-        <button
-          type="submit"
-          className="tappable flex h-control min-w-touch items-center justify-center rounded-sm border border-line px-5 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
-        >
-          {copy.submit}
-        </button>
-      </div>
-
       {/* --------------------------------------------------- the families */}
-      <fieldset className="mt-6">
-        <legend className="mb-2.5 text-caption tracking-label text-ink3">{copy.family}</legend>
-        <div className="flex flex-wrap gap-2">
+      <fieldset className="min-w-0">
+        <legend className={legend}>{copy.family}</legend>
+        <div className={chipRow}>
           {SCENT_FAMILIES.map((family) => (
             <button
               key={family}
@@ -123,9 +125,9 @@ export function Filters({ query, houses }: {
 
       {/* ----------------------------------------------------- the houses */}
       {houses.length > 1 && (
-        <fieldset className="mt-6">
-          <legend className="mb-2.5 text-caption tracking-label text-ink3">{copy.house}</legend>
-          <div className="flex flex-wrap gap-2">
+        <fieldset className="min-w-0">
+          <legend className={legend}>{copy.house}</legend>
+          <div className={chipRow}>
             {houses.map((house) => (
               <button
                 key={house.slug}
@@ -145,10 +147,8 @@ export function Filters({ query, houses }: {
       )}
 
       {/* ------------------------------------------------------ the price */}
-      <fieldset className="mt-6">
-        <legend className="mb-2.5 text-caption tracking-label text-ink3">
-          {copy.price}
-        </legend>
+      <fieldset className="min-w-0">
+        <legend className={legend}>{copy.price}</legend>
         <div className="flex flex-wrap items-center gap-3">
           {(['minEgp', 'maxEgp'] as const).map((bound) => (
             <input
@@ -165,7 +165,7 @@ export function Filters({ query, houses }: {
                 if (value === query[bound]) return;
                 apply({ ...query, [bound]: Number.isFinite(value) ? value : null });
               }}
-              className="tnum h-control w-28 rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink2 focus:outline-none focus-visible:border-accent"
+              className={`tnum h-control w-28 px-3 text-body ${field}`}
             />
           ))}
 
@@ -182,9 +182,9 @@ export function Filters({ query, houses }: {
       </fieldset>
 
       {/* ------------------------------------------------ sort, and clear */}
-      <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
         <div className="flex items-center gap-3">
-          <label htmlFor="sort" className="text-caption tracking-label text-ink3">
+          <label htmlFor="sort" className="text-small text-ink3">
             {copy.sort}
           </label>
           <select
@@ -192,7 +192,7 @@ export function Filters({ query, houses }: {
             value={query.sort}
             disabled={pending}
             onChange={(event) => apply({ ...query, sort: event.target.value as Sort })}
-            className="h-control rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+            className={`h-control px-3 text-body ${field}`}
           >
             {SORTS.map((sort) => (
               <option key={sort} value={sort}>{copy[SORT_KEY[sort]]}</option>
@@ -209,7 +209,7 @@ export function Filters({ query, houses }: {
               // search, not abandoning it.
               ...query, families: [], houses: [], minEgp: null, maxEgp: null, inStockOnly: false,
             })}
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+            className="tappable flex min-h-touch items-center text-small text-ink transition-colors duration-base ease-out hover:text-accent"
           >
             {copy.clear(num(count))}
           </button>

@@ -3192,3 +3192,22 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: audit (product, en-product) has no findings in light and dark at all six
   widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.
   Founder decision, 15 Oct 2026: keep the curve, labelled as an illustration.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 3: search.
+  The catalogue is laid out as the register's full listing:
+  - a ruled head with a Latin kicker and the title;
+  - the search field in the head, joined to the filter form by the `form`
+    attribute, so it is still one GET form and works without JavaScript;
+  - filters in a ruled start column, with square chips that are inked when pressed
+    and fields set into the paper;
+  - the result count always stated above results on SpecimenCards;
+  - ratings fetched in batches of 60.
+  On phones each chip group is one scrolling row, so the filters no longer fill the
+  first screen. `min-w-0` on the column and the fieldsets keeps the rows from
+  widening the page.
+  Fixes: letterspaced Arabic legends, the old half-alpha accent underline on the
+  empty state, and rounded corners.
+  `audit.mjs` now reports an `ONLY` name that matched no surface, instead of passing
+  silently.
+  Verified: audit (search, en-search) has no findings in light and dark at all six
+  widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.

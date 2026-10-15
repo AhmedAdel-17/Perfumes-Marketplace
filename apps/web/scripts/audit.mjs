@@ -186,7 +186,10 @@ async function settle(page) {
   await page.waitForTimeout(700);
 }
 
+const audited = new Set();
+
 async function auditPage(page, surface, width) {
+  audited.add(surface);
   await settle(page);
 
   const structural = await page.evaluate(() => {
@@ -636,6 +639,12 @@ try {
 }
 
 /* ------------------------------------------------------------------ report */
+// A misspelt `ONLY` name matches nothing and would report "no findings" for a
+// screen that was never opened. Silence about an unaudited screen is a finding.
+for (const name of ONLY ?? []) {
+  if (!audited.has(name)) record(name, '—', 'missing', 'named in ONLY, but no such surface was audited');
+}
+
 const bySurface = new Map();
 for (const f of findings) {
   const key = `${f.surface}`;

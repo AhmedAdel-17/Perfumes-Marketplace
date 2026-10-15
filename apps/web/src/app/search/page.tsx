@@ -17,8 +17,10 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
-import { ProductTile } from '@/features/catalogue/ProductTile';
+import { SpecimenCard, type CardRating } from '@/features/catalogue/SpecimenCard';
+import { api } from '@/core/api';
 import { Filters } from '@/features/catalogue/Filters';
+import { SearchBox } from '@/features/catalogue/SearchBox';
 import { searchCatalogue } from '@/core/catalogue';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,6 +40,20 @@ export default async function SearchPage(
 ) {
   const query = parseCatalogueQuery(await searchParams);
   const { products, houses } = await searchCatalogue(query);
+
+  /*
+   * Ratings for every card, asked in batches: `reviews.summaries` takes at most
+   * sixty ids, and a catalogue past sixty would otherwise rate its first page
+   * and leave the rest blank — a grid where some perfumes seem unreviewed only
+   * because of where they fell.
+   */
+  const ids = products.map((p) => p.id);
+  const batches: string[][] = [];
+  for (let i = 0; i < ids.length; i += 60) batches.push(ids.slice(i, i + 60));
+  const ratings: Record<string, CardRating> = Object.assign(
+    {},
+    ...(await Promise.all(batches.map((productIds) => api().reviews.summaries({ productIds })))),
+  );
 
   /*
    * Three different things happen on this screen, and only two are events.
@@ -69,54 +85,77 @@ export default async function SearchPage(
         />
       )}
 
-      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[88px]">
-        <header className="pb-7 pt-8 lg:pb-8 lg:pt-12">
-          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
+      {/*
+        Visual identity v2: the catalogue as the register's full listing. A
+        ruled head that states the count, the filters in a ruled column at the
+        start edge, and the perfumes on the same specimen cards as the home page,
+        so a perfume looks the same wherever it is listed.
+      */}
+      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
+        <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-ink pb-4 pt-8 lg:pt-12">
+          <div>
+            <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+              {copy.kicker.toUpperCase()}
+              <span aria-hidden="true" className="h-px w-12 bg-current" />
+            </span>
+            <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
+          </div>
+          <SearchBox text={query.text} />
         </header>
 
-        <Filters query={query} houses={houses} />
+        <div className="mt-7 grid gap-8 lg:mt-8 lg:grid-cols-12">
+          <aside aria-labelledby="filters-title" className="min-w-0 lg:col-span-3">
+            <h2 id="filters-title" className="sr-only">{copy.filters}</h2>
+            <Filters query={query} houses={houses} />
+          </aside>
 
-        {/*
-          The count is stated, always — including when it is everything.
-
-          A results page that only says something when it is empty leaves the
-          customer to work out whether a filter did anything, and the answer is
-          the one number they actually want.
-        */}
-        <p className="py-6 text-caption text-ink3 lg:py-7" aria-live="polite">
-          {countedIn(locale, products.length, NOUN.perfume, editorialIn(locale))}
-        </p>
-
-        {products.length === 0 ? (
-          <div className="pb-12">
-            <p className="text-bodyLg leading-relaxed text-ink2">
-              {isEmptyQuery(query)
-                ? copy.nothingPublished
-                : copy.noMatch}
-            </p>
+          <div className="lg:col-span-9">
             {/*
-              An empty result offers the way out rather than only the bad news.
-              This is where a customer decides whether the shop is small or the
-              search is bad, and a dead end answers that question wrongly.
+              The count is stated, always — including when it is everything.
+
+              A results page that only says something when it is empty leaves
+              the customer to work out whether a filter did anything, and the
+              answer is the one number they actually want.
             */}
-            {!isEmptyQuery(query) && (
-              <a
-                href={localeHref(locale, '/search')}
-                className="tappable mt-6 inline-flex min-h-touch items-center border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
-              >
-                {copy.showAll}
-              </a>
+            <p className="mb-4 text-body text-ink2 lg:text-bodyLg" aria-live="polite">
+              {countedIn(locale, products.length, NOUN.perfume, editorialIn(locale))}
+            </p>
+            {products.length === 0 ? (
+              <div className="border border-line bg-raised p-6 lg:p-8">
+                <p className="text-bodyLg leading-relaxed text-ink2">
+                  {isEmptyQuery(query) ? copy.nothingPublished : copy.noMatch}
+                </p>
+                {/*
+                  An empty result offers the way out rather than only the bad
+                  news. This is where a customer decides whether the shop is
+                  small or the search is bad, and a dead end answers that
+                  question wrongly.
+                */}
+                {!isEmptyQuery(query) && (
+                  <a
+                    href={localeHref(locale, '/search')}
+                    className="tappable mt-4 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
+                  >
+                    <span className="border-b border-current">{copy.showAll}</span>
+                  </a>
+                )}
+              </div>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+                {products.map((product, index) => (
+                  <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
+                    <SpecimenCard
+                      product={product}
+                      locale={locale}
+                      rating={ratings[product.id]}
+                      sizes="(min-width: 1024px) 24vw, 50vw"
+                    />
+                  </Reveal>
+                ))}
+              </ul>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-9 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14">
-            {products.map((product, index) => (
-              <Reveal key={product.id} delay={Math.min(index, 6) * 60}>
-                <ProductTile product={product} locale={locale} />
-              </Reveal>
-            ))}
-          </div>
-        )}
+        </div>
       </main>
 
       <SiteFooter />
