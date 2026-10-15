@@ -41,14 +41,16 @@ export default async function SellerListingPage(
   */
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <header className="px-5 pb-6 pt-9 lg:px-0">
+      <header className="mx-5 mb-6 border-b border-ink pb-3 pt-7 lg:mx-0 lg:mb-8 lg:pt-9">
         <a
           href="/seller/listings"
-          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable mb-3 flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          ← كل المنتجات
+          {/* Back points to the reading START — right, in Arabic. The glyph
+              does not mirror itself, so the arrow is chosen for the direction. */}
+          <span className="border-b border-current">→ كل المنتجات</span>
         </a>
-        <h1 className="font-display text-h2 leading-heading lg:text-h1Lg">
+        <h1 className="font-display text-h2 leading-heading lg:text-h1">
           {listing.name || 'منتج جديد'}
         </h1>
       </header>

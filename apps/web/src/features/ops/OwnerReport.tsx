@@ -58,7 +58,7 @@ function Rate({ rate }: { rate: RateView }) {
   return (
     <span className="whitespace-nowrap">
       <bdi dir="ltr" className="tnum text-ink">{num(percent)}%</bdi>
-      <span className="ms-1.5 text-micro text-ink3">
+      <span className="ms-1.5 text-small text-ink3">
         <bdi dir="ltr" className="tnum">{num(rate.numerator)}/{num(rate.denominator)}</bdi>
       </span>
     </span>
@@ -71,17 +71,19 @@ function Minutes({ value }: { value: number | null }) {
   const minutes = value % 60;
   return (
     <span className="tnum whitespace-nowrap">
-      {hours > 0 && <>{num(hours)} <span className="text-caption">س</span> </>}
-      {num(minutes)} <span className="text-caption">د</span>
+      {hours > 0 && <>{num(hours)} <span className="text-small">س</span> </>}
+      {num(minutes)} <span className="text-small">د</span>
     </span>
   );
 }
 
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
-    <section className="border-t border-line py-7">
-      <h2 className="font-display text-h3 lg:text-h2Lg">{title}</h2>
-      {note && <p className="mt-1 max-w-proseMax text-caption leading-relaxed text-ink3">{note}</p>}
+    <section className="py-7">
+      {/* The register's section head: a full-strength rule UNDER the title,
+          as on every other screen, rather than a hairline above it. */}
+      <h2 className="border-b border-ink pb-2 font-display text-h3 lg:text-h2">{title}</h2>
+      {note && <p className="mt-2 max-w-proseMax text-small leading-relaxed text-ink3">{note}</p>}
       <div className="mt-5">{children}</div>
     </section>
   );
@@ -107,7 +109,7 @@ function Table({ label, head, children }: {
         <thead>
           <tr className="border-b border-line text-start">
             {head.map((label) => (
-              <th key={label} scope="col" className="py-2 pe-4 text-start text-caption font-normal tracking-label text-ink3">
+              <th key={label} scope="col" className="py-2 pe-4 text-start text-small font-normal text-ink3">
                 {label}
               </th>
             ))}
@@ -132,7 +134,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
             href={`/ops/insights?days=${days}`}
             aria-current={report.days === days ? 'page' : undefined}
             className={[
-              'tappable inline-flex min-h-touch min-w-touch items-center justify-center border-b pb-0.5 text-caption tracking-label',
+              'tappable inline-flex min-h-touch min-w-touch items-center justify-center border-b pb-0.5 text-small',
               'transition-colors duration-base ease-out hover:text-accent',
               report.days === days ? 'border-accent text-ink' : 'border-transparent text-ink3',
             ].join(' ')}
@@ -140,7 +142,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
             {PERIOD_LABEL[days] ?? days}
           </a>
         ))}
-        <p className="ms-auto text-micro text-ink3">
+        <p className="ms-auto text-small text-ink3">
           من <time dateTime={report.from}>{internalDate(report.from, { time: true })}</time>
           {' '}إلى <time dateTime={report.to}>{internalDate(report.to, { time: true })}</time>
           {' '}· بتوقيت القاهرة
@@ -176,7 +178,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         note="ما فعله الزوّار قبل أن يصير أي طلب. «زوّار» تحسب الشخص مرّة واحدة مهما كرّر، و«مرات» تحسب كل مرّة — الشخص الذي فتح صفحة عطر عشرين مرّة زائر واحد نظر، لا عشرون لم يشتروا. لا نحتفظ بكلمات البحث، ولا نربط هذا بأي حساب."
       >
         {report.preOrder.isEmpty ? (
-          <p className="text-caption text-ink3">لم يُسجَّل نشاط تصفّح في هذه الفترة.</p>
+          <p className="text-small text-ink3">لم يُسجَّل نشاط تصفّح في هذه الفترة.</p>
         ) : (
           <ol className="grid grid-cols-1 gap-y-2 sm:grid-cols-4 sm:gap-x-4 lg:grid-cols-7">
             {report.preOrder.stages.map((stage) => (
@@ -184,7 +186,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
                 key={stage.event}
                 className="flex items-baseline justify-between gap-3 border-b border-line py-2 sm:block sm:border-b-0 sm:border-s sm:ps-4"
               >
-                <span className="text-caption tracking-label text-ink3">
+                <span className="text-small text-ink3">
                   {BROWSING_EVENT_AR[stage.event]}
                 </span>
                 <span className="block">
@@ -199,7 +201,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
                   <span className="block text-h3 text-ink">
                     {counted(stage.visitors, VISITOR, num)}
                   </span>
-                  <span className="mt-0.5 block text-caption text-ink3">
+                  <span className="mt-0.5 block text-small text-ink3">
                     {counted(stage.events, TIME, num)}
                   </span>
                 </span>
@@ -217,7 +219,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         <ol className="grid grid-cols-1 gap-y-2 sm:grid-cols-5 sm:gap-x-4">
           {(['placed', 'confirmed', 'dispatched', 'delivered', 'completed'] as const).map((stage) => (
             <li key={stage} className="flex items-baseline justify-between gap-3 border-b border-line py-2 sm:block sm:border-b-0 sm:border-s sm:ps-4">
-              <span className="text-caption tracking-label text-ink3">{FUNNEL_STAGE_AR[stage]}</span>
+              <span className="text-small text-ink3">{FUNNEL_STAGE_AR[stage]}</span>
               <span className="tnum block text-h3 text-ink">{num(f[stage])}</span>
             </li>
           ))}
@@ -234,7 +236,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
                   {Object.entries(f.exits[state].byReason)
                     .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
                     .map(([reason, count]) => (
-                      <li key={reason} className="flex items-baseline justify-between gap-3 py-1 text-caption text-ink2">
+                      <li key={reason} className="flex items-baseline justify-between gap-3 py-1 text-small text-ink2">
                         <span>{words(REASON_CODE_AR, reason)}</span>
                         <span className="tnum">{num(count ?? 0)}</span>
                       </li>
@@ -244,7 +246,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-caption text-ink3">لم يخرج أي طلب من المسار في هذه الفترة.</p>
+          <p className="mt-5 text-small text-ink3">لم يخرج أي طلب من المسار في هذه الفترة.</p>
         )}
       </Section>
 
@@ -254,7 +256,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         note="الردّ في الموعد يشمل الاعتذار السريع — الدار التي تعتذر فورًا عن طلب لا تستطيع تنفيذه وفت بوعدها. الطلب الذي ما زال أمامه وقت لا يُحسب في أيٍّ من الخانتين."
       >
         {report.sla.length === 0 ? (
-          <p className="text-caption text-ink3">لا طلبات في هذه الفترة.</p>
+          <p className="text-small text-ink3">لا طلبات في هذه الفترة.</p>
         ) : (
           <Table label="التزام الدور" head={['الدار', 'طلبات', 'ردّت في الموعد', 'متأخرة بلا ردّ', 'وسيط زمن الردّ', 'شُحنت في الموعد', 'متأخرة بلا شحن', 'اعتذار', 'رفض استلام', 'إرجاع']}>
             {report.sla.map((row) => (
@@ -285,7 +287,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         note="من الشحنات التي خرجت فعلًا. التوصيل الفاشل تكلفة حقيقية، وتختلف من منطقة لأخرى."
       >
         {report.refusalByGovernorate.length === 0 ? (
-          <p className="text-caption text-ink3">لم تُشحن طلبات في هذه الفترة.</p>
+          <p className="text-small text-ink3">لم تُشحن طلبات في هذه الفترة.</p>
         ) : (
           <ul className="max-w-proseMax">
             {report.refusalByGovernorate.map((row) => (
@@ -304,7 +306,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         note="المصدر الذي تُحسب عليه العمولة لكل دار، لا تصنيف الطلب العام."
       >
         {report.sourceMix.length === 0 ? (
-          <p className="text-caption text-ink3">لا مبيعات مكتملة في هذه الفترة.</p>
+          <p className="text-small text-ink3">لا مبيعات مكتملة في هذه الفترة.</p>
         ) : (
           <ul className="max-w-proseMax">
             {report.sourceMix.map((row) => (
@@ -312,7 +314,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
                 <span className="text-ink2">{words(ORDER_SOURCE_AR, row.source)}</span>
                 <span className="whitespace-nowrap">
                   <Money piastres={row.gmvPiastres} />
-                  <span className="ms-2 text-micro text-ink3">· <span className="tnum">{num(row.subOrders)}</span></span>
+                  <span className="ms-2 text-small text-ink3">· <span className="tnum">{num(row.subOrders)}</span></span>
                 </span>
               </li>
             ))}
@@ -331,7 +333,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
               <span className="text-small text-ink">{words(CONTRIBUTION_INPUT_AR, input.key)}</span>
               <span className="flex items-baseline gap-3">
                 <InputValue input={input} />
-                <span className="text-micro tracking-label text-ink3">{words(INPUT_STATUS_AR, input.status)}</span>
+                <span className="text-small text-ink3">{words(INPUT_STATUS_AR, input.status)}</span>
               </span>
             </li>
           ))}
@@ -344,7 +346,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
 function Figure({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <dt className="text-caption tracking-label text-ink3">{label}</dt>
+      <dt className="text-small text-ink3">{label}</dt>
       <dd className="mt-1 text-h3 text-ink">{children}</dd>
     </div>
   );

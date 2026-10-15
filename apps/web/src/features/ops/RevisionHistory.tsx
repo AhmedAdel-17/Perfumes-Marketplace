@@ -76,7 +76,7 @@ export function RevisionHistory({ pageId, revisions }: {
   return (
     <section className="mt-12 border-t border-line pt-7">
       <h2 className="mb-1 font-display text-h4">السجل</h2>
-      <p className="mb-5 text-caption leading-relaxed text-ink3">
+      <p className="mb-5 text-small leading-relaxed text-ink3">
         الاسترجاع ينقل النسخة إلى المسودة فقط. لا يُنشر شيء حتى تختار النشر.
       </p>
 
@@ -86,7 +86,7 @@ export function RevisionHistory({ pageId, revisions }: {
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div>
                 <div className="text-body text-ink">{revision.title}</div>
-                <div className="mt-1 text-caption text-ink3">
+                <div className="mt-1 text-small text-ink3">
                   <span className="tnum">{published(revision.publishedAt)}</span>
                   {' · '}
                   {/*
@@ -114,14 +114,14 @@ export function RevisionHistory({ pageId, revisions }: {
                       type="button"
                       disabled={pending}
                       onClick={() => restore(revision.id)}
-                      className="tappable flex min-h-touch items-center rounded-sm border border-accent px-4 text-small text-accent transition-opacity duration-base ease-out disabled:opacity-disabled"
+                      className="tappable flex min-h-touch items-center border border-accent px-4 text-small text-accent transition-opacity duration-base ease-out disabled:opacity-disabled"
                     >
                       {pending ? '…' : 'تأكيد الاسترجاع'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirming(null)}
-                      className="tappable flex min-h-touch min-w-touch items-center justify-center text-caption text-ink3 transition-colors duration-base ease-out hover:text-ink"
+                      className="tappable flex min-h-touch min-w-touch items-center justify-center text-small text-ink3 transition-colors duration-base ease-out hover:text-ink"
                     >
                       إلغاء
                     </button>
@@ -134,7 +134,7 @@ export function RevisionHistory({ pageId, revisions }: {
                     // was never a revision — and a single click next to a date
                     // is too easy to hit while reading.
                     onClick={() => { setConfirming(revision.id); setMessage(null); }}
-                    className="tappable flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent"
+                    className="tappable flex min-h-touch items-center text-small text-ink2 transition-colors duration-base ease-out hover:text-accent"
                   >
                     استرجاع
                   </button>

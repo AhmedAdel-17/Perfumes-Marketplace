@@ -51,7 +51,7 @@ export function OpsWorkQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small text-ink">
+        <p role="alert" className="mb-6 border border-danger bg-raised p-4 text-small text-ink">
           {error}
         </p>
       )}
@@ -86,13 +86,13 @@ export function OpsWorkQueue() {
  * screen that shouts about all of them shouts about none.
  */
 function Waiting({ since }: { since: string | null }) {
-  if (!since) return <span className="text-caption text-ink3">—</span>;
+  if (!since) return <span className="text-small text-ink3">—</span>;
 
   const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
   const tone = days >= 7 ? 'text-danger' : days >= 3 ? 'text-accent' : 'text-ink3';
 
   return (
-    <span className={`text-caption tracking-label ${tone}`}>
+    <span className={`text-small ${tone}`}>
       {days === 0 ? 'اليوم' : <>منذ <span className="tnum">{num(days)}</span> {plural(days, DAY)}</>}
     </span>
   );
@@ -108,8 +108,11 @@ function Group({
   if (entries.length === 0) return null;
   return (
     <section className="mb-9">
-      <h2 className="mb-4 border-b border-line pb-3 font-display text-h3 lg:text-h2Lg">
-        {title} <span className="tnum text-ink3">{num(entries.length)}</span>
+      {/* The register's group head, as in the seller queue: the name and how
+          many, over a full-strength rule. */}
+      <h2 className="mb-4 flex items-baseline gap-3 border-b border-ink pb-2 font-display text-h3 lg:text-h2">
+        {title}
+        <span className="latin tnum text-body text-ink3">{num(entries.length)}</span>
       </h2>
       {/*
         Two columns of cards from `lg`, not one card stretched to 1240px.
@@ -135,16 +138,16 @@ function Group({
             <Waiting since={entry.dispatchedAt ?? entry.deliveredAt} />
             <span className="latin text-micro tracking-label text-ink3">{entry.reference}</span>
           </div>
-          <div className="mt-1 text-caption text-ink3">{entry.brandName}</div>
+          <div className="mt-1 text-small text-ink3">{entry.brandName}</div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-small text-ink2">{entry.recipientName}</span>
-            <span className="text-bodyLg font-semibold">
+            <span className="text-bodyLg">
               <span className="tnum">{formatPrice(entry.totalPiastres)}</span>
               <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
             </span>
           </div>
           {entry.trackingNumber && (
-            <div className="mt-2 text-caption text-ink3">
+            <div className="mt-2 text-small text-ink3">
               شحنة <span className="latin tnum select-all">{entry.trackingNumber}</span>
             </div>
           )}
@@ -177,7 +180,7 @@ function RemitForm({
 
   return (
     <div>
-      <label className="mb-2 block text-caption tracking-label text-ink2" htmlFor={`r-${entry.id}`}>
+      <label className="mb-2 block text-small text-ink2" htmlFor={`r-${entry.id}`}>
         المبلغ المحصّل بالجنيه
       </label>
       <div className="flex gap-3">
@@ -187,13 +190,13 @@ function RemitForm({
           onChange={(event) => setAmount(event.target.value)}
           inputMode="decimal"
           autoComplete="off"
-          className="tnum h-control min-w-0 flex-1 rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+          className="tnum h-control min-w-0 flex-1 border border-line bg-sunken px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
         />
         <PrimaryButton type="button" disabled={busy || !valid} onClick={() => act(entry.id, () => opsRecordRemittance(entry.id, piastres))} fill="auto">
       {busy ? '…' : 'تسجيل'}
     </PrimaryButton>
       </div>
-      <p className="mt-2 text-micro leading-relaxed text-ink3">
+      <p className="mt-2 text-small leading-relaxed text-ink3">
         المتوقّع <span className="tnum">{formatPrice(entry.totalPiastres)}</span>{' '}
         {CURRENCY_LABEL}. اكتب ما وصل فعلًا.
       </p>

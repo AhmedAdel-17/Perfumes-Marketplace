@@ -85,7 +85,7 @@ export function ReturnQueue() {
                     {row.subOrderReference}
                   </span>
                 </div>
-                <span className="text-caption text-accent">
+                <span className="text-small text-accent">
                   {RETURN_STATE_AR[row.state as keyof typeof RETURN_STATE_AR] ?? row.state}
                 </span>
               </div>
@@ -108,14 +108,14 @@ export function ReturnQueue() {
               )}
 
               {row.refundPiastres !== null && (
-                <p className="mt-2 text-caption text-ink3">
+                <p className="mt-2 text-small text-ink3">
                   رُدّ للعميل{' '}
                   <span className="tnum">{formatPrice(row.refundPiastres)}</span>
                   <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
                 </p>
               )}
 
-              <p className="mt-2 text-micro text-ink3">
+              <p className="mt-2 text-small text-ink3">
                 طُلب في{' '}
                 <span className="tnum">
                   {internalDate(row.requestedAt)}
@@ -149,7 +149,7 @@ export function ReturnQueue() {
               )}
 
               {moves.length === 0 && (
-                <p className="mt-3 text-caption text-ink3">
+                <p className="mt-3 text-small text-ink3">
                   {/* Not a dead row: it says WHO it is waiting on. A queue that
                       shows a case with no actions and no explanation is a queue
                       a house stops reading. */}
@@ -163,7 +163,7 @@ export function ReturnQueue() {
         })}
       </ul>
 
-      <p className="mt-6 px-5 text-caption leading-relaxed text-ink3 lg:px-0">
+      <p className="mt-6 px-5 text-small leading-relaxed text-ink3 lg:px-0">
         عدد الطلبات <span className="tnum">{num(queue.length)}</span>. ردّ المبلغ إجراء تقوم به
         المنصّة بعد استلام العبوة وفحصها.
       </p>

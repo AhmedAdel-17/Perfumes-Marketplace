@@ -98,7 +98,7 @@ function Entry({ row }: { row: QueueRow }) {
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h2 className="font-display text-h4 text-ink">{row.name}</h2>
-          <p className="mt-1 text-caption text-ink3">
+          <p className="mt-1 text-small text-ink3">
             {row.brandName} · <span className="tnum">{num(row.volumeMl)}</span> مل
           </p>
         </div>
@@ -108,7 +108,7 @@ function Entry({ row }: { row: QueueRow }) {
             <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </div>
           {row.waitingHours !== null && (
-            <div className={`mt-1 text-caption ${late ? 'text-danger' : slow ? 'text-accent' : 'text-ink3'}`}>
+            <div className={`mt-1 text-small ${late ? 'text-danger' : slow ? 'text-accent' : 'text-ink3'}`}>
               انتظر <span className="tnum">{num(row.waitingHours)}</span>{' '}
               {plural(row.waitingHours, HOUR)}
             </div>
@@ -117,7 +117,7 @@ function Entry({ row }: { row: QueueRow }) {
       </div>
 
       {row.claims.length > 0 && (
-        <ul className="mt-4 border-s-2 border-accent/60 ps-4">
+        <ul className="mt-4 border-s-2 border-accent ps-4">
           {row.claims.map((claim, i) => (
             <li key={i} className="py-1 text-small leading-relaxed text-ink2">
               {CLAIM_LABELS[claim.code]} — <span className="text-ink3">«{claim.evidence}»</span>
@@ -130,7 +130,7 @@ function Entry({ row }: { row: QueueRow }) {
 
       {choosing ? (
         <div className="mt-5 border-t border-line pt-4">
-          <p className="mb-3 text-caption text-ink2">اختر سببًا محدّدًا:</p>
+          <p className="mb-3 text-small text-ink2">اختر سببًا محدّدًا:</p>
           <div className="flex flex-wrap gap-2">
             {MODERATION_REASONS.map((reason) => (
               <button
@@ -138,7 +138,7 @@ function Entry({ row }: { row: QueueRow }) {
                 type="button"
                 disabled={pending}
                 onClick={() => decide(choosing, reason)}
-                className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+                className="tappable flex min-h-touch items-center border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
               >
                 {REASON_LABELS[reason]}
               </button>
@@ -147,7 +147,7 @@ function Entry({ row }: { row: QueueRow }) {
           <button
             type="button"
             onClick={() => setChoosing(null)}
-            className="tappable mt-4 flex min-h-touch items-center text-caption text-ink3 underline transition-colors duration-base ease-out hover:text-ink"
+            className="tappable mt-4 flex min-h-touch items-center text-small text-ink3 underline transition-colors duration-base ease-out hover:text-ink"
           >
             رجوع
           </button>
@@ -164,7 +164,7 @@ function Entry({ row }: { row: QueueRow }) {
             type="button"
             disabled={pending}
             onClick={() => setChoosing('draft')}
-            className="tappable flex min-h-touch items-center rounded-sm border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
           >
             إعادة للدار
           </button>

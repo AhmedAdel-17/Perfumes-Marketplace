@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { OpsNav } from '@/features/ops/OpsNav';
+import { ConsoleHead } from '@/features/shell/ConsoleHead';
 import { OwnerReport } from '@/features/ops/OwnerReport';
 import { fetchOwnerReport, type ReportDays } from '@/features/ops/insights-actions';
 import { activeOperator } from '@/features/ops/actions';
@@ -41,18 +42,12 @@ export default async function OpsInsightsPage({
 
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-4 px-5 pb-7 pt-9 lg:px-0">
-        <div>
-          <div className="latin mb-3 text-micro tracking-label text-accent">OPERATIONS</div>
-          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">التقارير</h1>
-          <p className="mt-2 max-w-proseMax text-caption leading-relaxed text-ink3">
-            كل رقم هنا محسوب بالتعريف نفسه الذي تُحسب به كشوف الدور. ما لا يسجّله النظام
-            بعد يُذكر أنه غير مسجَّل، ولا يظهر صفرًا.
-          </p>
-        </div>
-
-        <OpsNav current="insights" />
-      </header>
+      <ConsoleHead
+        kicker="Operations"
+        title="التقارير"
+        nav={<OpsNav current="insights" />}
+        intro="كل رقم هنا محسوب بالتعريف نفسه الذي تُحسب به كشوف الدور. ما لا يسجّله النظام بعد يُذكر أنه غير مسجَّل، ولا يظهر صفرًا."
+      />
 
       {result.ok ? (
         <OwnerReport report={result.report} />

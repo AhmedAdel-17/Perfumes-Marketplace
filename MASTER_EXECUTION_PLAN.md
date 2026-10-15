@@ -3358,3 +3358,36 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   scrolled 8px sideways at 360 and 390. It is now in ConsoleHead.
   Verified: audit (all six seller surfaces) has no findings in light and dark at all
   six widths; e2e 133/133; typecheck clean; unit tests 1,675 pass; guard clean.
+
+- 2026-10-16 · Claude Code session · P5.1.3 · Phase C complete: the rest of the seller
+  portal and the whole operations console.
+  - All 11 ops pages and 4 seller pages use ConsoleHead. OpsNav was rebuilt like
+    SellerNav: untracked Arabic, and `aria-current` plus an ink rule plus colour.
+  - The sign-in screens use PageHead. The listing and page editors have a ruled head
+    with an underlined back link.
+  - Console section heads are in the register style: a full-strength rule, and the
+    count as a small Latin figure.
+  - A scripted sweep over every class list in features/{seller,ops} and
+    app/{seller,ops} that is not a `latin` label:
+    - 51 letterspaced Arabic labels un-tracked;
+    - `text-micro` and `text-caption` raised to the reading size;
+    - `rounded-sm` removed (sharp edges);
+    - half-alpha danger and accent borders made solid;
+    - fields set into the paper (`sunken`, ink on focus).
+    The pills and figure weights were done by hand.
+  - Back links in the Arabic consoles read "← …", which in RTL points forward. They
+    are now "→" (CLAUDE.md §14: flip directional icons).
+  e2e: the suite now warms the server in a real browser (/, /search, /en, with a
+  180 s allowance) before the first test. This is the cause of the cold-run mass
+  failure logged on 15 Oct as "not established", which recurred today with 46/133
+  failing: `curl /` answering 200 means the HTML compiled, not the client code. The
+  first navigation outlived its 30 s timeout, its catalogue came back empty, and
+  forty-odd tests failed for want of a perfume.
+  Verified: audit (all 20 seller and ops surfaces) has no findings in light and dark
+  at all six widths; e2e 133/133 from a cold server with a fresh seed; typecheck
+  clean; unit tests 1,675 pass; guard clean.
+  One `packages/db` test (returns.contract, "a delivered line reports the FACTS")
+  failed once, while an audit was running in parallel. It passed alone and in two
+  full reruns, including one under the same load. It does not read the clock. The
+  failure message was not captured, so the cause is NOT established; it is recorded
+  here in case it recurs.

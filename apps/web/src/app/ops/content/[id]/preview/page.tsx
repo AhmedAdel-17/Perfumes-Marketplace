@@ -52,8 +52,8 @@ export default async function PreviewPage(
       */}
       {/* On the raised surface, not a tint of accent: the accent ink is proven
           against the surfaces, and a tint is none of them. */}
-      <div className="sticky top-0 z-10 border-b border-accent/40 bg-raised px-5 py-2.5 text-center">
-        <span className="text-caption tracking-label text-accent">
+      <div className="sticky top-0 z-10 border-b border-accent bg-raised px-5 py-2.5 text-center">
+        <span className="text-small text-accent">
           معاينة المسودة — غير منشورة
         </span>
       </div>
@@ -69,9 +69,10 @@ export default async function PreviewPage(
 
         <a
           href={`/ops/content/${id}`}
-          className="tappable mt-10 flex min-h-touch items-center border-t border-line pt-6 text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable mt-10 flex min-h-touch items-center border-t border-ink pt-6 text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          ← العودة إلى التحرير
+          {/* Back points to the reading start — right, in Arabic. */}
+          <span className="border-b border-current">→ العودة إلى التحرير</span>
         </a>
       </main>
     </>

@@ -41,7 +41,7 @@ const hrefFor = (params: { action?: AuditAction | undefined; before?: string | u
 const chip = (active: boolean) => [
   // Both axes: `الكل` is 33px wide at caption size, and a target has two
   // dimensions. Centred so the underline sits under the word, not beside it.
-  'tappable inline-flex min-h-touch min-w-touch items-center justify-center border-b pb-0.5 text-caption tracking-label',
+  'tappable inline-flex min-h-touch min-w-touch items-center justify-center border-b pb-0.5 text-small',
   'transition-colors duration-base ease-out hover:text-accent',
   active ? 'border-accent text-ink' : 'border-transparent text-ink3',
 ].join(' ');
@@ -115,20 +115,20 @@ function Entry({ entry }: { entry: AuditEntryRow }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-small text-ink">
           {(AUDIT_ACTION_AR as Readonly<Record<string, string>>)[entry.action] ?? entry.action}
-          <span className="text-caption text-ink3"> · {subject}</span>
+          <span className="text-small text-ink3"> · {subject}</span>
         </h2>
-        <time dateTime={entry.occurredAt} className="tnum text-caption text-ink3">
+        <time dateTime={entry.occurredAt} className="tnum text-small text-ink3">
           {when(entry.occurredAt)}
         </time>
       </div>
 
-      <p className="mt-1 text-caption text-ink2">بقرار من {entry.actorLabel}</p>
+      <p className="mt-1 text-small text-ink2">بقرار من {entry.actorLabel}</p>
 
       {lines.length > 0 && (
         <dl className="mt-3 grid max-w-proseMax grid-cols-[auto_1fr] gap-x-6 gap-y-1.5">
           {lines.map((line) => (
             <div key={line.field} className="contents">
-              <dt className="text-caption tracking-label text-ink3">{line.label}</dt>
+              <dt className="text-small text-ink3">{line.label}</dt>
               <dd className="text-small text-ink">
                 {line.from !== null && (
                   <>

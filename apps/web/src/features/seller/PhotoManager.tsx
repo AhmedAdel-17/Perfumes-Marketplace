@@ -50,9 +50,9 @@ export interface PhotoView {
   url: string | null;
 }
 
-const control = 'w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent';
+const control = 'w-full border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none';
 
-const quiet = 'tappable inline-flex min-h-touch min-w-touch items-center justify-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled';
+const quiet = 'tappable inline-flex min-h-touch min-w-touch items-center justify-center text-small text-ink2 transition-colors duration-base ease-out hover:text-accent disabled:opacity-disabled';
 
 export function PhotoManager({ productId, photos, readOnly }: {
   productId: string;
@@ -64,9 +64,9 @@ export function PhotoManager({ productId, photos, readOnly }: {
 
   return (
     <section aria-labelledby="photos-heading" className="mb-9 px-5 lg:px-0">
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
-        <h2 id="photos-heading" className="font-display text-h3 lg:text-h2Lg">الصور</h2>
-        <p className="text-caption text-ink3">
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3 border-b border-ink pb-2">
+        <h2 id="photos-heading" className="font-display text-h3 lg:text-h2">الصور</h2>
+        <p className="text-small text-ink3">
           <span className="tnum">{num(photos.length)}</span> من <span className="tnum">{num(MAX_PHOTOS)}</span>
           {' · '}الأولى في الترتيب ليست بالضرورة الرئيسية
         </p>
@@ -150,23 +150,23 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center p-4 text-center text-caption leading-relaxed text-ink3">
+          <div className="flex h-full items-center justify-center p-4 text-center text-small leading-relaxed text-ink3">
             هذه الصورة لم تُرفع بالطريقة المعتمدة ولا يمكن عرضها. أضف صورة جديدة ثم احذف هذه.
           </div>
         )}
         {photo.isPrimary && (
-          <span className="absolute start-2 top-2 rounded-pill border border-line bg-ground px-2.5 py-0.5 text-micro tracking-label text-ink">
+          <span className="absolute start-2 top-2 border border-ink bg-ground px-2.5 py-0.5 text-small text-ink">
             رئيسية
           </span>
         )}
       </div>
 
       {readOnly ? (
-        <p className="mt-2 text-caption leading-relaxed text-ink2">{photo.alt}</p>
+        <p className="mt-2 text-small leading-relaxed text-ink2">{photo.alt}</p>
       ) : (
         <>
           <label className="mt-3 block">
-            <span className="mb-1 block text-micro tracking-label text-ink3">وصف الصورة</span>
+            <span className="mb-1 block text-small text-ink3">وصف الصورة</span>
             <input
               type="text"
               value={alt}
@@ -230,7 +230,7 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
         </>
       )}
 
-      {error && <p role="alert" className="mt-2 text-caption leading-relaxed text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-small leading-relaxed text-danger">{error}</p>}
     </li>
   );
 }
@@ -303,12 +303,12 @@ function AddPhoto({ productId }: { productId: string }) {
   return (
     <div className="max-w-proseMax border border-line bg-raised p-5">
       <h3 className="mb-1 text-small text-ink">إضافة صورة</h3>
-      <p className="mb-5 text-caption leading-relaxed text-ink3">
+      <p className="mb-5 text-small leading-relaxed text-ink3">
         JPG أو PNG أو WebP · حتى 10 ميجابايت · لا يقل الضلع الأقصر عن 800 بكسل
       </p>
 
       <label className="mb-4 block">
-        <span className="mb-1.5 block text-caption tracking-label text-ink2">
+        <span className="mb-1.5 block text-small text-ink2">
           وصف الصورة — ماذا يظهر فيها؟
         </span>
         <input
@@ -334,7 +334,7 @@ function AddPhoto({ productId }: { productId: string }) {
       </label>
 
       <label className="mb-5 block">
-        <span className="mb-1.5 block text-caption tracking-label text-ink2">الملف</span>
+        <span className="mb-1.5 block text-small text-ink2">الملف</span>
         <input
           ref={fileInput}
           type="file"
@@ -352,15 +352,15 @@ function AddPhoto({ productId }: { productId: string }) {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress * 100)}
-            className="relative h-[3px] w-full overflow-hidden rounded-pill bg-line"
+            className="relative h-[3px] w-full overflow-hidden bg-line"
           >
             {/* Fills from the right, like every meter on an Arabic page. */}
             <span
-              className="absolute inset-y-0 start-0 rounded-pill bg-accent transition-[width] duration-base ease-out"
+              className="absolute inset-y-0 start-0 bg-accent transition-[width] duration-base ease-out"
               style={{ width: `${Math.round(progress * 100)}%` }}
             />
           </div>
-          <p className="mt-1.5 text-micro text-ink3">
+          <p className="mt-1.5 text-small text-ink3">
             {progress < 1 ? 'جارٍ الرفع…' : 'تم الرفع — جارٍ التحقّق من الصورة…'}
           </p>
         </div>

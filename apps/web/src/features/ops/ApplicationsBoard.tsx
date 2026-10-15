@@ -133,7 +133,7 @@ function Entry({ row }: { row: ApplicationRow }) {
         </span>
       </div>
 
-      <div className="mt-1 text-caption text-ink3">
+      <div className="mt-1 text-small text-ink3">
         {row.ownerName}
         {' · '}
         <span className="latin tnum select-all">{row.contactPhone}</span>
@@ -151,13 +151,13 @@ function Entry({ row }: { row: ApplicationRow }) {
         </p>
       )}
 
-      {error && <p role="alert" className="mt-3 text-caption leading-relaxed text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-small leading-relaxed text-danger">{error}</p>}
 
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        className="tappable mt-4 min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+        className="tappable mt-4 min-h-touch border-b border-accent text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
       >
         {open ? 'إخفاء بنود المراجعة' : 'بنود المراجعة'}
       </button>
@@ -165,7 +165,7 @@ function Entry({ row }: { row: ApplicationRow }) {
       {open && (
         <div className="mt-4 border border-line bg-raised p-4">
           {controls === null ? (
-            <p className="text-caption text-ink3">…جارٍ التحميل</p>
+            <p className="text-small text-ink3">…جارٍ التحميل</p>
           ) : (
             <ul>
               {controls.map((control) => (
@@ -178,7 +178,7 @@ function Entry({ row }: { row: ApplicationRow }) {
                       ?? control.control}
                   </span>
                   <span className="flex items-center gap-3">
-                    <span className="text-caption text-ink3">
+                    <span className="text-small text-ink3">
                       {VERIFICATION_STATUS_AR[control.status as keyof typeof VERIFICATION_STATUS_AR]
                         ?? control.status}
                     </span>
@@ -187,7 +187,7 @@ function Entry({ row }: { row: ApplicationRow }) {
                         type="button"
                         disabled={pending}
                         onClick={() => mark(control.control, 'approved')}
-                        className="tappable min-h-touch text-caption text-accent transition-colors duration-base ease-out hover:text-ink"
+                        className="tappable min-h-touch text-small text-accent transition-colors duration-base ease-out hover:text-ink"
                       >
                         اعتمد
                       </button>
@@ -196,7 +196,7 @@ function Entry({ row }: { row: ApplicationRow }) {
                         type="button"
                         disabled={pending}
                         onClick={() => mark(control.control, 'pending')}
-                        className="tappable min-h-touch text-caption text-ink3 transition-colors duration-base ease-out hover:text-danger"
+                        className="tappable min-h-touch text-small text-ink3 transition-colors duration-base ease-out hover:text-danger"
                       >
                         تراجع
                       </button>

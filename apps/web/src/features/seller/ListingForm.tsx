@@ -132,9 +132,9 @@ const CLAIM_LABELS: Record<ClaimFinding['code'], string> = {
 /* ------------------------------------------------------------------ atoms */
 
 const control = [
-  'h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink',
+  'h-control w-full border border-line bg-sunken px-3 text-body text-ink',
   'transition-colors duration-base ease-out',
-  'focus:border-ink2 focus:outline-none focus-visible:border-accent',
+  'focus:border-ink focus:outline-none',
 ].join(' ');
 
 function Row({ label, htmlFor, hint, children }: {
@@ -142,11 +142,11 @@ function Row({ label, htmlFor, hint, children }: {
 }) {
   return (
     <div className="mb-4">
-      <label htmlFor={htmlFor} className="mb-1.5 block text-caption tracking-label text-ink3">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-small text-ink3">
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1.5 text-micro leading-relaxed text-ink3">{hint}</p>}
+      {hint && <p className="mt-1.5 text-small leading-relaxed text-ink3">{hint}</p>}
     </div>
   );
 }
@@ -185,7 +185,7 @@ function Toggles<T extends string>({
   const chosen = new Set(values ?? []);
   return (
     <fieldset className="mb-4">
-      <legend className="mb-2 text-caption tracking-label text-ink3">{label}</legend>
+      <legend className="mb-2 text-small text-ink3">{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = chosen.has(option);
@@ -198,7 +198,7 @@ function Toggles<T extends string>({
                 on ? [...chosen].filter((x) => x !== option) : [...chosen, option],
               )}
               className={[
-                'tappable flex min-h-touch items-center rounded-sm border px-4 text-small',
+                'tappable flex min-h-touch items-center border px-4 text-small',
                 'transition-colors duration-base ease-out',
                 on
                   // No tint behind the chosen chip: accent on a 10% accent fill
@@ -231,7 +231,7 @@ function Notes({ id, label, value, onChange }: {
         onChange={(e) => onChange(
           e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
         )}
-        className="min-h-touch w-full rounded-sm border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+        className="min-h-touch w-full border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
       />
     </Row>
   );
@@ -383,7 +383,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             href={`/p/${listing.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent"
+            className="tappable flex min-h-touch items-center text-small text-accent"
           >
             عرض في المتجر ↗
           </a>
@@ -391,7 +391,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       </div>
 
       {readOnly && (
-        <p className="mb-7 border-s-2 border-accent/60 ps-4 text-small leading-relaxed text-ink2">
+        <p className="mb-7 border-s-2 border-accent ps-4 text-small leading-relaxed text-ink2">
           {state === 'pending_moderation'
             ? 'المنتج قيد المراجعة. اسحبه من المراجعة إذا أردت تعديله.'
             : 'المنتج مؤرشف. أعِده إلى المسودة للتعديل.'}
@@ -505,7 +505,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             <textarea
               id="f-defect" rows={3} value={String(draft.defectRoute ?? '')} maxLength={500}
               onChange={(e) => set('defectRoute', e.target.value)}
-              className="min-h-touch w-full rounded-sm border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+              className="min-h-touch w-full border border-line bg-ground px-3 py-3 text-body leading-relaxed text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
             />
           </Row>
         </Group>
@@ -531,7 +531,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {gaps.length > 0 && (
         <div className="mb-6 border-s-2 border-line ps-4">
-          <p className="mb-2 text-caption tracking-label text-ink3">
+          <p className="mb-2 text-small text-ink3">
             ناقص قبل الإرسال · <span className="tnum">{gaps.length}</span>
           </p>
           <p className="text-small leading-relaxed text-ink2">
@@ -565,7 +565,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
               type="button"
               disabled={pending || (to === 'pending_moderation' && (gaps.length > 0 || refused))}
               onClick={() => move(to)}
-              className="tappable flex min-h-touch items-center rounded-sm border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
+              className="tappable flex min-h-touch items-center border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
             >
               {MOVE_LABELS[to]}
             </button>

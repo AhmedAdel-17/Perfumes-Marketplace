@@ -26,7 +26,7 @@ export function NoteGlossary({ rows }: { rows: readonly GlossaryRow[] }) {
 
   return (
     <div className="px-5 lg:px-0">
-      <p className="mb-5 text-caption text-ink3">
+      <p className="mb-5 text-small text-ink3">
         {missing === 0
           ? 'كل النفحات المستخدمة لها اسم إنجليزي.'
           : <>بلا اسم إنجليزي: <span className="tnum">{num(missing)}</span></>}
@@ -62,7 +62,7 @@ function Row({ row }: { row: GlossaryRow }) {
     <li className="grid gap-3 border-b border-line py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] sm:items-center">
       <div>
         <label htmlFor={id} className="text-body text-ink">{row.ar}</label>
-        <div className="mt-0.5 text-caption text-ink3">
+        <div className="mt-0.5 text-small text-ink3">
           {row.uses === 0 ? 'غير مستخدمة في أي منتج' : <>في <span className="tnum">{num(row.uses)}</span> منتج</>}
         </div>
       </div>
@@ -74,14 +74,14 @@ function Row({ row }: { row: GlossaryRow }) {
         lang="en"
         placeholder="English name"
         onChange={(event) => { setValue(event.target.value); setSaved(false); }}
-        className="h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink2 focus:outline-none focus-visible:border-accent"
+        className="h-control w-full border border-line bg-sunken px-3 text-body text-ink transition-colors duration-base ease-out placeholder:text-ink3 focus:border-ink focus:outline-none"
       />
       <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={pending || !changed || value.trim() === ''}
           onClick={save}
-          className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
+          className="tappable flex min-h-touch items-center border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
         >
           {saved && !changed ? 'تم الحفظ' : 'حفظ'}
         </button>
@@ -90,7 +90,7 @@ function Row({ row }: { row: GlossaryRow }) {
             type="button"
             disabled={pending}
             onClick={remove}
-            className="tappable flex min-h-touch items-center px-2 text-caption text-ink3 transition-colors duration-base ease-out hover:text-danger disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center px-2 text-small text-ink3 transition-colors duration-base ease-out hover:text-danger disabled:opacity-disabled"
           >
             حذف
           </button>

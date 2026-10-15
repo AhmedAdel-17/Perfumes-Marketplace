@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { AUDIT_ACTIONS, type AuditAction } from '@diyar/domain';
 import { OpsNav } from '@/features/ops/OpsNav';
+import { ConsoleHead } from '@/features/shell/ConsoleHead';
 import { AuditLog } from '@/features/ops/AuditLog';
 import { fetchAuditPage } from '@/features/ops/audit-actions';
 import { activeOperator } from '@/features/ops/actions';
@@ -48,18 +49,12 @@ export default async function OpsAuditPage({
 
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-4 px-5 pb-7 pt-9 lg:px-0">
-        <div>
-          <div className="latin mb-3 text-micro tracking-label text-accent">OPERATIONS</div>
-          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">سجل القرارات</h1>
-          <p className="mt-2 max-w-proseMax text-caption leading-relaxed text-ink3">
-            كل قرار يمسّ مال دار أو ظهورها يُكتب هنا في اللحظة نفسها، باسم من اتخذه.
-            لا يُعدَّل هذا السجل ولا يُحذف منه شيء.
-          </p>
-        </div>
-
-        <OpsNav current="audit" />
-      </header>
+      <ConsoleHead
+        kicker="Operations"
+        title="سجل القرارات"
+        nav={<OpsNav current="audit" />}
+        intro="كل قرار يمسّ مال دار أو ظهورها يُكتب هنا في اللحظة نفسها، باسم من اتخذه. لا يُعدَّل هذا السجل ولا يُحذف منه شيء."
+      />
 
       <AuditLog
         entries={page?.entries ?? []}

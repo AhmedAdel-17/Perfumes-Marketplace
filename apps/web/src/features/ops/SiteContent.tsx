@@ -34,9 +34,9 @@ export interface CurationProduct {
 }
 
 const field = [
-  'h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink',
+  'h-control w-full border border-line bg-sunken px-3 text-body text-ink',
   'transition-colors duration-base ease-out',
-  'focus:border-ink2 focus:outline-none focus-visible:border-accent',
+  'focus:border-ink focus:outline-none',
 ].join(' ');
 
 const MONTHS = [
@@ -126,7 +126,7 @@ export function SiteContent({ announcements, products, curation }: {
       {/* ------------------------------------------------- announcements */}
       <section>
         <h2 className="mb-1 font-display text-h3">الإعلانات</h2>
-        <p className="mb-6 text-caption leading-relaxed text-ink3">
+        <p className="mb-6 text-small leading-relaxed text-ink3">
           سطر واحد أعلى كل صفحة، لمدة محدّدة. ينتهي وحده — لا حاجة لإزالته.
         </p>
 
@@ -139,7 +139,7 @@ export function SiteContent({ announcements, products, curation }: {
                   {a.messageEn && (
                     <div dir="ltr" lang="en" className="text-small text-ink2">{a.messageEn}</div>
                   )}
-                  <div className="mt-1 text-caption text-ink3">
+                  <div className="mt-1 text-small text-ink3">
                     <span className="tnum">{when(a.startsAt)}</span>
                     {' ← '}
                     <span className="tnum">{when(a.endsAt)}</span>
@@ -165,16 +165,16 @@ export function SiteContent({ announcements, products, curation }: {
                     </span>
                   )}
                   {!a.isLive && !a.hasEnded && (
-                    <span className="text-caption text-ink3">مجدول</span>
+                    <span className="text-small text-ink3">مجدول</span>
                   )}
-                  {a.hasEnded && <span className="text-caption text-ink3">انتهى</span>}
+                  {a.hasEnded && <span className="text-small text-ink3">انتهى</span>}
 
                   {a.isLive && (
                     <button
                       type="button"
                       disabled={pending}
                       onClick={() => end(a.id)}
-                      className="tappable flex min-h-touch items-center text-caption tracking-label text-ink2 transition-colors duration-base ease-out hover:text-danger disabled:opacity-disabled"
+                      className="tappable flex min-h-touch items-center text-small text-ink2 transition-colors duration-base ease-out hover:text-danger disabled:opacity-disabled"
                     >
                       إيقاف الآن
                     </button>
@@ -186,7 +186,7 @@ export function SiteContent({ announcements, products, curation }: {
         )}
 
         <div className="mb-3">
-          <label htmlFor="ann-message" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="ann-message" className="mb-1.5 block text-small text-ink3">
             النص{' '}
             {/*
               ISOLATED, or the browser reorders it.
@@ -211,7 +211,7 @@ export function SiteContent({ announcements, products, curation }: {
           visitors read the Arabic line, marked as Arabic.
         */}
         <div className="mb-3">
-          <label htmlFor="ann-message-en" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="ann-message-en" className="mb-1.5 block text-small text-ink3">
             النص بالإنجليزية — اختياري{' '}
             <span dir="ltr" className="tnum latin">
               {num(messageEn.length)}/{num(ANNOUNCEMENT_MAX_LENGTH)}
@@ -226,7 +226,7 @@ export function SiteContent({ announcements, products, curation }: {
 
         <div className="mb-3 grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="ann-start" className="mb-1.5 block text-caption tracking-label text-ink3">
+            <label htmlFor="ann-start" className="mb-1.5 block text-small text-ink3">
               يبدأ
             </label>
             <input
@@ -235,7 +235,7 @@ export function SiteContent({ announcements, products, curation }: {
             />
           </div>
           <div>
-            <label htmlFor="ann-end" className="mb-1.5 block text-caption tracking-label text-ink3">
+            <label htmlFor="ann-end" className="mb-1.5 block text-small text-ink3">
               ينتهي
             </label>
             <input
@@ -255,13 +255,13 @@ export function SiteContent({ announcements, products, curation }: {
           same way the checkout shows a phone number back after converting its
           numerals.
         */}
-        <p className="mb-4 text-caption text-ink3">
+        <p className="mb-4 text-small text-ink3">
           من <span className="tnum">{when(new Date(startsAt).toISOString())}</span>
           {' '}إلى <span className="tnum">{when(new Date(endsAt).toISOString())}</span>
         </p>
 
         <div className="mb-4">
-          <label htmlFor="ann-href" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="ann-href" className="mb-1.5 block text-small text-ink3">
             رابط داخلي — اختياري، يبدأ بـ /
           </label>
           <input
@@ -289,12 +289,12 @@ export function SiteContent({ announcements, products, curation }: {
       {/* ------------------------------------------------------ curation */}
       <section className="mt-14 border-t border-line pt-9">
         <h2 className="mb-1 font-display text-h3">الصفحة الرئيسية</h2>
-        <p className="mb-6 text-caption leading-relaxed text-ink3">
+        <p className="mb-6 text-small leading-relaxed text-ink3">
           العطر الذي يفتح الموقع، والعطور التي تتصدّر الشبكة. النص والتصميم ثابتان.
         </p>
 
         <div className="mb-5">
-          <label htmlFor="hero" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="hero" className="mb-1.5 block text-small text-ink3">
             عطر الافتتاح
           </label>
           <select
@@ -311,7 +311,7 @@ export function SiteContent({ announcements, products, curation }: {
         </div>
 
         <fieldset className="mb-5">
-          <legend className="mb-2 text-caption tracking-label text-ink3">
+          <legend className="mb-2 text-small text-ink3">
             المتصدّرة — بالترتيب الذي تختاره
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -324,14 +324,14 @@ export function SiteContent({ announcements, products, curation }: {
                   aria-pressed={at !== -1}
                   onClick={() => toggleFeatured(p.id)}
                   className={[
-                    'tappable flex min-h-touch items-center gap-2 rounded-sm border px-4 text-small',
+                    'tappable flex min-h-touch items-center gap-2 border px-4 text-small',
                     'transition-colors duration-base ease-out',
                     at !== -1
                       ? 'border-accent text-accent'
                       : 'border-line text-ink hover:border-ink2',
                   ].join(' ')}
                 >
-                  {at !== -1 && <span className="tnum text-micro">{num(at + 1)}</span>}
+                  {at !== -1 && <span className="tnum text-small">{num(at + 1)}</span>}
                   {p.name}
                 </button>
               );

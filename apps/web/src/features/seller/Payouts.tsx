@@ -61,21 +61,21 @@ export function SellerPayouts() {
         >
           <div className="flex items-baseline justify-between">
             <span className="latin text-caption tracking-label text-accent">{payout.reference}</span>
-            <span className="text-caption text-ink3">
+            <span className="text-small text-ink3">
               <Period start={payout.periodStart} end={payout.periodEnd} />
             </span>
           </div>
 
           <div className="mt-4 flex items-baseline justify-between">
-            <span className="text-caption text-ink3">صافي المستحق</span>
-            <span className="text-h3 font-semibold lg:text-h2Lg">
+            <span className="text-small text-ink3">صافي المستحق</span>
+            <span className="text-h3 lg:text-h2Lg">
               <span className="tnum">{formatPrice(payout.netPiastres)}</span>
               <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
             </span>
           </div>
 
           {payout.disputeDeadline && (
-            <p className="mt-3 text-micro leading-relaxed text-ink3">
+            <p className="mt-3 text-small leading-relaxed text-ink3">
               يمكن الاعتراض حتى <DateText iso={payout.disputeDeadline} />
             </p>
           )}
@@ -91,14 +91,14 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
       <button
         type="button"
         onClick={onBack}
-        className="tappable mb-6 flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+        className="tappable mb-6 flex min-h-touch items-center text-small text-ink3 transition-colors duration-base ease-out hover:text-accent"
       >
         رجوع إلى الكشوف
       </button>
 
       <div className="border border-line bg-raised p-5">
         <div className="latin text-caption tracking-label text-accent">{statement.reference}</div>
-        <div className="mt-2 text-caption text-ink3">
+        <div className="mt-2 text-small text-ink3">
           <Period start={statement.periodStart} end={statement.periodEnd} />
         </div>
       </div>
@@ -116,15 +116,16 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
         <Row label="استرداد التوصيل" piastres={statement.shippingPiastres} />
         <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
           <dt className="font-display text-h4">الصافي</dt>
-          <dd className="text-h3 font-semibold lg:text-h2Lg">
+          <dd className="text-h3 lg:text-h2Lg">
             <span className="tnum">{formatPrice(statement.netPiastres)}</span>
             <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </dd>
         </div>
       </dl>
 
-      <h2 className="mb-4 mt-9 border-b border-line pb-3 font-display text-h3 lg:text-h2Lg">
-        التفاصيل <span className="tnum text-ink3">{num(statement.lines.length)}</span>
+      <h2 className="mb-4 mt-9 flex items-baseline gap-3 border-b border-ink pb-2 font-display text-h3 lg:text-h2">
+        التفاصيل
+        <span className="latin tnum text-body text-ink3">{num(statement.lines.length)}</span>
       </h2>
 
       {statement.lines.map((line) => (
@@ -136,7 +137,7 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
             {/* The rate, on the line. A house comparing two lines can see why
                 one cost more — which is what makes an attribution-based
                 commission defensible rather than arbitrary. */}
-            <span className="text-caption text-ink3">
+            <span className="text-small text-ink3">
               <span className="tnum">{num(line.commissionBps / 100)}</span>%
             </span>
           </div>
@@ -155,7 +156,7 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
             </div>
           )}
           {/* Last, because the arithmetic above it should read top to bottom. */}
-          <div className="mt-2 flex justify-between border-t border-line pt-2 text-bodyLg font-semibold">
+          <div className="mt-2 flex justify-between border-t border-ink pt-2 text-bodyLg">
             <span>الصافي</span>
             <span className="tnum">{formatPrice(line.netPiastres)}</span>
           </div>
@@ -163,7 +164,7 @@ function StatementView({ statement, onBack }: { statement: Statement; onBack(): 
       ))}
 
       {statement.disputeDeadline && (
-        <p className="mt-6 border-t border-line pt-5 text-caption leading-relaxed text-ink3">
+        <p className="mt-6 border-t border-line pt-5 text-small leading-relaxed text-ink3">
           إن وجدت خطأً في هذا الكشف، يمكنك الاعتراض حتى{' '}
           <DateText iso={statement.disputeDeadline} />.
         </p>

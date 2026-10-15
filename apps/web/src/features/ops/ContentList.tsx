@@ -63,7 +63,7 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
               reads as its own labelled fact. */}
           <li
             aria-hidden
-            className="hidden border-b border-line py-2 text-micro tracking-label text-ink3 lg:grid lg:grid-cols-[1fr_18ch_11ch_9ch] lg:items-center lg:gap-6"
+            className="hidden border-b border-line py-2 text-small text-ink3 lg:grid lg:grid-cols-[1fr_18ch_11ch_9ch] lg:items-center lg:gap-6"
           >
             <span>العنوان</span>
             <span className="latin">PATH</span>
@@ -91,7 +91,7 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
                     </span>
                   )}
                 </span>
-                <span className="text-caption text-ink3">{STATE_LABELS[page.state]}</span>
+                <span className="text-small text-ink3">{STATE_LABELS[page.state]}</span>
               </a>
             </li>
           ))}
@@ -107,18 +107,18 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
         <h2 className="mb-4 font-display text-h4">صفحة جديدة</h2>
 
         <div className="mb-3">
-          <label htmlFor="new-title" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="new-title" className="mb-1.5 block text-small text-ink3">
             العنوان
           </label>
           <input
             id="new-title" value={title} maxLength={160}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+            className="h-control w-full border border-line bg-sunken px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
           />
         </div>
 
         <div className="mb-4">
-          <label htmlFor="new-slug" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="new-slug" className="mb-1.5 block text-small text-ink3">
             المسار — حروف لاتينية صغيرة وشرطات، ولا يمكن تغييره لاحقًا
           </label>
           <input

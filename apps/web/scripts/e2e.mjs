@@ -196,6 +196,27 @@ async function settled(page) {
 const browser = await chromium.launch({ channel: 'chrome' });
 const DESKTOP = { width: 1280, height: 900 };
 
+/*
+ * WARM THE SERVER IN A REAL BROWSER before the first test.
+ *
+ * A dev server that answers `curl /` with 200 has compiled the page's HTML, not
+ * the client code a browser then asks for — Turbopack builds that on the first
+ * browser request, and on a cold server it took longer than a test's 30-second
+ * navigation timeout. The first test failed, the catalogue it collects was
+ * empty, and some forty tests after it failed for want of a perfume: a run
+ * that read as the whole shop being broken (seen 15 Oct and 16 Oct 2026, both
+ * times with nothing but ECONNRESET in the server log). Not a test: a run that
+ * cannot warm in three minutes has a real problem, and says so.
+ */
+{
+  const warmContext = await browser.newContext();
+  const warm = await warmContext.newPage();
+  for (const path of ['/', '/search', '/en']) {
+    await warm.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 180_000 });
+  }
+  await warmContext.close();
+}
+
 let slugs = [];
 let inStock = [];
 let outOfStock = null;

@@ -38,44 +38,51 @@ const DESTINATIONS = [
 export type OpsSection = (typeof DESTINATIONS)[number]['key'];
 
 export function OpsNav({ current }: { current: OpsSection }) {
-  const link = (active: boolean) =>
-    [
-      // `خروج` is three narrow glyphs — 37px wide, under the floor on the CROSS
-      // axis even with the height fixed. A target has two dimensions and only
-      // one of them was being enforced.
-      'tappable flex min-h-touch min-w-touch items-center text-caption tracking-label',
-      'transition-colors duration-base ease-out hover:text-accent',
-      active ? 'text-ink' : 'text-ink3',
-    ].join(' ');
-
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+    <div className="flex flex-wrap items-center gap-x-5">
+      {/*
+        Identity v2 (Phase C): the labels are Arabic, so they are not
+        letterspaced (CLAUDE.md §15), and the current section is an ink rule on
+        the band's line as well as `aria-current` and colour — the band reads
+        as tabs, and colour never carries "you are here" alone.
+
+        `min-w-touch` as well as the height: `خروج` is three narrow glyphs —
+        37px wide, under the floor on the CROSS axis even with the height
+        fixed. A target has two dimensions.
+      */}
       <nav aria-label="أقسام التشغيل" className="flex flex-wrap items-center gap-x-5">
-        {DESTINATIONS.map((destination) => (
-          <a
-            key={destination.key}
-            href={destination.href}
-            // The current section is named to assistive technology as well as
-            // coloured. Colour alone carrying "you are here" is the rule the
-            // accessibility floor exists to stop.
-            aria-current={current === destination.key ? 'page' : undefined}
-            className={link(current === destination.key)}
-          >
-            {destination.label}
-          </a>
-        ))}
+        {DESTINATIONS.map((destination) => {
+          const active = current === destination.key;
+          return (
+            <a
+              key={destination.key}
+              href={destination.href}
+              aria-current={active ? 'page' : undefined}
+              className={[
+                'flex min-h-touch min-w-touch items-center justify-center border-b-2 text-body transition-colors duration-base ease-out hover:text-accent',
+                active ? 'border-ink text-ink' : 'border-transparent text-ink2',
+              ].join(' ')}
+            >
+              {destination.label}
+            </a>
+          );
+        })}
       </nav>
 
-      {/* The consoles have no site footer, so appearance lives beside the
-          navigation here. An operator reads these screens all day; which way
-          they are lit is not a cosmetic question for them. */}
-      <ThemeToggle />
-
-      <form action={signOutOps}>
-        <button type="submit" className={link(false)}>
-          خروج
-        </button>
-      </form>
+      <div className="ms-auto flex items-center gap-x-5">
+        {/* The consoles have no site footer, so appearance lives beside the
+            navigation here. An operator reads these screens all day; which way
+            they are lit is not a cosmetic question for them. */}
+        <ThemeToggle />
+        <form action={signOutOps}>
+          <button
+            type="submit"
+            className="tappable flex min-h-touch min-w-touch items-center justify-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
+          >
+            خروج
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

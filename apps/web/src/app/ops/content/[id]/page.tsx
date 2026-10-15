@@ -39,15 +39,17 @@ export default async function OpsPageEditor(
   */
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <header className="px-5 pb-6 pt-9 lg:px-0">
+      <header className="mx-5 mb-6 border-b border-ink pb-3 pt-7 lg:mx-0 lg:mb-8 lg:pt-9">
         <a
           href="/ops/content"
-          className="tappable mb-4 flex min-h-touch items-center text-caption tracking-label text-ink3 transition-colors duration-base ease-out hover:text-accent"
+          className="tappable mb-3 flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          ← كل الصفحات
+          {/* Back points to the reading START — right, in Arabic. The glyph
+              does not mirror itself, so the arrow is chosen for the direction. */}
+          <span className="border-b border-current">→ كل الصفحات</span>
         </a>
         <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <h1 className="font-display text-h2 leading-heading lg:text-h1Lg">{page.title}</h1>
+          <h1 className="font-display text-h2 leading-heading lg:text-h1">{page.title}</h1>
           {/*
             The preview is offered ALWAYS, not only once a page is live — an
             unpublished draft is exactly the thing nobody can otherwise see.
@@ -56,7 +58,7 @@ export default async function OpsPageEditor(
             href={`/ops/content/${id}/preview`}
             target="_blank"
             rel="noreferrer"
-            className="tappable flex min-h-touch items-center text-caption tracking-label text-accent transition-opacity duration-base ease-out hover:opacity-press"
+            className="tappable flex min-h-touch items-center text-small text-accent transition-opacity duration-base ease-out hover:opacity-press"
           >
             معاينة المسودة ↗
           </a>

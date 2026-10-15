@@ -80,14 +80,14 @@ function Entry({ row }: { row: ReviewRow }) {
           >
             {row.productName}
           </a>
-          <span className="text-caption text-ink3"> · {row.brandName}</span>
+          <span className="text-small text-ink3"> · {row.brandName}</span>
         </div>
-        <span dir="ltr" className="tnum text-caption text-accent">
+        <span dir="ltr" className="tnum text-small text-accent">
           {formatRating(overall)}
         </span>
       </div>
 
-      <div className="mt-1 text-caption text-ink3">
+      <div className="mt-1 text-small text-ink3">
         {row.authorName}
         {' · '}
         <time dateTime={row.createdAt}>
@@ -101,10 +101,10 @@ function Entry({ row }: { row: ReviewRow }) {
       <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
         {REVIEW_DIMENSIONS.map((dimension) => (
           <div key={dimension} className="flex items-baseline gap-1.5">
-            <dt className="text-micro tracking-label text-ink3">
+            <dt className="text-small text-ink3">
               {REVIEW_DIMENSION_AR[dimension]}
             </dt>
-            <dd className="tnum text-caption text-ink2">{num(row.ratings[dimension])}</dd>
+            <dd className="tnum text-small text-ink2">{num(row.ratings[dimension])}</dd>
           </div>
         ))}
       </dl>
@@ -116,13 +116,13 @@ function Entry({ row }: { row: ReviewRow }) {
       )}
 
       {row.moderationNote && (
-        <p className="mt-3 border-s-2 border-line ps-3 text-caption leading-relaxed text-ink3">
+        <p className="mt-3 border-s-2 border-line ps-3 text-small leading-relaxed text-ink3">
           سبب الإخفاء: {row.moderationNote}
         </p>
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-caption text-danger">{error}</p>
+        <p role="alert" className="mt-3 text-small text-danger">{error}</p>
       )}
 
       {hidden ? (
@@ -131,7 +131,7 @@ function Entry({ row }: { row: ReviewRow }) {
             type="button"
             disabled={pending}
             onClick={() => act(() => restoreReview(row.id), false)}
-            className="tappable min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+            className="tappable min-h-touch border-b border-accent text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
           >
             {pending ? '…' : 'إعادة إظهاره'}
           </button>
@@ -145,13 +145,13 @@ function Entry({ row }: { row: ReviewRow }) {
             only thing separating moderation from suppression.
           */}
           <label className="min-w-[240px] flex-1">
-            <span className="text-caption tracking-label text-ink3">سبب الإخفاء</span>
+            <span className="text-small text-ink3">سبب الإخفاء</span>
             <input
               type="text"
               value={note}
               onChange={(event) => setNote(event.target.value)}
               maxLength={500}
-              className="mt-1 block w-full border border-line bg-raised p-2.5 text-small text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+              className="mt-1 block w-full border border-line bg-raised p-2.5 text-small text-ink outline-none transition-colors duration-base ease-out"
             />
           </label>
 

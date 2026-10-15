@@ -99,12 +99,12 @@ function Entry({ row }: { row: ReturnRow }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div>
           <span className="text-small text-ink">{row.productName ?? 'الطلب كاملًا'}</span>
-          <span className="text-caption text-ink3"> · {row.brandName}</span>
+          <span className="text-small text-ink3"> · {row.brandName}</span>
           <span className="latin ms-2 text-caption tracking-label text-ink3">
             {row.subOrderReference}
           </span>
         </div>
-        <span className="text-caption text-accent">
+        <span className="text-small text-accent">
           {RETURN_STATE_AR[state] ?? row.state}
         </span>
       </div>
@@ -120,22 +120,22 @@ function Entry({ row }: { row: ReturnRow }) {
       )}
 
       {row.refundPiastres !== null && (
-        <p className="mt-2 text-caption text-ink2">
+        <p className="mt-2 text-small text-ink2">
           رُدّ <span className="tnum">{formatPrice(row.refundPiastres)}</span>
           <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
         </p>
       )}
 
-      {error && <p role="alert" className="mt-3 text-caption text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-small text-danger">{error}</p>}
 
       {moves.length > 0 && (
         <div className="mt-4">
           <label className="inline-flex items-baseline gap-2">
-            <span className="text-caption tracking-label text-ink3">التكلفة على</span>
+            <span className="text-small text-ink3">التكلفة على</span>
             <select
               value={bearer}
               onChange={(event) => setBearer(event.target.value as CostBearer)}
-              className="min-h-touch border border-line bg-raised px-2 text-small text-ink outline-none focus-visible:border-accent"
+              className="min-h-touch border border-line bg-raised px-2 text-small text-ink outline-none"
             >
               {COST_BEARERS.map((option) => (
                 <option key={option} value={option}>{COST_BEARER_AR[option]}</option>
@@ -150,13 +150,13 @@ function Entry({ row }: { row: ReturnRow }) {
           */}
           {ReturnLifecycle.canRefund(state) && (
             <label className="ms-4 inline-flex items-baseline gap-2">
-              <span className="text-caption tracking-label text-ink3">المبلغ</span>
+              <span className="text-small text-ink3">المبلغ</span>
               <input
                 type="text"
                 inputMode="decimal"
                 value={refund}
                 onChange={(event) => setRefund(event.target.value)}
-                className="tnum min-h-touch w-28 border border-line bg-raised px-2 text-small text-ink outline-none focus-visible:border-accent"
+                className="tnum min-h-touch w-28 border border-line bg-raised px-2 text-small text-ink outline-none"
               />
               <span className="latin text-micro tracking-label text-ink3">{CURRENCY_LABEL}</span>
             </label>

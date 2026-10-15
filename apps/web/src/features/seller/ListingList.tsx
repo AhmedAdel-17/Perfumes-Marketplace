@@ -31,7 +31,7 @@ export interface ListingRow {
   moderationReason: ModerationReason | null;
 }
 
-const control = 'h-control w-full rounded-sm border border-line bg-ground px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent';
+const control = 'h-control w-full border border-line bg-sunken px-3 text-body text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none';
 
 export function ListingList({ listings, brandId }: {
   listings: ListingRow[];
@@ -79,20 +79,20 @@ export function ListingList({ listings, brandId }: {
                     them without opening each.
                   */}
                   {listing.moderationReason && (
-                    <span className="ms-3 text-caption text-danger">
+                    <span className="ms-3 text-small text-danger">
                       {REASON_LABELS[listing.moderationReason]}
                     </span>
                   )}
                 </span>
                 <>
-                  <span className="text-caption text-ink3">
+                  <span className="text-small text-ink3">
                     <span className="tnum">{num(listing.stock)}</span> في المخزون
                   </span>
                   <span className="text-small text-ink2">
                     <span className="tnum">{formatPrice(listing.pricePiastres)}</span>
                     <span className="latin ms-1 text-micro tracking-label">{CURRENCY_LABEL}</span>
                   </span>
-                  <span className="text-caption text-ink3">{STATE_LABELS[listing.state]}</span>
+                  <span className="text-small text-ink3">{STATE_LABELS[listing.state]}</span>
                 </>
               </a>
             </li>
@@ -104,7 +104,7 @@ export function ListingList({ listings, brandId }: {
         <h2 className="mb-4 font-display text-h4">منتج جديد</h2>
 
         <div className="mb-3">
-          <label htmlFor="n-name" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="n-name" className="mb-1.5 block text-small text-ink3">
             اسم العطر
           </label>
           <input id="n-name" value={name} maxLength={160}
@@ -112,7 +112,7 @@ export function ListingList({ listings, brandId }: {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="n-slug" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="n-slug" className="mb-1.5 block text-small text-ink3">
             المسار — حروف لاتينية صغيرة وشرطات، ولا يمكن تغييره لاحقًا
           </label>
           <input id="n-slug" value={slug} maxLength={120} dir="ltr"
@@ -121,7 +121,7 @@ export function ListingList({ listings, brandId }: {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="n-sku" className="mb-1.5 block text-caption tracking-label text-ink3">
+          <label htmlFor="n-sku" className="mb-1.5 block text-small text-ink3">
             رمز المنتج — رمزك الداخلي
           </label>
           <input id="n-sku" value={sku} maxLength={60} dir="ltr"

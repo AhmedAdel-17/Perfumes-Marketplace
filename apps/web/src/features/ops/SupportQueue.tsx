@@ -93,7 +93,7 @@ function Entry({ row }: { row: TicketRow }) {
         </span>
       </div>
 
-      <div className="mt-1 text-caption text-ink3">
+      <div className="mt-1 text-small text-ink3">
         {SUPPORT_CATEGORY_AR[row.category as keyof typeof SUPPORT_CATEGORY_AR] ?? row.category}
         {' · '}
         {row.contactName}
@@ -110,7 +110,7 @@ function Entry({ row }: { row: TicketRow }) {
         {row.message}
       </p>
 
-      <p className="mt-2 text-micro text-ink3">
+      <p className="mt-2 text-small text-ink3">
         وصلت{' '}
         <time dateTime={row.createdAt}>
           {internalDate(row.createdAt, { time: true })}
@@ -122,16 +122,16 @@ function Entry({ row }: { row: TicketRow }) {
           : ' · رُدّ عليها'}
       </p>
 
-      {error && <p role="alert" className="mt-3 text-caption text-danger">{error}</p>}
-      {saved && <p className="mt-3 text-caption text-accent">حُفظ.</p>}
+      {error && <p role="alert" className="mt-3 text-small text-danger">{error}</p>}
+      {saved && <p className="mt-3 text-small text-accent">حُفظ.</p>}
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="inline-flex items-baseline gap-2">
-          <span className="text-caption tracking-label text-ink3">الحالة</span>
+          <span className="text-small text-ink3">الحالة</span>
           <select
             value={status}
             onChange={(event) => { setStatus(event.target.value); setSaved(false); }}
-            className="min-h-touch border border-line bg-raised px-2 text-small text-ink outline-none focus-visible:border-accent"
+            className="min-h-touch border border-line bg-raised px-2 text-small text-ink outline-none"
           >
             {STATUSES.map((option) => (
               <option key={option} value={option}>{TICKET_STATUS_AR[option]}</option>
@@ -146,13 +146,13 @@ function Entry({ row }: { row: TicketRow }) {
             an operator using it for internal shorthand is writing to a stranger
             without realising.
           */}
-          <span className="text-caption tracking-label text-ink3">ما يظهر للعميل</span>
+          <span className="text-small text-ink3">ما يظهر للعميل</span>
           <input
             type="text"
             value={nextAction}
             onChange={(event) => { setNextAction(event.target.value); setSaved(false); }}
             maxLength={500}
-            className="mt-1 block w-full border border-line bg-raised p-2.5 text-small text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+            className="mt-1 block w-full border border-line bg-raised p-2.5 text-small text-ink outline-none transition-colors duration-base ease-out"
           />
         </label>
 

@@ -98,7 +98,7 @@ export function SellerSignIn() {
           <button
             type="button"
             onClick={() => { setStep('phone'); setCode(''); setError(null); }}
-            className="tappable mb-6 text-caption text-ink2 underline transition-colors duration-base ease-out hover:text-accent"
+            className="tappable mb-6 text-small text-ink2 underline transition-colors duration-base ease-out hover:text-accent"
           >
             تغيير الرقم
           </button>
@@ -106,7 +106,7 @@ export function SellerSignIn() {
       )}
 
       {error && (
-        <p role="alert" className="mb-5 border border-danger/50 bg-raised p-4 text-small leading-relaxed text-ink">
+        <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-small leading-relaxed text-ink">
           {error}
         </p>
       )}
@@ -121,7 +121,7 @@ export function SellerSignIn() {
         disappears with the stub because it is rendered from the same flag the
         production guard reads.
       */}
-      <p className="mt-5 text-center text-micro leading-relaxed text-ink3">
+      <p className="mt-5 text-center text-small leading-relaxed text-ink3">
         وضع التطوير: يُطبع الرمز في سجلّ الخادم بدل إرساله برسالة.
       </p>
     </form>
