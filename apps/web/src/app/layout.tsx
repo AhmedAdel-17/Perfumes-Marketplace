@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Amiri, Bodoni_Moda, IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import {
+  Archivo, IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Newsreader,
+  Noto_Kufi_Arabic, Noto_Naskh_Arabic, Reem_Kufi,
+} from 'next/font/google';
 import { directionOf, localePath, SHELL } from '@diyar/i18n';
 import { getLocale, getPath } from '@/core/locale';
 import { LocaleProvider } from '@/features/shell/LocaleProvider';
@@ -10,53 +13,74 @@ import { headers } from 'next/headers';
 import './globals.css';
 
 /**
- * Amiri for Arabic headings. Bodoni Moda for Latin small-caps labels. IBM Plex
- * Sans Arabic for everything else (DESIGN_DOCTRINE.md §1.III).
+ * The faces of both themes (visual identity v2, FD-1, 14 Oct 2026).
  *
- * next/font self-hosts these, so there is no render-blocking request to Google
- * and no layout shift when they arrive — which matters more on an Egyptian
- * mobile connection than on a developer's laptop.
+ *   Laboratoire (light, the default)   Noir (dark)
+ *   ar headings  Noto Naskh Arabic     Reem Kufi
+ *   ar text      IBM Plex Sans Arabic  Noto Kufi Arabic
+ *   en headings  Newsreader            Archivo, condensed capitals
+ *   en text      IBM Plex Sans Arabic  Archivo
+ *                (its Latin glyphs —
+ *                IBM Plex Sans' design)
+ *   labels/data  IBM Plex Mono         Archivo
+ *
+ * Which variable a component reads is decided in globals.css by theme and
+ * language; a component only ever says `font-display`, `font-sans`, `latin`.
+ *
+ * WHAT IS DOWNLOADED. next/font self-hosts every face (no request to Google,
+ * no layout shift), but a browser fetches a face only when an element on the
+ * page asks for it. So declaring Noir's faces costs a light-mode visitor
+ * nothing. `preload` is on only for the three faces the DEFAULT page — light,
+ * Arabic — needs before first paint; preloading the rest would spend an
+ * Egyptian mobile connection on fonts the visitor may never see.
+ *
+ * Only the weights actually used are requested, as before: a weight nothing
+ * asks for is wasted bytes, and a weight something asks for and does not get
+ * is synthesised, and faux-bold Arabic is worse than the download it saved.
  */
-/*
-  Only the weights actually used.
-
-  Fonts were 261 KB across eight files on the product page — by far the largest
-  thing this site downloads, and on the Egyptian mobile connections doc 02
-  describes, essentially the whole budget. Three of those files were never
-  referenced by anything:
-
-    Amiri 700     no `font-bold`, no <strong>, no <b> anywhere in the app.
-                  Amiri is the DISPLAY face and headings are set at 400.
-    Bodoni 500    the Latin face is used only for letterspaced small-caps
-                  labels, and not one of them asks for a weight.
-    Plex 500      one `font-medium`, on the primary button, which is Arabic
-                  and therefore Plex — kept for that single use.
-
-  Dropping a weight is safe only when NOTHING requests it: a browser asked for
-  a bold it does not have will synthesise one, and faux-bold Arabic is worse
-  than the download it saved. Checked before cutting, not assumed.
-*/
-const amiri = Amiri({
-  subsets: ['arabic'], weight: ['400'],
-  variable: '--font-amiri', display: 'swap',
-});
-const bodoni = Bodoni_Moda({
-  subsets: ['latin'], weight: ['400'],
-  variable: '--font-bodoni', display: 'swap',
-});
-const plex = IBM_Plex_Sans_Arabic({
+const naskh = Noto_Naskh_Arabic({
   subsets: ['arabic'], weight: ['400', '500', '600'],
+  variable: '--font-naskh', display: 'swap',
+});
+/*
+  Arabic AND Latin from one family: the Latin glyphs of Plex Sans Arabic are IBM
+  Plex Sans, so the English site's text needs no second family. (A separate
+  IBM_Plex_Sans was tried and dropped on 14 Oct 2026: Google serves that
+  variable family's static instances from an `l/font?kit=` URL that Turbopack's
+  font loader cannot resolve — "queries have exactly one entry" — and every page
+  returned 500.)
+*/
+const plex = IBM_Plex_Sans_Arabic({
+  subsets: ['arabic', 'latin'], weight: ['400', '500', '600'],
   variable: '--font-plex', display: 'swap',
 });
-/*
-  The English site's body face. Declared on every page but DOWNLOADED only where
-  it is used: the browser fetches a face when an element asks for it, and only
-  `html[lang='en']` does — so the Arabic site pays nothing for it.
-*/
-const plexLatin = IBM_Plex_Sans({
-  subsets: ['latin'], weight: ['400', '500', '600'],
-  variable: '--font-plex-latin', display: 'swap',
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'], weight: ['400', '500'],
+  variable: '--font-plex-mono', display: 'swap',
 });
+// English site, light theme.
+const newsreader = Newsreader({
+  subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'],
+  variable: '--font-newsreader', display: 'swap', preload: false,
+});
+// Noir.
+const reemKufi = Reem_Kufi({
+  subsets: ['arabic'], weight: ['500', '600'],
+  variable: '--font-reem', display: 'swap', preload: false,
+});
+const kufi = Noto_Kufi_Arabic({
+  subsets: ['arabic'], weight: ['300', '400', '500', '600'],
+  variable: '--font-kufi', display: 'swap', preload: false,
+});
+// Variable on width as well as weight: Noir's English headings are Archivo at
+// 62% width, its text at 100% — one file, two voices.
+const archivo = Archivo({
+  subsets: ['latin'], axes: ['wdth'],
+  variable: '--font-archivo', display: 'swap', preload: false,
+});
+
+const FONT_VARIABLES = [naskh, plex, plexMono, newsreader, reemKufi, kufi, archivo]
+  .map((f) => f.variable).join(' ');
 
 export async function generateMetadata(): Promise<Metadata> {
   const copy = SHELL[await getLocale()];
@@ -101,12 +125,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={locale}
       dir={directionOf(locale)}
-      className={`${amiri.variable} ${bodoni.variable} ${plex.variable} ${plexLatin.variable}`}
+      className={FONT_VARIABLES}
       /*
         ThemeScript writes `data-theme` onto this element before React hydrates,
         which is the entire point of it — so the server HTML and the client DOM
         differ here BY DESIGN and React would otherwise log a mismatch on every
-        page load for a visitor who chose paper. Suppression is scoped to this
+        page load for a visitor who chose Noir. Suppression is scoped to this
         one element's attributes; children are still checked normally.
       */
       suppressHydrationWarning

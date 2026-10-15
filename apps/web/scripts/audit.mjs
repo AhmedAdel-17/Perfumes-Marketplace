@@ -26,11 +26,11 @@
  *   LEAKED ENUMS  No raw state or enum values rendered to a customer.
  *
  * THEMES. Everything below runs against the theme named by `THEME` (default
- * `dark`). It is a whole run rather than an extra dimension inside one because
+ * `light`, the site's default since visual identity v2). It is a whole run rather than an extra dimension inside one because
  * the theme is set before the first paint and lives on the document — and
  * because contrast is the check that actually differs between the two, so a
  * light run that shares a dark run's session would prove nothing about the
- * screens it did not reload. `THEME=light pnpm audit` is the second pass.
+ * screens it did not reload. `THEME=dark pnpm audit` is the second pass.
  *
  * Findings print grouped by surface and exit non-zero, so this is usable in CI
  * the day CI exists.
@@ -62,7 +62,7 @@ if (!OUTBOX) {
  * rather than flipping into it after paint. Auditing contrast on a page mid-flip
  * measures whichever frame the check happened to catch.
  */
-const THEME = process.env.THEME === 'light' ? 'light' : 'dark';
+const THEME = process.env.THEME === 'dark' ? 'dark' : 'light';
 const themed = async (context) => {
   await context.addInitScript((theme) => {
     try { localStorage.setItem('diyar-theme', theme); } catch { /* private mode */ }

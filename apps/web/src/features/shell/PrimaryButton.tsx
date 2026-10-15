@@ -5,18 +5,14 @@
  *
  * This markup was copy-pasted into seven files — checkout, cart, both
  * sign-ins, the seller queue, the ops console, the buy bar — each carrying its
- * own copy of the brass gradient as three hard-coded hexes. Which meant the
- * brand's most repeated surface was the one place the token system did not
- * reach, and a change to `brass` would have moved every button EXCEPT the ones
- * people press.
+ * own copy of the surface as hard-coded hexes. Which meant the brand's most
+ * repeated surface was the one place the token system did not reach.
  *
  * The look lives in `primary-surface.tsx`, which carries no `'use client'`
  * directive so a server component can import it too. See the note there: a
  * constant exported from a client module does not survive the trip.
  */
-import {
-  PrimaryHighlight, primarySurface, primarySurfaceStyle,
-} from './primary-surface';
+import { primarySurface } from './primary-surface';
 
 export function PrimaryButton({
   children,
@@ -42,11 +38,9 @@ export function PrimaryButton({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      style={primarySurfaceStyle}
       className={[primarySurface, width, className].join(' ')}
       {...rest}
     >
-      <PrimaryHighlight />
       {children}
     </button>
   );

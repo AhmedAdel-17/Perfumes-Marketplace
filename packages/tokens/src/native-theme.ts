@@ -19,11 +19,8 @@ export const nativeTheme = {
     language, and the two would drift the first time either palette moved.
   */
   themes,
-  font: {
-    display: font.display,
-    latin: font.displayLatin,
-    body: font.body,
-  },
+  /* Per theme, like the colours: the apps switch faces with the appearance. */
+  font,
   fontSize,
   lineHeight,
   letterSpacing,

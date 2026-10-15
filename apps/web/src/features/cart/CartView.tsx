@@ -12,7 +12,7 @@ import { localeHref } from '@/core/href';
 import { useLocale } from '@/features/shell/LocaleProvider';
 import { priceCart, type PricedCartResult } from './actions';
 import { useCart } from './CartStore';
-import { PrimaryHighlight, primarySurface, primarySurfaceStyle } from '@/features/shell/primary-surface';
+import { primarySurface } from '@/features/shell/primary-surface';
 
 /**
  * The bag.
@@ -244,10 +244,8 @@ export function CartView() {
             element — middle-click and "open in new tab" have to work. */}
         <Link
           href={localeHref(locale, '/checkout')}
-          style={primarySurfaceStyle}
           className={`${primarySurface} mt-6 w-full`}
         >
-          <PrimaryHighlight />
           {copy.checkout}
         </Link>
         <p className="mt-3 text-center text-micro text-ink3">{copy.cashOnDelivery}</p>

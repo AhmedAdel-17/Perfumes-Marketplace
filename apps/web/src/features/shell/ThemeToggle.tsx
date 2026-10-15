@@ -8,7 +8,7 @@ import { SHELL } from '@diyar/i18n';
 import { useLocale } from './LocaleProvider';
 
 /**
- * Noir or paper.
+ * Paper (Laboratoire, the default) or Noir.
  *
  * A SEGMENTED CONTROL, not a switch, and the difference matters here. A switch
  * shows one state and asks you to infer the other; a visitor who has never seen
@@ -27,10 +27,18 @@ import { useLocale } from './LocaleProvider';
  * during which neither segment claims to be active. Rendering a guess and
  * correcting it a frame later is how a toggle ends up flickering the wrong way.
  */
+// Light first: it is the default since identity v2 (FD-1, 14 Oct 2026).
 const SEGMENTS: ReadonlyArray<{ theme: ThemeName; label: string; spoken: 'dark' | 'light' }> = [
-  { theme: 'dark', label: 'NOIR', spoken: 'dark' },
   { theme: 'light', label: 'PAPER', spoken: 'light' },
+  { theme: 'dark', label: 'NOIR', spoken: 'dark' },
 ];
+
+/**
+ * Present on the root only while a chosen switch is settling. globals.css
+ * animates the ground and ink under it and nowhere else, so a page LOADING in
+ * the remembered theme never animates into it.
+ */
+const SWITCHING_ATTRIBUTE = 'data-theme-switching';
 
 /** Keeps the mobile browser's chrome continuous with the page it frames. */
 function paintBrowserChrome(theme: ThemeName) {
@@ -48,7 +56,21 @@ export function ThemeToggle() {
   }, []);
 
   const choose = (next: ThemeName) => {
-    document.documentElement.setAttribute(THEME_ATTRIBUTE, next);
+    const root = document.documentElement;
+    root.setAttribute(SWITCHING_ATTRIBUTE, '');
+    root.setAttribute(THEME_ATTRIBUTE, next);
+    // Cleared when the ground has settled. The timeout covers the cases that
+    // fire no transitionend: the same theme chosen twice, or reduced motion.
+    // `transitionend` bubbles, so a link finishing its own colour change must
+    // not end the body's.
+    const body = document.body;
+    const settle = () => {
+      body.removeEventListener('transitionend', onEnd);
+      root.removeAttribute(SWITCHING_ATTRIBUTE);
+    };
+    const onEnd = (event: TransitionEvent) => { if (event.target === body) settle(); };
+    body.addEventListener('transitionend', onEnd);
+    window.setTimeout(settle, 1000);
     paintBrowserChrome(next);
     setTheme(next);
     // A refused write — private mode, storage disabled — must not stop the

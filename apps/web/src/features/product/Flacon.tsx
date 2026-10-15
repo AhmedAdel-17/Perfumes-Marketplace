@@ -269,7 +269,7 @@ export function Flacon({
           fillOpacity=".70"
           fontSize="7"
           letterSpacing="2.6"
-          fontFamily="var(--font-bodoni), serif"
+          fontFamily="var(--f-label)"
         >
           DIYAR
         </text>
@@ -282,7 +282,7 @@ export function Flacon({
           fillOpacity=".55"
           fontSize="5.6"
           letterSpacing="1.5"
-          fontFamily="var(--font-bodoni), serif"
+          fontFamily="var(--f-label)"
         >
           {house.toUpperCase().slice(0, 18)}
         </text>

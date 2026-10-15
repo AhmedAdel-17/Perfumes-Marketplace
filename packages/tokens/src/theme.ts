@@ -1,29 +1,30 @@
 /**
  * Semantic roles — the layer that makes two themes possible.
  *
- * WHY THIS EXISTS. Until now a component said `bg-noir` and `text-bone`, which
- * names a VALUE, not a job. That is fine while there is one palette and fatal
- * the moment there are two: `bg-noir` cannot mean "the page ground" on paper
- * without the name becoming a lie, and a codebase whose colour names lie is one
- * where nobody can predict what a change does.
+ * WHY THIS EXISTS. Components name a JOB — ground, raised, line, ink, ink2,
+ * ink3, accent — never a value, and this file decides what each job is worth in
+ * each theme. Adding a third theme is one entry here and no component edits.
+ * The Tailwind preset exposes only roles, so `bg-noir` does not compile.
  *
- * So components name the ROLE — ground, raised, line, ink, ink2, ink3, accent —
- * and this file decides what each role is worth in each theme. Adding a third
- * theme is one entry here and no component edits. That is the whole design.
+ * VISUAL IDENTITY v2 (founder decision FD-1, 14 Oct 2026). The two themes are no
+ * longer one palette lit two ways; they are two finishes of one layout:
  *
- * DESIGN_DOCTRINE law IV still holds: one accent, used sparingly. Light mode
- * does not add a colour, it restates the same three — ground, ink, accent — in
- * the other direction.
+ *   LIGHT, the default — "Laboratoire": putty ground, paper cards, sepia ink and
+ *   ONE accent, olive. Taken from design-reference/redesign/04-laboratoire.html.
  *
- * The roles deliberately mirror the HIG's own advice: dynamic colours are
- * "semantically defined by purpose, rather than appearance or colour values",
- * and an app that redefines their meaning per screen loses the guarantee.
+ *   DARK — "Noir": black, bone and greys, and NO colour accent at all. The
+ *   accent role is bone, so emphasis comes from weight, scale and photography.
+ *   Taken from design-reference/redesign/02-noir-absolu.html.
  *
- * WHAT DOES NOT FLIP. The flacon plate keeps its dark stage in both themes.
- * A perfume is photographed in a dark room whichever way the page is lit, and
- * `scentFamily` / `glassPalette` are the physics of that room — they describe
- * light through glass, not chrome. Inverting them would produce a bottle lit
- * from a lightbox, which is a catalogue photograph, not a shop window.
+ * Law IV ("one accent") still holds in each theme. Fonts follow the theme too;
+ * they are CSS variables set in apps/web globals.css, because a font is not a
+ * colour channel and does not belong in this map.
+ *
+ * WHAT CHANGED ABOUT THE PLATE. It used to be dark in both themes — a bottle
+ * lit in a dark room whichever way the page was lit. Identity v2 shows real
+ * photographs on the page's own paper in light mode, so `plate` now follows the
+ * theme. The dark `stage` palette survives only behind the ILLUSTRATED flacon,
+ * the placeholder for a listing with no photograph.
  */
 import raw from './tokens.json' with { type: 'json' };
 
@@ -34,11 +35,7 @@ const light = raw.colorLight;
 export interface ThemeRoles {
   /** The page. Everything else sits on it. */
   ground: string;
-  /**
-   * The stage a product is photographed on. Dark in BOTH themes, deliberately.
-   * See the note above: the flacon is lit in a dark room whichever way the page
-   * is lit, and a bottle on white is a catalogue cut-out, not a shop window.
-   */
+  /** The ground a product photograph sits on while it loads and around its edges. */
   plate: string;
   /** A panel lifted off the ground. Depth is value, never shadow. */
   raised: string;
@@ -56,11 +53,11 @@ export interface ThemeRoles {
   ink2: string;
   /** Smallest labels. Sits ON the 4.5:1 floor in both themes, by construction. */
   ink3: string;
-  /** Brass, as TEXT and hairlines. Darkens on paper; see the note below. */
+  /** The one accent, as TEXT and hairlines: olive on light, bone on Noir. */
   accent: string;
-  /** Brass as a FILL. Does not darken — the gold slab is the same gold. */
+  /** The accent as a FILL. */
   accentSurface: string;
-  /** Ink printed on `accentSurface`. Dark in both themes. */
+  /** Ink printed on `accentSurface`. */
   onAccent: string;
   /** Errors and refusals. */
   danger: string;
@@ -70,20 +67,10 @@ export interface ThemeRoles {
   noteBase: string;
 }
 
-/**
- * The accent is the one role whose value is NOT shared between themes, and the
- * reason is arithmetic rather than taste: brass at #B08D57 gives 6.4:1 on noir
- * and 2.4:1 on paper. A single accent value cannot serve both, so on paper the
- * TEXT accent drops to #80612E (4.95:1) while the FILLED accent — the primary
- * button, the bag badge — stays the original brass, because there the ink on
- * top of it is dark and the pair is measured the other way round (6.4:1).
- *
- * One accent, two jobs, measured separately. Not two accents.
- */
 export const themes: { readonly dark: ThemeRoles; readonly light: ThemeRoles } = {
   dark: {
     ground: dark.noir,
-    plate: dark.noir,
+    plate: dark.l1,
     raised: dark.l1,
     raised2: dark.l2,
     raised3: dark.l3,
@@ -92,8 +79,11 @@ export const themes: { readonly dark: ThemeRoles; readonly light: ThemeRoles } =
     ink: dark.bone,
     ink2: dark.dim,
     ink3: dark.faint,
-    accent: dark.brass,
-    accentSurface: dark.brass,
+    // Noir has no colour accent. The role is bone, the same as the ink, so a
+    // focus ring, an active tab or a link underline is white on black — and
+    // nothing on the page competes with the photograph.
+    accent: dark.bone,
+    accentSurface: dark.chalk,
     onAccent: dark.noir,
     danger: dark.danger,
     noteTop: raw.noteTier.top,
@@ -101,21 +91,21 @@ export const themes: { readonly dark: ThemeRoles; readonly light: ThemeRoles } =
     noteBase: raw.noteTier.base,
   },
   light: {
-    ground: light.paper,
-    plate: dark.noir,
-    raised: light.paperL1,
+    ground: light.putty,
+    plate: light.plate,
+    raised: light.paper,
     raised2: light.paperL2,
     raised3: light.paperL3,
-    // A field reads as a well cut into paper, so it goes to pure white — the
-    // one place the light theme is allowed to be colourless.
-    sunken: light.paperL3,
+    // A field reads as a well cut into paper: the near-white `well`, a step
+    // lighter than the card it sits in.
+    sunken: light.well,
     line: light.rule,
-    ink: light.graphite,
-    ink2: light.slate,
+    ink: light.sepia,
+    ink2: light.umber,
     ink3: light.stone,
-    accent: light.bronze,
-    accentSurface: dark.brass,
-    onAccent: dark.noir,
+    accent: light.olive,
+    accentSurface: light.olive,
+    onAccent: light.paper,
     danger: light.crimson,
     noteTop: raw.noteTierLight.top,
     noteHeart: raw.noteTierLight.heart,
@@ -130,17 +120,17 @@ export const THEME_ATTRIBUTE = 'data-theme';
 export const THEME_STORAGE_KEY = 'diyar-theme';
 
 /**
- * Dark is the default, and that is a brand decision rather than an oversight.
+ * Light — "Laboratoire" — is the default (founder decision FD-1, 14 Oct 2026).
+ * It was Noir until then.
  *
- * The HIG would have the app follow the system appearance. For an OS-resident
- * app that is right. This is a storefront: a visitor whose laptop is in light
- * mode would otherwise meet a DIFFERENT house than the one on the poster, and
- * noir is not a theme here, it is the identity. So the system preference is not
- * read; the choice is offered, explicitly, and remembered.
+ * The system preference is deliberately not read: a storefront should open as
+ * the same house for everyone, and the visitor's choice is offered explicitly
+ * and remembered. Flipping to system-following is this one constant.
  *
- * Flipping to system-following is one constant — this one — and nothing else.
+ * The server renders the DEFAULT, so `:root` below carries the light roles and
+ * a document with no `data-theme` attribute is Laboratoire.
  */
-export const DEFAULT_THEME: ThemeName = 'dark';
+export const DEFAULT_THEME: ThemeName = 'light';
 
 /** `#RRGGBB` → `R G B`, the space-separated form a CSS colour channel takes. */
 const channels = (hex: string): string => {
@@ -172,11 +162,11 @@ const declarations = (name: ThemeName): Record<string, string> =>
  *
  * THE ATTRIBUTE IS NOT ROOT-ONLY, and that turned out to be the whole trick.
  *
- * A perfume is lit in a dark room in both themes, so the hero stage and the
- * product plate stay black on paper. The first version scoped the variables to
- * `:root`, which meant the ink INSIDE those dark panels went graphite along
- * with the rest of the page — near-black type on a near-black stage. Fixing it
- * per element would have meant a second colour decision at every one of them.
+ * A panel that must stay dark inside a light page — the illustrated flacon's
+ * stage is the one left — needs its ink, hairlines and accent to resolve dark
+ * too. Variables scoped to `:root` only would leave near-black type on a
+ * near-black stage, and fixing that per element would mean a second colour
+ * decision at every one of them.
  *
  * Declaring the themes on ANY element instead makes `data-theme="dark"` a
  * scope: everything inside a marked panel resolves against the dark theme —
@@ -184,7 +174,7 @@ const declarations = (name: ThemeName): Record<string, string> =>
  * and the panel is simply somewhere else.
  */
 export const themeBaseStyles: Record<string, Record<string, string>> = {
-  ':root': declarations('dark'),
+  ':root': declarations(DEFAULT_THEME),
   [`[${THEME_ATTRIBUTE}='light']`]: declarations('light'),
   [`[${THEME_ATTRIBUTE}='dark']`]: declarations('dark'),
 };
@@ -192,7 +182,7 @@ export const themeBaseStyles: Record<string, Record<string, string>> = {
 /**
  * The Tailwind colour map: every role, as a channel-backed function.
  *
- * Only roles appear here. The primitives — `noir`, `bone`, `paper`, `bronze` —
+ * Only roles appear here. The primitives — `noir`, `bone`, `putty`, `olive` —
  * are deliberately NOT reachable through a utility class, so `bg-noir` no
  * longer compiles and a component physically cannot pin itself to one theme.
  * That is the guard; the naming convention alone would not have held.

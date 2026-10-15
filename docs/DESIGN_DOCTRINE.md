@@ -6,6 +6,17 @@ feels ordinary has already failed, because the entire category sells on desire.
 
 This document turns that into rules an engineer can apply and a reviewer can check.
 
+> **Visual identity v2 — 14 October 2026 (founder decision FD-1, `DECISION_REGISTER.md`).**
+> The founder judged the first identity "cheap, not optimised, AI-generated" and chose from
+> four rendered samples (`design-reference/redesign/`). The product now has **two finishes
+> over one layout**: LIGHT "Laboratoire" (`04-laboratoire.html`), the default — putty and
+> paper, sepia ink, one olive accent, every perfume shown as a specimen with its facts and
+> their source; and DARK "Noir" (`02-noir-absolu.html`) — black and bone, no colour accent,
+> condensed type. The layout is sample 4's in both. The seven laws stand; laws III and IV,
+> the imagery rule and §7 are amended below, each with its date. Older references in
+> `/design-reference` still define structure where the redesign has not reached a screen yet,
+> but never colour, type or finish.
+
 Read with `ENGINEERING_PRINCIPLES.md`. The existing design references in
 `/design-reference` and the tokens in `src/tokens.json` are the concrete expression of
 everything below.
@@ -29,17 +40,33 @@ row. More air around everything. A cramped grid says "discount"; a spacious one 
 
 ### III. Typography carries the brand
 
-Amiri for Arabic headings. Bodoni Moda for Latin labels, always letterspaced, always
-small-caps. IBM Plex Sans Arabic for everything else. Set the Arabic scale first — Arabic
-needs more leading than Latin, and every app that sets Latin first produces cramped,
-amateur Arabic.
+**Amended 14 October 2026 (identity v2).** Faces follow the theme as well as the language:
 
-Letterspacing is not decoration. `letterSpacing.label: 2.4` and `wordmark: 8` are the
-difference between a fashion house and a storefront template.
+| | Laboratoire (light, default) | Noir (dark) |
+|---|---|---|
+| Arabic headings | Noto Naskh Arabic | Reem Kufi |
+| Arabic text | IBM Plex Sans Arabic | Noto Kufi Arabic |
+| English headings | Newsreader (italic for the accent phrase) | Archivo, 62% width, capitals, 800 |
+| English text | IBM Plex Sans Arabic (its Latin glyphs) | Archivo |
+| Latin labels and data | IBM Plex Mono | Archivo |
+
+A component never names a family: it says `font-display`, `font-sans` or `latin`, and
+`globals.css` decides. Set the Arabic scale first — Arabic needs more leading than Latin,
+and every app that sets Latin first produces cramped, amateur Arabic.
+
+Letterspacing is not decoration — and it is **Latin only**. A tracked Latin label is the
+difference between a fashion house and a storefront template; tracked Arabic is broken
+Arabic, because spacing pulls the joined letters apart. Arabic is never letterspaced,
+uppercased, or set in the label face. *(Was: Amiri headings, Bodoni Moda labels.)*
 
 ### IV. One accent, and use it sparingly
 
-Noir, bone, and brass. That is the palette. Brass is for moments — a price, an accent rule,
+**Amended 14 October 2026 (identity v2).** Laboratoire: putty, paper, sepia ink — and
+**olive**, the one accent. Noir: black, bone, greys — and **no colour accent at all**; the
+accent role is bone, so emphasis comes from weight, scale and the photograph. Each theme
+still has exactly one accent (or none). The original wording follows as history.
+
+*Original:* Noir, bone, and brass. That is the palette. Brass is for moments — a price, an accent rule,
 a single active state. The instant a second accent colour appears, the impression collapses.
 Scent-family and note-tier colours exist for data visualisation only and never for chrome.
 
@@ -119,7 +146,13 @@ they never snap. Layout shift is a defect, not a nuisance.
 
 ### Imagery
 
-Photography is the product. Full-bleed, dark, art-directed. Never a white-background cutout
+*Amended 14 October 2026 (identity v2):* product photographs sit on the theme's own plate —
+paper in Laboratoire, near-black in Noir — and are **always in full colour**: a customer must
+see the colour of the juice, and a phone has no hover to reveal it. Black-and-white is a Noir
+treatment for hero and editorial imagery only. The dark "stage" survives only behind the
+illustrated flacon, the placeholder for a listing with no photograph.
+
+*Original:* Photography is the product. Full-bleed, dark, art-directed. Never a white-background cutout
 dropped on a grid. Enforced minimum resolution; **never upscale**. Blur-up placeholders in
 brand tones, not grey boxes. Fixed aspect ratios per surface, held everywhere.
 
@@ -159,7 +192,7 @@ Any one of these, anywhere, breaks the impression:
 - Exclamation marks in copy
 - Inconsistent icon stroke weights (ours is `1.3`, everywhere, always)
 - Inconsistent corner radius across two components
-- A grey darker than `#90887F` on noir, or lighter than `#6B635A` on paper (§7)
+- A grey darker than `#8F8A84` on Noir, or lighter than `#67615A` on Laboratoire's putty (§7; values since identity v2)
 - An alpha applied to an ink role — `text-accent/90` measures 4.08:1 on paper (§7)
 - A calibrated ink on a translucent fill — `bg-accent/15 text-accent` also measures 4.08:1 on
   paper, and shipped as seven status pills because it clears the floor on noir. A status label
@@ -351,6 +384,13 @@ sells on desire, and desire does not survive a misaligned hairline.
 ---
 
 ## 7. Two themes, one palette
+
+> **Amended 14 October 2026 (identity v2).** Now *two themes, two palettes, one layout*:
+> Laboratoire is the default and Noir the alternative (FD-1). The role mechanism below is
+> unchanged and is what made the swap a token change rather than a rewrite. What no longer
+> holds: "noir is the identity", "dark is the default", and "the product plate stays dark in
+> both themes" — see the imagery rule in §2. The text below is kept as the record of why the
+> mechanism exists.
 
 **Added 7 September 2026, at the founder's request.** Noir is the identity; paper is an
 option the visitor may take. Both are the house.

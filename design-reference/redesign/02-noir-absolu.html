@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — Sample 2 · Noir Absolu</title>
+<!--
+  REDESIGN SAMPLE 2 — NOIR ABSOLU (stark fashion)
+  Fonts: Reem Kufi (Arabic display) · Noto Kufi Arabic (Arabic UI) · Archivo, condensed and normal widths (Latin)
+  Palette: black, bone, greys. NO colour accent — the accent is the photograph.
+  Photography is shown in black and white and turns to colour on hover/focus.
+  Unsplash placeholders for art direction only — houses supply their own.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Noto+Kufi+Arabic:wght@300;400;500;600&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A; --raised:#141414; --line:#2A2826; --ink:#F2EFEA; --ink2:#A8A29A; --ink3:#7E7871; --bone:#EEEAE3; --onbone:#0A0A0A;
+    --f-display:'Reem Kufi', sans-serif; --f-ui:'Noto Kufi Arabic', sans-serif; --f-latin:'Archivo', sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1); --gutter:clamp(18px,3vw,44px);
+  }
+  html[lang=en]{ --f-display:'Archivo', sans-serif; --f-ui:'Archivo', sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-weight:300;font-size:14.5px;line-height:1.8;-webkit-font-smoothing:antialiased}
+  html[lang=en] body{line-height:1.55}
+  a{color:inherit;text-decoration:none} button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  img{display:block;width:100%;height:100%;object-fit:cover}
+  :focus-visible{outline:1.5px solid var(--ink);outline-offset:3px}
+  .latin{font-family:var(--f-latin);direction:ltr;unicode-bidi:isolate}
+  .cap{font-family:var(--f-latin);font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase}
+  html[lang=en] .ui-cap{font-size:11.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+  .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+  .tap{min-height:44px;display:inline-flex;align-items:center}
+  .u{border-bottom:1px solid currentColor;padding-bottom:2px}
+  .px{padding-inline:var(--gutter)}
+
+  /* header floats over the hero */
+  header{position:absolute;inset-inline:0;top:0;z-index:10;color:#fff}
+  .mast{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:76px}
+  .mast nav{display:flex;gap:28px;font-size:13.5px}
+  .mast .end{justify-content:flex-end}
+  .word{font-family:'Archivo',sans-serif;font-weight:800;font-stretch:62%;font-size:34px;letter-spacing:.02em;line-height:1;direction:ltr}
+  .menu{display:none}
+
+  .hero{position:relative;height:100svh;min-height:640px;max-height:1000px;overflow:hidden;background:#000}
+  .hero img{filter:grayscale(1) contrast(1.08);object-position:50% 40%;transform:scale(1.04);animation:settle 2.4s var(--ease) forwards}
+  @keyframes settle{to{transform:none}}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.2) 46%,rgba(0,0,0,.45) 100%)}
+  .hero .copy{position:absolute;z-index:2;inset-inline:var(--gutter);bottom:clamp(32px,6vh,72px);display:grid;grid-template-columns:1fr auto;align-items:end;gap:32px}
+  .hero h1{font-family:var(--f-display);font-weight:600;font-size:clamp(56px,10vw,168px);line-height:.98;letter-spacing:-.01em}
+  html[lang=en] .hero h1{font-weight:800;font-stretch:62%;text-transform:uppercase;line-height:.86;letter-spacing:-.01em;font-size:clamp(64px,12vw,200px)}
+  .hero .side{max-width:320px;color:#D9D4CC;font-size:14px}
+  .hero .side .links{display:flex;gap:26px;margin-top:22px;color:#fff;font-weight:400}
+  .hero .tag{position:absolute;z-index:2;top:104px;inset-inline-start:var(--gutter);color:#D9D4CC}
+
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+  .trust div{padding:22px var(--gutter);border-inline-start:1px solid var(--line);font-size:13px;color:var(--ink2)}
+  .trust div:first-child{border-inline-start:0}
+  .trust b{display:block;color:var(--ink);font-weight:500;font-size:14px}
+
+  section{padding-block:clamp(64px,8vw,120px)}
+  .sh{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:32px}
+  .sh h2{font-family:var(--f-display);font-weight:600;font-size:clamp(36px,5vw,76px);line-height:1}
+  html[lang=en] .sh h2{font-weight:800;font-stretch:62%;text-transform:uppercase;font-size:clamp(44px,6vw,92px);line-height:.9}
+
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-block:1px solid var(--line)}
+  .p{background:var(--bg);display:flex;flex-direction:column}
+  .p .ph{aspect-ratio:3/4;overflow:hidden;background:#000}
+  .p .ph img{filter:grayscale(1);transition:filter .9s var(--ease),transform 1.4s var(--ease)}
+  .p:hover .ph img,.p:focus-visible .ph img{filter:none;transform:scale(1.03)}
+  .p .info{padding:16px 18px 22px;display:grid;grid-template-columns:1fr auto;gap:2px 12px}
+  .p .h{color:var(--ink3);grid-column:1/-1}
+  .p .n{font-family:var(--f-display);font-size:20px;font-weight:500;line-height:1.35}
+  html[lang=en] .p .n{font-weight:700;font-stretch:75%;text-transform:uppercase;font-size:21px;letter-spacing:.01em}
+  .p .pr{font-family:var(--f-latin);font-size:14px;align-self:end}
+  .p .m{color:var(--ink2);font-size:12.5px}
+  .p .rt{color:var(--ink2);font-size:12.5px;text-align:end}
+
+  .bone{background:var(--bone);color:var(--onbone);display:grid;grid-template-columns:1.3fr 1fr}
+  .bone .t{padding:clamp(48px,7vw,120px) var(--gutter)}
+  .bone p.big{font-family:var(--f-display);font-weight:600;font-size:clamp(34px,4.4vw,72px);line-height:1.18}
+  html[lang=en] .bone p.big{font-weight:800;font-stretch:62%;text-transform:uppercase;line-height:.95;font-size:clamp(40px,5.4vw,86px)}
+  .bone .small{max-width:440px;margin-top:32px;color:#4A4641;font-size:15px}
+  .bone .stats{display:flex;gap:48px;margin-top:40px}
+  .bone .stats b{display:block;font-family:'Archivo',sans-serif;font-weight:700;font-stretch:62%;font-size:56px;line-height:1}
+  .bone .stats span{font-size:12.5px;color:#4A4641}
+  .bone .img{min-height:560px}
+  .bone .img img{filter:grayscale(1)}
+
+  .index a{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:28px;border-top:1px solid var(--line);padding:14px var(--gutter);transition:background .5s var(--ease)}
+  .index a:last-child{border-bottom:1px solid var(--line)}
+  .index .nm{font-family:var(--f-display);font-weight:600;font-size:clamp(38px,6vw,96px);line-height:1.15;transition:transform .7s var(--ease)}
+  html[lang=en] .index .nm{font-weight:800;font-stretch:62%;text-transform:uppercase;line-height:1}
+  .index .meta{color:var(--ink2);font-size:13px;text-align:end}
+  .index .th{width:110px;height:80px;overflow:hidden;opacity:0;transition:opacity .5s var(--ease)}
+  .index a:hover{background:var(--raised)}
+  .index a:hover .th{opacity:1}
+  .index a:hover .nm{transform:translateX(calc(var(--d,1) * -12px))}
+  html[dir=ltr] .index a:hover .nm{--d:-1}
+
+  .fams{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--f-display);font-weight:500;font-size:clamp(28px,3.6vw,52px);line-height:1.4}
+  html[lang=en] .fams{font-weight:700;font-stretch:75%;text-transform:uppercase}
+  .fams a{color:var(--ink3);transition:color .4s var(--ease)}
+  .fams a:hover{color:var(--ink)}
+  .fams sup{font-family:var(--f-latin);font-size:12px;font-weight:400;vertical-align:top;margin-inline-start:4px}
+  .fams i{color:var(--line);font-style:normal}
+
+  footer{border-top:1px solid var(--line);padding-top:56px}
+  footer .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;font-size:13.5px;color:var(--ink2)}
+  footer h4{color:var(--ink);font-weight:500;font-size:13px;margin-bottom:12px}
+  footer li{list-style:none;line-height:2.2}
+  footer .giant{font-family:'Archivo',sans-serif;font-weight:800;font-stretch:62%;font-size:31vw;line-height:.78;letter-spacing:-.01em;margin-top:64px;direction:ltr;text-align:center;color:#161616;user-select:none}
+  footer .legal{display:flex;justify-content:space-between;padding-block:18px;font-size:12px;color:var(--ink3);border-top:1px solid var(--line)}
+  .sample-tag{position:fixed;inset-block-end:16px;inset-inline-start:16px;z-index:20;background:#fff;color:#000;padding:8px 12px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;direction:ltr}
+
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.reveal{opacity:1;transform:none}}
+
+  @media (max-width:1023px){
+    .mast nav.start{display:none}.menu{display:inline-flex}
+    .mast .end .hide-sm{display:none}
+    .hero .copy{grid-template-columns:1fr}
+    .trust{grid-template-columns:1fr 1fr}
+    .trust div:nth-child(3){border-inline-start:0}
+    .trust div:nth-child(n+3){border-top:1px solid var(--line)}
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .bone{grid-template-columns:1fr}.bone .img{min-height:380px;order:-1}
+    .index .th{display:none}
+    .index a{grid-template-columns:1fr auto}
+    footer .cols{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:560px){
+    .word{font-size:28px}
+    .hero{height:88svh;min-height:560px}
+    .hero .tag{top:92px}
+    .sh{flex-direction:column;align-items:flex-start}
+    .p .info{padding:12px 12px 18px;grid-template-columns:1fr}
+    .p .rt{text-align:start}
+    .p .n{font-size:17px}
+    .bone .stats{gap:28px}
+    .index .meta{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mast px">
+    <nav class="start ui-cap" aria-label="Main">
+      <a class="tap" href="#" data-en="Houses">الدور</a>
+      <a class="tap" href="#" data-en="Perfumes">العطور</a>
+      <a class="tap" href="#" data-en="Journal">المجلة</a>
+    </nav>
+    <button class="menu tap ui-cap" aria-label="Menu" data-en="Menu">القائمة</button>
+    <a href="#" class="word" aria-label="DIYAR">DIYAR</a>
+    <nav class="end ui-cap" aria-label="Utility">
+      <a class="tap hide-sm" href="#" data-en="Search">ابحث</a>
+      <a class="tap hide-sm" href="#" data-en="Track">تابع طلبك</a>
+      <button class="tap" data-lang-toggle data-en="عربي">EN</button>
+      <a class="tap" href="#"><span data-en="Bag">الشنطة</span>&nbsp;<span class="num">(0)</span></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <img src="https://images.unsplash.com/photo-1617661338085-d1ec6a89a6d8?w=2000&h=1300&fit=crop&q=80&auto=format" alt="">
+    <span class="tag cap">The perfume houses of Egypt — 2026</span>
+    <div class="copy">
+      <h1 data-en="Egyptian<br>perfume.<br>Quietly.">عطر مصري.<br>بهدوء.</h1>
+      <div class="side">
+        <p data-en="Selected houses, verified one by one. Every perfume described to the same standard. Every review from someone who received the bottle.">دور مختارة، اتوثّقت واحدة واحدة. كل عطر موصوف بنفس المعيار، وكل تقييم من حد استلم الزجاجة.</p>
+        <div class="links ui-cap">
+          <a class="tap u" href="#" data-en="Shop perfumes">تسوّق العطور</a>
+          <a class="tap u" href="#" data-en="The houses">الدور</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trust">
+    <div><b data-en="Verified houses">دور موثّقة</b><span data-en="Checked before they go live">بنتحقق منها قبل ما تتعرض</span></div>
+    <div><b data-en="Cash on delivery">الدفع عند الاستلام</b><span data-en="Cairo &amp; Giza">القاهرة والجيزة</span></div>
+    <div><b data-en="No hidden cost">من غير تكلفة مخفية</b><span data-en="Delivery shown before you pay">التوصيل باين قبل الدفع</span></div>
+    <div><b data-en="Earned reviews">تقييمات حقيقية</b><span data-en="Only from delivered orders">بس من طلبات اتسلّمت</span></div>
+  </div>
+
+  <section>
+    <div class="sh px reveal">
+      <h2 data-en="New in">وصل حديثًا</h2>
+      <a class="tap u ui-cap" href="#" data-en="All perfumes">كل العطور</a>
+    </div>
+    <div class="grid">
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1709662217618-83586dc9b777?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Maison Nour</span><span class="n" data-en="Layl Al Qahira">ليل القاهرة</span><span class="pr num">450 EGP</span><span class="m" data-en="Amber · 50 ml">عنبر · ٥٠ مل</span><span class="rt"><span class="num">4.8</span> <span data-en="(41)">(٤١)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1709662369957-0cbf9f8452fc?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Bait El Oud</span><span class="n" data-en="Oud Qadim">عود قديم</span><span class="pr num">690 EGP</span><span class="m" data-en="Oud · 50 ml">عود · ٥٠ مل</span><span class="rt"><span class="num">4.7</span> <span data-en="(31)">(٣١)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1594125311687-3b1b3eafa9f4?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Atelier Siwa</span><span class="n" data-en="Nakhil">نخيل</span><span class="pr num">290 EGP</span><span class="m" data-en="Fresh · 50 ml">منعش · ٥٠ مل</span><span class="rt"><span class="num">4.4</span> <span data-en="(6)">(٦)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1720423514789-15a33e59fc81?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Dar Al Ward</span><span class="n" data-en="Naseem Al Max">نسيم المكس</span><span class="pr num">340 EGP</span><span class="m" data-en="Fresh · 50 ml">منعش · ٥٠ مل</span><span class="rt"><span class="num">4.5</span> <span data-en="(12)">(١٢)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1709660628819-c8f1cb5d818b?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Maison Nour</span><span class="n" data-en="Souq Al Attarin">سوق العطارين</span><span class="pr num">520 EGP</span><span class="m" data-en="Amber · 50 ml">عنبر · ٥٠ مل</span><span class="rt"><span class="num">4.8</span> <span data-en="(23)">(٢٣)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1535683577427-740aaac4ec25?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Bait El Oud</span><span class="n" data-en="Bakhour Al Muizz">بخور المعز</span><span class="pr num">560 EGP</span><span class="m" data-en="Oud · 30 ml">عود · ٣٠ مل</span><span class="rt"><span class="num">4.9</span> <span data-en="(19)">(١٩)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1709662217788-6a8a1b31562a?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Atelier Siwa</span><span class="n" data-en="Milh Al Waha">ملح الواحة</span><span class="pr num">310 EGP</span><span class="m" data-en="Fresh · oil, 12 ml">منعش · زيت، ١٢ مل</span><span class="rt"><span class="num">4.9</span> <span data-en="(8)">(٨)</span></span></div></a>
+      <a href="#" class="p reveal"><div class="ph"><img src="https://images.unsplash.com/photo-1733660227163-01bc46e0d7d7?w=700&h=933&fit=crop&q=75&auto=format" alt=""></div><div class="info"><span class="h cap">Dar Al Ward</span><span class="n" data-en="Ward Al Taif">ورد الطائف</span><span class="pr num">380 EGP</span><span class="m" data-en="Floral · 30 ml">زهري · ٣٠ مل</span><span class="rt"><span class="num">4.6</span> <span data-en="(17)">(١٧)</span></span></div></a>
+    </div>
+  </section>
+
+  <div class="bone">
+    <div class="t reveal">
+      <span class="cap" style="color:#6B655E">Our standard</span>
+      <p class="big" style="margin-top:24px" data-en="Every house makes and ships its own perfume. We make sure what you read is true.">كل دار بتصنع عطرها وبتشحنه بنفسها. واحنا بنتأكد إن اللي بتقراه صحيح.</p>
+      <p class="small" data-en="Eight checks before a house goes live: identity, product responsibility, labels, claims, returns route, a full test order and more. Nothing is listed until all eight pass.">ثماني خطوات تحقّق قبل ما أي دار تتعرض: الهوية، المسؤولية عن المنتج، الملصقات، الادعاءات، طريقة الإرجاع، وطلب تجريبي كامل. مفيش حاجة بتتعرض قبل ما الثمانية يعدّوا.</p>
+      <div class="stats">
+        <div><b class="num">8/8</b><span data-en="checks per house">تحقّقات لكل دار</span></div>
+        <div><b class="num">100%</b><span data-en="reviews from delivered orders">من التقييمات من طلبات اتسلّمت</span></div>
+      </div>
+    </div>
+    <div class="img"><img src="https://images.unsplash.com/photo-1709660274775-75c47120ec0c?w=1100&h=1300&fit=crop&q=80&auto=format" alt=""></div>
+  </div>
+
+  <section>
+    <div class="sh px reveal">
+      <h2 data-en="The houses">الدور</h2>
+      <a class="tap u ui-cap" href="#" data-en="All houses">كل الدور</a>
+    </div>
+    <div class="index reveal">
+      <a href="#"><span class="nm" data-en="Maison Nour">ميزون نور</span><span class="th"><img src="https://images.unsplash.com/photo-1617661338085-d1ec6a89a6d8?w=220&h=160&fit=crop&q=70&auto=format" alt=""></span><span class="meta" data-en="Cairo<br>since 2019 · 6 perfumes">القاهرة<br>منذ ٢٠١٩ · ٦ عطور</span></a>
+      <a href="#"><span class="nm" data-en="Dar Al Ward">دار الورد</span><span class="th"><img src="https://images.unsplash.com/photo-1733660227163-01bc46e0d7d7?w=220&h=160&fit=crop&q=70&auto=format" alt=""></span><span class="meta" data-en="Alexandria<br>since 2021 · 4 perfumes">الإسكندرية<br>منذ ٢٠٢١ · ٤ عطور</span></a>
+      <a href="#"><span class="nm" data-en="Atelier Siwa">أتيليه سيوة</span><span class="th"><img src="https://images.unsplash.com/photo-1608571423539-e951b9b3871e?w=220&h=160&fit=crop&q=70&auto=format" alt=""></span><span class="meta" data-en="Giza<br>since 2020 · 5 perfumes">الجيزة<br>منذ ٢٠٢٠ · ٥ عطور</span></a>
+      <a href="#"><span class="nm" data-en="Bait El Oud">بيت العود</span><span class="th"><img src="https://images.unsplash.com/photo-1709662369957-0cbf9f8452fc?w=220&h=160&fit=crop&q=70&auto=format" alt=""></span><span class="meta" data-en="Cairo<br>since 2016 · 7 perfumes">القاهرة<br>منذ ٢٠١٦ · ٧ عطور</span></a>
+    </div>
+  </section>
+
+  <section class="px" style="padding-top:0">
+    <span class="cap" style="color:var(--ink3);display:table;margin-bottom:18px">Shop by family</span>
+    <div class="fams reveal">
+      <a href="#" data-en="Oud<sup>9</sup>">عود<sup>9</sup></a><i>/</i>
+      <a href="#" data-en="Amber<sup>12</sup>">عنبر<sup>12</sup></a><i>/</i>
+      <a href="#" data-en="Floral<sup>14</sup>">زهري<sup>14</sup></a><i>/</i>
+      <a href="#" data-en="Woody<sup>8</sup>">خشبي<sup>8</sup></a><i>/</i>
+      <a href="#" data-en="Fresh<sup>11</sup>">منعش<sup>11</sup></a><i>/</i>
+      <a href="#" data-en="Gourmand<sup>5</sup>">حلواني<sup>5</sup></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="cols px">
+    <div><h4 data-en="DIYAR">ديار</h4><p data-en="The Egyptian perfume houses, chosen and verified.">دور العطور المصرية، مختارة وموثّقة.</p></div>
+    <div><h4 data-en="Shop">تسوّق</h4><ul><li data-en="Perfumes">العطور</li><li data-en="Houses">الدور</li><li data-en="Search">ابحث</li></ul></div>
+    <div><h4 data-en="Help">مساعدة</h4><ul><li data-en="Track your order">تابع طلبك</li><li data-en="Delivery &amp; returns">التوصيل والإرجاع</li><li data-en="Contact">كلّمنا</li></ul></div>
+    <div><h4 data-en="For houses">للدور</h4><ul><li data-en="Sell on DIYAR">انضم كدار</li><li data-en="Verification">التوثيق</li><li data-en="About">عن ديار</li></ul></div>
+  </div>
+  <div class="giant" aria-hidden="true">DIYAR</div>
+  <div class="legal px"><span class="latin">© 2026 DIYAR</span><span data-en="Terms · Privacy · Returns">الشروط · الخصوصية · الإرجاع</span></div>
+</footer>
+
+<div class="sample-tag">Sample 2 · Noir Absolu</div>
+
+<script>
+(function(){
+  var nodes=[].slice.call(document.querySelectorAll('[data-en]'));
+  nodes.forEach(function(n){n.setAttribute('data-ar',n.innerHTML)});
+  function set(l){var h=document.documentElement;h.lang=l;h.dir=l==='ar'?'rtl':'ltr';nodes.forEach(function(n){n.innerHTML=n.getAttribute(l==='ar'?'data-ar':'data-en')})}
+  document.querySelectorAll('[data-lang-toggle]').forEach(function(b){b.addEventListener('click',function(){set(document.documentElement.lang==='ar'?'en':'ar')})});
+  if(new URLSearchParams(location.search).get('lang')==='en')set('en');
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+})();
+</script>
+</body>
+</html>

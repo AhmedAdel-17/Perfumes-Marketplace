@@ -60,7 +60,7 @@ every gate outcome is recorded here.
 | SL-4 | Reserve period and payout cadence | FOUNDERS | 7-day reserve; fortnightly (manual in pilot) | both founders | P0.2.5 | OPEN |
 | A-2 | Cost entry method | FOUNDERS | decided method (admin entry); build timing before pilot end | founders | P2.2.5 / P4.3.3 | DECIDED (method) 15 Sep 2026 |
 | A-1 | Browsing analytics retention 180 d; banner question | LEGAL | keep; confirm L10 | counsel | ~Oct 2026 | INTERIM |
-| FD-1..7 | Redesign direction (palette, photography requirement, compare, verified marks, house marks, no wishlist yet, no gradient) | FOUNDERS | approve all seven (FD-1 after DR-07's test) | both founders | P0.2.6 | OPEN |
+| FD-1..7 | Redesign direction (palette, photography requirement, compare, verified marks, house marks, no wishlist yet, no gradient) | FOUNDERS | approve all seven (FD-1 after DR-07's test) | both founders | P0.2.6 | **FD-1 and FD-7 DECIDED 14 Oct 2026, Ahmed Adel** — visual identity v2, chosen from four samples in `design-reference/redesign/`: LIGHT "Laboratoire" (sample 4) is the default theme, DARK "Noir" (sample 2) is the alternative; ONE layout, sample 4's, for both; product photographs in full colour in both themes, black-and-white only for hero and editorial imagery in Noir; the primary action is a flat fill, no gradient (FD-7). Replaces the noir/brass identity and the Amiri/Bodoni faces. Taken without DR-07's buyer test, and with one founder's name where this register asks for both — recorded as a gap, not a formality met. FD-2..6 still OPEN. Implementation: task P5.1.3. |
 | ADR-12 | Stop mobile work after 11.2 | FOUNDERS | stop | both founders | P0.2.6 | OPEN |
 | ADR-01/03/04/06/07/09/10/13/14 | Technical architecture decisions | TECHNICAL | approve | technical founder | P0.2.6 | OPEN |
 | ADR-05 | Own OTP identity, no Supabase Auth | FOUNDERS (security-critical) | keep | both founders | P0.2.6 | OPEN |
@@ -135,3 +135,13 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   approved mockups (`design-reference/marketplace.html`) already use Egyptian Arabic;
   contracts stay formal until counsel reviews them · supersedes `docs/brand/04` §1.4 and §2
   (corrected the same day) · P5.6.3.
+
+- 2026-10-14 · FD-1, FD-7 · Ahmed (founder) · visual identity v2: light "Laboratoire"
+  (putty, paper, sepia ink, olive accent; Noto Naskh Arabic / IBM Plex Sans Arabic /
+  Newsreader / IBM Plex Mono) is the default theme and dark "Noir" (black and bone, no
+  colour accent; Reem Kufi / Noto Kufi Arabic / Archivo) the alternative, over one layout
+  taken from sample 4; product photographs stay in colour; flat primary action · the
+  founder judged the current frontend "cheap, not optimised, AI-generated" and chose from
+  four rendered samples · supersedes DESIGN_DOCTRINE laws III and IV and §7, and the
+  Amiri/Bodoni typography in CLAUDE.md §15 · P5.1.3 (brought forward past GATE 5, as D-3
+  was). DR-07's buyer test of the luxury frame was not run first.

@@ -296,7 +296,10 @@ believed this section would have invented a visual language that already existed
 | `ALL.html` | All screens, tabbed |
 
 Open the matching reference and **match it exactly** — colours, spacing, type sizes, SVG
-paths, layout. Do not redesign or "improve". If something looks wrong, say so and ask.
+paths, layout. *Since 14 October 2026 (FD-1) the visual identity is `design-reference/redesign/`
+— `04-laboratoire.html` (layout, light theme) and `02-noir-absolu.html` (dark theme); where an
+older reference disagrees with it on colour, type or finish, the redesign wins.*
+Do not redesign or "improve". If something looks wrong, say so and ask.
 
 Icons are in `packages/ui/src/icons.tsx` (41 components). Never draw a new one without
 asking.
@@ -371,7 +374,8 @@ is possible, but do not implement English until decided.)*
 
 ### Accessibility floor — audited, not aspirational
 44pt minimum hit area (visual size may be smaller). 11pt minimum reading text. 4.5:1
-minimum contrast — never a grey lighter than `#8B837A` on noir. Visible focus.
+minimum contrast — never a grey darker than `#8F8A84` on Noir or lighter than `#67615A` on
+Laboratoire's putty (both asserted in `packages/tokens`). Visible focus.
 `prefers-reduced-motion` respected. Never colour alone to carry meaning.
 
 ### Performance
@@ -386,11 +390,21 @@ data. Storefronts are an acquisition surface — sellers link to them from socia
 
 ## 15. Typography
 
-**Amiri** — Arabic headings only. **Bodoni Moda** — Latin small-caps labels only, always
-letterspaced. **IBM Plex Sans Arabic** — everything else. Arabic needs more line-height
-than Latin; set the scale for Arabic first.
+*Replaced 14 October 2026 by visual identity v2 (founder decision FD-1). Amiri and Bodoni
+Moda are retired.* Fonts follow the THEME as well as the language:
 
----
+| | Light — "Laboratoire" (default) | Dark — "Noir" |
+|---|---|---|
+| Arabic headings | Noto Naskh Arabic | Reem Kufi |
+| Arabic text | IBM Plex Sans Arabic | Noto Kufi Arabic |
+| English headings | Newsreader | Archivo, condensed capitals |
+| English text | IBM Plex Sans Arabic (its Latin glyphs) | Archivo |
+| Latin labels and data | IBM Plex Mono | Archivo |
+
+Components never name a family: `font-display`, `font-sans` and `latin` read variables set
+in `apps/web/src/app/globals.css`. **Arabic is never letterspaced, uppercased or set in a
+Latin label face** — tracking breaks the joins. Arabic needs more line-height than Latin;
+set the scale for Arabic first.
 
 ## 16. Egyptian commerce specifics
 

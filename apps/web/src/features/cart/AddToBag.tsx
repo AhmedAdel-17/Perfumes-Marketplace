@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { PrimaryHighlight, primarySurfaceStyle } from '@/features/shell/primary-surface';
 import { recordBrowsing } from '@/features/analytics/record';
 import { PRODUCT } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
@@ -52,10 +51,8 @@ export function AddToBag({
       onClick={onClick}
       disabled={!inStock || !hydrated}
       aria-live="polite"
-      style={primarySurfaceStyle}
       className={className}
     >
-      <PrimaryHighlight />
       {!inStock ? copy.outOfStock : confirmed ? copy.added : copy.addToBag}
     </button>
   );

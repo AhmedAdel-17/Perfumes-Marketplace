@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { color, colorLight, fontSize, motion, MIN_READING_SIZE, TOUCH_TARGET, radius, opacity, noteTier, noteTierLight } from './index';
+import { color, colorLight, fontSize, motion, MIN_READING_SIZE, TOUCH_TARGET, radius, opacity, noteTier, noteTierLight, stage } from './index';
 import { cssVariable, themeBaseStyles, themeColors, themes, type ThemeRoles } from './theme';
 import { diyarPreset } from './tailwind-preset';
 import { nativeTheme } from './native-theme';
@@ -21,7 +21,7 @@ const contrast = (a: string, b: string): number => {
 
 describe('accessibility floor — audited, not aspirational', () => {
   it('every ink colour clears 4.5:1 on noir', () => {
-    for (const name of ['bone', 'dim', 'faint', 'brass'] as const) {
+    for (const name of ['bone', 'dim', 'faint'] as const) {
       expect(contrast(color[name], color.noir), name).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -32,10 +32,10 @@ describe('accessibility floor — audited, not aspirational', () => {
     //
     // Measured against the LIGHTEST surface it may be printed on, not against
     // the page. Against noir it has margin to spare; against an l3 panel it is
-    // at 4.58:1, and that is the number that decides the value.
+    // at 4.60:1, and that is the number that decides the value.
     expect(contrast(color.faint, color.l3)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(color.faint, color.l3)).toBeLessThan(5.2);
-    expect(contrast('#8B837A', color.l3)).toBeLessThan(4.5);
+    expect(contrast('#8A857F', color.l3)).toBeLessThan(4.5);
   });
 
   it('the touch target floor is 44pt', () => {
@@ -177,10 +177,10 @@ describe('two themes, one contract', () => {
   */
   it('the smallest label sits just above the floor in both directions', () => {
     expect(contrast(themes.dark.ink3, themes.dark.ground)).toBeLessThan(6);
-    expect(contrast('#7C746B', themes.dark.ground)).toBeLessThan(4.5);   // darker fails on noir
+    expect(contrast('#8A857F', themes.dark.raised3)).toBeLessThan(4.5);  // darker fails on Noir's lightest panel
 
     expect(contrast(themes.light.ink3, themes.light.ground)).toBeLessThan(6);
-    expect(contrast('#767068', themes.light.ground)).toBeLessThan(4.5);  // LIGHTER fails on paper
+    expect(contrast('#6E675D', themes.light.ground)).toBeLessThan(4.5);  // LIGHTER fails on putty
   });
 
   it('emits every role as RGB channels, for both themes', () => {
@@ -197,8 +197,22 @@ describe('two themes, one contract', () => {
     }
   });
 
-  it('keeps the stage dark on paper — a bottle is lit in a dark room either way', () => {
-    expect(themes.light.plate).toBe(themes.dark.plate);
+  /*
+    Identity v2 (FD-1, 14 Oct 2026) reversed a rule this test used to hold:
+    the plate was dark in both themes. Real photographs now sit on the page's
+    own paper in Laboratoire, so the plate FOLLOWS the theme — and only the
+    illustrated flacon, the placeholder for a listing with no photograph, keeps
+    a dark stage. Both halves are asserted so neither can drift back silently.
+  */
+  it('lets the photograph plate follow the theme', () => {
+    expect(themes.light.plate).not.toBe(themes.dark.plate);
+    expect(luminance(themes.light.plate)).toBeGreaterThan(luminance(themes.dark.plate));
+  });
+
+  it("keeps the illustrated flacon's stage dark in both themes", () => {
+    for (const [name, hex] of Object.entries(stage)) {
+      expect(luminance(hex), name).toBeLessThan(0.05);
+    }
   });
 });
 

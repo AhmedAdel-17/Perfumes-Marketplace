@@ -4,7 +4,7 @@
  * Apps extend this rather than declaring colours of their own, so a value that
  * is not in the token file cannot be reached through a utility class.
  */
-import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, stage, font } from './index';
+import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, stage } from './index';
 import { themeColors } from './theme';
 
 const px = (o: Record<string, number>) =>
@@ -38,30 +38,24 @@ export const diyarPreset = {
       */
       colors: { ...themeColors, family: scentFamily, stage },
       /*
-        Real fallback stacks, not a bare generic.
+        Fonts are VARIABLES, set per theme and per language in apps/web
+        globals.css (identity v2, 14 Oct 2026): Laboratoire and Noir use
+        different faces, and English uses different faces from Arabic. A
+        component says `font-display` — "the heading face" — and never names a
+        family, exactly as it says `text-ink` and never names a hex.
 
-        The webfonts load with `display: swap`, so on a slow connection every
-        visitor reads the page in the FALLBACK first — and `sans-serif` alone
-        resolves to Times on some Android builds, which renders Arabic badly
-        enough to look broken. Naming the system Arabic faces means the swap
-        period looks like a different typeface rather than like a failure.
+          display  headings
+          sans     everything else
+          latin    Latin labels and data: sizes, references, specimen fields
+                   (never Arabic — tracking breaks the joins)
 
-        Segoe UI is Windows, Geeza Pro and SF Arabic are Apple, Noto Naskh
-        Arabic ships on Android and most Linux desktops.
+        Each variable carries its own fallback stack, so the swap period on a
+        slow connection looks like a different typeface rather than a failure.
       */
       fontFamily: {
-        display: [font.display, 'Amiri Quran', '"Noto Naskh Arabic"', 'serif'],
-        latin: [font.displayLatin, 'Georgia', '"Times New Roman"', 'serif'],
-        // The English site's stacks. Each keeps its Arabic face second, because
-        // an English page still carries Arabic — a product name its house has
-        // not yet translated — and that text must not fall to a system font.
-        sansEn: [font.bodyLatin, font.body, '"Segoe UI"', 'system-ui', 'sans-serif'],
-        displayEn: [font.displayLatin, font.display, 'Georgia', 'serif'],
-        sans: [
-          font.body,
-          '"Segoe UI"', '"SF Arabic"', '"Geeza Pro"', '"Noto Naskh Arabic"',
-          'system-ui', 'sans-serif',
-        ],
+        display: ['var(--f-display)'],
+        sans: ['var(--f-body)'],
+        latin: ['var(--f-label)'],
       },
       fontSize: px(fontSize),
       lineHeight: lineHeight as unknown as Record<string, string>,

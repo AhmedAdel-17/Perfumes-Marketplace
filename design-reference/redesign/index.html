@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIYAR — Redesign directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F4F3F0;--card:#fff;--ink:#1B1A18;--ink2:#5F5C57;--line:#E2DFD9}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter','IBM Plex Sans Arabic',sans-serif;font-size:14px;line-height:1.6;padding:40px clamp(16px,4vw,48px) 80px}
+  a{color:inherit}
+  h1{font-size:28px;font-weight:600;letter-spacing:-.01em}
+  .intro{max-width:780px;color:var(--ink2);margin-top:8px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:32px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+  .prev{position:relative;height:340px;overflow:hidden;border-bottom:1px solid var(--line);background:#ddd}
+  .prev iframe{width:1440px;height:1100px;border:0;transform:scale(.4);transform-origin:0 0;pointer-events:none}
+  .body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .t{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .t h2{font-size:19px;font-weight:600}
+  .t span{color:var(--ink2);font-size:13px}
+  .sw{display:flex;gap:6px}
+  .sw i{flex:1;height:34px;border-radius:3px;border:1px solid rgba(0,0,0,.08);position:relative}
+  .sw i b{position:absolute;bottom:-18px;inset-inline-start:0;font-size:10px;font-weight:400;font-style:normal;color:var(--ink2);font-family:ui-monospace,monospace}
+  .meta{margin-top:12px;display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:13px}
+  .meta dt{color:var(--ink2)}
+  .links{display:flex;gap:10px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+  .links a{display:inline-flex;align-items:center;height:40px;padding:0 16px;border:1px solid var(--ink);border-radius:4px;text-decoration:none;font-weight:500;font-size:13px}
+  .links a.primary{background:var(--ink);color:#fff}
+  .note{margin-top:36px;max-width:780px;color:var(--ink2);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}.prev{height:260px}}
+</style>
+</head>
+<body>
+  <h1>Redesign directions — home page</h1>
+  <p class="intro">Four directions for the same screen and the same content. Each has its own Arabic + Latin type pairing, its own palette and its own layout. Every sample is Arabic-first (RTL) with a working English switch in its header, and is built to work at phone, tablet and desktop widths. Pick one, and it becomes the design system for every screen.</p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="prev"><iframe src="01-ivoire.html" title="Sample 1 preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="body">
+        <div class="t"><h2>1 · Ivoire</h2><span>couture editorial · light · Dior-like</span></div>
+        <div class="sw"><i style="background:#F6F2EC"><b>#F6F2EC</b></i><i style="background:#E7E0D5"><b>#E7E0D5</b></i><i style="background:#161310"><b>#161310</b></i><i style="background:#5D554C"><b>#5D554C</b></i><i style="background:#6B1E28"><b>#6B1E28</b></i></div>
+        <dl class="meta">
+          <dt>Arabic</dt><dd>Markazi Text (display) · Alexandria (UI)</dd>
+          <dt>Latin</dt><dd>Cormorant Garamond (display) · Jost (UI)</dd>
+          <dt>Feels like</dt><dd>A fashion-house magazine: ivory paper, big serif headlines, oxblood as the single accent.</dd>
+          <dt>Trade-off</dt><dd>Most "luxury" of the four; relies on very good photography to stay rich rather than empty.</dd>
+        </dl>
+        <div class="links"><a class="primary" href="01-ivoire.html">Open (Arabic)</a><a href="01-ivoire.html?lang=en">Open (English)</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="prev"><iframe src="02-noir-absolu.html" title="Sample 2 preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="body">
+        <div class="t"><h2>2 · Noir Absolu</h2><span>stark fashion · black &amp; white · Saint Laurent-like</span></div>
+        <div class="sw"><i style="background:#0A0A0A"><b>#0A0A0A</b></i><i style="background:#141414"><b>#141414</b></i><i style="background:#F2EFEA"><b>#F2EFEA</b></i><i style="background:#A8A29A"><b>#A8A29A</b></i><i style="background:#EEEAE3"><b>#EEEAE3</b></i></div>
+        <dl class="meta">
+          <dt>Arabic</dt><dd>Reem Kufi (display) · Noto Kufi Arabic (UI)</dd>
+          <dt>Latin</dt><dd>Archivo — condensed for display, normal for UI</dd>
+          <dt>Feels like</dt><dd>A runway campaign: full-bleed hero, huge condensed type, photos in black &amp; white that turn to colour on hover. No accent colour at all.</dd>
+          <dt>Trade-off</dt><dd>The boldest and most memorable; the coldest, and the furthest from a "value" buyer.</dd>
+        </dl>
+        <div class="links"><a class="primary" href="02-noir-absolu.html">Open (Arabic)</a><a href="02-noir-absolu.html?lang=en">Open (English)</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="prev"><iframe src="03-qahira.html" title="Sample 3 preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="body">
+        <div class="t"><h2>3 · Qahira</h2><span>warm contemporary Egyptian · approachable</span></div>
+        <div class="sw"><i style="background:#EFE7DA"><b>#EFE7DA</b></i><i style="background:#E4D8C6"><b>#E4D8C6</b></i><i style="background:#16302A"><b>#16302A</b></i><i style="background:#55574B"><b>#55574B</b></i><i style="background:#A4431D"><b>#A4431D</b></i></div>
+        <dl class="meta">
+          <dt>Arabic</dt><dd>Qahiri (display — a Cairene kufi) · Readex Pro (UI)</dd>
+          <dt>Latin</dt><dd>Fraunces (display) · Readex Pro (UI)</dd>
+          <dt>Feels like</dt><dd>Modern Cairo: limestone, Nile green and terracotta, images framed in the arch of Islamic Cairo, a prominent search and "how it works" up front.</dd>
+          <dt>Trade-off</dt><dd>The most inviting and the most clearly Egyptian; the least "Dior". Qahiri is distinctive but stylised, so it is kept to short headings only.</dd>
+        </dl>
+        <div class="links"><a class="primary" href="03-qahira.html">Open (Arabic)</a><a href="03-qahira.html?lang=en">Open (English)</a></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="prev"><iframe src="04-laboratoire.html" title="Sample 4 preview" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="body">
+        <div class="t"><h2>4 · Laboratoire</h2><span>apothecary · specimen labels · Le Labo / Aesop-like</span></div>
+        <div class="sw"><i style="background:#E7E2D8"><b>#E7E2D8</b></i><i style="background:#F4F1EB"><b>#F4F1EB</b></i><i style="background:#221F1B"><b>#221F1B</b></i><i style="background:#5C574F"><b>#5C574F</b></i><i style="background:#4D5A2C"><b>#4D5A2C</b></i></div>
+        <dl class="meta">
+          <dt>Arabic</dt><dd>Noto Naskh Arabic (display) · IBM Plex Sans Arabic (UI)</dd>
+          <dt>Latin</dt><dd>Newsreader (display) · IBM Plex Mono (data labels)</dd>
+          <dt>Feels like</dt><dd>A perfumer's register: every perfume is a labelled specimen with its notes, strength and the source of each claim; the 8 verification checks are on show.</dd>
+          <dt>Trade-off</dt><dd>Turns DIYAR's real differentiator — honest, structured data — into the look. Less glamour, more trust; denser to design well on every screen.</dd>
+        </dl>
+        <div class="links"><a class="primary" href="04-laboratoire.html">Open (Arabic)</a><a href="04-laboratoire.html?lang=en">Open (English)</a></div>
+      </div>
+    </article>
+  </div>
+
+  <p class="note">Photography in all four samples is placeholder imagery from Unsplash, chosen for art direction only and screened for visible designer branding; in the product every photograph comes from the house that owns it. Product, house and review figures beyond the three seeded houses are illustrative. The current production home page is unchanged.</p>
+<script>
+  // scale each 1440px-wide preview to exactly fill its card
+  function fit(){document.querySelectorAll('.prev').forEach(function(p){var f=p.querySelector('iframe');f.style.transform='scale('+(p.clientWidth/1440)+')'})}
+  addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

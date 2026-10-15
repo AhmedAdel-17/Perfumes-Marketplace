@@ -5,8 +5,8 @@ import { DEFAULT_THEME, THEME_ATTRIBUTE, THEME_STORAGE_KEY, themes } from '@diya
  *
  * WHY A BLOCKING INLINE SCRIPT, which is normally the wrong answer. The theme
  * lives in localStorage, which the server cannot read, so the server-rendered
- * HTML necessarily carries the DEFAULT theme. A visitor who chose paper would
- * therefore see a black page flash to white on every navigation — and on a
+ * HTML necessarily carries the DEFAULT theme (light, since FD-1). A visitor who
+ * chose Noir would therefore see a paper page flash to black on every navigation — and on a
  * fashion surface a flash of the wrong brand is not a cosmetic defect, it is
  * the interface admitting it was assembled after arriving.
  *
@@ -29,7 +29,7 @@ const source = [
 /**
  * `nonce` is this request's Content-Security-Policy nonce (P3.4.3). Without it
  * the policy refuses the script, the remembered theme is never applied, and a
- * visitor who chose paper sees the page flash from black on every navigation.
+ * visitor who chose Noir sees the page flash from paper on every navigation.
  *
  * `suppressHydrationWarning`: browsers deliberately hide a nonce from the DOM
  * once the script has been parsed (`nonce=""`), so React always sees the

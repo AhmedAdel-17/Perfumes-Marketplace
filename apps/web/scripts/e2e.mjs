@@ -2251,7 +2251,8 @@ try {
       equal(root.dir, 'ltr', 'dir on /en');
       assert(root.title.includes('DIYAR'), `title: ${root.title}`);
       const nav = await english.locator('header nav').innerText();
-      assert(/Houses/.test(nav) && /Search/.test(nav) && /Track your order/.test(nav), `masthead: ${nav}`);
+      // "Perfumes" since identity v2: the link to /search is the catalogue (P5.1.3).
+      assert(/Houses/.test(nav) && /Perfumes/.test(nav) && /Track your order/.test(nav), `masthead: ${nav}`);
       assert(!/[؀-ۿ]/.test(nav), `Arabic left in the English masthead: ${nav}`);
     });
 

@@ -9,6 +9,7 @@ export const SHELL = defineMessages(
     homeLabel: 'ديار — الصفحة الرئيسية',
     mainNav: 'التصفّح',
     houses: 'الدور',
+    perfumes: 'العطور',
     search: 'ابحث',
     trackYourOrder: 'تتبّع طلبك',
     switchLanguage: 'English',
@@ -27,6 +28,17 @@ export const SHELL = defineMessages(
     notFoundBody: 'ربما تغيّر الرابط، أو لم تعد الصفحة معروضة.',
     browsePerfumes: 'تصفّح العطور',
     imagePlaceholder: 'صورة',
+    // The line above the masthead (identity v2): two facts a first-time buyer
+    // asks before anything else — how they pay, and whether anyone checked.
+    // Latin in both languages: it qualifies the Latin wordmark beside it.
+    descriptor: 'Egyptian perfume houses',
+    codNote: 'الدفع عند الاستلام · القاهرة والجيزة',
+    verifiedNote: 'كل دار تُوثَّق قبل أن تعرض عطورها',
+    footerShop: 'تسوّق',
+    footerHelp: 'مساعدة',
+    footerHouses: 'للدور',
+    footerInformation: 'معلومات',
+    copyright: '© 2026 ديار · القاهرة',
   },
   {
     siteTitle: 'DIYAR — Egyptian perfume houses',
@@ -35,6 +47,7 @@ export const SHELL = defineMessages(
     homeLabel: 'DIYAR — home',
     mainNav: 'Browse',
     houses: 'Houses',
+    perfumes: 'Perfumes',
     search: 'Search',
     trackYourOrder: 'Track your order',
     switchLanguage: 'العربية',
@@ -53,5 +66,13 @@ export const SHELL = defineMessages(
     notFoundBody: 'The link may have changed, or the page is no longer shown.',
     browsePerfumes: 'Browse perfumes',
     imagePlaceholder: 'Image',
+    descriptor: 'Egyptian perfume houses',
+    codNote: 'Cash on delivery · Cairo & Giza',
+    verifiedNote: 'Every house is verified before it can sell',
+    footerShop: 'Shop',
+    footerHelp: 'Help',
+    footerHouses: 'For houses',
+    footerInformation: 'Information',
+    copyright: '© 2026 DIYAR · Cairo',
   },
 );

@@ -215,6 +215,7 @@ production (P0.1.3).
 | P4.9.1 | Notes dictionary v1; review-aggregate bands threshold | P4 | NOT_STARTED | P1 | BUILD | DR M-2 |
 | P5.1.1 | Journey redesign (R3) | P5 | NOT_STARTED | P2 | BUILD | GATE 5, P4.2.1 |
 | P5.1.2 | Polish: structured data, ISR, visual regression (R4) | P5 | NOT_STARTED | P2 | BUILD | P5.1.1 |
+| P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | IN_PROGRESS | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2236,6 +2237,26 @@ listing form; print styles.
 **Acceptance criteria:** rich results validated; cache hit ratio reported; baselines in CI.
 **Reference documents:** `docs/frontend/03` §2.3.
 
+#### P5.1.3 Visual identity v2 — Laboratoire (light) and Noir (dark)
+**Status:** IN_PROGRESS · **Priority:** P1 · **Type:** BUILD
+**Why:** the founder judged the frontend "cheap, not optimised, AI-generated" (14 Oct 2026)
+and chose an identity from four rendered samples of the home page
+(`design-reference/redesign/`): sample 4 "Laboratoire" as the light theme and the default,
+sample 2 "Noir" as the dark theme, one layout (sample 4's) for both, product photographs in
+colour in both. Recorded as FD-1 and FD-7 in `DECISION_REGISTER.md`. Brought forward past
+GATE 5 on the founder's instruction, as D-3 was; it overlaps P4.1.1 (frontend foundations),
+whose primitives it builds.
+**Depends on:** DR FD-1 · **Blocks:** nothing technical; P5.1.1 builds on it
+**Phases:** A foundation — decision recorded, tokens (two palettes, contrast-proven), fonts
+by theme and language, primitives, shell · B customer screens — home first, then product,
+search, houses and house, bag, checkout, tracking, support, apply, CMS pages, 404 · C seller
+portal and ops console at tool density · D clean-up of what the system replaces.
+**Acceptance criteria:** every screen renders the identity in both themes and both locales
+at 390/768/1440; token contrast tests green; `audit.mjs` clean in both themes; browser suite
+green; no Amiri/Bodoni/brass left in source; DESIGN_DOCTRINE and CLAUDE.md describe it.
+**Do not do:** invent a visual language for a screen the samples did not cover without
+showing the founder screenshots first (CLAUDE.md §12); designer-name references; urgency UI.
+
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
 **Goal:** campaign registry (UTM ids, spend entries), `paid_campaign` touches already
@@ -3071,6 +3092,13 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   so the Egyptian rewrite later touches only the Arabic dictionaries. The "no Arabic
   literal outside the copy layer" check moves to P5.6.2.
 
+- 2026-10-14 · Claude Code session · P5.1.3 · created → IN_PROGRESS · founder decision FD-1/FD-7
+  (visual identity v2) after reviewing four home-page samples in `design-reference/redesign/`.
+  Phase A started: tokens.json carries the Laboratoire and Noir palettes (light the default,
+  every ink proven against every surface in both themes), fonts follow theme and language
+  through CSS variables, the primary action is a flat role fill. Brought forward past GATE 5
+  on the founder's instruction.
+
 - 2026-10-15 · Claude Code session · dev-server fix (no task ID; it unblocks P5.1.3
   verification) · the first request to a route right after `next dev` started answered
   500, "frame.join is not a function". That message was a secondary failure, and it hid
@@ -3097,3 +3125,21 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   compile. One cold run before those two failed nearly every test, with ECONNRESET in the
   server log. It did not happen again in two attempts and its cause is not established. If
   it comes back, start from that run.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase A (foundation) complete; task stays
+  IN_PROGRESS for phases B–D. Tokens (Laboratoire light default, Noir dark, every ink
+  proven against every surface), fonts by theme and language, the flat primary fill, and
+  the shell (masthead and footer) on the 04-laboratoire structure. Two defects found while
+  verifying, both fixed:
+  (1) The footer had five blocks in a four-track grid, so "Information" fell to a second
+  row at 1440. It now follows the reference: three columns, and the published pages on the
+  ruled line beneath them.
+  (2) The body's colour transition was permanent, so a style pass that ran before
+  ThemeScript's `data-theme` (a late stylesheet is enough) animated a returning Noir
+  visitor's page from paper to black. That happened on 4 of 12 loads, 1.3–1.9 s in. The
+  dark audit caught one frame of it on /seller/payouts. The transition now exists only while
+  ThemeToggle is switching: 0 of 23 loads animate, and the toggle still does.
+  `audit.mjs` now defaults to the light theme, since light is the site's default.
+  Verified: `audit.mjs` finds nothing on any surface at any width, in light and in dark;
+  e2e 133/133 from a fresh seed; `pnpm -r typecheck` clean; `pnpm -r test` 1,661 pass;
+  `pnpm guard` clean.
