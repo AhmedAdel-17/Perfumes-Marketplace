@@ -576,6 +576,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
               reference: sub.reference,
               sellerId: sub.sellerId,
               brandName: seller?.tradingName ?? '',
+              brandNameEn: null,
               state: sub.state,
               merchandise: Money.fromMinor(sub.merchandiseMinor),
               shipping: Money.fromMinor(sub.shippingMinor),

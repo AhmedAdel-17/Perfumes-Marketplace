@@ -4,6 +4,8 @@ import { defineMessages } from '../messages';
 export const ORDERS = defineMessages(
   {
     title: 'تتبّع الطلب',
+    // A Latin label in both languages: Arabic is never set in the label face.
+    kicker: 'After the order',
     intro: 'اكتب رقم الطلب ورقم الموبايل الذي طلبت به.',
     reference: 'رقم الطلب',
     referenceHint: 'مثل DY-4KK3YMDK',
@@ -20,6 +22,7 @@ export const ORDERS = defineMessages(
   },
   {
     title: 'Track your order',
+    kicker: 'After the order',
     intro: 'Enter the order number and the mobile number you ordered with.',
     reference: 'Order number',
     referenceHint: 'For example DY-4KK3YMDK',

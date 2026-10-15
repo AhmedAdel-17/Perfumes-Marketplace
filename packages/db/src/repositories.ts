@@ -351,7 +351,14 @@ const orderRepository = (db: Executor): OrderRepository => ({
     if (!order) return null;
 
     const subs = await db
-      .select({ sub: schema.subOrders, brandName: schema.sellers.tradingName })
+      .select({
+        sub: schema.subOrders,
+        brandName: schema.sellers.tradingName,
+        // The house's English name is its brand's, as on the storefront
+        // (`houseBySlug` takes the first brand the same way).
+        brandNameEn: sql<string | null>`(select ${schema.brands.nameEn} from ${schema.brands}
+          where ${schema.brands.sellerId} = ${schema.sellers.id} limit 1)`,
+      })
       .from(schema.subOrders)
       .innerJoin(schema.sellers, eq(schema.sellers.id, schema.subOrders.sellerId))
       .where(eq(schema.subOrders.orderId, order.id));
@@ -382,6 +389,7 @@ const orderRepository = (db: Executor): OrderRepository => ({
         reference: s.sub.reference,
         sellerId: s.sub.sellerId,
         brandName: s.brandName,
+        brandNameEn: s.brandNameEn,
         state: s.sub.state,
         merchandise: Money.fromMinor(s.sub.merchandisePiastres),
         shipping: Money.fromMinor(s.sub.shippingPiastres),

@@ -237,6 +237,8 @@ export interface OrderLookupHouse {
   readonly reference: string;
   readonly sellerId: string;
   readonly brandName: string;
+  /** The house's English name (its brand's), or null (D-3). Display only. */
+  readonly brandNameEn: string | null;
   readonly state: string;
   readonly merchandise: Money;
   readonly shipping: Money;

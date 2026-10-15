@@ -60,7 +60,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
   if (returnable.length === 0 && existing.length === 0) return null;
 
   return (
-    <section className="mt-8 border-t border-line pt-6">
+    <section className="mt-8 border-t border-ink pt-6">
       <h2 className="font-display text-h4 lg:text-h3">{copy.heading}</h2>
 
       {existing.length > 0 && (
@@ -68,16 +68,16 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
           {existing.map((row) => (
             <li key={row.id} className="border border-line bg-raised p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span {...langAttrs(locale, languageOf(row.productName ?? row.brandName))} className="text-small text-ink">{row.productName ?? row.brandName}</span>
-                <span className="text-caption text-accent">
+                <span {...langAttrs(locale, languageOf(row.productName ?? row.brandName))} className="text-body text-ink">{row.productName ?? row.brandName}</span>
+                <span className="text-small text-accent">
                   {RETURN_STATE[locale][row.state as keyof (typeof RETURN_STATE)['ar']] ?? row.state}
                 </span>
               </div>
-              <p className="mt-1 text-caption text-ink3">
+              <p className="mt-1 text-small text-ink3">
                 {RETURN_REASON[locale][row.reason as ReturnReason] ?? row.reason}
               </p>
               {row.refundPiastres !== null && (
-                <p className="mt-2 text-caption text-ink2">
+                <p className="mt-2 text-small text-ink2">
                   {copy.refunded}{' '}
                   <span className="tnum">{formatPrice(row.refundPiastres)}</span>
                   <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
@@ -90,7 +90,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
 
       {returnable.length > 0 && (
         <>
-          <p className="mt-4 max-w-proseMax text-caption leading-relaxed text-ink3">
+          <p className="mt-4 max-w-proseMax text-body leading-relaxed text-ink2">
             {copy.houseReviews}
           </p>
 
@@ -99,8 +99,8 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
               <li key={item.lineItemId} className="border-t border-line py-4 first:border-t-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
                   <div>
-                    <div {...langAttrs(locale, languageOf(item.productName))} className="text-small text-ink">{item.productName}</div>
-                    <div className="text-caption text-ink3">
+                    <div {...langAttrs(locale, languageOf(item.productName))} className="text-body text-ink">{item.productName}</div>
+                    <div className="text-small text-ink3">
                       {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                       {item.daysLeft !== null && item.daysLeft > 0 && (
                         <> · {copy.daysLeft(num(item.daysLeft), item.daysLeft === 1)}</>
@@ -112,9 +112,9 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
                     type="button"
                     onClick={() => setOpen(open === item.lineItemId ? null : item.lineItemId)}
                     aria-expanded={open === item.lineItemId}
-                    className="tappable min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+                    className="tappable inline-flex min-h-touch items-center text-body text-ink transition-colors duration-base ease-out hover:text-accent"
                   >
-                    {open === item.lineItemId ? copy.close : copy.request}
+                    <span className="border-b border-current">{open === item.lineItemId ? copy.close : copy.request}</span>
                   </button>
                 </div>
 
@@ -164,9 +164,10 @@ function ReturnForm({
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mt-4 border border-line bg-raised p-4 lg:p-5">
+    <form onSubmit={onSubmit} noValidate className="mt-4 border border-ink bg-raised p-4 lg:p-5">
       <fieldset>
-        <legend className="text-caption tracking-label text-ink3">{copy.whatIsWrong}</legend>
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <legend className="text-body text-ink2">{copy.whatIsWrong}</legend>
 
         <div className="mt-2">
           {/*
@@ -189,8 +190,8 @@ function ReturnForm({
                 className="mt-1 h-4 w-4 accent-accent"
               />
               <span>
-                <span className="block text-small text-ink">{RETURN_REASON[locale][option]}</span>
-                <span className="block text-caption leading-relaxed text-ink3">
+                <span className="block text-body text-ink">{RETURN_REASON[locale][option]}</span>
+                <span className="block text-small leading-relaxed text-ink3">
                   {RETURN_REASON_DETAIL[locale][option]}
                 </span>
               </span>
@@ -200,27 +201,27 @@ function ReturnForm({
       </fieldset>
 
       <label className="mt-4 block">
-        <span className="text-caption tracking-label text-ink3">{copy.explain}</span>
+        <span className="text-body text-ink2">{copy.explain}</span>
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value.slice(0, 1_000))}
           rows={3}
           maxLength={1_000}
           required
-          className="mt-2 block w-full resize-y border border-line bg-ground p-3 text-small leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+          className="mt-2 block w-full resize-y border border-line bg-sunken p-3 text-body leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus:border-ink focus-visible:border-accent"
         />
         {/*
           The note is required by the router and by the domain, and this line
           says why rather than just insisting. Somebody has to collect the
           bottle and look at it.
         */}
-        <span className="mt-1 block text-micro leading-relaxed text-ink3">
+        <span className="mt-1 block text-small leading-relaxed text-ink3">
           {copy.houseReads}
         </span>
       </label>
 
       {error && (
-        <p role="alert" className="mt-4 border border-line bg-ground p-3 text-small leading-relaxed text-danger">
+        <p role="alert" className="mt-4 border border-danger bg-ground p-3 text-body leading-relaxed text-danger">
           {error}
         </p>
       )}
@@ -234,7 +235,7 @@ function ReturnForm({
           {saving ? copy.sending : copy.send}
         </PrimaryButton>
         {(reason === null || note.trim().length === 0) && (
-          <p className="mt-2 text-caption text-ink3">
+          <p className="mt-2 text-small text-ink3">
             {reason === null ? copy.chooseReason : copy.writeLine}
           </p>
         )}

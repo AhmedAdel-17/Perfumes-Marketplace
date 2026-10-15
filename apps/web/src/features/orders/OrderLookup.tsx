@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, langAttrs, languageOf, ORDERS,
-  stateCopy, data as num,
+  pick, stateCopy, data as num,
 } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
 import { Field } from '@/features/checkout/Field';
@@ -57,7 +57,7 @@ export function OrderLookup() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="px-5 lg:px-0">
-      <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
+      <p className="mb-7 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">
         {copy.intro}
       </p>
 
@@ -71,7 +71,7 @@ export function OrderLookup() {
       />
 
       {searched && !order && (
-        <p role="alert" className="mb-5 border border-line bg-raised p-4 text-small leading-relaxed text-ink2">
+        <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-body leading-relaxed text-ink">
           {copy.notFound}
         </p>
       )}
@@ -94,12 +94,13 @@ function OrderDetail({
   const words = ORDERS[locale];
   return (
     <div className="px-5 lg:px-0">
-      <div className="border border-line bg-raised p-5">
-        <div className="text-caption tracking-label text-ink3">{words.reference}</div>
+      <div className="border border-ink bg-raised p-5">
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <div className="text-body text-ink2">{words.reference}</div>
         <div className="latin mt-2 select-all text-h3 tracking-[3px] text-accent lg:text-h2Lg">
           {order.reference}
         </div>
-        <div className="mt-3 text-caption text-ink3">
+        <div className="mt-3 text-small text-ink3">
           {words.placedBy(order.contactName)}
         </div>
       </div>
@@ -118,9 +119,12 @@ function OrderDetail({
         const position = journeyIndex(house.state);
 
         return (
-          <section key={house.reference} className="mt-7 border-t border-line pt-6">
-            <div className="flex items-baseline justify-between">
-              <h2 {...langAttrs(locale, languageOf(house.brandName))} className="font-display text-h4 lg:text-h3">{house.brandName}</h2>
+          // Each house a ruled panel, as in the bag: one parcel, one timeline.
+          <section key={house.reference} className="mt-5 border border-ink bg-raised p-4 lg:p-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 {...langAttrs(locale, pick(locale, house.brandName, house.brandNameEn).lang)} className="font-display text-h4 lg:text-h3">
+                {pick(locale, house.brandName, house.brandNameEn).text}
+              </h2>
               <span
                 className={statusPill(
                   copy.terminal && house.state !== 'delivered' ? 'danger' : 'accent',
@@ -130,7 +134,7 @@ function OrderDetail({
               </span>
             </div>
 
-            <p className="mt-2 text-small leading-relaxed text-ink2">{copy.detail}</p>
+            <p className="mt-2 text-body leading-relaxed text-ink2">{copy.detail}</p>
 
             {position !== null && (
               <ol className="mt-5 flex gap-1.5" aria-label={words.stages}>
@@ -139,7 +143,7 @@ function OrderDetail({
                     key={step}
                     aria-current={index === position ? 'step' : undefined}
                     className={[
-                      'h-[3px] flex-1 rounded-pill transition-colors duration-slow ease-out',
+                      'h-[3px] flex-1 transition-colors duration-slow ease-out',
                       index <= position ? 'bg-accent' : 'bg-line',
                     ].join(' ')}
                   >
@@ -151,7 +155,7 @@ function OrderDetail({
 
             {house.trackingNumber && (
               <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
-                <span className="text-caption text-ink3">{words.trackingNumber}</span>
+                <span className="text-small text-ink3">{words.trackingNumber}</span>
                 {/* Selectable, because the customer will paste it into the
                     courier's own tracking page. */}
                 <span className="latin tnum select-all text-small text-ink">
@@ -162,7 +166,7 @@ function OrderDetail({
 
             <ul className="mt-5">
               {house.items.map((item) => (
-                <li key={item.name} className="flex justify-between py-1.5 text-small text-ink2">
+                <li key={item.name} className="flex justify-between gap-3 py-1.5 text-body text-ink2">
                   <span {...langAttrs(locale, languageOf(item.name))}>
                     {item.name}
                     {item.quantity > 1 && (
@@ -175,7 +179,7 @@ function OrderDetail({
                   </span>
                 </li>
               ))}
-              <li className="flex justify-between py-1.5 text-caption text-ink3">
+              <li className="flex justify-between border-t border-line py-1.5 pt-2 text-body text-ink3">
                 <span>{words.delivery}</span>
                 <span>
                   <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
@@ -187,9 +191,9 @@ function OrderDetail({
         );
       })}
 
-      <div className="mt-7 flex items-baseline justify-between border-t border-line pt-5">
+      <div className="mt-6 flex items-baseline justify-between border-t border-ink pt-5">
         <span className="font-display text-h4">{words.totalOnDelivery}</span>
-        <span className="text-h3 font-semibold lg:text-h2Lg">
+        <span className="text-h3 lg:text-h2Lg">
           <span className="tnum">{formatPrice(order.totalPiastres)}</span>
           <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
@@ -206,9 +210,9 @@ function OrderDetail({
       <button
         type="button"
         onClick={onBack}
-        className="tappable mt-8 border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+        className="tappable mt-8 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
       >
-        {words.trackAnother}
+        <span className="border-b border-current">{words.trackAnother}</span>
       </button>
     </div>
   );

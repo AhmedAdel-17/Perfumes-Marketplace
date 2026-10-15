@@ -526,7 +526,15 @@ try {
     for (const good of ['01012345678', '01112345678', '01212345678', '01512345678', '+201012345678']) {
       await fillCheckout(shopper, { phone: good });
       await shopper.locator('button[type="submit"]').click();
-      await shopper.waitForTimeout(700);
+      // Until the submission has SETTLED — confirmed, or the button usable
+      // again after a refusal. A fixed 700 ms read the page mid-flight whenever
+      // placing took longer, then filled the form again and clicked a button
+      // that was still disabled, failing this test and the two after it.
+      await shopper.waitForFunction(() => {
+        const text = document.querySelector('main')?.innerText ?? '';
+        const button = document.querySelector('button[type="submit"]');
+        return text.includes('تم استلام طلبك') || (button !== null && !button.disabled);
+      }, null, { timeout: 20_000 });
       const stillOnForm = await shopper.locator('main').innerText();
       assert(
         !stillOnForm.includes('رقم موبايل مصري غير صحيح'),

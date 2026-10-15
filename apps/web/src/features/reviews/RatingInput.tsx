@@ -34,8 +34,8 @@ export function RatingInput({
       <legend className="sr-only">{label}</legend>
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <span aria-hidden="true" className="text-small text-ink">{label}</span>
-        <span className="text-caption text-ink3">{prompt}</span>
+        <span aria-hidden="true" className="text-body text-ink">{label}</span>
+        <span className="text-small text-ink3">{prompt}</span>
       </div>
 
       <div className="mt-2 flex items-center gap-1">
@@ -74,7 +74,7 @@ export function RatingInput({
                 <span
                   aria-hidden="true"
                   className={[
-                    'block h-[3px] w-full rounded-pill transition-colors duration-base ease-out',
+                    'block h-[3px] w-full transition-colors duration-base ease-out',
                     filled ? 'bg-accent' : 'bg-line',
                   ].join(' ')}
                 />
@@ -85,7 +85,7 @@ export function RatingInput({
 
         <span
           dir="ltr"
-          className="tnum ms-3 min-w-[2ch] text-caption text-ink2"
+          className="tnum ms-3 min-w-[2ch] text-small text-ink2"
           aria-hidden="true"
         >
           {value === null ? '—' : num(value)}

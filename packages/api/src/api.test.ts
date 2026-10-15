@@ -403,6 +403,27 @@ describe('orders.byReference — two factors, neither a password', () => {
     expect(found?.totalPiastres).toBe(placed.totalPiastres);
   });
 
+  it("names each house in English where it has given an English name", async () => {
+    // The English tracking page printed the Arabic trading name: the lookup
+    // carried no English one. It is the brand's, as on the storefront.
+    await pg.query(`UPDATE brands SET name_en = 'Maison Nour' WHERE slug = 'maison-nour-b'`);
+    const placed = await caller(ANON).orders.place({
+      contactName: 'سارة محمود',
+      contactPhone: '01234445555',
+      address: {
+        governorate: 'giza', city: 'الدقي', area: 'المساحة',
+        street: 'شارع التحرير', building: '7',
+      },
+      lines: [{ productId: ids['maison-nour:product']!, quantity: 1 }],
+      paymentMethod: 'cod',
+    });
+    const found = await caller(ANON).orders.byReference({
+      reference: placed.reference, phone: '01234445555',
+    });
+    expect(found?.houses[0]?.brandName).toBe('ميزون نور');
+    expect(found?.houses[0]?.brandNameEn).toBe('Maison Nour');
+  });
+
   it('forgives case and a missing hyphen in what the customer typed', async () => {
     const placed = await caller(ANON).orders.place({
       contactName: 'سارة محمود',

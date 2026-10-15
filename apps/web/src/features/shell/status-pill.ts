@@ -19,10 +19,16 @@
 export type StatusTone = 'accent' | 'danger' | 'quiet';
 
 const TONES: Record<StatusTone, string> = {
-  accent: 'border-accent/50 text-accent',
-  danger: 'border-danger/50 text-danger',
+  accent: 'border-accent text-accent',
+  danger: 'border-danger text-danger',
   quiet: 'border-line text-ink2',
 };
 
+/*
+ * Identity v2: a square stamp, not a pill, at reading size and WITHOUT
+ * tracking — the labels are Arabic on the Arabic site, and letterspacing
+ * breaks the joins (CLAUDE.md §15). Full-strength borders: an alpha on a role
+ * spends contrast that was never there.
+ */
 export const statusPill = (tone: StatusTone): string =>
-  `rounded-pill border px-3 py-1 text-micro tracking-label ${TONES[tone]}`;
+  `inline-block border px-2 py-0.5 text-small ${TONES[tone]}`;

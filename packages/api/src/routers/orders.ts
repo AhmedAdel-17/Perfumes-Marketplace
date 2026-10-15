@@ -284,6 +284,7 @@ export const ordersRouter = router({
           reference: h.reference,
           trackingNumber: h.trackingNumber,
           brandName: h.brandName,
+          brandNameEn: h.brandNameEn,
           state: h.state,
           merchandisePiastres: h.merchandise.minor,
           shippingPiastres: h.shipping.minor,

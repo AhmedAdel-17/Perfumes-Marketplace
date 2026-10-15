@@ -49,9 +49,9 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
   const copy = REVIEWS[locale];
 
   return (
-    <section className="mt-8 border-t border-line pt-6">
+    <section className="mt-8 border-t border-ink pt-6">
       <h2 className="font-display text-h4 lg:text-h3">{copy.rateWhatArrived}</h2>
-      <p className="mt-2 max-w-proseMax text-caption leading-relaxed text-ink3">
+      <p className="mt-2 max-w-proseMax text-body leading-relaxed text-ink2">
         {unreviewed.length === 0
           ? copy.allReviewed
           : copy.howShown}
@@ -62,22 +62,22 @@ export function ReviewPanel({ reference, phone }: { reference: string; phone: st
           <li key={item.lineItemId} className="border-t border-line py-4 first:border-t-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
               <div>
-                <div {...langAttrs(locale, languageOf(item.productName))} className="text-small text-ink">{item.productName}</div>
-                <div className="text-caption text-ink3">
+                <div {...langAttrs(locale, languageOf(item.productName))} className="text-body text-ink">{item.productName}</div>
+                <div className="text-small text-ink3">
                   {item.brandName} · <span className="tnum">{num(item.volumeMl)}</span> {copy.ml}
                 </div>
               </div>
 
               {item.reviewed ? (
-                <span className="text-caption text-accent">{copy.reviewed}</span>
+                <span className="text-small text-accent">{copy.reviewed}</span>
               ) : (
                 <button
                   type="button"
                   onClick={() => setOpen(open === item.lineItemId ? null : item.lineItemId)}
                   aria-expanded={open === item.lineItemId}
-                  className="tappable min-h-touch border-b border-accent/50 text-small transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+                  className="tappable inline-flex min-h-touch items-center text-body text-ink transition-colors duration-base ease-out hover:text-accent"
                 >
-                  {open === item.lineItemId ? copy.close : copy.write}
+                  <span className="border-b border-current">{open === item.lineItemId ? copy.close : copy.write}</span>
                 </button>
               )}
             </div>
@@ -153,7 +153,7 @@ function ReviewForm({
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mt-4 border border-line bg-raised p-4 lg:p-5">
+    <form onSubmit={onSubmit} noValidate className="mt-4 border border-ink bg-raised p-4 lg:p-5">
       {REVIEW_DIMENSIONS.map((dimension) => (
         <RatingInput
           key={dimension}
@@ -165,7 +165,8 @@ function ReviewForm({
       ))}
 
       <label className="mt-5 block">
-        <span className="text-caption tracking-label text-ink3">
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <span className="text-body text-ink2">
           {copy.yourWords}
         </span>
         <textarea
@@ -173,14 +174,14 @@ function ReviewForm({
           onChange={(event) => setBody(event.target.value.slice(0, REVIEW_BODY_MAX))}
           rows={4}
           maxLength={REVIEW_BODY_MAX}
-          className="mt-2 block w-full resize-y border border-line bg-ground p-3 text-small leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus-visible:border-accent"
+          className="mt-2 block w-full resize-y border border-line bg-sunken p-3 text-body leading-relaxed text-ink outline-none transition-colors duration-base ease-out focus:border-ink focus-visible:border-accent"
         />
         {/*
           `dir="ltr"` isolates the counter. In an RTL paragraph "1200/160"
           reorders and renders as "160/1200" — the listing editor's counter
           shipped reading "160/0" for exactly this reason.
         */}
-        <span dir="ltr" className="tnum mt-1 block text-end text-micro text-ink3">
+        <span dir="ltr" className="tnum mt-1 block text-end text-small text-ink3">
           {body.length}/{REVIEW_BODY_MAX}
         </span>
       </label>
@@ -197,13 +198,13 @@ function ReviewForm({
           onChange={(event) => setIncentive(event.target.checked)}
           className="mt-1 h-4 w-4 accent-accent"
         />
-        <span className="text-caption leading-relaxed text-ink2">
+        <span className="text-body leading-relaxed text-ink2">
           {copy.incentive}
         </span>
       </label>
 
       {error && (
-        <p role="alert" className="mt-4 border border-line bg-ground p-3 text-small leading-relaxed text-danger">
+        <p role="alert" className="mt-4 border border-danger bg-ground p-3 text-body leading-relaxed text-danger">
           {error}
         </p>
       )}
@@ -220,7 +221,7 @@ function ReviewForm({
           {saving ? copy.saving : copy.submit}
         </PrimaryButton>
         {missing.length > 0 && (
-          <p className="mt-2 text-caption text-ink3">
+          <p className="mt-2 text-small text-ink3">
             {copy.remaining(missing.map((d) => REVIEW_DIMENSION[locale][d]).join(copy.listSeparator))}
           </p>
         )}

@@ -3280,3 +3280,36 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: audit (checkout, en-checkout, house, en-house) has no findings in light
   and dark at all six widths; e2e 133/133; typecheck clean; unit tests 1,674 pass;
   guard clean.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 7: order tracking, with its
+  review and return panels.
+  - Ruled page head ("After the order").
+  - The reference panel is ruled at full strength.
+  - Each house is a ruled panel holding its own square-edged timeline.
+  - The review and return forms are ruled, with fields set into the paper.
+  - The total sits under a full-strength rule.
+  Fixes:
+  - The English page named houses in Arabic. `brandNameEn` (the brand's, as on the
+    storefront) now runs through `findForCustomerLookup` and `orders.byReference`,
+    with an api test.
+  - Letterspaced Arabic in the reference label, the review label and the return
+    legend and label. These were the last ones on the customer side.
+  - Below-floor sizes (`text-caption` and `text-micro` on Arabic).
+  - Half-alpha borders.
+  - `statusPill` is now a square stamp at reading size with no tracking and solid
+    borders. Its seven seller and ops uses were audited with it.
+  - e2e "accepts every valid Egyptian prefix" read the page 700 ms after submitting.
+    When placing took longer it refilled the form and clicked a disabled button,
+    failing that test and the two after it (seen once). It now waits until the
+    submission settles.
+  Not changed: a line item's name on tracking is the order-time snapshot, in Arabic,
+  and the review and return rows print the house in Arabic. Neither stores an
+  English name; this is noted for D-3.
+  Verified: audit (order-lookup, en-order-lookup, and the statusPill screens
+  ops-content, ops-site, ops-support, ops-houses, ops-page-editor and
+  seller-listing-editor) has no findings in light and dark at all six widths, and
+  every named surface was actually audited. e2e 133/133; typecheck clean; unit
+  tests 1,675 pass; guard clean.
+  Note: an audit run straight after the e2e suite cannot sign in, because the
+  in-process login-code rate limit (DEBT_REGISTER #2) is spent. Restart the server
+  between them.
