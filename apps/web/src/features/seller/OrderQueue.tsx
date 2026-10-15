@@ -6,6 +6,7 @@ import {
 } from '@diyar/i18n';
 import { confirmSubOrder, declineSubOrder, dispatchSubOrder, fetchQueue } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { statusPill } from '@/features/shell/status-pill';
 import { REJECTION_REASONS } from '@diyar/domain';
 
 type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
@@ -40,7 +41,7 @@ export function OrderQueue() {
   };
 
   if (queue === null) {
-    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">…جارٍ التحميل</p>;
+    return <p className="px-5 py-8 text-body text-ink3 lg:px-0">…جارٍ التحميل</p>;
   }
 
   // Three groups, in the order a house works through them: decide, then pack
@@ -53,7 +54,7 @@ export function OrderQueue() {
   return (
     <div className="px-5 lg:px-0">
       {error && (
-        <p role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small text-ink">
+        <p role="alert" className="mb-6 border border-danger bg-raised p-4 text-body text-ink">
           {error}
         </p>
       )}
@@ -65,7 +66,7 @@ export function OrderQueue() {
       )}
 
       {queue.length === 0 && (
-        <p className="py-9 text-center text-small leading-relaxed text-ink3">
+        <p className="border border-line bg-raised px-6 py-9 text-center text-body leading-relaxed text-ink2">
           لا توجد طلبات بعد.
         </p>
       )}
@@ -87,9 +88,11 @@ function Section({
   if (entries.length === 0) return null;
   return (
     <section className="mb-9">
-      <h2 className="mb-4 border-b border-line pb-3 font-display text-h3 lg:text-h2Lg">
-        {title} <span className="text-ink3">·</span>{' '}
-        <span className="tnum text-ink3">{num(entries.length)}</span>
+      {/* The group's head in the register: its name and how many are in it,
+          over a full-strength rule. */}
+      <h2 className="mb-4 flex items-baseline gap-3 border-b border-ink pb-2 font-display text-h3 lg:text-h2">
+        {title}
+        <span className="latin tnum text-body text-ink3">{num(entries.length)}</span>
       </h2>
       {/*
         Two columns of cards from `lg`, not one card stretched to 1240px.
@@ -124,29 +127,33 @@ function Row({
   const r = entry.recipient;
 
   return (
-    <article className="mb-4 border border-line bg-raised p-4 lg:p-5">
+    <article className="mb-4 border border-ink bg-raised">
       {/*
         The card is read in the order the work happens: how long is left, what
         to put in the box, where it goes. The reference is the least urgent
         thing on it and used to be the most prominent.
       */}
-      <header className="flex items-baseline justify-between gap-3 border-b border-line pb-3">
+      {/* The card's head bar, ruled at full strength like a specimen label:
+          the clock it is racing, and its reference. */}
+      <header className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2 lg:px-5">
         <Countdown
           confirmDueAt={entry.confirmDueAt}
           dispatchDueAt={entry.dispatchDueAt}
           state={entry.state}
         />
-        <span className="latin text-micro tracking-label text-ink3">{entry.reference}</span>
+        <span className="latin select-all text-caption tracking-label text-ink2">{entry.reference}</span>
       </header>
+
+      <div className="p-4 lg:p-5">
 
       {/* What goes in the box — the largest thing on the card, because it is
           what the person holding it is looking for. */}
-      <ul className="mt-4">
+      <ul>
         {entry.items.map((item) => (
           <li key={item.sku} className="flex items-baseline justify-between gap-3 py-1.5">
             <span className="font-display text-h4">
               {item.name}
-              <span className="ms-2 text-caption text-ink3">
+              <span className="ms-2 text-small text-ink3">
                 <span className="tnum">{num(item.volumeMl)}</span> مل
               </span>
             </span>
@@ -164,11 +171,14 @@ function Row({
                   should be the most legible thing on the row, not the least;
                   the tint still says "quantity" on its own.
                 */
-                <span className="rounded-sm bg-accent/15 px-2 py-0.5 text-caption text-ink">
+                // A ruled square, not a tint: an alpha on the accent was the
+                // badge that failed contrast once already. Ink on paper, in a
+                // box, is the most legible thing on the row, as it should be.
+                <span className="border border-ink px-2 py-0.5 text-body text-ink">
                   <span className="tnum">×{num(item.quantity)}</span>
                 </span>
               )}
-              <span className="latin text-micro tracking-label text-ink3">{item.sku}</span>
+              <span className="latin text-caption tracking-label text-ink3">{item.sku}</span>
             </span>
           </li>
         ))}
@@ -194,7 +204,7 @@ function Row({
           </a>
         </div>
 
-        <address className="mt-2 text-caption not-italic leading-relaxed text-ink2">
+        <address className="mt-2 text-body not-italic leading-relaxed text-ink2">
           {r.building} {r.street}
           {r.floor && <> · الدور <span className="tnum">{r.floor}</span></>}
           {r.apartment && <> · شقة <span className="tnum">{r.apartment}</span></>}
@@ -210,15 +220,16 @@ function Row({
       </div>
 
       <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
-        <span className="text-caption tracking-label text-ink3">{copy.label}</span>
-        <span className="text-bodyLg font-semibold">
+        {/* The state is Arabic: no tracking (CLAUDE.md §15). */}
+        <span className={statusPill('quiet')}>{copy.label}</span>
+        <span className="text-bodyLg">
           <span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span>
           <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
       </div>
 
       {entry.trackingNumber && (
-        <div className="mt-3 flex justify-between border-t border-line pt-3 text-caption">
+        <div className="mt-3 flex justify-between border-t border-line pt-3 text-body">
           <span className="text-ink3">رقم الشحنة</span>
           <span className="latin tnum select-all text-ink">{entry.trackingNumber}</span>
         </div>
@@ -226,7 +237,7 @@ function Row({
 
       {stage === 'ship' && (
         <div className="mt-4 border-t border-line pt-4">
-          <label className="mb-2 block text-caption tracking-label text-ink2" htmlFor={`t-${entry.id}`}>
+          <label className="mb-2 block text-body text-ink2" htmlFor={`t-${entry.id}`}>
             رقم الشحنة من شركة الشحن
           </label>
           <div className="flex gap-3">
@@ -236,13 +247,13 @@ function Row({
               onChange={(event) => setTracking(event.target.value)}
               inputMode="text"
               autoComplete="off"
-              className="latin h-control min-w-0 flex-1 rounded-sm border border-line bg-ground px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+              className="latin h-control min-w-0 flex-1 border border-line bg-sunken px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
             />
             <PrimaryButton type="button" disabled={busy || tracking.trim().length < 4} onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))} fill="auto">
       {busy ? '…' : 'تم الشحن'}
     </PrimaryButton>
           </div>
-          <p className="mt-2 text-micro leading-relaxed text-ink3">
+          <p className="mt-2 text-small leading-relaxed text-ink3">
             اكتب الرقم كما هو على البوليصة. سيراه العميل في صفحة التتبّع.
           </p>
         </div>
@@ -257,7 +268,7 @@ function Row({
             type="button"
             disabled={busy}
             onClick={() => setDeclining(true)}
-            className="flex h-control min-w-[120px] items-center justify-center rounded-sm border border-line px-6 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-danger hover:text-danger"
+            className="flex h-control min-w-[120px] items-center justify-center border border-ink px-6 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger"
           >
             اعتذار
           </button>
@@ -265,6 +276,7 @@ function Row({
       )}
 
       {stage === 'decide' && declining && <DeclineReasons entry={entry} busy={busy} act={act} onCancel={() => setDeclining(false)} />}
+      </div>
     </article>
   );
 }
@@ -304,7 +316,7 @@ function DeclineReasons({
 }) {
   return (
     <div className="mt-4 border-t border-line pt-4">
-      <p className="mb-3 text-caption text-ink2">اختر سببًا محدّدًا:</p>
+      <p className="mb-3 text-body text-ink2">اختر سببًا محدّدًا:</p>
       <div className="flex flex-wrap gap-2">
         {REASONS.map((reason) => (
           <button
@@ -312,7 +324,7 @@ function DeclineReasons({
             type="button"
             disabled={busy}
             onClick={() => act(entry.id, () => declineSubOrder(entry.id, reason.value))}
-            className="tappable flex min-h-touch items-center rounded-sm border border-line px-4 text-small text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
+            className="tappable flex min-h-touch items-center border border-line bg-ground px-4 text-body text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger disabled:opacity-disabled"
           >
             {reason.label}
           </button>
@@ -321,9 +333,9 @@ function DeclineReasons({
       <button
         type="button"
         onClick={onCancel}
-        className="tappable mt-4 flex min-h-touch items-center text-caption text-ink3 underline transition-colors duration-base ease-out hover:text-ink"
+        className="tappable mt-4 flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-ink"
       >
-        رجوع
+        <span className="border-b border-current">رجوع</span>
       </button>
     </div>
   );
@@ -335,6 +347,11 @@ function DeclineReasons({
  * "18:40" requires the reader to know what time it is now and do subtraction;
  * "متبقٍ ٣ ساعات" does not. It turns amber under an hour and red once it has
  * passed, because a breached SLA has to look different from a tight one.
+ *
+ * NOT BY COLOUR ALONE. Under an hour also prints an "عاجل" stamp: in Noir the
+ * accent IS the ink (bone on black), so the amber step was invisible in the
+ * dark theme, and colour is never allowed to carry meaning on its own anyway.
+ * Overdue already says so in words ("تأخّر").
  *
  * TWO CLOCKS. Confirmation while the order waits for the house; dispatch once
  * it is confirmed. The second was never shown — the column behind it had never
@@ -367,23 +384,20 @@ function Countdown({ confirmDueAt, dispatchDueAt, state }: {
   const hours = Math.floor(Math.abs(remaining) / 3_600_000);
   const minutes = Math.floor((Math.abs(remaining) % 3_600_000) / 60_000);
 
-  const tone = overdue
-    ? 'text-danger'
-    : remaining < 3_600_000
-      ? 'text-accent'
-      : 'text-ink3';
+  const urgent = !overdue && remaining < 3_600_000;
+  const tone = overdue ? 'text-danger' : urgent ? 'text-accent' : 'text-ink2';
 
   return (
     <span className={`flex items-baseline gap-1.5 text-bodyLg ${tone}`}>
-      {/* No opacity on the label. Every ink sits just above 4.5:1 by
-          construction, and an alpha spends a margin that was never there. */}
-      <span className="text-caption tracking-label">
+      {urgent && <span className={`${statusPill('accent')} me-1 self-center`}>عاجل</span>}
+      {/* No opacity on the label, and no tracking: it is Arabic. */}
+      <span className="text-small">
         {shipping
           ? (overdue ? 'تأخّر الشحن' : 'متبقٍ للشحن')
           : (overdue ? 'تأخّر' : 'متبقٍ')}
       </span>
-      {hours > 0 && <span className="tnum font-semibold">{num(hours)}<span className="text-caption font-normal"> س</span></span>}
-      <span className="tnum font-semibold">{num(minutes)}<span className="text-caption font-normal"> د</span></span>
+      {hours > 0 && <span className="tnum font-semibold">{num(hours)}<span className="text-small font-normal"> س</span></span>}
+      <span className="tnum font-semibold">{num(minutes)}<span className="text-small font-normal"> د</span></span>
     </span>
   );
 }

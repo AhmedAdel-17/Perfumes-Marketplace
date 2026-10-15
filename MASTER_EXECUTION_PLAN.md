@@ -3338,3 +3338,23 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   all six widths; e2e 133/133; typecheck clean; unit tests 1,675 pass; guard clean.
   Phase B gate: the FULL `audit.mjs` (every customer, seller and ops surface, at all
   six widths) has no findings in light and dark, from a fresh seed.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase C, screen 1: the seller order queue.
+  - `ConsoleHead` (features/shell) is the working screens' head: a Latin kicker, the
+    title, an optional intro, a full-strength rule, and the section navigation in its
+    own band. It is used by the four seller list pages; the listing editor keeps its
+    back-link head until its turn.
+  - SellerNav labels are no longer letterspaced (they are Arabic). "You are here" is
+    now `aria-current` plus an ink rule plus colour; it used to be colour alone.
+  - Order cards have a full-strength head bar carrying the clock and the reference.
+    The quantity is a ruled square instead of an accent tint (an alpha that once
+    failed contrast). The state is a stamp, prices are at regular weight, fields are
+    set into the paper, the decline control is square, and sizes meet the reading
+    floor.
+  - Under an hour to the deadline now prints an "عاجل" stamp as well as the colour.
+    In Noir the accent IS the ink, so the amber step was invisible there, and colour
+    may never carry meaning alone.
+  Fix: /seller/listings put SellerNav straight into `main` with no gutter and
+  scrolled 8px sideways at 360 and 390. It is now in ConsoleHead.
+  Verified: audit (all six seller surfaces) has no findings in light and dark at all
+  six widths; e2e 133/133; typecheck clean; unit tests 1,675 pass; guard clean.

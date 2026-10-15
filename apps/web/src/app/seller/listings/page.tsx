@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { ListingList } from '@/features/seller/ListingList';
 import { SellerNav } from '@/features/seller/SellerNav';
+import { ConsoleHead } from '@/features/shell/ConsoleHead';
 import { activeSellerSession } from '@/features/seller/actions';
 import { api } from '@/core/api';
 
@@ -31,10 +32,7 @@ export default async function SellerListingsPage() {
   */
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <SellerNav current="listings" />
-      <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pt-9 lg:text-h1Lg">
-        المنتجات
-      </h1>
+      <ConsoleHead kicker="Listings" title="المنتجات" nav={<SellerNav current="listings" />} />
       <ListingList listings={listings} brandId={brand?.id ?? null} />
     </main>
   );
