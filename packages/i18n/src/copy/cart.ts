@@ -5,7 +5,7 @@ export const CART = defineMessages(
   {
     title: 'الحقيبة',
     // Latin labels in both languages: Arabic is never set in the label face.
-    kicker: 'The bag',
+    kicker: 'Your selection',
     summary: 'Summary',
     pricing: '…جارٍ الحساب',
     failed: 'تعذّر حساب الحقيبة. تحقّق من اتصالك ثم أعد المحاولة.',
@@ -33,7 +33,7 @@ export const CART = defineMessages(
   },
   {
     title: 'Bag',
-    kicker: 'The bag',
+    kicker: 'Your selection',
     summary: 'Summary',
     pricing: 'Working out your bag…',
     failed: 'We could not price your bag. Check your connection and try again.',

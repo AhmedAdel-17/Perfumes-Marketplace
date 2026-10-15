@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  CHECKOUT, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, governorateOptions, langAttrs, languageOf,
-  NOUN, nounIn, data as num, type Locale,
+  CHECKOUT, countedIn, CURRENCY_LABEL, editorialIn, formatPrice, governorateOptions, langAttrs,
+  NOUN, nounIn, data as num, pick, type Locale,
 } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { useLocale } from '@/features/shell/LocaleProvider';
@@ -111,24 +111,27 @@ export function CheckoutForm() {
 
   if (!hydrated || cart === null) {
     return (
-      <>
+      <div className="px-5 lg:px-0">
         <Heading title={copy.title} />
-        <p className="px-5 py-8 text-small text-ink3 lg:px-0">{copy.preparing}</p>
-      </>
+        <p className="py-8 text-body text-ink3">{copy.preparing}</p>
+      </div>
     );
   }
 
   if (cart.isEmpty) {
     return (
-      <div className="px-5 py-9 text-center lg:px-0">
+      <div className="px-5 lg:px-0">
         <Heading title={copy.title} />
-        <p className="font-display text-h3">{copy.empty}</p>
-        <Link
-          href={localeHref(locale, '/')}
-          className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
-        >
-          {copy.browse}
-        </Link>
+        <div className="border border-line bg-raised px-6 py-9 text-center">
+          <p className="font-display text-h3">{copy.empty}</p>
+          {/* To the catalogue, as the bag's empty state does. */}
+          <Link
+            href={localeHref(locale, '/search')}
+            className="tappable mt-5 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
+          >
+            <span className="border-b border-current">{copy.browse}</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -157,19 +160,19 @@ export function CheckoutForm() {
     >
       <Heading title={copy.title} />
       {result && !result.ok && (
-        <div role="alert" className="mb-6 border border-danger/50 bg-raised p-4 text-small leading-relaxed text-ink lg:col-span-12">
+        <div role="alert" className="mb-6 border border-danger bg-raised p-4 text-body leading-relaxed text-ink lg:col-span-12">
           {result.message}
           {result.reason === 'cart_changed' && (
-            <Link href={localeHref(locale, '/cart')} className="tappable mt-3 block text-accent underline">
-              {copy.reviewBag}
+            <Link href={localeHref(locale, '/cart')} className="tappable mt-2 flex min-h-touch items-center text-ink hover:text-accent">
+              <span className="border-b border-current">{copy.reviewBag}</span>
             </Link>
           )}
         </div>
       )}
 
       <div className="lg:col-span-7">
-      <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.contact}</h2>
+      <section aria-labelledby="step-contact" className="mb-8">
+        <Step id="step-contact" index="01" title={copy.contact} />
         <Field
           label={copy.fullName} value={contactName} onChange={setContactName}
           error={errors.contactName} required autoComplete="name" maxLength={80}
@@ -182,8 +185,8 @@ export function CheckoutForm() {
         />
       </section>
 
-      <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.address}</h2>
+      <section aria-labelledby="step-address" className="mb-8">
+        <Step id="step-address" index="02" title={copy.address} />
         <SelectField
           label={copy.governorate} value={governorate} onChange={setGovernorate}
           options={governorates}
@@ -209,33 +212,40 @@ export function CheckoutForm() {
         />
       </section>
 
-      <section className="mb-8">
-        <h2 className="mb-5 font-display text-h3 lg:text-h2Lg">{copy.payment}</h2>
+      <section aria-labelledby="step-payment" className="mb-8">
+        <Step id="step-payment" index="03" title={copy.payment} />
         {/*
           One method, presented as a statement rather than a radio group with a
           single option. Cash on delivery needs no gateway and no approvals, so
           it is a real launch method — not a placeholder. Card and wallet appear
           here when Paymob is connected.
         */}
-        <div className="border border-line bg-raised p-4">
+        <div className="border border-ink bg-raised p-4">
           <div className="text-bodyLg">{copy.cashOnDelivery}</div>
-          <p className="mt-2 text-caption leading-relaxed text-ink3">
+          <p className="mt-2 text-body leading-relaxed text-ink2">
             {copy.cashOnDeliveryBody}
           </p>
         </div>
       </section>
       </div>
 
-      <div className="lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:border-line lg:bg-raised lg:p-7">
+      {/* The same ruled summary panel as the bag, so the figure the visitor
+          confirms looks exactly like the one they decided on. */}
+      <div className="mb-8 border border-ink bg-raised lg:sticky lg:top-[110px] lg:col-span-5 lg:mb-0">
+        <h2 className="latin border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
+          {copy.summary.toUpperCase()}
+        </h2>
+        <div className="px-4 pb-5 pt-4 lg:px-6 lg:pb-6">
         <Summary cart={cart} locale={locale} />
 
         <PrimaryButton type="submit" disabled={submitting} fill="full">
           {submitting ? copy.placing : copy.place}
         </PrimaryButton>
 
-        <p className="mt-3 pb-8 text-center text-micro leading-relaxed text-ink3 lg:pb-0">
+        <p className="mt-3 text-center text-small leading-relaxed text-ink3">
           {copy.agreement}
         </p>
+        </div>
       </div>
     </form>
   );
@@ -250,10 +260,29 @@ export function CheckoutForm() {
  * component is also what stops the four copies drifting apart.
  */
 function Heading({ title }: { title: string }) {
+  const kicker = CHECKOUT[useLocale()].kicker;
+  // Identity v2: the register's page head, ruled at full strength.
   return (
-    <h1 className="px-5 pb-6 pt-7 font-display text-h1 leading-heading lg:col-span-12 lg:px-0 lg:pb-8 lg:pt-9 lg:text-h1Lg">
-      {title}
-    </h1>
+    <header className="mb-6 border-b border-ink pb-4 pt-8 lg:col-span-12 lg:mb-8 lg:pt-12">
+      <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+        {kicker.toUpperCase()}
+        <span aria-hidden="true" className="h-px w-12 bg-current" />
+      </span>
+      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{title}</h1>
+    </header>
+  );
+}
+
+/**
+ * A numbered step of the form: the register's section head at the size of a
+ * form, so the three steps read as 01, 02, 03 of one document.
+ */
+function Step({ id, index, title }: { id: string; index: string; title: string }) {
+  return (
+    <div className="mb-5 flex items-baseline gap-4 border-b border-ink pb-3">
+      <span className="latin text-small text-ink3 tnum">{index}</span>
+      <h2 id={id} className="font-display text-h3 lg:text-h2Lg">{title}</h2>
+    </div>
   );
 }
 
@@ -264,11 +293,13 @@ function Summary({ cart, locale }: { cart: PricedCartResult; locale: Locale }) {
     // desktop panel the panel's own border already does that job, and two
     // lines 1px apart is the kind of detail the doctrine calls a misaligned
     // hairline.
-    <section className="border-t border-line pt-5 lg:border-t-0 lg:pt-0">
+    <section>
       {cart.houses.map((house) => (
-        <div key={house.sellerId} className="mb-3 flex justify-between text-small text-ink2">
+        <div key={house.sellerId} className="mb-3 flex justify-between gap-3 text-body text-ink2">
           <span>
-            <span {...langAttrs(locale, languageOf(house.brandName))}>{house.brandName}</span>
+            <span {...langAttrs(locale, pick(locale, house.brandName, house.brandNameEn).lang)}>
+              {pick(locale, house.brandName, house.brandNameEn).text}
+            </span>
             <span className="text-ink3">
               {' · '}
               <span className="tnum">{num(house.etaDaysMin)}</span>–
@@ -294,14 +325,14 @@ function Summary({ cart, locale }: { cart: PricedCartResult; locale: Locale }) {
         that one screen before the money.
       */}
       <div className="mt-4 border-t border-line pt-4">
-        <div className="flex justify-between py-1 text-small text-ink2">
+        <div className="flex justify-between py-1 text-body text-ink2">
           <span>{copy.products}</span>
           <span>
             <span className="tnum">{formatPrice(cart.merchandisePiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </span>
         </div>
-        <div className="flex justify-between py-1 text-small text-ink2">
+        <div className="flex justify-between py-1 text-body text-ink2">
           <span>{copy.delivery(countedIn(locale, cart.houses.length, NOUN.shipment, editorialIn(locale)))}</span>
           <span>
             <span className="tnum">{formatPrice(cart.shippingPiastres)}</span>
@@ -310,9 +341,9 @@ function Summary({ cart, locale }: { cart: PricedCartResult; locale: Locale }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
+      <div className="mb-5 mt-3 flex items-baseline justify-between border-t border-ink pt-4">
         <span className="font-display text-h4">{copy.total}</span>
-        <span className="text-h3 font-semibold lg:text-h2Lg">
+        <span className="text-h3 lg:text-h2Lg">
           <span className="tnum">{formatPrice(cart.totalPiastres)}</span>
           <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
@@ -325,6 +356,20 @@ function Confirmation(
   { result, locale }: { result: Extract<PlaceOrderResult, { ok: true }>; locale: Locale },
 ) {
   const copy = CHECKOUT[locale];
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  /*
+   * The page is replaced under a viewport still scrolled to where "place order"
+   * was — on a phone, the foot of a long form — so the customer landed partway
+   * down a now-short confirmation with its title under the sticky masthead.
+   * Back to the top, and focus on the heading: it is also how a screen reader
+   * learns the order went through, since nothing announced the swap.
+   */
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    heading.current?.focus({ preventScroll: true });
+  }, []);
+
   return (
     // Capped at the prose measure. The page frame is the full content width so
     // the checkout can hold two columns; a confirmation is one short column of
@@ -332,9 +377,9 @@ function Confirmation(
     // one §4b describes, made on the same page.
     <div className="max-w-proseMax px-5 py-9 lg:px-0 lg:py-[72px]">
       <div className="latin mb-4 text-micro tracking-label text-accent">ORDER CONFIRMED</div>
-      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.confirmedTitle}</h1>
+      <h1 ref={heading} tabIndex={-1} className="font-display text-h1 leading-heading focus:outline-none lg:text-h1Lg">{copy.confirmedTitle}</h1>
 
-      <p className="mt-5 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
+      <p className="mt-5 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">
         {result.houseCount > 1
           ? copy.confirmedManyHouses
           : copy.confirmedOneHouse}
@@ -345,25 +390,26 @@ function Confirmation(
         customer will read down a phone line, and its alphabet is chosen so no
         character can be misheard.
       */}
-      <div className="mt-7 border border-line bg-raised p-5">
-        <div className="text-caption tracking-label text-ink3">{copy.reference}</div>
+      <div className="mt-7 border border-ink bg-raised p-5">
+        {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
+        <div className="text-body text-ink2">{copy.reference}</div>
         <div className="latin mt-2 select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
           {result.reference}
         </div>
-        <p className="mt-3 text-caption leading-relaxed text-ink3">
+        <p className="mt-3 text-small leading-relaxed text-ink3">
           {copy.referenceHint}
         </p>
       </div>
 
       <dl className="mt-6 border-t border-line pt-5">
-        <div className="flex justify-between py-1.5 text-small text-ink2">
+        <div className="flex justify-between py-1.5 text-body text-ink2">
           <dt>{copy.totalOnDelivery}</dt>
           <dd>
             <span className="tnum">{formatPrice(result.totalPiastres)}</span>
             <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
           </dd>
         </div>
-        <div className="flex justify-between py-1.5 text-small text-ink2">
+        <div className="flex justify-between py-1.5 text-body text-ink2">
           <dt>{copy.expectedArrival}</dt>
           <dd>
             <span className="tnum">{num(result.etaDaysMin)}</span>–
@@ -376,15 +422,15 @@ function Confirmation(
       <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
         <Link
           href={localeHref(locale, '/order')}
-          className="tappable border-b border-accent/50 pb-2 text-bodyLg transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          {copy.track}
+          <span className="border-b border-current">{copy.track}</span>
         </Link>
         <Link
           href={localeHref(locale, '/')}
-          className="tappable border-b border-line pb-2 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+          className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          {copy.keepBrowsing}
+          <span className="border-b border-current">{copy.keepBrowsing}</span>
         </Link>
       </div>
     </div>

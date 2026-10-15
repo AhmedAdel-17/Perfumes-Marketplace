@@ -3255,3 +3255,28 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   One e2e run was lost to fonts.gstatic.com being unreachable for a few minutes:
   next/font fetches on a cold dev compile, and the server answered 500 until the
   host came back.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 6: checkout and its
+  confirmation.
+  - Checkout gets a ruled page head and three numbered steps (01 contact, 02 address,
+    03 payment), with fields set into the paper (`sunken`, square, ink on focus).
+  - The summary uses the bag's ruled panel, so the figure confirmed looks like the
+    one decided on, and the houses are named in the visitor's language.
+  - The confirmation has a ruled reference panel and underlined actions.
+  Fixes:
+  - Field labels and the reference label letterspaced Arabic.
+  - Below-floor sizes on Arabic notes.
+  - The half-alpha danger border and accent underlines.
+  - The empty checkout's "browse" now goes to the catalogue.
+  - The confirmation replaced the form under a viewport still scrolled to the
+    button. It now scrolls to the top and focuses its heading, which is also how a
+    screen reader learns the order went through.
+  - Kickers that repeated their titles in English ("CHECKOUT / Checkout", and the
+    same on the bag, the directory and a house's Latin name) now say something
+    else: "Your selection", "Delivery and payment", "The register of houses",
+    "Verified house · Est. 2019".
+  - The 404 test's "way back" check was vacuous (the logo); it is now scoped to
+    `main`.
+  Verified: audit (checkout, en-checkout, house, en-house) has no findings in light
+  and dark at all six widths; e2e 133/133; typecheck clean; unit tests 1,674 pass;
+  guard clean.

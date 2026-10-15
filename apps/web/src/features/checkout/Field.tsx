@@ -63,7 +63,7 @@ export function Field({
 
   return (
     <div className="mb-5">
-      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-ink2">
+      <label htmlFor={id} className="mb-2 block text-body text-ink2">
         {label}
         {!required && <span className="text-ink3">{optional}</span>}
       </label>
@@ -84,20 +84,22 @@ export function Field({
         aria-describedby={error ? errorId : hint ? hintId : undefined}
         // 52px, the control height — a 40px input is the single most common
         // reason a checkout feels cheap on a phone.
+        // Identity v2: a field cut into the paper — the `sunken` well, square,
+        // a hairline that turns to ink on focus.
         className={[
-          'h-control w-full rounded-sm border bg-raised px-4 text-bodyLg text-ink',
+          'h-control w-full border bg-sunken px-4 text-bodyLg text-ink',
           'transition-colors duration-base ease-out',
-          'placeholder:text-ink3 focus:outline-none focus-visible:border-accent',
-          error ? 'border-danger' : 'border-line focus:border-ink2',
+          'placeholder:text-ink3 focus:outline-none',
+          error ? 'border-danger' : 'border-line focus:border-ink',
         ].join(' ')}
       />
 
       {error ? (
-        <p id={errorId} role="alert" className="mt-2 text-caption text-danger">
+        <p id={errorId} role="alert" className="mt-2 text-small text-danger">
           {error}
         </p>
       ) : hint ? (
-        <p id={hintId} className="mt-2 text-caption text-ink3">
+        <p id={hintId} className="mt-2 text-small text-ink3">
           {hint}
         </p>
       ) : null}
@@ -120,17 +122,17 @@ export function SelectField({
   const id = useId();
   return (
     <div className="mb-5">
-      <label htmlFor={id} className="mb-2 block text-caption tracking-label text-ink2">
+      <label htmlFor={id} className="mb-2 block text-body text-ink2">
         {label}
       </label>
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-control w-full rounded-sm border border-line bg-raised px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+        className="h-control w-full border border-line bg-sunken px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-raised text-ink">
+          <option key={option.value} value={option.value} className="bg-sunken text-ink">
             {option.label}
           </option>
         ))}

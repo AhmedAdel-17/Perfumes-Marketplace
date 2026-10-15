@@ -14,7 +14,11 @@ export const HOUSES = defineMessages(
     noPerfumes: 'لا توجد عطور معروضة من هذه الدار حاليًا.',
     deliversTo: 'يوصّل إلى',
     // A Latin label in both languages: Arabic is never set in the label face.
-    kicker: 'The houses',
+    kicker: 'The register of houses',
+    // A kicker says something the title does not: on the English page the
+    // house's Latin name WAS its title, printed twice.
+    verifiedHouse: 'Verified house',
+    established: (year: string) => `Est. ${year}`,
     houseLabel: 'The house',
     // The register's columns, shared by the directory and the home page.
     columns: {
@@ -38,7 +42,11 @@ export const HOUSES = defineMessages(
     perfumes: 'Perfumes',
     noPerfumes: 'This house has no perfumes on show at the moment.',
     deliversTo: 'Delivers to',
-    kicker: 'The houses',
+    kicker: 'The register of houses',
+    // A kicker says something the title does not: on the English page the
+    // house's Latin name WAS its title, printed twice.
+    verifiedHouse: 'Verified house',
+    established: (year: string) => `Est. ${year}`,
     houseLabel: 'The house',
     columns: {
       house: 'House',

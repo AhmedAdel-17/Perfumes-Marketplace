@@ -4,6 +4,9 @@ import { defineMessages } from '../messages';
 export const CHECKOUT = defineMessages(
   {
     title: 'إتمام الطلب',
+    // Latin labels in both languages: Arabic is never set in the label face.
+    kicker: 'Delivery and payment',
+    summary: 'Summary',
     confirmedTitle: 'تم استلام طلبك',
     preparing: '…جارٍ التحضير',
     empty: 'حقيبتك فارغة',
@@ -48,6 +51,8 @@ export const CHECKOUT = defineMessages(
   },
   {
     title: 'Checkout',
+    kicker: 'Delivery and payment',
+    summary: 'Summary',
     confirmedTitle: 'Your order is placed',
     preparing: 'Getting things ready…',
     empty: 'Your bag is empty',

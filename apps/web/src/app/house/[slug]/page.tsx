@@ -97,7 +97,8 @@ export default async function HousePage(
           <div className="lg:col-span-7">
             <Reveal>
               <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
-                {house.latin}
+                {[copy.verifiedHouse, house.foundedYear ? copy.established(String(house.foundedYear)) : null]
+                  .filter(Boolean).join(' · ').toUpperCase()}
                 <span aria-hidden="true" className="h-px w-12 bg-current" />
               </span>
               <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1 leading-heading lg:text-displayLg">

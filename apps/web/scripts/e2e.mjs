@@ -489,8 +489,10 @@ try {
     await shopper.goto(`${BASE}/definitely-not-a-page`, { waitUntil: 'networkidle' });
     const text = await shopper.locator('main').innerText();
     assert(text.includes('الصفحة غير موجودة'), `the 404 must be in Arabic: ${text.slice(0, 80)}`);
+    // Inside MAIN: the masthead's logo links to "/" on every page, so a
+    // page-wide check could not fail.
     assert(
-      await shopper.locator('a[href="/"]').count() > 0,
+      await shopper.locator('main a[href="/"]').count() > 0,
       'and must offer the way back rather than an apology',
     );
   });
