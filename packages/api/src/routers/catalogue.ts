@@ -20,8 +20,8 @@
  */
 import { z } from 'zod';
 import { BAND_FILL } from '@diyar/i18n';
-import type { CatalogueProductRow, CataloguePhotoRow } from '@diyar/domain';
-import { EMPTY_QUERY, queryTerms } from '@diyar/domain';
+import type { CatalogueProductRow, CataloguePhotoRow, NoteTier } from '@diyar/domain';
+import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
 import { slugSchema } from '../validation';
 import type { MediaStore } from '../providers/media';
@@ -54,6 +54,16 @@ export interface ProductCard {
    * cannot render a broken image from one.
    */
   photo: StorefrontPhoto | null;
+  /** Concentration code; the storefront words it per language. Empty when unknown. */
+  concentration: string;
+  /**
+   * How long it lasts, WITH where that claim came from (doc 06 §4). On the card
+   * because a card that printed a band without its source would be presenting
+   * a house's claim as the platform's fact.
+   */
+  longevity: PerformanceReading | null;
+  /** Whether it can be put in a bag today. A page choosing a perfume to feature needs it. */
+  inStock: boolean;
 }
 
 /**
@@ -76,15 +86,11 @@ export interface ProductDetail extends ProductCard {
    */
   noteEnglish: Readonly<Record<string, string>>;
   houseSlug: string;
-  /** Concentration code; the storefront words it per language. */
-  concentration: string;
   notesTop: string[];
   notesHeart: string[];
   notesBase: string[];
-  longevity: PerformanceReading | null;
   projection: PerformanceReading | null;
   fulfilmentHours: number;
-  inStock: boolean;
 }
 
 export interface HouseDetail {
@@ -104,6 +110,14 @@ export interface HouseDetail {
   /** Where it delivers. Empty means it has not said, not that it delivers nowhere. */
   serviceGovernorates: string[];
   products: ProductCard[];
+}
+
+/** One note in the notes index, with its English name when the glossary has one. */
+export interface IndexedNote {
+  note: string;
+  en: string | null;
+  /** Published perfumes carrying it, in this tier. */
+  count: number;
 }
 
 export interface SearchResult {
@@ -128,6 +142,19 @@ const photoMap = (rows: readonly CataloguePhotoRow[], media: MediaStore) => {
   return found;
 };
 
+/**
+ * A performance band, with the three things a meter needs and the one thing
+ * doc 06 §4 requires: where the claim came from.
+ */
+const band = (value: string | null, source: string | null): PerformanceReading | null => {
+  if (!value) return null;
+  return {
+    band: value,
+    fill: BAND_FILL[value as keyof typeof BAND_FILL] ?? 50,
+    source: source ?? 'seller_provided',
+  };
+};
+
 const toCard = (
   row: CatalogueProductRow,
   photos: ReadonlyMap<string, StorefrontPhoto>,
@@ -141,20 +168,10 @@ const toCard = (
   volumeMl: row.volumeMl,
   family: row.scentFamily ?? 'amber',
   photo: photos.get(row.id) ?? null,
+  concentration: row.concentration ?? '',
+  longevity: band(row.longevityBand, row.performanceSource),
+  inStock: row.stock > 0,
 });
-
-/**
- * A performance band, with the three things a meter needs and the one thing
- * doc 06 §4 requires: where the claim came from.
- */
-const band = (value: string | null, source: string | null): PerformanceReading | null => {
-  if (!value) return null;
-  return {
-    band: value,
-    fill: BAND_FILL[value as keyof typeof BAND_FILL] ?? 50,
-    source: source ?? 'seller_provided',
-  };
-};
 
 export const catalogueRouter = router({
   /** Every published product, for the home grid. */
@@ -189,14 +206,11 @@ export const catalogueRouter = router({
         brandNameEn: row.brandNameEn,
         noteEnglish: Object.fromEntries(result.glossary),
         houseSlug: row.houseSlug ?? '',
-        concentration: row.concentration ?? '',
         notesTop: [...row.notesTop],
         notesHeart: [...row.notesHeart],
         notesBase: [...row.notesBase],
-        longevity: band(row.longevityBand, row.performanceSource),
         projection: band(row.projectionBand, row.performanceSource),
         fulfilmentHours: row.fulfilmentHours,
-        inStock: row.stock > 0,
       };
     }),
 
@@ -239,9 +253,31 @@ export const catalogueRouter = router({
       latin: latin(h.brandName, h.brandNameEn),
       nameEn: h.brandNameEn,
       city: h.city,
+      foundedYear: h.foundedYear,
       count: h.publishedCount,
     }));
   }),
+
+  /**
+   * The notes the published catalogue carries, tier by tier, most-used first,
+   * each with its English name where the glossary has one.
+   *
+   * Counted by the domain's `noteIndex` over the same rows the home grid reads,
+   * so the number beside a note and the perfumes a search for it finds come
+   * from one set — RLS's, as `anon`.
+   */
+  noteIndex: publicProcedure
+    .input(z.object({ perTier: z.number().int().min(1).max(20).default(5) }).default({}))
+    .query(async ({ ctx, input }): Promise<Record<NoteTier, IndexedNote[]>> => {
+      const { index, glossary } = await ctx.uow.transaction(async (r) => {
+        const counted = noteIndex(await r.catalogue.publishedProducts(), input.perTier);
+        const notes = NOTE_TIERS.flatMap((tier) => counted[tier].map((n) => n.note));
+        return { index: counted, glossary: await r.catalogue.noteGlossary(notes) };
+      });
+      const named = (tier: NoteTier): IndexedNote[] =>
+        index[tier].map((n) => ({ note: n.note, en: glossary.get(n.note) ?? null, count: n.count }));
+      return { top: named('top'), heart: named('heart'), base: named('base') };
+    }),
 
   /**
    * The catalogue, narrowed.

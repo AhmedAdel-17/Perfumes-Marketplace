@@ -601,6 +601,27 @@ describe('public catalogue — anonymous traffic', () => {
     const api = caller({ role: 'anon', id: null });
     await expect(api.catalogue.productBySlug({ slug: 'Bad Slug!' })).rejects.toThrow();
   });
+
+  it('carries how long a perfume lasts on its card, with where that claim came from', async () => {
+    const api = caller({ role: 'anon', id: null });
+    const card = (await api.catalogue.published()).find((p) => p.slug === 'dar-al-ward-product');
+    expect(card?.concentration).toBe('eau_de_parfum');
+    expect(card?.longevity).toMatchObject({ band: 'long', source: 'seller_provided' });
+  });
+
+  it('indexes the notes of what is published, counted against the same shop', async () => {
+    await pg.query(`INSERT INTO note_glossary (ar, en) VALUES ('برغموت', 'Bergamot')
+                    ON CONFLICT (ar) DO NOTHING`);
+    const api = caller({ role: 'anon', id: null });
+    const published = await api.catalogue.published();
+    const index = await api.catalogue.noteIndex({ perTier: 5 });
+
+    // Every seeded listing carries bergamot on top, so its count IS the shop:
+    // a number larger than the published list would be counting drafts.
+    expect(index.top).toContainEqual({ note: 'برغموت', en: 'Bergamot', count: published.length });
+    expect(index.heart.find((n) => n.note === 'ورد')?.en).toBeNull();
+    expect(index.base.map((n) => n.note)).toContain('مسك');
+  });
 });
 
 describe('authorisation — defence in depth, through the whole stack', () => {

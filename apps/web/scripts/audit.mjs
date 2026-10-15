@@ -63,6 +63,15 @@ if (!OUTBOX) {
  * measures whichever frame the check happened to catch.
  */
 const THEME = process.env.THEME === 'dark' ? 'dark' : 'light';
+
+/*
+ * ONE SCREEN AT A TIME. `ONLY=home,en-home` audits just those surfaces, at every
+ * width, in the theme above. A full run is ~40 minutes per theme, and a screen
+ * being redesigned needs its answer in minutes; the full run stays the gate
+ * before a commit. A sign-in is skipped when none of its surfaces is wanted.
+ */
+const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',').map((s) => s.trim())) : null;
+const wanted = (surface) => !ONLY || ONLY.has(surface);
 const themed = async (context) => {
   await context.addInitScript((theme) => {
     try { localStorage.setItem('diyar-theme', theme); } catch { /* private mode */ }
@@ -479,12 +488,12 @@ try {
 
   for (const size of WIDTHS) {
     await page.setViewportSize({ width: size.width, height: size.height });
-    for (const [surface, path] of publicRoutes) {
+    for (const [surface, path] of publicRoutes.filter(([s]) => wanted(s))) {
       await visit(page, `${BASE}${path}`);
       await auditPage(page, surface, size.name);
     }
     await englishPage.setViewportSize({ width: size.width, height: size.height });
-    for (const [surface, path] of englishRoutes) {
+    for (const [surface, path] of englishRoutes.filter(([s]) => wanted(s))) {
       await visit(englishPage, `${BASE}${path}`);
       await auditPage(englishPage, surface, size.name);
     }
@@ -492,6 +501,8 @@ try {
   await englishVisitor.close();
 
   /* --------------------------------------------------------------- seller */
+  const sellerSurfaces = ['seller-queue', 'seller-listings', 'seller-payouts', 'seller-returns', 'seller-listing-editor'];
+  if (sellerSurfaces.some(wanted)) {
   const house = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const seller = await house.newPage();
   await visit(seller, `${BASE}/seller`);
@@ -509,7 +520,7 @@ try {
       ['seller-listings', '/seller/listings'],
       ['seller-payouts', '/seller/payouts'],
       ['seller-returns', '/seller/returns'],
-    ]) {
+    ].filter(([s]) => wanted(s))) {
       await visit(seller, `${BASE}${path}`);
       await auditPage(seller, surface, size.name);
     }
@@ -521,17 +532,22 @@ try {
   const firstListing = await seller.locator('a[href^="/seller/listings/"]').first()
     .getAttribute('href', { timeout: 10_000 })
     .catch(() => null);
-  if (firstListing) {
+  if (firstListing && wanted('seller-listing-editor')) {
     for (const size of WIDTHS) {
       await seller.setViewportSize({ width: size.width, height: size.height });
       await visit(seller, `${BASE}${firstListing}`);
       await auditPage(seller, 'seller-listing-editor', size.name);
     }
-  } else {
+  } else if (wanted('seller-listing-editor')) {
     record('seller-listing-editor', '—', 'missing', 'no listing link to follow — the editor was not audited');
   }
 
+  }
+
   /* ------------------------------------------------------------------ ops */
+  const opsSurfaces = ['ops-queue', 'ops-content', 'ops-moderation', 'ops-site', 'ops-notes', 'ops-reviews',
+    'ops-returns', 'ops-support', 'ops-houses', 'ops-audit', 'ops-insights', 'ops-page-editor', 'ops-page-preview'];
+  if (opsSurfaces.some(wanted)) {
   const opsContext = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const ops = await opsContext.newPage();
   await visit(ops, `${BASE}/ops`);
@@ -566,7 +582,7 @@ try {
 
   for (const size of WIDTHS) {
     await ops.setViewportSize({ width: size.width, height: size.height });
-    for (const [surface, path] of opsRoutes) {
+    for (const [surface, path] of opsRoutes.filter(([s]) => wanted(s))) {
       await visit(ops, `${BASE}${path}`);
       await auditPage(ops, surface, size.name);
     }
@@ -581,18 +597,23 @@ try {
   const firstPage = await ops.locator('a[href^="/ops/content/"]').first()
     .getAttribute('href', { timeout: 10_000 })
     .catch(() => null);
-  if (firstPage) {
+  if (firstPage && (wanted('ops-page-editor') || wanted('ops-page-preview'))) {
     for (const size of WIDTHS) {
       await ops.setViewportSize({ width: size.width, height: size.height });
-      await visit(ops, `${BASE}${firstPage}`);
-      await auditPage(ops, 'ops-page-editor', size.name);
+      if (wanted('ops-page-editor')) {
+        await visit(ops, `${BASE}${firstPage}`);
+        await auditPage(ops, 'ops-page-editor', size.name);
+      }
       // The draft preview renders through the PUBLIC renderer, inside the
       // console's session — a surface of its own, never audited until now.
-      await visit(ops, `${BASE}${firstPage}/preview`);
-      await auditPage(ops, 'ops-page-preview', size.name);
+      if (wanted('ops-page-preview')) {
+        await visit(ops, `${BASE}${firstPage}/preview`);
+        await auditPage(ops, 'ops-page-preview', size.name);
+      }
     }
-  } else {
+  } else if (!firstPage) {
     record('ops-page-editor', '—', 'missing', 'no content link to follow — the editor was not audited');
+  }
   }
 } catch (error) {
   /*

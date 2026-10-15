@@ -3143,3 +3143,31 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: `audit.mjs` finds nothing on any surface at any width, in light and in dark;
   e2e 133/133 from a fresh seed; `pnpm -r typecheck` clean; `pnpm -r test` 1,661 pass;
   `pnpm guard` clean.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 1: the home page rebuilt
+  on 04-laboratoire as a numbered register.
+  01 The opening, with a specimen card of the featured perfume showing real notes,
+     longevity with its source, the arrival window, price and Add to bag, and a
+     "Verified 8 / 8" stamp. Without a curated choice it features the newest perfume
+     in stock.
+  02 The eight verification controls, keyed to the `verification_control` enum, with
+     a test holding the copy to it. "The database refuses it" is migration 0001's
+     gate.
+  03 The operators' selection when there is one, otherwise the newest perfumes, each
+     on a new SpecimenCard.
+  04 A notes index by tier with counts, from the domain's `noteIndex` and the new
+     public `catalogue.noteIndex`. Each note links to `/search?q=`.
+  05 The houses as a table. There is no rating column, because no per-house
+     aggregate exists.
+  Data changes: `publishedProducts` returns newest first (`coalesce(published_at,
+  created_at)`); ProductCard carries `concentration`, `longevity` (with source) and
+  `inStock`; the houses directory carries `foundedYear`.
+  Copy is in formal Arabic, by founder decision; Egyptian Arabic comes with P5.6.3.
+  `audit.mjs` gains `ONLY=` for single-screen runs.
+  Deviations from the reference, all for truthfulness or token rules:
+  - longevity meters have 4 segments, matching the 4 bands;
+  - the olive tint panel is a paper panel with an olive rule, because no tint token
+    exists;
+  - there is no "read the full standard" link, because no such page exists.
+  Verified: audit (home, en-home) has no findings in light and dark at all six
+  widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.

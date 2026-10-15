@@ -92,6 +92,7 @@ export interface CatalogueHouseSummary {
   readonly brandName: string;
   readonly brandNameEn: string | null;
   readonly city: string | null;
+  readonly foundedYear: number | null;
   readonly publishedCount: number;
 }
 
@@ -114,7 +115,11 @@ export interface CatalogueSearchCriteria {
 }
 
 export interface CatalogueReadModel {
-  /** Every published product, for the home grid. */
+  /**
+   * Every published product, NEWEST FIRST: by the moment it was published, or
+   * by when it was created where no publish moment was recorded. The home page
+   * calls the first few "recently registered", and that has to be true.
+   */
   publishedProducts(): Promise<CatalogueProductRow[]>;
 
   /**

@@ -78,7 +78,13 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
     const rows = await db
       .select({ p: schema.products, brandName: schema.brands.name, brandEn: schema.brands.nameEn })
       .from(schema.products)
-      .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId));
+      .innerJoin(schema.brands, eq(schema.brands.id, schema.products.brandId))
+      // `id` last, so two listings created in the same instant still come back
+      // in one order rather than whichever the planner prefers that day.
+      .orderBy(
+        desc(sql`coalesce(${schema.products.publishedAt}, ${schema.products.createdAt})`),
+        asc(schema.products.id),
+      );
     return rows.map((r) => toRow(r.p, r.brandName, r.brandEn));
   },
 
@@ -153,6 +159,7 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
         slug: schema.sellers.slug,
         name: schema.sellers.tradingName,
         city: schema.sellers.city,
+        foundedYear: schema.sellers.foundedYear,
         brandName: schema.brands.name,
         brandEn: schema.brands.nameEn,
         productId: schema.products.id,
@@ -174,6 +181,7 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
         brandName: row.brandName,
         brandNameEn: row.brandEn,
         city: row.city,
+        foundedYear: row.foundedYear,
         publishedCount: 1,
       });
     }

@@ -130,6 +130,20 @@ describe('a visitor sees the shop, and only the shop', () => {
     expect(rows.map((p) => p.slug).sort()).toEqual(['oud-malaki', 'ward-al-taif']);
   });
 
+  it('lists the most recently published first, because the home page says so', async () => {
+    // "Recently registered" is a claim the home page makes about this order.
+    // Publish moments set apart by a day, the older one written second, so an
+    // insertion-order accident cannot pass for the rule.
+    await pg.query(`UPDATE products SET published_at = '2026-10-01' WHERE slug = 'ward-al-taif'`);
+    await pg.query(`UPDATE products SET published_at = '2026-10-02' WHERE slug = 'oud-malaki'`);
+    const newest = await asAnon().transaction((r) => r.catalogue.publishedProducts());
+    expect(newest.map((p) => p.slug)).toEqual(['oud-malaki', 'ward-al-taif']);
+
+    await pg.query(`UPDATE products SET published_at = '2026-10-03' WHERE slug = 'ward-al-taif'`);
+    const reordered = await asAnon().transaction((r) => r.catalogue.publishedProducts());
+    expect(reordered.map((p) => p.slug)).toEqual(['ward-al-taif', 'oud-malaki']);
+  });
+
   it('does NOT list a draft — and no WHERE clause here says so', async () => {
     /*
      * The heart of the change. The read model asks for every product it can
@@ -208,6 +222,7 @@ describe('the directory and the filter panel', () => {
     const rows = await asAnon().transaction((r) => r.catalogue.houses());
     expect(rows.map((h) => h.slug)).toEqual(['dar-al-ward']);
     expect(rows[0]!.publishedCount).toBe(2);
+    expect(rows[0]!.foundedYear).toBe(2019);
   });
 
   it('offers every live house in the filter panel', async () => {
