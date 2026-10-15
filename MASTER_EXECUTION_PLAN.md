@@ -3211,3 +3211,23 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   silently.
   Verified: audit (search, en-search) has no findings in light and dark at all six
   widths; e2e 133/133; typecheck clean; unit tests 1,673 pass; guard clean.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 4: the houses directory and
+  a house's page.
+  - The directory is the register table (HouseTable, now in features/catalogue and
+    shared with the home page's section 05) under a ruled head with the intro and the
+    count.
+  - A house page has its name, Latin kicker and bio, beside a ruled label: city,
+    founding year, perfumes, verification 8/8 (true of every page, because
+    `houseBySlug` returns only live houses) and where it delivers. "Delivers to" moved
+    there from the foot of the page, so coverage is read before the perfumes. The
+    story and the perfumes follow as numbered sections, on SpecimenCard with ratings.
+  - The verification count comes from the controls' label map, which a test holds to
+    the database enum.
+  Fix: founding years were printed with data numerals in three places; they are
+  editorial by kind (numerals.ts).
+  Cleanup: ProductTile is deleted, since every listing now uses SpecimenCard. The
+  table's copy moved from HOME to HOUSES.
+  Verified: audit (houses, house, en-houses, en-house, home, en-home) has no findings
+  in light and dark at all six widths; e2e 133/133; typecheck clean; unit tests 1,673
+  pass; guard clean.

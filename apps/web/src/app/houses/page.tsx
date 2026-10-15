@@ -6,18 +6,19 @@
  * marketplace whose argument is the makers, that is the wrong way round: the
  * question "who is on here?" had no answer at all.
  *
- * A list, not a grid of cards. Houses have no logos yet and inventing a tile
- * for each would mean three identical rectangles differing only in text — a
- * grid that carries no more than a list while claiming to.
+ * A REGISTER TABLE, not a grid of cards (visual identity v2 — the houses table
+ * in 04-laboratoire.html, the same component as the home page's section 05).
+ * Houses have no logos yet, and a grid of identical rectangles differing only
+ * in text carries no more than a table while claiming to; the table at least
+ * lets the eye run down a column and compare.
  */
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { countedIn, editorialIn, HOUSES, langAttrs, NOUN, pick, SHELL } from '@diyar/i18n';
+import { countedIn, editorialIn, HOUSES, NOUN, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
-import { localeHref } from '@/core/href';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
+import { HouseTable } from '@/features/catalogue/HouseTable';
 import { listHouses } from '@/core/catalogue';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,51 +40,29 @@ export default async function HousesPage() {
     <>
       <SiteHeader />
 
-      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[88px]">
-        <header className="pb-8 pt-8 lg:pb-11 lg:pt-14">
-          <div className="latin mb-4 text-micro tracking-label text-accent lg:mb-5 lg:text-caption">
-            THE HOUSES
+      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
+        <header className="grid gap-x-8 gap-y-4 border-b border-ink pb-6 pt-8 lg:grid-cols-12 lg:items-end lg:pt-12">
+          <div className="lg:col-span-7">
+            <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+              {copy.kicker.toUpperCase()}
+              <span aria-hidden="true" className="h-px w-12 bg-current" />
+            </span>
+            <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
           </div>
-          <h1 className="font-display text-h1 leading-heading lg:text-displayLg">{copy.title}</h1>
-          <p className="mt-5 max-w-proseMax text-bodyLg leading-relaxed text-ink2 lg:mt-7">
-            {copy.intro}
-          </p>
+          <div className="lg:col-span-5">
+            <p className="max-w-proseMax text-bodyLg leading-relaxed text-ink2">{copy.intro}</p>
+            <p className="mt-2 text-body text-ink3">
+              {countedIn(locale, houses.length, NOUN.house, editorialIn(locale))}
+            </p>
+          </div>
         </header>
 
         {houses.length === 0 ? (
           <p className="py-8 text-bodyLg text-ink2">{copy.none}</p>
         ) : (
-          <ul className="border-t border-line">
-            {houses.map((house, index) => (
-              <li key={house.slug} className="border-b border-line">
-                <Reveal delay={index * 60}>
-                  <Link
-                    href={localeHref(locale, `/house/${house.slug}`)}
-                    className="tappable group flex min-h-touch flex-wrap items-baseline justify-between gap-x-6 gap-y-2 py-6 lg:py-8"
-                  >
-                    <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                      <span
-                        {...langAttrs(locale, pick(locale, house.name, house.nameEn).lang)}
-                        className="font-display text-h3 transition-colors duration-base ease-out group-hover:text-accent lg:text-h2Lg"
-                      >
-                        {pick(locale, house.name, house.nameEn).text}
-                      </span>
-                      <span className="latin text-micro tracking-label text-accent lg:text-caption">
-                        {house.latin}
-                      </span>
-                    </span>
-
-                    <span className="flex items-baseline gap-x-4 text-caption text-ink3">
-                      {house.city && <span>{house.city}</span>}
-                      {/* Through `counted`: Arabic inflects a counted noun six
-                          ways, and "١ عطر" is not one of them. */}
-                      <span>{countedIn(locale, house.count, NOUN.perfume, editorialIn(locale))}</span>
-                    </span>
-                  </Link>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
+          <Reveal className="mt-6 lg:mt-8">
+            <HouseTable houses={houses} locale={locale} />
+          </Reveal>
         )}
       </main>
 

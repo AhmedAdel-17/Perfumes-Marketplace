@@ -13,6 +13,19 @@ export const HOUSES = defineMessages(
     perfumes: 'العطور',
     noPerfumes: 'لا توجد عطور معروضة من هذه الدار حاليًا.',
     deliversTo: 'يوصّل إلى',
+    // A Latin label in both languages: Arabic is never set in the label face.
+    kicker: 'The houses',
+    houseLabel: 'The house',
+    // The register's columns, shared by the directory and the home page.
+    columns: {
+      house: 'الدار',
+      city: 'المدينة',
+      since: 'منذ',
+      perfumes: 'العطور',
+      verification: 'التوثيق',
+    },
+    founded: 'التأسيس',
+    verifiedChecks: (passed: string, total: string) => `${passed} من ${total} خطوات موثّقة`,
   },
   {
     title: 'Houses',
@@ -25,5 +38,16 @@ export const HOUSES = defineMessages(
     perfumes: 'Perfumes',
     noPerfumes: 'This house has no perfumes on show at the moment.',
     deliversTo: 'Delivers to',
+    kicker: 'The houses',
+    houseLabel: 'The house',
+    columns: {
+      house: 'House',
+      city: 'City',
+      since: 'Since',
+      perfumes: 'Perfumes',
+      verification: 'Verification',
+    },
+    founded: 'Founded',
+    verifiedChecks: (passed: string, total: string) => `${passed} of ${total} checks verified`,
   },
 );

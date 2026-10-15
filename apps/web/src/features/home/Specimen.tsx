@@ -6,7 +6,7 @@ import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { primarySurface } from '@/features/shell/primary-surface';
 import {
-  CONCENTRATION, CURRENCY_LABEL, data as num, formatPrice, HOME, HOUSES, labelOf, langAttrs,
+  CONCENTRATION, CURRENCY_LABEL, data as num, editorialIn, formatPrice, HOME, HOUSES, labelOf, langAttrs,
   languageOf, pick, PRODUCT, type Locale,
 } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
@@ -58,7 +58,7 @@ export function Specimen({
   // Arabic, and on the English page it has to be marked as such.
   const facts: Array<{ text: string; lang: Locale }> = [];
   if (house?.city) facts.push({ text: house.city, lang: languageOf(house.city) });
-  if (house?.foundedYear) facts.push({ text: HOUSES[locale].since(num(house.foundedYear, false)), lang: locale });
+  if (house?.foundedYear) facts.push({ text: HOUSES[locale].since(editorialIn(locale)(house.foundedYear, false)), lang: locale });
 
   return (
     <article aria-labelledby="specimen-name" className="relative border border-ink bg-raised">

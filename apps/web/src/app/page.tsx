@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { findHouseBySlug, findProductBySlug, listHouses, listPublishedProducts } from '@/core/catalogue';
 import { api } from '@/core/api';
 import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
-import { HouseTable } from '@/features/home/HouseTable';
+import { HouseTable } from '@/features/catalogue/HouseTable';
 import { NoteIndex } from '@/features/home/NoteIndex';
 import { SectionHead } from '@/features/shell/SectionHead';
 import { Specimen } from '@/features/home/Specimen';
@@ -190,7 +190,7 @@ export default async function Home() {
               />
             </Reveal>
             <Reveal>
-              <HouseTable houses={houses} locale={locale} total={controls} />
+              <HouseTable houses={houses} locale={locale} />
             </Reveal>
           </section>
         )}

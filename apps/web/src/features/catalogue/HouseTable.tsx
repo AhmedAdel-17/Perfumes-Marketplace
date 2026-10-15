@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { data as num, languageOf, HOME, langAttrs, pick, type Locale } from '@diyar/i18n';
+import { data as num, editorialIn, HOUSES, langAttrs, languageOf, pick, VERIFICATION_CONTROL_AR, type Locale } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 
 export interface HouseLine {
@@ -27,9 +27,21 @@ export interface HouseLine {
  *
  * Founding year and count step aside below `sm`; the name, the city and the
  * verification are what a phone needs, and the house page has the rest.
+ *
+ * Shared by the home page's register and the directory, so a house reads the
+ * same in both places.
  */
-export function HouseTable({ houses, locale, total }: { houses: readonly HouseLine[]; locale: Locale; total: number }) {
-  const copy = HOME[locale];
+
+/**
+ * How many controls a live house has passed: all of them. The operators' label
+ * map is held to the database's `verification_control` enum by a test, so this
+ * is the gate's own count, not a number typed here.
+ */
+export const VERIFICATION_CONTROLS = Object.keys(VERIFICATION_CONTROL_AR).length;
+
+export function HouseTable({ houses, locale }: { houses: readonly HouseLine[]; locale: Locale }) {
+  const copy = HOUSES[locale];
+  const total = VERIFICATION_CONTROLS;
   const head = 'pb-3 pe-3 text-start font-normal text-ink3';
   const cell = 'border-t border-line py-4 pe-3';
 
@@ -38,11 +50,11 @@ export function HouseTable({ houses, locale, total }: { houses: readonly HouseLi
       <table className="w-full border-collapse text-body lg:text-bodyLg">
         <thead>
           <tr className={locale === 'en' ? 'latin text-micro uppercase tracking-label' : 'text-small'}>
-            <th scope="col" className={head}>{copy.house}</th>
-            <th scope="col" className={head}>{copy.city}</th>
-            <th scope="col" className={`${head} hidden sm:table-cell`}>{copy.since}</th>
-            <th scope="col" className={`${head} hidden sm:table-cell`}>{copy.perfumes}</th>
-            <th scope="col" className={head}>{copy.verification}</th>
+            <th scope="col" className={head}>{copy.columns.house}</th>
+            <th scope="col" className={head}>{copy.columns.city}</th>
+            <th scope="col" className={`${head} hidden sm:table-cell`}>{copy.columns.since}</th>
+            <th scope="col" className={`${head} hidden sm:table-cell`}>{copy.columns.perfumes}</th>
+            <th scope="col" className={head}>{copy.columns.verification}</th>
           </tr>
         </thead>
         <tbody>
@@ -62,7 +74,9 @@ export function HouseTable({ houses, locale, total }: { houses: readonly HouseLi
                 <td className={cell}>
                   {house.city && <span {...langAttrs(locale, languageOf(house.city))}>{house.city}</span>}
                 </td>
-                <td className={`${cell} hidden tnum sm:table-cell`}>{house.foundedYear ? num(house.foundedYear, false) : ''}</td>
+                {/* Editorial numerals: a founding year is prose by KIND, wherever
+                    it is printed (numerals.ts). The count beside it is data. */}
+                <td className={`${cell} hidden tnum sm:table-cell`}>{house.foundedYear ? editorialIn(locale)(house.foundedYear, false) : ''}</td>
                 <td className={`${cell} hidden tnum sm:table-cell`}>{num(house.count)}</td>
                 <td className={cell}>
                   <span className="inline-flex items-center gap-2 text-small text-accent">

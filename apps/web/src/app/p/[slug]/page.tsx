@@ -18,7 +18,7 @@ import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
 import {
-  CONCENTRATION, data as num, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn, pick, PRODUCT,
+  CONCENTRATION, data as num, editorialIn, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn, pick, PRODUCT,
   SCENT_FAMILY, SHELL, type Locale,
 } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const houseFacts: Array<{ text: string; lang: Locale }> = [];
   if (houseDetail?.city) houseFacts.push({ text: houseDetail.city, lang: languageOf(houseDetail.city) });
   if (houseDetail?.foundedYear) {
-    houseFacts.push({ text: HOUSES[locale].since(num(houseDetail.foundedYear, false)), lang: locale });
+    houseFacts.push({ text: HOUSES[locale].since(editorialIn(locale)(houseDetail.foundedYear, false)), lang: locale });
   }
 
   return (
