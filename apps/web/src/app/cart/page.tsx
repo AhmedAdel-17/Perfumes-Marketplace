@@ -45,10 +45,15 @@ export default async function CartPage() {
       {/* 820px was the phone column with room to breathe. It is not a desktop
           layout: two columns need the content measure, and below `lg` this is
           still the capped phone column it always was. */}
-      <main className="mx-auto max-w-phoneMax pb-8 lg:max-w-contentMax lg:px-8 lg:pb-[88px]">
-        <h1 className="px-5 pb-5 pt-7 font-display text-h1 leading-heading lg:px-0 lg:pb-7 lg:pt-9 lg:text-h1Lg">
-          {CART[locale].title}
-        </h1>
+      <main className="mx-auto max-w-phoneMax pb-8 lg:max-w-contentMax lg:px-8 lg:pb-[104px]">
+        {/* Identity v2: the register's page head, ruled at full strength. */}
+        <header className="mx-5 mb-6 border-b border-ink pb-4 pt-8 lg:mx-0 lg:mb-8 lg:pt-12">
+          <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+            {CART[locale].kicker.toUpperCase()}
+            <span aria-hidden="true" className="h-px w-12 bg-current" />
+          </span>
+          <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{CART[locale].title}</h1>
+        </header>
         <CartView />
       </main>
       <SiteFooter />

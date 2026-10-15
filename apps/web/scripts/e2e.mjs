@@ -292,7 +292,9 @@ try {
     await shopper.waitForTimeout(1500);
     const text = await shopper.locator('main').innerText();
     assert(text.includes('فارغة'), 'an empty bag must say so');
-    assert(await shopper.locator('a[href="/"]').count() > 0, 'and must offer the catalogue');
+    // Inside MAIN: the masthead's logo links to "/" on every page, so a
+    // page-wide check passed whether or not the empty bag offered anything.
+    assert(await shopper.locator('main a[href="/search"]').count() > 0, 'and must offer the catalogue');
   });
 
   /* ================================================================ search */

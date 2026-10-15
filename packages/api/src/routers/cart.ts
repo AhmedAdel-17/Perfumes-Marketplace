@@ -45,6 +45,7 @@ export const cartRouter = router({
         houses: cart.houses.map((h) => ({
           sellerId: h.sellerId,
           brandName: h.brandName,
+          brandNameEn: h.brandNameEn,
           brandLatin: h.brandLatin,
           merchandisePiastres: h.merchandise.minor,
           shippingPiastres: h.shipping.minor,

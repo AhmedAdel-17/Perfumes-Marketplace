@@ -443,6 +443,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
               name: p.name,
               nameEn: null,
               brandName: seller?.tradingName ?? '',
+              brandNameEn: null,
               brandLatin: (seller?.tradingName ?? '').toUpperCase(),
               sku: p.sku,
               volumeMl: p.volumeMl,

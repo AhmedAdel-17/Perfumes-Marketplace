@@ -83,6 +83,8 @@ export interface PricedCartLine {
 export interface PricedCartHouse {
   readonly sellerId: string;
   readonly brandName: string;
+  /** The house's English name, for the English bag. Display only. */
+  readonly brandNameEn: string | null;
   readonly brandLatin: string;
   readonly lines: readonly PricedCartLine[];
   readonly merchandise: Money;
@@ -222,6 +224,7 @@ export class CartPricer {
       return {
         sellerId,
         brandName: bucket.snapshot.brandName,
+        brandNameEn: bucket.snapshot.brandNameEn,
         brandLatin: bucket.snapshot.brandLatin,
         lines: bucket.lines,
         merchandise,

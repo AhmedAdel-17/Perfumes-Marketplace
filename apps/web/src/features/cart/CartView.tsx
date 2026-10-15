@@ -61,13 +61,13 @@ export function CartView() {
   }, [entries, hydrated]);
 
   if (!hydrated || (cart === null && !failed)) {
-    return <p className="px-5 py-8 text-small text-ink3 lg:px-0">{copy.pricing}</p>;
+    return <p className="px-5 py-8 text-body text-ink3 lg:px-0">{copy.pricing}</p>;
   }
 
   if (failed) {
     return (
       <div className="px-5 py-8 lg:px-0">
-        <p className="text-small leading-relaxed text-ink2">
+        <p className="text-body leading-relaxed text-ink2">
           {copy.failed}
         </p>
       </div>
@@ -78,18 +78,20 @@ export function CartView() {
 
   if (priced.isEmpty) {
     return (
-      <div className="px-5 py-9 text-center lg:px-0 lg:py-[88px]">
+      <div className="mx-5 border border-line bg-raised px-6 py-9 text-center lg:mx-0 lg:py-[88px]">
         <p className="font-display text-h3 lg:text-h2Lg">{copy.empty}</p>
-        <p className="mt-3 text-small leading-relaxed text-ink3">
+        <p className="mt-3 text-body leading-relaxed text-ink2">
           {/* An empty state that only says "empty" is a dead end; it must offer
               the next step, and the next step is the catalogue. */}
           {copy.emptyBody}
         </p>
+        {/* To the CATALOGUE: the link says "browse perfumes", and the home page
+            is not where perfumes are browsed. */}
         <Link
-          href={localeHref(locale, '/')}
-          className="tappable mt-6 inline-block border-b border-accent/50 pb-2 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent"
+          href={localeHref(locale, '/search')}
+          className="tappable mt-5 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          {copy.browse}
+          <span className="border-b border-current">{copy.browse}</span>
         </Link>
       </div>
     );
@@ -101,9 +103,9 @@ export function CartView() {
           the customer put it in the bag, and finding out at the payment step is
           how trust is lost. */}
       {priced.adjustments.length > 0 && (
-        <ul className="mx-5 mb-6 border border-line bg-raised p-4 lg:mx-0">
+        <ul className="mx-5 mb-6 border border-accent bg-raised p-4 lg:mx-0">
           {priced.adjustments.map((a) => (
-            <li key={`${a.productId}-${a.reason}`} className="text-caption leading-relaxed text-ink2">
+            <li key={`${a.productId}-${a.reason}`} className="text-body leading-relaxed text-ink">
               {a.reason === 'no_longer_available' && copy.noLongerAvailable(a.productName || copy.aProduct)}
               {a.reason === 'out_of_stock' && copy.outOfStock(a.productName)}
               {a.reason === 'quantity_reduced' &&
@@ -123,13 +125,22 @@ export function CartView() {
       <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px]">
       <div className="lg:col-span-7">
       {priced.houses.map((house) => (
-        <section key={house.sellerId} className="mb-7 border-t border-line px-5 pt-5 lg:px-0">
-          <div className="mb-4 flex items-baseline justify-between">
-            <div>
-              <div className="latin text-micro tracking-label text-accent">{house.brandLatin}</div>
-              <div {...langAttrs(locale, languageOf(house.brandName))} className="mt-1 font-display text-h4">{house.brandName}</div>
+        /*
+          Each house a ruled panel, like a specimen label: its Latin name and
+          its own arrival window in the head bar, its lines, and its own
+          delivery charge at the foot — one parcel, printed as one.
+        */
+        <section key={house.sellerId} className="mx-5 mb-5 border border-ink bg-raised lg:mx-0">
+          <div className="latin flex items-center justify-between gap-3 border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
+            <span>{house.brandLatin}</span>
+          </div>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 pt-4">
+            {/* The house's own name in the visitor's language, as everywhere
+                else; Arabic, marked as such, where it has given no English. */}
+            <div {...langAttrs(locale, pick(locale, house.brandName, house.brandNameEn).lang)} className="font-display text-h4 lg:text-h3">
+              {pick(locale, house.brandName, house.brandNameEn).text}
             </div>
-            <div className="text-caption text-ink3">
+            <div className="text-small text-ink2">
               {/* The noun agrees with the LAST number in the range, so a 10–11
                   day window reads "١٠ إلى ١١ يومًا" rather than "…أيام". */}
               {copy.arrivesIn} <span className="tnum">{num(house.etaDaysMin)}</span>–
@@ -138,9 +149,9 @@ export function CartView() {
             </div>
           </div>
 
-          <ul>
+          <ul className="px-4">
             {house.lines.map((line) => (
-              <li key={line.productId} className="flex gap-4 border-b border-line/60 py-4 last:border-0">
+              <li key={line.productId} className="flex gap-4 border-b border-line py-4 last:border-0">
                 {/*
                   The picture is decorative — the product name sits beside it as
                   its own link — but it is still a LINK, and a link whose only
@@ -154,7 +165,7 @@ export function CartView() {
                 <Link
                   href={localeHref(locale, `/p/${line.slug}`)}
                   aria-label={pick(locale, line.name, line.nameEn).text}
-                  className="relative block h-[104px] w-[84px] flex-none overflow-hidden bg-[radial-gradient(72%_58%_at_50%_24%,theme(colors.stage.glow),theme(colors.stage.mid)_52%,theme(colors.stage.deep))]"
+                  className="relative block h-[104px] w-[84px] flex-none overflow-hidden border border-line bg-plate"
                 >
                   {line.photo ? (
                     <ProductPhoto photo={line.photo} sizes="84px" />
@@ -176,7 +187,7 @@ export function CartView() {
                   >
                     {pick(locale, line.name, line.nameEn).text}
                   </Link>
-                  <div className="mt-1 text-caption text-ink3">
+                  <div className="mt-1 text-small text-ink3">
                     <span className="tnum">{num(line.volumeMl)}</span> {copy.ml}
                   </div>
 
@@ -189,7 +200,7 @@ export function CartView() {
                       label={pick(locale, line.name, line.nameEn).text}
                       copy={copy}
                     />
-                    <div className="text-bodyLg font-semibold">
+                    <div className="text-bodyLg">
                       <span className="tnum">{formatPrice(line.lineTotalPiastres)}</span>
                       <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
                     </div>
@@ -199,7 +210,7 @@ export function CartView() {
             ))}
           </ul>
 
-          <div className="mt-3 flex justify-between text-caption text-ink3">
+          <div className="flex justify-between border-t border-line px-4 py-3 text-body text-ink2">
             <span>{copy.houseDelivery}</span>
             <span>
               <span className="tnum">{formatPrice(house.shippingPiastres)}</span>
@@ -219,7 +230,11 @@ export function CartView() {
         flush to zero tucks the panel's own top rule under the header, which
         reads as a rendering fault rather than as a layout.
       */}
-      <section className="border-t border-line px-5 pt-5 lg:sticky lg:top-[110px] lg:col-span-5 lg:border lg:bg-raised lg:px-7 lg:py-7">
+      <section aria-labelledby="bag-summary" className="mx-5 mt-2 border border-ink bg-raised lg:sticky lg:top-[110px] lg:col-span-5 lg:mx-0 lg:mt-0">
+        <h2 id="bag-summary" className="latin border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
+          {copy.summary.toUpperCase()}
+        </h2>
+        <div className="px-4 pb-5 pt-3 lg:px-6 lg:pb-6">
         <Row label={copy.products} piastres={priced.merchandisePiastres} />
         {/* "٢ شحنات" is the very mistake @diyar/i18n exists to prevent — two of
             something takes the DUAL, شحنتان, with no numeral in front of it.
@@ -229,14 +244,14 @@ export function CartView() {
           label={copy.delivery(countedIn(locale, priced.houses.length, NOUN.shipment, editorialNum))}
           piastres={priced.shippingPiastres}
         />
-        <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
+        <div className="mt-3 flex items-baseline justify-between border-t border-ink pt-4">
           <span className="font-display text-h4">{copy.total}</span>
-          <span className="text-h3 font-semibold lg:text-h2Lg">
+          <span className="text-h3 lg:text-h2Lg">
             <span className="tnum">{formatPrice(priced.totalPiastres)}</span>
             <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
           </span>
         </div>
-        <p className="mt-2 text-micro text-ink3">
+        <p className="mt-2 text-small text-ink3">
           {countedIn(locale, priced.itemCount, NOUN.perfume, editorialNum)} · {copy.taxIncluded}
         </p>
 
@@ -248,7 +263,8 @@ export function CartView() {
         >
           {copy.checkout}
         </Link>
-        <p className="mt-3 text-center text-micro text-ink3">{copy.cashOnDelivery}</p>
+        <p className="mt-3 text-center text-small text-ink3">{copy.cashOnDelivery}</p>
+        </div>
       </section>
       </div>
     </div>
@@ -257,7 +273,7 @@ export function CartView() {
 
 function Row({ label, piastres }: { label: string; piastres: number }) {
   return (
-    <div className="flex justify-between py-1.5 text-small text-ink2">
+    <div className="flex justify-between py-1.5 text-body text-ink2">
       <span>{label}</span>
       <span>
         <span className="tnum">{formatPrice(piastres)}</span>
@@ -270,7 +286,7 @@ function Row({ label, piastres }: { label: string; piastres: number }) {
 /**
  * Quantity.
  *
- * The visible controls are 32px circles because a 44px one would dominate a
+ * The visible controls are 32px squares because a 44px one would dominate a
  * cart row; the HIT AREA is expanded past 44pt with `tappable`, which is the
  * rule the doctrine actually states — the target may not shrink, the visual
  * may. Decrementing from one removes the line, so there is no dead "−" and no
@@ -287,7 +303,7 @@ function Stepper({
   copy: (typeof CART)[keyof typeof CART];
 }) {
   const base =
-    'tappable flex h-[32px] w-[32px] items-center justify-center rounded-pill border border-line text-bodyLg text-ink transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled disabled:hover:border-line disabled:hover:text-ink';
+    'tappable flex h-[32px] w-[32px] items-center justify-center border border-line bg-ground text-bodyLg text-ink transition-colors duration-base ease-out hover:border-ink disabled:opacity-disabled disabled:hover:border-line';
 
   return (
     <div className="flex items-center gap-3">

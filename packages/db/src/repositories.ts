@@ -189,6 +189,7 @@ const productRepository = (db: Executor): ProductRepository => ({
       name: r.p.name,
       nameEn: r.p.nameEn,
       brandName: r.brandName,
+      brandNameEn: r.brandEn,
       brandLatin: (r.brandEn ?? r.brandName).toUpperCase(),
       sku: r.p.sku,
       volumeMl: r.p.volumeMl,

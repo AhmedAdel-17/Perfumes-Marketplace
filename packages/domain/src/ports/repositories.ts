@@ -89,6 +89,8 @@ export interface CatalogueSnapshot {
   /** The house's English name for the perfume, or null (D-3). Display only. */
   readonly nameEn: string | null;
   readonly brandName: string;
+  /** The house's own English name, or null (D-3). Display only. */
+  readonly brandNameEn: string | null;
   readonly brandLatin: string;
   readonly sku: string;
   readonly volumeMl: number;

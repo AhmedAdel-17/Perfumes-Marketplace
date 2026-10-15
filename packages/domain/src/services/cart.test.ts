@@ -22,6 +22,7 @@ const product = (over: Partial<CatalogueSnapshot> = {}): CatalogueSnapshot => ({
   name: 'ليل القاهرة',
   nameEn: null,
   brandName: 'ميزون نور',
+  brandNameEn: 'Maison Nour',
   brandLatin: 'MAISON NOUR',
   sku: 'NUR-LQ-50',
   volumeMl: 50,
@@ -74,7 +75,7 @@ describe('CartPricer — one cart, N parcels', () => {
   const twoHouses = [
     product(),
     product({ productId: 'p2', sellerId: 's2', slug: 'ward', name: 'ورد الطائف',
-      brandName: 'دار الورد', brandLatin: 'DAR AL WARD', unitPrice: Money.fromMinor(38_000) }),
+      brandName: 'دار الورد', brandNameEn: null, brandLatin: 'DAR AL WARD', unitPrice: Money.fromMinor(38_000) }),
   ];
 
   it('groups by house and charges shipping per house', () => {
@@ -87,6 +88,18 @@ describe('CartPricer — one cart, N parcels', () => {
     expect(cart.shipping.minor).toBe(11_000);
     expect(cart.merchandise.minor).toBe(83_000);
     expect(cart.total.minor).toBe(94_000);
+  });
+
+  it("carries each house's English name, or null where it has given none", () => {
+    // The English bag names a house the way every other English page does;
+    // without this it printed the Arabic name under the Latin label.
+    const cart = pricer.price(
+      [{ productId: 'p1', quantity: 1 }, { productId: 'p2', quantity: 1 }],
+      twoHouses,
+    );
+    const bySeller = new Map(cart.houses.map((h) => [h.sellerId, h.brandNameEn]));
+    expect(bySeller.get('s1')).toBe('Maison Nour');
+    expect(bySeller.get('s2')).toBeNull();
   });
 
   it('keeps several lines from the same house in ONE parcel', () => {

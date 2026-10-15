@@ -3231,3 +3231,27 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: audit (houses, house, en-houses, en-house, home, en-home) has no findings
   in light and dark at all six widths; e2e 133/133; typecheck clean; unit tests 1,673
   pass; guard clean.
+
+- 2026-10-15 · Claude Code session · P5.1.3 · Phase B, screen 5: the bag.
+  The bag gets a ruled page head with a Latin kicker. Each house is a ruled panel
+  printed as one parcel: its Latin name in the head bar, its name and its own arrival
+  window, its lines, and its own delivery charge at the foot. The summary is a ruled
+  panel, sticky from `lg`. Other changes:
+  - thumbnails sit on the plate ground, replacing the first identity's lit gradient;
+  - the quantity buttons are square;
+  - prices are set at regular weight;
+  - Arabic notes are at reading size.
+  Fixes:
+  - The English bag printed each house's Arabic name, because the priced cart
+    carried no English name. `brandNameEn` now runs from the snapshot through
+    CartPricer and `cart.price`, and the bag picks the visitor's language as every
+    other page does; there is a test in cart.test.ts.
+  - The empty bag's "browse perfumes" went to the home page; it now goes to the
+    catalogue.
+  - The e2e check for it was vacuous: it accepted any `a[href="/"]` on the page,
+    and the masthead logo is always one. It now looks inside `main`.
+  Verified: audit (cart, en-cart) has no findings in light and dark at all six
+  widths; e2e 133/133; typecheck clean; unit tests 1,674 pass; guard clean.
+  One e2e run was lost to fonts.gstatic.com being unreachable for a few minutes:
+  next/font fetches on a cold dev compile, and the server answered 500 until the
+  host came back.
