@@ -63,18 +63,19 @@
   }
 
   /*
-    FONTS FOLLOW THE THEME AND THE LANGUAGE (identity v2, FD-1, 14 Oct 2026).
+    FONTS FOLLOW THE LANGUAGE, NEVER THE THEME (FD-1, amended 16 Oct 2026).
+
+    The two themes differ in colour and in nothing else: Noir is Laboratoire
+    with the lights off, set in the same faces at the same weights. Noir once
+    had its own (Reem Kufi, Noto Kufi Arabic, Archivo condensed capitals); the
+    founder preferred Laboratoire's voice and asked for one style in both.
 
     Every family utility reads a variable: `font-display` → --f-display,
     `font-sans` → --f-body, `latin` → --f-label. They are decided here and only
-    here, on the ROOT element — keyed on the root's `data-theme`, not on any
-    nested one, because a panel scoped dark for its colours (the illustrated
-    flacon's stage) must not change typeface in the middle of a light page.
+    here, by the root's `lang`. Nothing in this block may key on `data-theme`.
 
-    `--display-*` carry the parts of a heading voice that are not the family:
-    Noir's English headings are Archivo condensed capitals at 800; Arabic is
-    never uppercased or tracked, whatever the theme. `.font-display` applies
-    them below.
+    `--display-*` carry the parts of a heading voice that are not the family.
+    Arabic is never uppercased or tracked. `.font-display` applies them below.
 
     Each variable ends in a real fallback stack. The faces load with
     `display: swap`, so a slow connection reads the page in the fallback first,
@@ -84,8 +85,6 @@
     --fallback-ar: 'Segoe UI', 'SF Arabic', 'Geeza Pro', 'Noto Naskh Arabic', system-ui, sans-serif;
     --fallback-latin: 'Segoe UI', system-ui, sans-serif;
 
-    /* Laboratoire — the default, so it is also what a document with no
-       data-theme attribute gets. */
     --f-display-ar: var(--font-naskh), 'Noto Naskh Arabic', serif;
     --f-body-ar: var(--font-plex), var(--fallback-ar);
     --f-display: var(--f-display-ar);
@@ -101,29 +100,11 @@
     --wordmark-stretch: 100%;
     --wordmark-tracking: 0.14em;
   }
-  :root[data-theme='dark'] {
-    --f-wordmark: var(--font-archivo), var(--fallback-latin);
-    --wordmark-weight: 800;
-    --wordmark-stretch: 62%;
-    --wordmark-tracking: 0.02em;
-    --f-display-ar: var(--font-reem), var(--fallback-ar);
-    --f-body-ar: var(--font-kufi), var(--fallback-ar);
-    --f-label: var(--font-archivo), var(--fallback-latin);
-    --display-weight: 600;
-  }
   html[lang='en'] {
     --f-display: var(--font-newsreader), Georgia, serif;
     --f-body: var(--font-plex), var(--fallback-latin);
     --display-weight: 300;
     --display-tracking: -0.015em;
-  }
-  html[lang='en'][data-theme='dark'] {
-    --f-display: var(--font-archivo), var(--fallback-latin);
-    --f-body: var(--font-archivo), var(--font-kufi), var(--fallback-latin);
-    --display-weight: 800;
-    --display-case: uppercase;
-    --display-stretch: 62%;
-    --display-tracking: 0;
   }
   html:not([lang='en']) {
     --f-display: var(--f-display-ar);
@@ -132,8 +113,8 @@
 
   /*
     Arabic content on the English site — a perfume or a page nobody has
-    translated yet — keeps the THEME'S Arabic faces and drops the Latin
-    heading voice: Arabic is never uppercased, condensed or tracked. It is
+    translated yet — keeps the Arabic faces and drops the Latin heading
+    voice: Arabic is never uppercased, condensed or tracked. It is
     marked `lang="ar"` where it is rendered.
   */
   html[lang='en'] [lang='ar'] {

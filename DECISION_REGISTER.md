@@ -145,3 +145,10 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   four rendered samples · supersedes DESIGN_DOCTRINE laws III and IV and §7, and the
   Amiri/Bodoni typography in CLAUDE.md §15 · P5.1.3 (brought forward past GATE 5, as D-3
   was). DR-07's buyer test of the luxury frame was not run first.
+
+- 2026-10-16 · FD-1 amended · Ahmed (founder) · the light and dark themes share ONE style —
+  Laboratoire's faces, weights, layout and finish — and differ in colour only; Noir keeps
+  its black-and-bone palette and loses its own type (Reem Kufi, Noto Kufi Arabic, Archivo
+  condensed capitals) · the founder, testing the finished redesign, preferred Laboratoire's
+  style and wanted the theme switch to change colour and nothing else · supersedes the
+  dark-theme column of CLAUDE.md §15 and DESIGN_DOCTRINE law III · P5.1.3 follow-up.

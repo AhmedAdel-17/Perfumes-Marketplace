@@ -40,15 +40,17 @@ row. More air around everything. A cramped grid says "discount"; a spacious one 
 
 ### III. Typography carries the brand
 
-**Amended 14 October 2026 (identity v2).** Faces follow the theme as well as the language:
+**Amended 14 October 2026 (identity v2), and again 16 October 2026: the two themes differ
+in colour only.** Noir is Laboratoire with the lights off — same faces, weights, layout and
+finish. Faces follow the language, never the theme:
 
-| | Laboratoire (light, default) | Noir (dark) |
-|---|---|---|
-| Arabic headings | Noto Naskh Arabic | Reem Kufi |
-| Arabic text | IBM Plex Sans Arabic | Noto Kufi Arabic |
-| English headings | Newsreader (italic for the accent phrase) | Archivo, 62% width, capitals, 800 |
-| English text | IBM Plex Sans Arabic (its Latin glyphs) | Archivo |
-| Latin labels and data | IBM Plex Mono | Archivo |
+| | Both themes |
+|---|---|
+| Arabic headings | Noto Naskh Arabic |
+| Arabic text | IBM Plex Sans Arabic |
+| English headings | Newsreader (italic for the accent phrase) |
+| English text | IBM Plex Sans Arabic (its Latin glyphs) |
+| Latin labels and data | IBM Plex Mono |
 
 A component never names a family: it says `font-display`, `font-sans` or `latin`, and
 `globals.css` decides. Set the Arabic scale first — Arabic needs more leading than Latin,

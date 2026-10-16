@@ -93,14 +93,14 @@ export default async function Home() {
             {/*
               Arabic display type wants room between lines that Latin does not:
               1.2 for Arabic, 1.02 for the English serif (CLAUDE.md §15 — set the
-              scale for Arabic first). The accent line is italic only where the
-              face has one worth showing: Newsreader on paper, not Archivo's
-              condensed capitals on Noir.
+              scale for Arabic first). The accent line is italic on the English
+              site, in both themes: Newsreader has an italic worth showing, and
+              Naskh has none.
             */}
             <h1 className="mt-5 font-display text-h1Lg leading-[1.2] lg:mt-6 lg:text-displayLg [html[lang=en]_&]:leading-[1.02] xl:text-displayXl">
               {copy.headline}
               <br />
-              <em className="not-italic text-accent [html[lang=en]:not([data-theme=dark])_&]:italic">{copy.headlineAccent}</em>
+              <em className="not-italic text-accent [html[lang=en]_&]:italic">{copy.headlineAccent}</em>
             </h1>
             <p className="mt-5 max-w-proseMax text-bodyLg leading-relaxed text-ink2 lg:mt-6 lg:text-h4">{copy.lede}</p>
             <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-3 lg:mt-8">

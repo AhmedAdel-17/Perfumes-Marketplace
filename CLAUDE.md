@@ -297,8 +297,9 @@ believed this section would have invented a visual language that already existed
 
 Open the matching reference and **match it exactly** — colours, spacing, type sizes, SVG
 paths, layout. *Since 14 October 2026 (FD-1) the visual identity is `design-reference/redesign/`
-— `04-laboratoire.html` (layout, light theme) and `02-noir-absolu.html` (dark theme); where an
-older reference disagrees with it on colour, type or finish, the redesign wins.*
+— `04-laboratoire.html` (layout, type and finish, both themes) and `02-noir-absolu.html`
+(the dark theme's COLOURS only, since 16 Oct 2026); where an older reference disagrees with
+it on colour, type or finish, the redesign wins.*
 Do not redesign or "improve". If something looks wrong, say so and ask.
 
 Icons are in `packages/ui/src/icons.tsx` (41 components). Never draw a new one without
@@ -391,15 +392,17 @@ data. Storefronts are an acquisition surface — sellers link to them from socia
 ## 15. Typography
 
 *Replaced 14 October 2026 by visual identity v2 (founder decision FD-1). Amiri and Bodoni
-Moda are retired.* Fonts follow the THEME as well as the language:
+Moda are retired. Amended 16 October 2026: the light and dark themes differ in COLOUR ONLY
+— same faces, weights, layout and finish. Noir's own faces (Reem Kufi, Noto Kufi Arabic,
+Archivo) are retired.* Fonts follow the language, never the theme:
 
-| | Light — "Laboratoire" (default) | Dark — "Noir" |
-|---|---|---|
-| Arabic headings | Noto Naskh Arabic | Reem Kufi |
-| Arabic text | IBM Plex Sans Arabic | Noto Kufi Arabic |
-| English headings | Newsreader | Archivo, condensed capitals |
-| English text | IBM Plex Sans Arabic (its Latin glyphs) | Archivo |
-| Latin labels and data | IBM Plex Mono | Archivo |
+| | Both themes |
+|---|---|
+| Arabic headings | Noto Naskh Arabic |
+| Arabic text | IBM Plex Sans Arabic |
+| English headings | Newsreader |
+| English text | IBM Plex Sans Arabic (its Latin glyphs) |
+| Latin labels and data | IBM Plex Mono |
 
 Components never name a family: `font-display`, `font-sans` and `latin` read variables set
 in `apps/web/src/app/globals.css`. **Arabic is never letterspaced, uppercased or set in a

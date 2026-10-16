@@ -19,7 +19,7 @@ export const nativeTheme = {
     language, and the two would drift the first time either palette moved.
   */
   themes,
-  /* Per theme, like the colours: the apps switch faces with the appearance. */
+  /* One set for both appearances: the themes differ in colour only (FD-1, amended 16 Oct 2026). */
   font,
   fontSize,
   lineHeight,

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import {
-  Archivo, IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Newsreader,
-  Noto_Kufi_Arabic, Noto_Naskh_Arabic, Reem_Kufi,
+  IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Newsreader, Noto_Naskh_Arabic,
 } from 'next/font/google';
 import { directionOf, localePath, SHELL } from '@diyar/i18n';
 import { getLocale, getPath } from '@/core/locale';
@@ -13,26 +12,23 @@ import { headers } from 'next/headers';
 import './globals.css';
 
 /**
- * The faces of both themes (visual identity v2, FD-1, 14 Oct 2026).
+ * The faces — ONE set for both themes (FD-1, amended 16 Oct 2026: Laboratoire
+ * and Noir differ in colour only, so Noir is set in Laboratoire's type).
  *
- *   Laboratoire (light, the default)   Noir (dark)
- *   ar headings  Noto Naskh Arabic     Reem Kufi
- *   ar text      IBM Plex Sans Arabic  Noto Kufi Arabic
- *   en headings  Newsreader            Archivo, condensed capitals
- *   en text      IBM Plex Sans Arabic  Archivo
- *                (its Latin glyphs —
- *                IBM Plex Sans' design)
- *   labels/data  IBM Plex Mono         Archivo
+ *   ar headings  Noto Naskh Arabic
+ *   ar text      IBM Plex Sans Arabic
+ *   en headings  Newsreader
+ *   en text      IBM Plex Sans Arabic (its Latin glyphs — IBM Plex Sans' design)
+ *   labels/data  IBM Plex Mono
  *
- * Which variable a component reads is decided in globals.css by theme and
- * language; a component only ever says `font-display`, `font-sans`, `latin`.
+ * Which variable a component reads is decided in globals.css by language; a
+ * component only ever says `font-display`, `font-sans`, `latin`.
  *
  * WHAT IS DOWNLOADED. next/font self-hosts every face (no request to Google,
- * no layout shift), but a browser fetches a face only when an element on the
- * page asks for it. So declaring Noir's faces costs a light-mode visitor
- * nothing. `preload` is on only for the three faces the DEFAULT page — light,
- * Arabic — needs before first paint; preloading the rest would spend an
- * Egyptian mobile connection on fonts the visitor may never see.
+ * no layout shift). `preload` is on for the three faces the default page —
+ * Arabic — needs before first paint; Newsreader serves only the English site,
+ * so preloading it would spend an Egyptian mobile connection on a face most
+ * visitors never see.
  *
  * Only the weights actually used are requested, as before: a weight nothing
  * asks for is wasted bytes, and a weight something asks for and does not get
@@ -58,28 +54,12 @@ const plexMono = IBM_Plex_Mono({
   subsets: ['latin'], weight: ['400', '500'],
   variable: '--font-plex-mono', display: 'swap',
 });
-// English site, light theme.
+// English site headings.
 const newsreader = Newsreader({
   subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'],
   variable: '--font-newsreader', display: 'swap', preload: false,
 });
-// Noir.
-const reemKufi = Reem_Kufi({
-  subsets: ['arabic'], weight: ['500', '600'],
-  variable: '--font-reem', display: 'swap', preload: false,
-});
-const kufi = Noto_Kufi_Arabic({
-  subsets: ['arabic'], weight: ['300', '400', '500', '600'],
-  variable: '--font-kufi', display: 'swap', preload: false,
-});
-// Variable on width as well as weight: Noir's English headings are Archivo at
-// 62% width, its text at 100% — one file, two voices.
-const archivo = Archivo({
-  subsets: ['latin'], axes: ['wdth'],
-  variable: '--font-archivo', display: 'swap', preload: false,
-});
-
-const FONT_VARIABLES = [naskh, plex, plexMono, newsreader, reemKufi, kufi, archivo]
+const FONT_VARIABLES = [naskh, plex, plexMono, newsreader]
   .map((f) => f.variable).join(' ');
 
 export async function generateMetadata(): Promise<Metadata> {

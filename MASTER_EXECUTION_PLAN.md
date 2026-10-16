@@ -3416,3 +3416,15 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   findings in light. Dark reported once "apply — 0 visible h1 [768]"; a rerun of apply and
   en-apply was clean in both themes and the server log shows every /apply request
   answered 200, so it is recorded as a render-timing flake, not a defect.
+
+- 2026-10-16 · Claude Code session · P5.1.3 follow-up · FD-1 amended by the founder: the
+  two themes differ in COLOUR ONLY. Noir now uses Laboratoire's faces, weights and finish
+  (Noto Naskh Arabic, IBM Plex Sans Arabic, Newsreader, IBM Plex Mono). Reem Kufi, Noto Kufi
+  Arabic and Archivo removed from the layout, globals.css and tokens.json (`font` is one set
+  now, not per theme); the English home headline's accent is italic in both themes.
+  CLAUDE.md §15, DESIGN_DOCTRINE law III, TECH_STACK and DECISION_REGISTER updated. The
+  grain's blend mode still flips with the theme: it adapts the texture to the ground's
+  colour and changes nothing a visitor reads.
+  Verified in the browser: computed family, weight, case, stretch, tracking and style of
+  the headline, accent, body, labels and wordmark are identical in light and dark, in
+  Arabic and in English.

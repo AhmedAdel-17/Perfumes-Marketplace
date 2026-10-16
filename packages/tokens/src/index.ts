@@ -25,8 +25,8 @@ export const noteTierLight = raw.noteTierLight;
 export const scentFamily = raw.scentFamily;
 /** One theme's faces: Arabic and English headings and text, and the Latin label face. */
 export interface ThemeFonts { displayAr: string; bodyAr: string; displayEn: string; bodyEn: string; label: string }
-/** Fonts follow the theme as well as the language (identity v2). See tokens.json `font.$usage`. */
-export const font = strip(raw.font) as unknown as { light: ThemeFonts; dark: ThemeFonts };
+/** One set of faces for both themes; they follow the language only. See tokens.json `font.$usage`. */
+export const font = strip(raw.font) as unknown as ThemeFonts;
 export const fontSize = strip(raw.fontSize) as unknown as Record<string, number>;
 export const lineHeight = strip(raw.lineHeight) as unknown as Record<string, number>;
 export const letterSpacing = raw.letterSpacing;
