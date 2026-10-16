@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | NOT_STARTED | 0/17 | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 2/20 (P5.6.4, P5.1.3 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -215,7 +215,7 @@ production (P0.1.3).
 | P4.9.1 | Notes dictionary v1; review-aggregate bands threshold | P4 | NOT_STARTED | P1 | BUILD | DR M-2 |
 | P5.1.1 | Journey redesign (R3) | P5 | NOT_STARTED | P2 | BUILD | GATE 5, P4.2.1 |
 | P5.1.2 | Polish: structured data, ISR, visual regression (R4) | P5 | NOT_STARTED | P2 | BUILD | P5.1.1 |
-| P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | IN_PROGRESS | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
+| P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | COMPLETE | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2238,7 +2238,7 @@ listing form; print styles.
 **Reference documents:** `docs/frontend/03` §2.3.
 
 #### P5.1.3 Visual identity v2 — Laboratoire (light) and Noir (dark)
-**Status:** IN_PROGRESS · **Priority:** P1 · **Type:** BUILD
+**Status:** COMPLETE (16 Oct 2026) · **Priority:** P1 · **Type:** BUILD
 **Why:** the founder judged the frontend "cheap, not optimised, AI-generated" (14 Oct 2026)
 and chose an identity from four rendered samples of the home page
 (`design-reference/redesign/`): sample 4 "Laboratoire" as the light theme and the default,
@@ -2256,6 +2256,13 @@ at 390/768/1440; token contrast tests green; `audit.mjs` clean in both themes; b
 green; no Amiri/Bodoni/brass left in source; DESIGN_DOCTRINE and CLAUDE.md describe it.
 **Do not do:** invent a visual language for a screen the samples did not cover without
 showing the founder screenshots first (CLAUDE.md §12); designer-name references; urgency UI.
+**Completion evidence:** commits db25cc9 (A); ab486a3, 380e181, b4fee97, 28b51b5, 72a9a41,
+ab12267, f7b74c5, fbd2459 (B); a647b91, 368a7c6 (C); the Phase D commit that follows them.
+At close: `audit.mjs` has no findings in light or dark at all six widths across every
+surface (one dark render flake on /apply at 768 did not reproduce on rerun — every request
+for it returned 200); e2e 133/133 from a cold server with a fresh seed; 1,674 unit tests
+pass; typecheck and guard clean; `next build` succeeds (shared JS 103 kB, pages 124–138 kB
+first load); no Amiri, Bodoni or brass remains in `apps`, `packages` or `scripts`.
 
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
@@ -3391,3 +3398,21 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   full reruns, including one under the same load. It does not read the clock. The
   failure message was not captured, so the cause is NOT established; it is recorded
   here in case it recurs.
+
+- 2026-10-16 · Claude Code session · P5.1.3 · Phase D (clean-up) complete; task → COMPLETE.
+  - The dark `stage` palette (the first identity's lit room behind a bottle) removed from
+    tokens.json, index.ts, the Tailwind preset and its tests; nothing used it any more.
+  - The tab icon redrawn for v2: a square putty ground, sepia flacon, olive liquid.
+  - Comments that still named Amiri, Bodoni, brass or the metallic gradient rewritten.
+  - The last alpha borders (`/25`, `/60`, `/70`) made solid, and the last rounded corners
+    (file input, rating bars, bag count) made square. Kept on purpose: the verification
+    check's circle (a circle in the reference) and the notes pyramid's tier dots.
+  - The colour guard now also catches `rgb()`/`rgba()`/`hsl()`/`hsla()` with a literal
+    first argument, with six self-tests; debt #24 PAID.
+  - TECH_STACK fonts line, DESIGN_DOCTRINE focus ring, and a "superseded in part" note on
+    docs/frontend/02 and docs/brand/06.
+  Verified: `next build` succeeds; e2e 133/133 from cold; unit tests 1,674 (tokens 123 —
+  one stage test removed with the stage); typecheck and guard clean; full audit has no
+  findings in light. Dark reported once "apply — 0 visible h1 [768]"; a rerun of apply and
+  en-apply was clean in both themes and the server log shows every /apply request
+  answered 200, so it is recorded as a render-timing flake, not a defect.

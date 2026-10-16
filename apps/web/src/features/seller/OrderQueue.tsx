@@ -160,20 +160,12 @@ function Row({
             <span className="flex items-baseline gap-2">
               {item.quantity > 1 && (
                 /*
-                  `text-ink`, not `text-accent`.
-                
-                  Brass on a 15% brass tint is 4.32:1 in the paper theme at
-                  10.5px — under the 4.5 floor. It had never been caught because
-                  the badge only renders when a line has more than one bottle,
-                  and no fixture had produced one until a seeded order did.
-                
-                  This is the number that tells a house HOW MANY to pack. It
-                  should be the most legible thing on the row, not the least;
-                  the tint still says "quantity" on its own.
+                  The number that tells a house HOW MANY to pack, so the most
+                  legible thing on the row: ink, in a ruled square. It was once
+                  accent text on an accent tint, which measured 4.32:1 — under
+                  the floor, and never caught because no fixture had a line
+                  with more than one bottle until a seeded order did.
                 */
-                // A ruled square, not a tint: an alpha on the accent was the
-                // badge that failed contrast once already. Ink on paper, in a
-                // box, is the most legible thing on the row, as it should be.
                 <span className="border border-ink px-2 py-0.5 text-body text-ink">
                   <span className="tnum">×{num(item.quantity)}</span>
                 </span>

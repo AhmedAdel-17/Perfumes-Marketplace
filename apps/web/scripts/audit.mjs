@@ -471,7 +471,7 @@ try {
    * The English site (P5.6.2): every customer screen again under `/en`.
    *
    * A second direction is a second layout. Left-to-right moves every logical
-   * margin, mirrors the evolution curve, and swaps the heading face to Bodoni —
+   * margin, mirrors the evolution curve, and swaps the heading face to the Latin one —
    * each a place where a contrast, an overflow or a heading order can break
    * that the Arabic run cannot see. The sign-in screens are left out: the seller
    * portal and the console are Arabic-only until steps 4 and 5.

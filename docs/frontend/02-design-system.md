@@ -1,5 +1,7 @@
 # Design system
 
+> **Superseded in part, 16 Oct 2026.** Written for the first visual identity. The shipped identity is v2 (FD-1): `design-reference/redesign/04-laboratoire.html` (light) and `02-noir-absolu.html` (dark), described in `docs/DESIGN_DOCTRINE.md` and `packages/tokens`. Where this document names brass, Amiri, Bodoni or a dark stage, the doctrine and the tokens win. Kept for its reasoning, not its values.
+
 Two surfaces, one token source. **Maison** is the shopfront and storefronts: space,
 photography, restraint, the doctrine as written. **Atelier** is every operating tool
 (seller portal, ops console): dense, tabular, fast to scan, the same palette and faces at a

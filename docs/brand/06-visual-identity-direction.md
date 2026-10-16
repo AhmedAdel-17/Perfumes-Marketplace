@@ -1,5 +1,7 @@
 # Visual identity direction
 
+> **Superseded in part, 16 Oct 2026.** Written for the first visual identity. The shipped identity is v2 (FD-1): `design-reference/redesign/04-laboratoire.html` (light) and `02-noir-absolu.html` (dark), described in `docs/DESIGN_DOCTRINE.md` and `packages/tokens`. Where this document names brass, Amiri, Bodoni or a dark stage, the doctrine and the tokens win. Kept for its reasoning, not its values.
+
 Strategy, not implementation. The implemented doctrine (`docs/DESIGN_DOCTRINE.md`), tokens
 and design references are FACT and remain the concrete expression of the storefront
 language; this document places them in a brand system with two related languages.

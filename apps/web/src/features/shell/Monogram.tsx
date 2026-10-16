@@ -1,7 +1,7 @@
 /**
  * The DIYAR mark.
  *
- * Letterspaced Bodoni is not a logo — it is type with tracking applied, and it
+ * Letterspaced type is not a logo — it is type with tracking applied, and it
  * is the house style of every generated brand on the internet. A maison has a
  * MARK: something drawn, that survives at 16px in a browser tab and at 200px
  * embossed on a box, and that means something.

@@ -34,7 +34,8 @@ export function BagLink() {
       aria-label={copy.bagLabel(num(itemCount))}
     >
       <span>{copy.bag}</span>
-      <span className="tnum flex h-[22px] min-w-[22px] items-center justify-center rounded-pill bg-accent-surface px-1.5 text-micro font-semibold text-on-accent">
+      {/* A square count, like every other edge in the identity. */}
+      <span className="tnum latin flex h-[22px] min-w-[22px] items-center justify-center bg-accent-surface px-1.5 text-caption text-on-accent">
         {num(itemCount)}
       </span>
     </Link>

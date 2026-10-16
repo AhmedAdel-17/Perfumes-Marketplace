@@ -209,7 +209,7 @@ means operationally.
 
 - [ ] Every tap target measured at 44pt — measured, not eyeballed
 - [ ] Press state present and felt on every interactive element
-- [ ] Focus ring visible and correct (2px brass, 2px offset)
+- [ ] Focus ring visible and correct (2px accent, 2px offset)
 - [ ] Skeleton matches final layout dimensions exactly — zero layout shift
 - [ ] Empty, error and offline states designed, not defaulted
 - [ ] RTL correct with mixed Arabic/Latin content

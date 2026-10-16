@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { color, colorLight, fontSize, motion, MIN_READING_SIZE, TOUCH_TARGET, radius, opacity, noteTier, noteTierLight, stage } from './index';
+import { color, colorLight, fontSize, motion, MIN_READING_SIZE, TOUCH_TARGET, radius, opacity, noteTier, noteTierLight } from './index';
 import { cssVariable, themeBaseStyles, themeColors, themes, type ThemeRoles } from './theme';
 import { diyarPreset } from './tailwind-preset';
 import { nativeTheme } from './native-theme';
@@ -200,20 +200,14 @@ describe('two themes, one contract', () => {
   /*
     Identity v2 (FD-1, 14 Oct 2026) reversed a rule this test used to hold:
     the plate was dark in both themes. Real photographs now sit on the page's
-    own paper in Laboratoire, so the plate FOLLOWS the theme — and only the
-    illustrated flacon, the placeholder for a listing with no photograph, keeps
-    a dark stage. Both halves are asserted so neither can drift back silently.
+    own paper in Laboratoire, so the plate FOLLOWS the theme. (The dark
+    `stage` behind the illustrated flacon went in Phase D, 16 Oct 2026.)
   */
   it('lets the photograph plate follow the theme', () => {
     expect(themes.light.plate).not.toBe(themes.dark.plate);
     expect(luminance(themes.light.plate)).toBeGreaterThan(luminance(themes.dark.plate));
   });
 
-  it("keeps the illustrated flacon's stage dark in both themes", () => {
-    for (const [name, hex] of Object.entries(stage)) {
-      expect(luminance(hex), name).toBeLessThan(0.05);
-    }
-  });
 });
 
 describe('note-tier colours are TEXT, and were never checked as text', () => {

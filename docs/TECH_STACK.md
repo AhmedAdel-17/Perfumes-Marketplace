@@ -118,7 +118,7 @@ opens. They are kept because when the apps are built, they are built that way.
 **Hard rule, for that day:** server data lives in TanStack Query, client state lives in
 Redux Toolkit, and they never overlap. See `ARCHITECTURE.md` §3.2.
 
-Fonts: Amiri (Arabic headings) · Bodoni Moda (Latin labels) · IBM Plex Sans Arabic (body).
+Fonts (visual identity v2, FD-1, 14 Oct 2026) follow the theme as well as the language. Light (Laboratoire, the default): Noto Naskh Arabic headings, IBM Plex Sans Arabic text, Newsreader English headings, IBM Plex Mono Latin labels. Dark (Noir): Reem Kufi headings, Noto Kufi Arabic text, Archivo for English and labels. All through `next/font`; the mapping lives once, in `apps/web/src/app/globals.css`. See CLAUDE.md §15.
 
 ---
 

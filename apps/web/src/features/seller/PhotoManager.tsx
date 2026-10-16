@@ -340,7 +340,7 @@ function AddPhoto({ productId }: { productId: string }) {
           type="file"
           accept={IMAGE_TYPES.join(',')}
           onChange={(event) => void choose(event.target.files?.[0] ?? null)}
-          className="block min-h-touch w-full text-small text-ink2 file:me-3 file:min-h-touch file:cursor-pointer file:rounded-sm file:border file:border-line file:bg-ground file:px-4 file:text-small file:text-ink"
+          className="block min-h-touch w-full text-small text-ink2 file:me-3 file:min-h-touch file:cursor-pointer file:border file:border-ink file:bg-ground file:px-4 file:text-small file:text-ink"
         />
       </label>
 

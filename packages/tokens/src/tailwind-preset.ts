@@ -4,7 +4,7 @@
  * Apps extend this rather than declaring colours of their own, so a value that
  * is not in the token file cannot be reached through a utility class.
  */
-import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space, stage } from './index';
+import { fontSize, layout, letterSpacing, lineHeight, motion, opacity, radius, scentFamily, space } from './index';
 import { themeColors } from './theme';
 
 const px = (o: Record<string, number>) =>
@@ -26,17 +26,15 @@ export const diyarPreset = {
         it would do so silently — the class compiles, the page renders, and the
         defect is invisible until somebody switches the toggle.
 
-        `family` is the exception and stays a literal palette. It paints light
-        through glass on a plate that is dark in BOTH themes, so it is physics,
-        not chrome. See the note in theme.ts.
+        `family` is the exception and stays a literal palette: it is the
+        colour of the liquid in the illustrated flacon, a drawing of a thing,
+        not chrome, and a perfume does not change colour with the theme.
 
-        `stage` is the second exception, for the same reason (DR-13, 21 Sep
-        2026): it is the light ON that plate — a warm glow falling to near-black
-        behind a bottle — and it does not flip with the theme any more than the
-        room a perfume is photographed in does. It is reached only through
-        `theme(colors.stage.*)` inside a gradient, never as a flat fill.
+        `stage` — the lit near-black room behind the first identity's bottles —
+        was removed with identity v2's Phase D (16 Oct 2026). Photographs and
+        the illustrated fallback both sit on the theme's `plate` now.
       */
-      colors: { ...themeColors, family: scentFamily, stage },
+      colors: { ...themeColors, family: scentFamily },
       /*
         Fonts are VARIABLES, set per theme and per language in apps/web
         globals.css (identity v2, 14 Oct 2026): Laboratoire and Noir use

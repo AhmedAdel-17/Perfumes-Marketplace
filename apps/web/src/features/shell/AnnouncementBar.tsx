@@ -34,8 +34,9 @@ export async function AnnouncementBar() {
       role="status"
       // The raised surface, not a 7% tint of accent: the message is set in the
       // accent ink, which is proven against the surfaces and not against a
-      // tint of itself. The brass rule beneath still marks it as a notice.
-      className="border-b border-accent/25 bg-raised px-5 py-2.5 text-center"
+      // tint of itself. The accent rule beneath marks it as a notice — at full
+      // strength, because an alpha on a role spends contrast that is not there.
+      className="border-b border-accent bg-raised px-5 py-2.5 text-center"
     >
       {announcement.href ? (
         <a

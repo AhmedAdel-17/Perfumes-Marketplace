@@ -20,7 +20,7 @@
 /**
  * A FLAT FILL, the ink of the page inverted (identity v2, FD-1 and FD-7).
  *
- * The brass gradient this replaced was the most "generated" element on screen
+ * The metallic gradient this replaced was the most "generated" element on screen
  * by the redesign audit's own account (`docs/frontend/01` §2). Both chosen
  * directions use a solid action: in Laboratoire a sepia slab that turns olive
  * under the pointer, in Noir a bone slab on black. Both are the same three

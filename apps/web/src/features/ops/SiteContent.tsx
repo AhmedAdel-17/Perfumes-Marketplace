@@ -271,7 +271,7 @@ export function SiteContent({ announcements, products, curation }: {
         </div>
 
         {objections.length > 0 && (
-          <ul className="mb-4 border-s-2 border-danger/60 ps-4" aria-live="polite">
+          <ul className="mb-4 border-s-2 border-danger ps-4" aria-live="polite">
             {objections.map((text) => (
               <li key={text} className="py-1 text-small text-danger">{text}</li>
             ))}

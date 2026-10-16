@@ -223,7 +223,7 @@ function ImageField({ id, pageId, mediaKey, image, alt, onUploaded }: {
       ) : mediaKey.trim() ? (
         // A key saved before uploads existed, or typed by hand. Said plainly,
         // because the publish rule will refuse it and the editor should know why.
-        <p className="mb-3 border-s-2 border-danger/60 ps-4 text-small leading-relaxed text-ink2">
+        <p className="mb-3 border-s-2 border-danger ps-4 text-small leading-relaxed text-ink2">
           هذه الصورة لم تُرفع عبر المنصّة، ولن تُنشر. ارفع الملف من جديد.
         </p>
       ) : null}
@@ -552,7 +552,7 @@ export function PageEditor({ page }: {
       </div>
 
       {/* ----------------------------------------------------- the language */}
-      <div role="group" aria-label="لغة المحتوى" className="mb-6 inline-flex border border-line/70">
+      <div role="group" aria-label="لغة المحتوى" className="mb-6 inline-flex border border-line">
         {(['ar', 'en'] as const).map((code) => (
           <button
             key={code}
@@ -561,7 +561,7 @@ export function PageEditor({ page }: {
             onClick={() => setLanguage(code)}
             className={[
               'flex min-h-touch items-center px-5 text-small transition-colors duration-base ease-out',
-              code === 'en' ? 'border-s border-line/70' : '',
+              code === 'en' ? 'border-s border-line' : '',
               language === code ? 'bg-raised text-ink' : 'text-ink3 hover:text-ink2',
             ].join(' ')}
           >
@@ -667,7 +667,7 @@ export function PageEditor({ page }: {
 
       {/* ----------------------------------------------------- objections */}
       {objections.length > 0 && (
-        <ul className="mt-7 border-s-2 border-danger/60 ps-4" aria-live="polite">
+        <ul className="mt-7 border-s-2 border-danger ps-4" aria-live="polite">
           {objections.map((objection, i) => (
             <li key={i} className="py-1 text-small leading-relaxed text-danger">
               {objectionText(objection)}

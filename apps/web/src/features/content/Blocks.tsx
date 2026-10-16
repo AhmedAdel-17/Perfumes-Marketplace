@@ -71,7 +71,7 @@ function Passage({ block }: { block: PassageBlock }) {
 
 function PullQuote({ block }: { block: PullQuoteBlock }) {
   /*
-   * Set larger and in the display face, with a brass rule on the leading edge.
+   * Set larger and in the display face, with an accent rule on the leading edge.
    *
    * `border-s` rather than `border-l`: this is a logical property, so the rule
    * sits on the right in Arabic and would move to the left if a second locale

@@ -515,7 +515,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {claims.length > 0 && (
         <ul
-          className={`mb-6 border-s-2 ps-4 ${refused ? 'border-danger/60' : 'border-accent/60'}`}
+          className={`mb-6 border-s-2 ps-4 ${refused ? 'border-danger' : 'border-accent'}`}
           aria-live="polite"
         >
           {claims.map((claim, i) => (

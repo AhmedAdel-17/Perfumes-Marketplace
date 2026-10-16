@@ -22,7 +22,7 @@ import { useLocale } from './LocaleProvider';
  * naming a thing — it sits beside the wordmark rather than fighting it.
  *
  * The five states the doctrine requires are all present: rest, hover, press
- * (`active:opacity-press`), focus (the global brass ring), and — because this
+ * (`active:opacity-press`), focus (the global accent ring), and — because this
  * control's state comes from a store the server cannot read — a HYDRATION state,
  * during which neither segment claims to be active. Rendering a guess and
  * correcting it a frame later is how a toggle ends up flickering the wrong way.
@@ -101,7 +101,7 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label={copy.appearance}
-      className="inline-flex items-center border border-line/70"
+      className="inline-flex items-center border border-line"
     >
       {SEGMENTS.map(({ theme: name, label, spoken }, index) => (
         <button
@@ -115,7 +115,7 @@ export function ThemeToggle() {
             // 44pt target the doctrine requires without inflating the chrome.
             'tappable latin flex h-[32px] items-center px-3 text-caption tracking-label',
             'transition-colors duration-base ease-out active:opacity-press',
-            index === 1 ? 'border-s border-line/70' : '',
+            index === 1 ? 'border-s border-line' : '',
             theme === name ? 'text-ink' : 'text-ink3 hover:text-ink2',
           ].join(' ')}
         >

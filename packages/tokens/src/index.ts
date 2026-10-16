@@ -23,8 +23,6 @@ export const colorLight = raw.colorLight;
 export const noteTier = raw.noteTier;
 export const noteTierLight = raw.noteTierLight;
 export const scentFamily = raw.scentFamily;
-/** The lit stage behind a bottle. A literal palette, dark in both themes — see tokens.json. */
-export const stage = raw.stage;
 /** One theme's faces: Arabic and English headings and text, and the Latin label face. */
 export interface ThemeFonts { displayAr: string; bodyAr: string; displayEn: string; bodyEn: string; label: string }
 /** Fonts follow the theme as well as the language (identity v2). See tokens.json `font.$usage`. */

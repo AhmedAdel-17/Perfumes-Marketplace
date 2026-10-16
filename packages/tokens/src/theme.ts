@@ -23,8 +23,8 @@
  * WHAT CHANGED ABOUT THE PLATE. It used to be dark in both themes — a bottle
  * lit in a dark room whichever way the page was lit. Identity v2 shows real
  * photographs on the page's own paper in light mode, so `plate` now follows the
- * theme. The dark `stage` palette survives only behind the ILLUSTRATED flacon,
- * the placeholder for a listing with no photograph.
+ * theme, and so does the illustrated flacon drawn when a listing has no
+ * photograph (Phase D removed the dark `stage` that once sat behind it).
  */
 import raw from './tokens.json' with { type: 'json' };
 
@@ -162,11 +162,12 @@ const declarations = (name: ThemeName): Record<string, string> =>
  *
  * THE ATTRIBUTE IS NOT ROOT-ONLY, and that turned out to be the whole trick.
  *
- * A panel that must stay dark inside a light page — the illustrated flacon's
- * stage is the one left — needs its ink, hairlines and accent to resolve dark
- * too. Variables scoped to `:root` only would leave near-black type on a
- * near-black stage, and fixing that per element would mean a second colour
- * decision at every one of them.
+ * A panel that must stay dark inside a light page needs its ink, hairlines and
+ * accent to resolve dark too. Variables scoped to `:root` only would leave
+ * near-black type on a near-black panel, and fixing that per element would mean
+ * a second colour decision at every one of them. (No panel uses this today —
+ * the first identity's dark hero did — but the selector also serves the root,
+ * so it costs nothing to keep it general.)
  *
  * Declaring the themes on ANY element instead makes `data-theme="dark"` a
  * scope: everything inside a marked panel resolves against the dark theme —

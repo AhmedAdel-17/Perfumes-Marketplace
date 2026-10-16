@@ -116,6 +116,16 @@ export function stripComments(source) {
 /** A 6- or 8-digit hex colour NOT followed by another hex digit. No `\b`. */
 const HEX = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})(?![0-9a-fA-F])/g;
 
+/**
+ * A colour written as a FUNCTION with a literal first argument: `rgb(6,5,5)`,
+ * `rgba(206, 168, 100, .18)`, `hsl(30 20% 10%)`. DEBT_REGISTER #24 — the guard
+ * used to know hex only, and seven of these sat in the stage files unseen.
+ *
+ * A DIGIT must follow the parenthesis. `rgb(var(--c-ground) / .72)` and
+ * `rgb(${channels})` are how a TOKEN is used with an alpha, and must pass.
+ */
+const FUNC = /\b(?:rgba?|hsla?)\(\s*[0-9.]/g;
+
 /** Physical directions. RTL needs logical properties: ms-, me-, ps-, pe-, start-, end-. */
 const PHYSICAL = /\b(?:ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)[0-9a-z]/g;
 
@@ -136,6 +146,12 @@ function selfTest() {
     ["'#2C221AFF'", 1, HEX],                   // 8-digit counts once, as itself
     ["'image/*' + '#2C221A'", 1, HEX],         // a string with /* must not open a comment
     ["'https://x' + '#2C221A'", 1, HEX],       // nor one with //
+    ["'rgba(206,168,100,.18)'", 1, FUNC],      // the seven #24 was about
+    ["'rgb( 6 5 5 )'", 1, FUNC],
+    ["'hsl(30 20% 10%)'", 1, FUNC],
+    ["'rgb(var(--c-ground) / .72)'", 0, FUNC],  // a token with an alpha
+    ['`rgb(${channels})`', 0, FUNC],
+    ['// rgba(6,5,5,.6) in a comment', 0, FUNC],
     ['{/* left-to-right */}', 0, PHYSICAL],
     ["'ml-4'", 1, PHYSICAL],
     ["'ms-4'", 0, PHYSICAL],
@@ -193,6 +209,7 @@ export function run() {
 
       if (!ARTWORK.some((a) => a.path === posix)) {
         for (const m of code.matchAll(HEX)) colours.push(`${posix}:${lineOf(code, m.index)}  ${m[0]}`);
+        for (const m of code.matchAll(FUNC)) colours.push(`${posix}:${lineOf(code, m.index)}  ${m[0]}…`);
       }
       for (const m of code.matchAll(PHYSICAL)) directions.push(`${posix}:${lineOf(code, m.index)}  ${m[0]}`);
     }

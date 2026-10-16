@@ -124,7 +124,7 @@ export function ContentList({ pages }: { pages: PageRow[] }) {
           <input
             id="new-slug" value={slug} maxLength={80} dir="ltr"
             onChange={(e) => setSlug(e.target.value)}
-            className="latin h-control w-full rounded-sm border border-line bg-ground px-3 text-start text-body text-ink transition-colors duration-base ease-out focus:border-ink2 focus:outline-none focus-visible:border-accent"
+            className="latin h-control w-full border border-line bg-sunken px-3 text-start text-body text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
           />
         </div>
 

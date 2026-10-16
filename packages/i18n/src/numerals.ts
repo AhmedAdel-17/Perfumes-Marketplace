@@ -18,7 +18,7 @@ import type { Locale } from './locale';
 const ARABIC_INDIC = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'] as const;
 
 export type NumeralContext =
-  /** Prose: headline counts, founding years, campaign copy. Set in Amiri. */
+  /** Prose: headline counts, founding years, campaign copy. Set in the display face. */
   | 'editorial'
   /** Anything scannable, comparable or actionable. The default. */
   | 'data';
@@ -107,7 +107,7 @@ export function formatPrice(piastres: number, options: { decimals?: boolean } = 
 /** The currency label is a letterspaced Latin word, never a glyph on the number. */
 export const CURRENCY_LABEL = 'EGP';
 
-/** Editorial helper: counts inside Amiri headings. */
+/** Editorial helper: counts inside display headings. */
 export const editorial = (n: number, group = true): string =>
   formatNumber(n, { context: 'editorial', group });
 

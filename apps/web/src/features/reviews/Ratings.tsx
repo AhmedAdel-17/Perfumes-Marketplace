@@ -23,11 +23,11 @@ function Bar({ value }: { value: number | null }) {
 
   return (
     <span
-      className="relative block h-[2px] w-full overflow-hidden rounded-pill bg-line"
+      className="relative block h-[2px] w-full overflow-hidden bg-line"
       aria-hidden="true"
     >
       <span
-        className="absolute inset-y-0 end-0 rounded-pill bg-accent transition-[width] duration-slow ease-out"
+        className="absolute inset-y-0 end-0 bg-accent transition-[width] duration-slow ease-out"
         // A width computed from a rating cannot be a Tailwind class — there are
         // no arbitrary values at runtime — so it is the one inline style here.
         style={{ width: `${Math.max(fraction, 0) * 100}%` }}
