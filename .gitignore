@@ -22,3 +22,8 @@ coverage/
 
 # Screenshots taken while working. Regenerated on demand, never reviewed.
 .shots/
+
+# Mock-up product photographs: free-licence stock, development only. See the README there.
+apps/web/scripts/mock-photos/*
+!apps/web/scripts/mock-photos/README.md
+!apps/web/scripts/mock-photos/SOURCES.md

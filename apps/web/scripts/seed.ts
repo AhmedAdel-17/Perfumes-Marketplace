@@ -1,5 +1,6 @@
 import {
-  foldArabic, publicAuthorName, REFERENCE_ALPHABET, REFERENCE_PREFIX,
+  foldArabic, objectionsToImage, publicAuthorName, REFERENCE_ALPHABET, REFERENCE_PREFIX,
+  sniffImage, type ImageType,
 } from '@diyar/domain';
 import { applyMigrations } from '@diyar/db/migrate';
 /**
@@ -17,7 +18,7 @@ import { applyMigrations } from '@diyar/db/migrate';
 import { PGlite } from '@electric-sql/pglite';
 import { seedEnglish } from './seed-english';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 
@@ -63,6 +64,36 @@ const solidPng = (width: number, height: number): Buffer => {
     chunk('IEND', Buffer.alloc(0)),
   ]);
 };
+/**
+ * Mock-up photographs, so a developer sees the catalogue as it will look.
+ *
+ * `scripts/mock-photos/<product-slug>.(jpg|png|webp)` — free-licence stock
+ * photographs of UNBRANDED bottles, kept out of git (see the README there).
+ * A product with no file there gets the solid ground above, so a fresh clone
+ * and CI seed exactly as before.
+ *
+ * Each file passes the SAME checks an upload does — type and dimensions read
+ * from its bytes, then the upload limits — so a mock-up can never put into the
+ * catalogue what a house could not.
+ */
+const MOCK_PHOTOS = join(process.cwd(), 'scripts/mock-photos');
+const EXTENSION = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' } as const;
+
+const photoFor = (slug: string): { bytes: Buffer; type: ImageType; width: number; height: number } => {
+  const file = ['jpg', 'jpeg', 'png', 'webp']
+    .map((ext) => join(MOCK_PHOTOS, `${slug}.${ext}`))
+    .find((path) => existsSync(path));
+  if (!file) return { bytes: solidPng(1000, 1250), type: 'image/png', width: 1000, height: 1250 };
+
+  const bytes = readFileSync(file);
+  const facts = sniffImage(new Uint8Array(bytes));
+  const objections = objectionsToImage({ facts, declaredType: facts?.type ?? '', byteSize: bytes.length });
+  if (!facts || objections.length > 0) {
+    throw new Error(`Mock photo ${file} would be refused as an upload: ${objections.join(', ')}`);
+  }
+  return { bytes, ...facts };
+};
+
 const MIGRATIONS = join(process.cwd(), '../../packages/db/migrations');
 const PLATFORM = '99999999-9999-9999-9999-999999999999';
 
@@ -332,17 +363,18 @@ async function main() {
        * The key is the shape the server issues — `products/{id}/{24 hex}.png` —
        * so the development serving route and `assertMediaKey` accept it.
        */
-      const imageKey = `products/${productId}/${randomBytes(12).toString('hex')}.png`;
-      const image = solidPng(1000, 1250);
+      const photo = photoFor(p.slug);
+      const imageKey = `products/${productId}/${randomBytes(12).toString('hex')}.${EXTENSION[photo.type]}`;
       const imagePath = join(MEDIA_DIR, imageKey);
       mkdirSync(dirname(imagePath), { recursive: true });
-      writeFileSync(imagePath, image);
+      writeFileSync(imagePath, photo.bytes);
 
       await pg.query(
         `INSERT INTO product_media (product_id, storage_path, alt_text, is_primary, ownership_confirmed,
            content_type, byte_size, width, height)
-         VALUES ($1,$2,$3,true,true,'image/png',$4,1000,1250)`,
-        [productId, imageKey, `زجاجة عطر ${p.name} من ${house.name}`, image.length],
+         VALUES ($1,$2,$3,true,true,$4,$5,$6,$7)`,
+        [productId, imageKey, `زجاجة عطر ${p.name} من ${house.name}`,
+          photo.type, photo.bytes.length, photo.width, photo.height],
       );
 
       // Publishing runs the real gate. If anything above is incomplete, this
