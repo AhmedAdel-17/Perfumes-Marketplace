@@ -53,7 +53,7 @@ export interface ThemeRoles {
   ink2: string;
   /** Smallest labels. Sits ON the 4.5:1 floor in both themes, by construction. */
   ink3: string;
-  /** The one accent, as TEXT and hairlines: olive on light, bone on Noir. */
+  /** The one accent, as TEXT and hairlines: olive on light, amber on Noir. */
   accent: string;
   /** The accent as a FILL. */
   accentSurface: string;
@@ -69,22 +69,23 @@ export interface ThemeRoles {
 
 export const themes: { readonly dark: ThemeRoles; readonly light: ThemeRoles } = {
   dark: {
-    ground: dark.noir,
+    ground: dark.graphite,
     plate: dark.l1,
     raised: dark.l1,
     raised2: dark.l2,
     raised3: dark.l3,
-    sunken: dark.noir,
+    // A field reads as a well cut into the page: a step DARKER than the
+    // ground, the mirror of Laboratoire's well a step lighter than its paper.
+    sunken: dark.well,
     line: dark.hair,
     ink: dark.bone,
     ink2: dark.dim,
     ink3: dark.faint,
-    // Noir has no colour accent. The role is bone, the same as the ink, so a
-    // focus ring, an active tab or a link underline is white on black — and
-    // nothing on the page competes with the photograph.
-    accent: dark.bone,
-    accentSurface: dark.chalk,
-    onAccent: dark.noir,
+    // One accent, as in Laboratoire: amber here, where the light theme has
+    // olive (FD-1 amended 17 Oct 2026; Noir had no colour accent until then).
+    accent: dark.amber,
+    accentSurface: dark.amber,
+    onAccent: dark.graphite,
     danger: dark.danger,
     noteTop: raw.noteTier.top,
     noteHeart: raw.noteTier.heart,

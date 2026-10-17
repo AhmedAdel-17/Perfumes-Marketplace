@@ -194,7 +194,7 @@ Any one of these, anywhere, breaks the impression:
 - Exclamation marks in copy
 - Inconsistent icon stroke weights (ours is `1.3`, everywhere, always)
 - Inconsistent corner radius across two components
-- A grey darker than `#8F8A84` on Noir, or lighter than `#67615A` on Laboratoire's putty (§7; values since identity v2)
+- A grey darker than `#B1A89C` on Noir, or lighter than `#67615A` on Laboratoire's putty (§7; Noir's value since 17 Oct 2026)
 - An alpha applied to an ink role — `text-accent/90` measures 4.08:1 on paper (§7)
 - A calibrated ink on a translucent fill — `bg-accent/15 text-accent` also measures 4.08:1 on
   paper, and shipped as seven status pills because it clears the floor on noir. A status label

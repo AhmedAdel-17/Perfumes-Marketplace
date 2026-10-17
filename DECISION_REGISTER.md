@@ -152,3 +152,11 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   condensed capitals) · the founder, testing the finished redesign, preferred Laboratoire's
   style and wanted the theme switch to change colour and nothing else · supersedes the
   dark-theme column of CLAUDE.md §15 and DESIGN_DOCTRINE law III · P5.1.3 follow-up.
+
+- 2026-10-17 · FD-1 amended · Ahmed (founder) · Noir's palette becomes 'Graphite & ambre':
+  warm charcoal `#201E1C` with visibly stepped surfaces, bone ink `#F8F3EB`, and ONE accent,
+  honey amber `#EDA53E` (Noir had no colour accent) · the founder found black-and-bone too
+  dark, flat and not luxurious, rejected four further palettes (sepia, olive, midnight,
+  bordeaux), then chose this from four charcoal options rendered on the real site · the
+  dark colours of `design-reference/redesign/02-noir-absolu.html` are superseded; every role
+  re-proved at 4.5:1 on every surface · P5.1.3 follow-up.

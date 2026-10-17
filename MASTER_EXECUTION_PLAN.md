@@ -3428,3 +3428,13 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified in the browser: computed family, weight, case, stretch, tracking and style of
   the headline, accent, body, labels and wordmark are identical in light and dark, in
   Arabic and in English.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · FD-1 amended again: Noir's palette is
+  now "Graphite & ambre", chosen by the founder from eight palettes rendered on the running
+  site (two rounds; the first four, all near-black, were rejected as too dark, dull and not
+  luxurious). Warm charcoal ground #201E1C with visibly stepped panels (l1–l3), a well a step
+  darker for fields, bone ink, and ONE accent — honey amber #EDA53E — where Noir had none.
+  The primitive `noir` is renamed `graphite` (it is no longer black); `chalk` removed. Note
+  tiers heart and base lightened to clear 4.5:1 on the lighter panels; base moved to
+  #D29B76 so it stays 21° of hue from top. The floor grey in CLAUDE.md §14 and the doctrine
+  is now #B1A89C. Tokens 123/123, guard and typecheck clean.

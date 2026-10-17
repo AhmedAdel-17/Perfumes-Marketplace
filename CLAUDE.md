@@ -297,9 +297,10 @@ believed this section would have invented a visual language that already existed
 
 Open the matching reference and **match it exactly** — colours, spacing, type sizes, SVG
 paths, layout. *Since 14 October 2026 (FD-1) the visual identity is `design-reference/redesign/`
-— `04-laboratoire.html` (layout, type and finish, both themes) and `02-noir-absolu.html`
-(the dark theme's COLOURS only, since 16 Oct 2026); where an older reference disagrees with
-it on colour, type or finish, the redesign wins.*
+— `04-laboratoire.html` (layout, type and finish, both themes). Since 17 Oct 2026 the dark
+theme's colours are the 'Graphite & ambre' palette in `packages/tokens` (FD-1 amended), not
+`02-noir-absolu.html`; where an older reference disagrees on colour, type or finish, the
+redesign and the tokens win.*
 Do not redesign or "improve". If something looks wrong, say so and ask.
 
 Icons are in `packages/ui/src/icons.tsx` (41 components). Never draw a new one without
@@ -375,7 +376,7 @@ is possible, but do not implement English until decided.)*
 
 ### Accessibility floor — audited, not aspirational
 44pt minimum hit area (visual size may be smaller). 11pt minimum reading text. 4.5:1
-minimum contrast — never a grey darker than `#8F8A84` on Noir or lighter than `#67615A` on
+minimum contrast — never a grey darker than `#B1A89C` on Noir or lighter than `#67615A` on
 Laboratoire's putty (both asserted in `packages/tokens`). Visible focus.
 `prefers-reduced-motion` respected. Never colour alone to carry meaning.
 

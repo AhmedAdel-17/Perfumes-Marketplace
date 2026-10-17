@@ -20,9 +20,9 @@ const contrast = (a: string, b: string): number => {
 };
 
 describe('accessibility floor — audited, not aspirational', () => {
-  it('every ink colour clears 4.5:1 on noir', () => {
-    for (const name of ['bone', 'dim', 'faint'] as const) {
-      expect(contrast(color[name], color.noir), name).toBeGreaterThanOrEqual(4.5);
+  it('every ink colour clears 4.5:1 on the dark ground', () => {
+    for (const name of ['bone', 'dim', 'faint', 'amber'] as const) {
+      expect(contrast(color[name], color.graphite), name).toBeGreaterThanOrEqual(4.5);
     }
   });
 
@@ -31,11 +31,11 @@ describe('accessibility floor — audited, not aspirational', () => {
     // approached from below: the next step darker than faint must fail.
     //
     // Measured against the LIGHTEST surface it may be printed on, not against
-    // the page. Against noir it has margin to spare; against an l3 panel it is
-    // at 4.60:1, and that is the number that decides the value.
+    // the page. Against the ground it has margin to spare; against an l3 panel
+    // it is at 4.95:1, and that is the number that decides the value.
     expect(contrast(color.faint, color.l3)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(color.faint, color.l3)).toBeLessThan(5.2);
-    expect(contrast('#8A857F', color.l3)).toBeLessThan(4.5);
+    expect(contrast('#A89F93', color.l3)).toBeLessThan(4.5);
   });
 
   it('the touch target floor is 44pt', () => {
@@ -170,14 +170,17 @@ describe('two themes, one contract', () => {
     The floor is approached from OPPOSITE directions, and that asymmetry is the
     thing most likely to be got wrong by whoever adds a third theme.
 
-    On noir, a grey with less contrast is DARKER. On paper it is LIGHTER. A
+    On the dark ground, a grey with less contrast is DARKER. On paper it is LIGHTER. A
     reviewer carrying the dark-theme instinct across will lighten `ink3` to
     "soften" it and take it straight through the floor without changing a single
     value any other test names.
   */
   it('the smallest label sits just above the floor in both directions', () => {
-    expect(contrast(themes.dark.ink3, themes.dark.ground)).toBeLessThan(6);
-    expect(contrast('#8A857F', themes.dark.raised3)).toBeLessThan(4.5);  // darker fails on Noir's lightest panel
+    // Noir is measured on its LIGHTEST panel: its surfaces step up far enough
+    // (17 Oct 2026) that a grey sitting near the floor there has plenty on the
+    // ground, so the ground no longer decides the value.
+    expect(contrast(themes.dark.ink3, themes.dark.raised3)).toBeLessThan(5.2);
+    expect(contrast('#A89F93', themes.dark.raised3)).toBeLessThan(4.5);  // darker fails on Noir's lightest panel
 
     expect(contrast(themes.light.ink3, themes.light.ground)).toBeLessThan(6);
     expect(contrast('#6E675D', themes.light.ground)).toBeLessThan(4.5);  // LIGHTER fails on putty
@@ -222,7 +225,7 @@ describe('note-tier colours are TEXT, and were never checked as text', () => {
     // it is actually drawn on at 4.43:1 — the same mistake with a thinner
     // margin. The surface matrix above is what finally covers it.
     for (const [tier, value] of Object.entries(noteTier)) {
-      expect(contrast(value, color.noir), `noteTier.${tier}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(value, color.graphite), `noteTier.${tier}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
