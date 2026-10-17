@@ -34,8 +34,15 @@ import './globals.css';
  * asks for is wasted bytes, and a weight something asks for and does not get
  * is synthesised, and faux-bold Arabic is worse than the download it saved.
  */
+/*
+  The VARIABLE face (no `weight` list), since 17 Oct 2026. Asked for static
+  weights, Google began serving Naskh's instances from the same `l/font?kit=`
+  URLs that broke IBM Plex Sans (below), and every page returned 500 in
+  development. The variable file comes from the ordinary URL, and one file
+  covering 400–700 replaces three.
+*/
 const naskh = Noto_Naskh_Arabic({
-  subsets: ['arabic'], weight: ['400', '500', '600'],
+  subsets: ['arabic'],
   variable: '--font-naskh', display: 'swap',
 });
 /*

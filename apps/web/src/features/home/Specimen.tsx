@@ -19,22 +19,17 @@ import { localeHref } from '@/core/href';
  * it says every perfume comes with its source; this card is one, with the
  * source line under its longevity, before the visitor has scrolled at all.
  *
- * THE STAMP. "Verified 8 / 8" is true of every perfume on the site, which is
- * exactly why it may be printed on this one: `sellers_verification_gate`
- * (migration 0001) refuses to put a house live until all eight controls are
- * approved, so a perfume from a house that is not 8 / 8 cannot be published,
- * let alone curated. `total` is the number of controls the page lists, which
- * a test holds equal to the database's enum.
+ * (It carried a "Verified 8 / 8" stamp until 17 Oct 2026. A count of a house's
+ * verification controls is the platform talking about its own process; the
+ * founder had the shop window speak only to buyers.)
  */
 export function Specimen({
-  product, house, locale, total, arrival,
+  product, house, locale, arrival,
 }: {
   product: ProductDetail;
   /** The house, for its city and founding year. Null if it could not be read. */
   house: HouseDetail | null;
   locale: Locale;
-  /** How many verification controls exist. */
-  total: number;
   /** The arrival window the bag and the checkout quote — `arrivalWindow`. */
   arrival: { min: number; max: number };
 }) {
@@ -127,14 +122,6 @@ export function Specimen({
         />
       </div>
 
-      {/* Latin in both languages, like every label on the page. Rotated a few
-          degrees because a stamp is applied by hand; it is the one thing on the
-          page allowed to be out of square. */}
-      <span className="latin pointer-events-none absolute end-3 top-[52px] -rotate-[8deg] border-[1.5px] border-accent bg-raised px-2 py-1 text-center text-micro leading-normal tracking-label text-accent lg:-start-[18px] lg:end-auto lg:top-[46%]">
-        {copy.verifiedStamp.toUpperCase()}
-        <br />
-        <span className="tnum">{total} / {total}</span>
-      </span>
     </article>
   );
 }

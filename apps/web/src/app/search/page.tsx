@@ -136,7 +136,7 @@ export default async function SearchPage(
                     href={localeHref(locale, '/search')}
                     className="tappable mt-4 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
                   >
-                    <span className="border-b border-current">{copy.showAll}</span>
+                    <span className="link-line">{copy.showAll}</span>
                   </a>
                 )}
               </div>

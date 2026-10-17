@@ -30,6 +30,18 @@ export const SCENT_FAMILIES = [
   'oud', 'amber', 'woody', 'floral', 'fresh', 'gourmand', 'musk',
 ] as const;
 
+/**
+ * The drawing beside a scent note (founder, 17 Oct 2026). A note itself is free
+ * text — houses write their own — but the picture is chosen by the platform
+ * from this closed set, in the notes glossary, so every perfume that carries
+ * "برغموت" shows the same bergamot. A note nobody has assigned shows a neutral
+ * mark, never a guess.
+ */
+export const NOTE_ICONS = [
+  'bergamot', 'citrus', 'cardamom', 'saffron', 'jasmine', 'white_flower', 'rose', 'violet', 'bloom', 'leaf', 'sprig', 'palm', 'wood', 'oud', 'amber', 'musk', 'vanilla', 'incense', 'cool',
+] as const;
+export type NoteIcon = (typeof NOTE_ICONS)[number];
+
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 
 export const DAY_NIGHT = ['day', 'night', 'both'] as const;

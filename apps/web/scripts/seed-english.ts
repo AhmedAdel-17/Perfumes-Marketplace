@@ -58,6 +58,28 @@ export const NOTES_EN: Readonly<Record<string, string>> = {
   'خشب الأرز': 'Cedarwood',
 };
 
+/** The drawing for each seeded note — what an operator would choose in /ops/notes. */
+export const NOTE_ICONS_SEED: Readonly<Record<string, string>> = {
+  'برغموت': 'bergamot',
+  'زعفران': 'saffron',
+  'هيل': 'cardamom',
+  'ورد دمشقي': 'rose',
+  'ياسمين': 'jasmine',
+  'عود': 'oud',
+  'عنبر': 'amber',
+  'مسك': 'musk',
+  'ليمون': 'citrus',
+  'ورد طائفي': 'rose',
+  'إيلنغ': 'white_flower',
+  'خشب الصندل': 'wood',
+  'نعناع': 'sprig',
+  'ليمون أخضر': 'citrus',
+  'نخيل': 'palm',
+  'شاي أخضر': 'leaf',
+  'مسك أبيض': 'musk',
+  'خشب الأرز': 'wood',
+};
+
 type Block =
   | { kind: 'heading'; level: 2 | 3; text: string }
   | { kind: 'passage'; text: string }
@@ -232,9 +254,12 @@ export async function seedEnglish(pg: PGlite, staffId: string): Promise<void> {
   }
 
   for (const [ar, en] of Object.entries(NOTES_EN)) {
+    // A database seeded before the drawings existed gets them filled in; one an
+    // operator has already chosen is left alone.
     const inserted = await pg.query(
-      `INSERT INTO note_glossary (ar, en, updated_by) VALUES ($1,$2,$3) ON CONFLICT (ar) DO NOTHING`,
-      [ar, en, staffId]);
+      `INSERT INTO note_glossary (ar, en, icon, updated_by) VALUES ($1,$2,$3::note_icon,$4)
+       ON CONFLICT (ar) DO UPDATE SET icon = EXCLUDED.icon WHERE note_glossary.icon IS NULL`,
+      [ar, en, NOTE_ICONS_SEED[ar] ?? null, staffId]);
     filled += inserted.affectedRows ?? 0;
   }
 

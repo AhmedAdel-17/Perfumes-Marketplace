@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Header 01 · Sillage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_base.css">
+<style>
+/*
+  01 · SILLAGE — the trail a perfume leaves in the air after its wearer has
+  passed. The masthead is centred like a maison's (the mark is the house, the
+  links are its doors on either side), and beneath it runs the sillage itself:
+  a single line that DRAWS ITSELF across the page on arrival, the way a scent
+  crosses a room, while a fainter dotted trail keeps drifting along it — the
+  scent lingering. Scroll, and the trail settles into a straight rule.
+*/
+.mast { position: sticky; top: 0; z-index: 40; background: var(--ground); }
+.mast .row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 116px; transition: height var(--slow) var(--out); }
+[data-scrolled] .mast .row { height: 66px; }
+
+/* The house at the centre. */
+.mark { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mark svg.mono { width: 34px; height: 34px; color: var(--ink); animation: settle 1.2s var(--entrance) both; transition: width var(--slow) var(--out), height var(--slow) var(--out), color var(--slow) var(--out); }
+.mark:hover svg.mono { color: var(--accent); }
+.wordmark { font-family: var(--f-wordmark); font-size: 30px; letter-spacing: .32em; margin-inline-end: -.32em; direction: ltr; line-height: 1; transition: font-size var(--slow) var(--out), letter-spacing var(--slow) var(--out); }
+.wordmark span { display: inline-block; animation: condense 1.4s var(--entrance) both; }
+.wordmark span:nth-child(1) { animation-delay: .10s } .wordmark span:nth-child(2) { animation-delay: .18s }
+.wordmark span:nth-child(3) { animation-delay: .26s } .wordmark span:nth-child(4) { animation-delay: .34s }
+.wordmark span:nth-child(5) { animation-delay: .42s }
+.descriptor { font-family: var(--f-label); font-size: 9.5px; letter-spacing: 3.2px; color: var(--ink3); max-height: 14px; overflow: hidden; animation: fade 1s var(--out) .7s both; transition: opacity var(--base) var(--out), max-height var(--base) var(--out); }
+[data-scrolled] .mark { flex-direction: row; gap: 14px; }
+[data-scrolled] .mark svg.mono { width: 26px; height: 26px; }
+[data-scrolled] .wordmark { font-size: 22px; letter-spacing: .26em; }
+[data-scrolled] .descriptor { opacity: 0; max-height: 0; }
+
+/* The doors either side. */
+nav ul { display: flex; gap: 40px; list-style: none; }
+nav a { position: relative; display: inline-flex; flex-direction: column; align-items: center; font-size: 15px; color: var(--ink2); padding-block: 14px; transition: color var(--base) var(--out); animation: fade 1s var(--out) .55s both; }
+nav a::before { /* a drop of scent above the word */
+  content: ''; position: absolute; top: 2px; width: 5px; height: 5px; background: var(--accent); transform: rotate(45deg) translateY(-6px) scale(.4); opacity: 0;
+  transition: opacity var(--base) var(--out), transform var(--slow) var(--entrance);
+}
+nav a:hover, nav a[aria-current] { color: var(--ink); }
+nav a:hover::before, nav a[aria-current]::before { opacity: 1; transform: rotate(45deg) translateY(0) scale(1); }
+.end { display: flex; justify-content: flex-end; align-items: center; gap: 32px; animation: fade 1s var(--out) .55s both; }
+.end a.track { font-size: 15px; color: var(--ink2); transition: color var(--base) var(--out); }
+.end a.track:hover { color: var(--ink); }
+
+/* THE SILLAGE. */
+.trail { display: block; width: 100%; height: 46px; margin-top: -14px; overflow: visible; }
+[dir='rtl'] .trail { transform: scaleX(-1); } /* it drifts from the reading edge */
+.trail path { fill: none; vector-effect: non-scaling-stroke; transition: d var(--slow) var(--inout); }
+.trail .main { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: draw 2.6s var(--out) .5s forwards; }
+.trail .wisp { stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .5 18; opacity: 0; animation: fade 1.6s var(--out) 2s forwards, drift 22s linear 2s infinite; }
+.trail .ghost { stroke: var(--ink3); stroke-width: .8; stroke-dasharray: 1600; stroke-dashoffset: 1600; opacity: .55; animation: draw 3.4s var(--out) .9s forwards; }
+[data-scrolled] .trail .main, [data-scrolled] .trail .ghost, [data-scrolled] .trail .wisp { d: path('M0 23 C 200 23, 380 23, 620 23 S 1060 23, 1440 23'); }
+[data-scrolled] .trail .ghost, [data-scrolled] .trail .wisp { opacity: 0 !important; transition: opacity var(--base) var(--out), d var(--slow) var(--inout); }
+
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes drift { to { stroke-dashoffset: -280; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes settle { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes condense { from { opacity: 0; filter: blur(6px); transform: translateY(.18em); } to { opacity: 1; filter: none; transform: none; } }
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap row">
+    <nav aria-label="التصفّح"><ul>
+      <li><a href="#" aria-current="page">العطور</a></li>
+      <li><a href="#">الدور</a></li>
+    </ul></nav>
+    <a class="mark" href="#" aria-label="ديار — الصفحة الرئيسية">
+      <svg class="mono" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 2 46 24 24 46 2 24 Z" stroke="currentColor" stroke-opacity=".55" stroke-width="1.15"/><path d="M16.5 33.5 V23.4 Q16.5 17.4 24 12.6 Q31.5 17.4 31.5 23.4 V33.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/><path d="M19.4 33.5 H28.6" stroke="currentColor" stroke-opacity=".7" stroke-width="1.5"/><circle cx="24" cy="20.4" r="1.35" fill="currentColor" fill-opacity=".85"/></svg>
+      <span class="wordmark"><span>D</span><span>I</span><span>Y</span><span>A</span><span>R</span></span>
+      <span class="descriptor" lang="en">EGYPTIAN PERFUME HOUSES</span>
+    </a>
+    <div class="end">
+      <a class="track" href="#">تتبّع طلبك</a>
+      <div class="prefs">
+        <div class="lang" role="group" aria-label="اللغة"><span aria-current="true">AR</span><a href="#" hreflang="en">EN</a><span class="bar"></span></div>
+        <button class="theme" data-toggle-theme aria-label="الوضع الداكن">
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"/><path d="M12 3.5v1.6M12 18.9v1.6M4.5 12H6.1M17.9 12h1.6"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M19.5 14.6A7.5 7.5 0 019.4 4.5a7.5 7.5 0 1010.1 10.1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <svg class="trail" viewBox="0 0 1440 30" preserveAspectRatio="none" aria-hidden="true">
+    <path class="ghost" d="M0 30 C 260 12, 420 44, 700 26 S 1120 10, 1440 30"/>
+    <path class="main" d="M0 23 C 200 6, 380 40, 620 23 S 1060 4, 1440 21"/>
+    <path class="wisp" d="M0 16 C 220 2, 440 34, 680 17 S 1100 0, 1440 14"/>
+  </svg>
+</header>
+<div data-sentinel style="position:absolute;top:24px;height:1px;width:1px"></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <span class="kicker">NO. 01 — THE REGISTER OF HOUSES</span>
+      <h1>كل عطر،<em>ومعه مصدره.</em></h1>
+      <p>نسجّل كل دار عطور مصرية، ونصف كل عطر بالطريقة نفسها: نفحاته، وتركيزه، ومن قاس ثباته.</p>
+    </div>
+    <figure><figcaption><span>DAR AL WARD</span><span>SPECIMEN</span></figcaption><img src="../../../apps/web/scripts/mock-photos/ward-al-taif.jpg" alt=""></figure>
+  </section>
+  <div class="filler"></div>
+</main>
+<div class="note">01 · SILLAGE — scroll · hover the links · switch the theme</div>
+<script src="_base.js"></script>
+</body>
+</html>

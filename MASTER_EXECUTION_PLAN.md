@@ -3438,3 +3438,85 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   tiers heart and base lightened to clear 4.5:1 on the lighter panels; base moved to
   #D29B76 so it stays 21° of hue from top. The floor grey in CLAUDE.md §14 and the doctrine
   is now #B1A89C. Tokens 123/123, guard and typecheck clean.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · the motion layer and the masthead
+  controls, on the founder's brief ("ease in and out, fade the type, dynamic buttons; the
+  language and theme controls look generic"). Plan approved with three choices: a sun/moon
+  switch (the Moon icon drawn with approval, CLAUDE.md §12), an AR | EN pair, and a
+  masthead that settles on scroll.
+  - Motion, all tokens and all opacity/transform: pages fade up on arrival (`main`); the
+    home opening and every PageHead stage their kicker, rule and title; text links'
+    underline retracts and redraws; masthead links draw their accent line in from the
+    reading edge; the primary slab fills with the accent from the reading edge and its
+    arrow steps forward. Reduced motion zeroes every duration and delay.
+  - Theme switch: one square control, the current appearance drawn (sun or moon) and
+    turning into the other; `role="switch"`; the page cross-fades through View
+    Transitions where available. The old segmented pair's `aria-pressed` buttons had been
+    the first `button[aria-pressed]` on the search page, so two filter tests were
+    clicking the theme; they now reach the filters.
+  - Language: AR | EN in one ruled 36px box beside the theme switch; the accent line
+    slides to the other language under the pointer; the page fades out before the full
+    load and the back-forward cache is restored on `pageshow`.
+  - Masthead: 76 → 60px with a smaller mark and the descriptor faded once the page scrolls
+    under it (IntersectionObserver sentinel, no scroll listener).
+  - Also: Noir's contrast notes in tokens.json were still the black palette's; corrected.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · masthead "Atomiseur". The founder
+  had the COD and verification statements removed from the top line, then asked for a
+  "breath-taking" masthead tied to the fragrance business. Three concepts were built as
+  working samples (`design-reference/redesign/header/` — Sillage, Atomiseur, Pyramide) and
+  shown in both themes; 02 Atomiseur was chosen.
+  - Three columns from lg (house, ways in, preferences), 84 → 62px on scroll.
+  - The wordmark condenses out of a mist, letter by letter, once per visit
+    (`data-arrived`), on two new motion tokens: `ceremony` 1600 and `mist` 2400.
+  - Masthead links bloom a cloud of the accent; Perfumes opens PerfumesPanel: the seven
+    scent families as vials in their family colours (each to /search?family=…, the liquid
+    rising on hover) beside the houses and links to all houses and all perfumes. Server
+    slot; `listHouses` is memoised per request so the directory page does not query twice.
+  - The panel opens from the LINK with a 120ms intent and closes on leave, Escape and any
+    click inside, so it never reopens under the pointer after a vial is clicked; keyboard
+    focus opens it through :focus-within. lg only — on a phone Perfumes is a plain link.
+  Verified in a real browser in both themes and both languages: mist plays once, panel
+  opens and closes as designed, vial lands on the filtered catalogue, Tab enters the
+  vials, no console errors.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · customer-first storefront (founder:
+  "the website should target the customers who want to buy perfumes"). Audited every
+  customer page for house-facing content and, with the plan approved:
+  - Home: kicker "Egyptian perfume, curated"; the lede rewritten as the buyer's benefit
+    (discover, compare honestly, one checkout across houses, cash on delivery); the second
+    action is "Shop by scent" (to the note index, or the houses when it is empty); the
+    eight-checks section and apply box removed; "New arrivals" / "Our selection"; sections
+    renumbered 01–04; the specimen's "Verified 8/8" stamp removed.
+  - Houses table (home and directory) loses its verification column; a house page loses its
+    verification row, and its kicker reads "Perfume house · Est. …". Search's kicker is "The
+    collection"; the directory's "Independent Egyptian perfume houses".
+  - The footer's "For houses" column becomes a band at its top: "Are you a perfume house?"
+    with a ruled secondary action ("Apply to join") — a new shared `secondarySurface`, the
+    primary's sweep inverted.
+  - Removed with their last use: VerificationChecks, HOME.checks and its copy,
+    HouseTable's VERIFICATION_CONTROLS, HOUSES.verifiedChecks / columns.verification,
+    SHELL.footerHouses / apply. The vocabulary test keeps its operators'-labels case.
+  - Found while verifying: every page returned 500 in development because Google began
+    serving Noto Naskh Arabic's static weights from `l/font?kit=` URLs that Turbopack's font
+    loader cannot resolve (the IBM Plex Sans failure of 14 Oct). Naskh is now requested as
+    its variable face; one file instead of three.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · a drawing for every scent note
+  (founder: "add an icon for each note in a clean way"; preview approved, on the home page
+  AND the product page, assigned by operators).
+  - Migration 0031: enum `note_icon` (19 drawings) and a nullable `icon` on note_glossary,
+    under the glossary's existing RLS (all read, platform writes). Domain NOTE_ICONS, held
+    to the enum by parity.test; GlossaryWord {en, icon} from the read model; IndexedNote.icon
+    and ProductDetail.noteIcons from the API; glossary.set takes an optional icon (absent
+    keeps it, null clears it) and audits it, named in words (AUDIT_FIELD_AR.icon, values
+    via NOTE_ICON_AR).
+  - Four drawings added to the icon set with approval: Wood, Palm, Sprig, Diamond (the
+    neutral mark for a note with no drawing). CLAUDE.md §12 count updated to 46.
+  - One NoteChip for the home index and the product pyramid; the drawing is the accent and
+    turns a few degrees as the chip inverts. The console's Notes screen gains a picker
+    (radiogroup of the 19 drawings plus none) under each note's English name.
+  - Seed assigns drawings to the 18 seeded notes and fills any missing on older databases.
+  Verified: unit tests (db 426 incl. a new glossary case and enum parity; api 354; i18n 61);
+  e2e 133/133 with the glossary test extended to choose a drawing and find it on the
+  product page and, in words, in the audit log.

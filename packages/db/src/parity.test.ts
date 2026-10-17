@@ -24,7 +24,7 @@ import {
   LISTING_STATES, MODERATION_REASONS,
   CONCENTRATIONS, PRODUCT_FORMS, GENDER_POSITIONINGS, SCENT_FAMILIES, SEASONS,
   DAY_NIGHT, OCCASIONS, PROJECTION_BANDS, LONGEVITY_BANDS, PERFORMANCE_SOURCES,
-  RETURN_ELIGIBILITIES,
+  RETURN_ELIGIBILITIES, NOTE_ICONS,
   DEFAULT_RATES, FixedClock, Money, SettlementService,
 } from '@diyar/domain';
 
@@ -89,6 +89,12 @@ describe('controlled vocabularies exist identically on both sides', () => {
     // one; this is what holds the fourth — the database — against it.
     const domain = CATALOGUE_VOCABULARIES[constant];
     expect((await enumValues(dbEnum)).sort()).toEqual([...domain].sort());
+  });
+
+  it('note icons', async () => {
+    // A drawing the console can offer and the database cannot store is a save
+    // that fails at the last statement.
+    expect((await enumValues('note_icon')).sort()).toEqual([...NOTE_ICONS].sort());
   });
 
   it('moderation reasons', async () => {

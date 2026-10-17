@@ -163,9 +163,99 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
       transition-duration: 0.01ms !important;
     }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+      animation: none !important;
+    }
   }
+
+  /*
+    THE MOTION LAYER (17 Oct 2026, founder brief: "ease in, ease out, fade the
+    type, give the controls life"). Law VI still decides every value: things
+    settle, nothing bounces, every duration and curve is a token. Each rule
+    below is opacity, transform or a colour — never layout — so nothing here
+    can move the page under a visitor's thumb.
+
+    The reduced-motion block above zeroes every one of them, delays included,
+    so an animation that starts invisible (`both`) ends visible at once.
+  */
+
+  /* The reading direction, for transforms that have no logical keyword. */
+  [dir='rtl'] { --edge-start: right; --edge-end: left; --forward: -1; }
+  [dir='ltr'] { --edge-start: left; --edge-end: right; --forward: 1; }
+
+  /*
+    A page ARRIVES. On every navigation the new `main` fades up from a few
+    pixels below — opacity and transform only, and on `main` rather than the
+    body, so the masthead stays put and nothing `fixed` inside the page loses
+    its containing block to an animated ancestor.
+  */
+  main {
+    animation: page-in theme('transitionDuration.slow') theme('transitionTimingFunction.entrance') both;
+  }
+
+  /*
+    Leaving for the other language is a full page load (the document changes
+    direction), so the page fades OUT first instead of blinking. Set by
+    LanguageSwitch just before it navigates.
+  */
+  html[data-leaving] body {
+    opacity: 0;
+    transition: opacity theme('transitionDuration.quick') theme('transitionTimingFunction.inOut');
+  }
+
+  /*
+    The theme change, where the browser has View Transitions: the whole page —
+    photographs, hairlines, text — cross-fades as one image, slowly. Browsers
+    without it fall back to the ground-and-ink transition above.
+  */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: theme('transitionDuration.slow');
+    animation-timing-function: theme('transitionTimingFunction.inOut');
+  }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(0.35em); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes condense {
+  0% { opacity: 0; filter: blur(10px); transform: scale(1.25); }
+  60% { opacity: 1; }
+  100% { opacity: 1; filter: none; transform: none; }
+}
+
+@keyframes spritz {
+  0% { opacity: 0; transform: scale(0.3); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+/* A line that is already drawn retracts toward the end, then redraws from the start. */
+@keyframes redraw {
+  0% { transform: scaleX(1); transform-origin: var(--edge-end); }
+  45% { transform: scaleX(0); transform-origin: var(--edge-end); }
+  55% { transform: scaleX(0); transform-origin: var(--edge-start); }
+  100% { transform: scaleX(1); transform-origin: var(--edge-start); }
 }
 
 @layer components {
@@ -188,6 +278,205 @@
     letter-spacing: var(--wordmark-tracking);
     direction: ltr;
     unicode-bidi: isolate;
+  }
+
+  /*
+    Type that arrives: a line rises a third of its own height and fades in,
+    on the entrance curve. `--rise-delay` staggers lines of one heading; keep a
+    whole sequence under ~400ms of offset or it reads as a slideshow.
+  */
+  .rise {
+    display: block;
+    animation: rise theme('transitionDuration.slow') theme('transitionTimingFunction.entrance') both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+  .fade-in {
+    animation: fade theme('transitionDuration.slow') theme('transitionTimingFunction.out') both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+  /* A rule that draws itself from the reading edge, as a kicker's line does. */
+  .draw-in {
+    transform-origin: var(--edge-start);
+    animation: draw theme('transitionDuration.slow') theme('transitionTimingFunction.out') both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  /*
+    THE UNDERLINED LINK. Replaces a static `border-b`: the line is a
+    pseudo-element, so it can retract toward the end and redraw from the start
+    when the link is hovered or focused — the one gesture that says "this is
+    alive" without moving a single letter.
+  */
+  .link-line {
+    position: relative;
+    padding-bottom: 1px;
+  }
+  .link-line::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: currentColor;
+    transform-origin: var(--edge-start);
+  }
+  :is(a, button):is(:hover, :focus-visible) > .link-line::after,
+  :is(a, button):is(:hover, :focus-visible) .link-line::after {
+    animation: redraw theme('transitionDuration.slow') theme('transitionTimingFunction.inOut');
+  }
+
+  /*
+    THE NAVIGATION LINE: absent at rest, drawn in from the reading edge under
+    the pointer, retracted toward the far edge when it leaves — so the line
+    seems to pass THROUGH the word. Always drawn, in the accent, under the
+    page you are on.
+  */
+  .nav-line {
+    position: relative;
+    padding-bottom: 4px;
+  }
+  .nav-line::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: theme('colors.accent');
+    transform: scaleX(0);
+    transform-origin: var(--edge-end);
+    transition: transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  :is(a:hover, a:focus-visible) > .nav-line::after,
+  [aria-current='page'] > .nav-line::after {
+    transform: scaleX(1);
+    transform-origin: var(--edge-start);
+  }
+
+  /*
+    THE MASTHEAD — "ATOMISEUR" (header concept 02, chosen 17 Oct 2026).
+    The spray: the wordmark condenses out of a mist on arrival, links bloom a
+    cloud of the accent under the pointer, and Perfumes opens a rack of vials.
+  */
+
+  /* The bloom behind a masthead link: a cloud of the accent, not a box. */
+  .mast-link { position: relative; isolation: isolate; }
+  .mast-link::before {
+    content: '';
+    position: absolute;
+    inset: 18px 0;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.2), transparent);
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+      opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out'),
+      transform theme('transitionDuration.slow') theme('transitionTimingFunction.entrance');
+  }
+  .mast-link:hover::before,
+  .mast-menu[data-open] > .mast-link::before {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    Perfumes' chevron: down at rest, up while the panel is open. Drawn, not an
+    icon — and drawn with PHYSICAL sides on purpose: it points down, which is
+    not a reading direction, and logical sides turned it sideways in Arabic.
+  */
+  .mast-chevron {
+    width: 7px;
+    height: 7px;
+    border-right: 1px solid currentColor;
+    border-bottom: 1px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .mast-menu[data-open] .mast-chevron,
+  .mast-menu:focus-within .mast-chevron {
+    transform: translateY(2px) rotate(225deg);
+  }
+
+  /*
+    The panel hangs from the whole masthead (the sticky header is its
+    containing block), revealed top-down with a clip — it is uncovered, not
+    slid, so nothing below it moves. `visibility` keeps a closed panel out of
+    the tab order and away from screen readers, and is held for the length of
+    the closing clip so the reveal can reverse.
+  */
+  .mast-panel {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    background: theme('colors.raised');
+    border-block-end: 1px solid theme('colors.ink');
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+    transition:
+      clip-path theme('transitionDuration.slow') theme('transitionTimingFunction.out'),
+      visibility 0s linear theme('transitionDuration.slow');
+  }
+  .mast-menu[data-open] .mast-panel,
+  .mast-menu:focus-within .mast-panel {
+    clip-path: inset(0 0 0 0);
+    visibility: visible;
+    transition: clip-path theme('transitionDuration.slow') theme('transitionTimingFunction.out'), visibility 0s;
+  }
+
+  /* The vials rise into place one after another as the panel opens. */
+  .vial {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity theme('transitionDuration.slow') theme('transitionTimingFunction.entrance'),
+      transform theme('transitionDuration.slow') theme('transitionTimingFunction.entrance');
+  }
+  .mast-menu[data-open] .vial,
+  .mast-menu:focus-within .vial {
+    opacity: 1;
+    transform: none;
+  }
+  .vial:nth-child(2) { transition-delay: 40ms; }
+  .vial:nth-child(3) { transition-delay: 80ms; }
+  .vial:nth-child(4) { transition-delay: 120ms; }
+  .vial:nth-child(5) { transition-delay: 160ms; }
+  .vial:nth-child(6) { transition-delay: 200ms; }
+  .vial:nth-child(7) { transition-delay: 240ms; }
+  /* Hover a vial and its liquid rises — the one playful gesture, and slow. */
+  .vial-liquid {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    transform: scaleY(0.55);
+    transition: transform theme('transitionDuration.slow') theme('transitionTimingFunction.entrance');
+  }
+  .vial :is(a:hover, a:focus-visible) .vial-liquid { transform: scaleY(0.95); }
+  .vial-name { transition: color theme('transitionDuration.base') theme('transitionTimingFunction.out'); }
+  .vial :is(a:hover, a:focus-visible) .vial-name { color: theme('colors.accent'); }
+
+  /*
+    The wordmark condenses out of a mist — once per visit, not per page: the
+    masthead remounts on every navigation, so the first arrival marks <html>
+    `data-arrived` (MastheadSentinel) and later pages show the mark at rest.
+  */
+  html:not([data-arrived]) .mast-letter {
+    display: inline-block;
+    animation: condense theme('transitionDuration.ceremony') theme('transitionTimingFunction.entrance') both;
+  }
+  html:not([data-arrived]) .mast-letter:nth-child(1) { animation-delay: 350ms; }
+  html:not([data-arrived]) .mast-letter:nth-child(2) { animation-delay: 500ms; }
+  html:not([data-arrived]) .mast-letter:nth-child(3) { animation-delay: 200ms; }
+  html:not([data-arrived]) .mast-letter:nth-child(4) { animation-delay: 600ms; }
+  html:not([data-arrived]) .mast-letter:nth-child(5) { animation-delay: 420ms; }
+  /* The spritz itself: one cloud that blooms and dissipates behind the mark. */
+  html:not([data-arrived]) .mast-mark::before {
+    content: '';
+    position: absolute;
+    inset: -40px -60px;
+    pointer-events: none;
+    background:
+      radial-gradient(closest-side, rgb(var(--c-accent) / 0.22), transparent 70%),
+      radial-gradient(closest-side at 70% 40%, rgb(var(--c-accent) / 0.14), transparent 75%);
+    filter: blur(8px);
+    animation: spritz theme('transitionDuration.mist') theme('transitionTimingFunction.out') both;
   }
 
   /* A control may LOOK smaller than its target; the target may not shrink. */

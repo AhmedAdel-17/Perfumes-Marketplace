@@ -182,7 +182,7 @@ function CallToAction({ block, locale }: { block: CallToActionBlock; locale: Loc
         href={localePath(locale, block.href)}
         className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
       >
-        <span className="border-b border-current">{block.label}</span>
+        <span className="link-line">{block.label}</span>
       </a>
     </div>
   );

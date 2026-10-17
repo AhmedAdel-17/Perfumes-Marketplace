@@ -1,4 +1,5 @@
-// Auto-generated from the design reference files. 40 icons, single stroke system.
+// Auto-generated from the design reference files, single stroke system. Moon added by hand,
+// founder-approved 17 Oct 2026.
 // Usage: <Icon.Heart className="w-4 h-4" />   — colour comes from `currentColor`.
 
 import type { SVGProps } from 'react';
@@ -174,6 +175,32 @@ export const Sun = (p: P) => (
   <svg {...base} {...p}><path d="M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"/><path d="M12 3.5v1.6M12 18.9v1.6M4.5 12H6.1M17.9 12h1.6"/></svg>
 );
 
+// The appearance switch's second state (founder-approved 17 Oct 2026): a
+// crescent in the same 1.3 stroke, the counterpart of Sun.
+export const Moon = (p: P) => (
+  <svg {...base} {...p}><path d="M19.5 14.6A7.5 7.5 0 019.4 4.5a7.5 7.5 0 1010.1 10.1z"/></svg>
+);
+
+// Scent notes the reference set had no drawing for (founder-approved 17 Oct
+// 2026, with the note icons): the rings of a cut log for the woods, a palm, a
+// sprig for mint and the green herbs, and the diamond of the house's own mark
+// for a note nobody has assigned a drawing yet.
+export const Wood = (p: P) => (
+  <svg {...base} {...p}><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/><path d="M12 4v3.2"/></svg>
+);
+
+export const Palm = (p: P) => (
+  <svg {...base} {...p}><path d="M12.4 21c.5-3.6.3-6.9-.8-9.8"/><path d="M11.6 11.2C9.4 8.6 6.4 8 3.8 9.4"/><path d="M11.6 11.2c-.4-3.2-2.4-5.6-5.2-6.6"/><path d="M11.6 11.2c1.2-3.1 3.8-4.9 6.8-4.9"/><path d="M11.6 11.2c2.9-1 5.8-.2 7.8 2"/></svg>
+);
+
+export const Sprig = (p: P) => (
+  <svg {...base} {...p}><path d="M12 21V4.5"/><path d="M12 8.5c-2.2 0-3.8-1.6-3.8-3.8 2.2 0 3.8 1.6 3.8 3.8z"/><path d="M12 8.5c2.2 0 3.8-1.6 3.8-3.8-2.2 0-3.8 1.6-3.8 3.8z"/><path d="M12 14.5c-2.7 0-4.6-1.9-4.6-4.6 2.7 0 4.6 1.9 4.6 4.6z"/><path d="M12 14.5c2.7 0 4.6-1.9 4.6-4.6-2.7 0-4.6 1.9-4.6 4.6z"/></svg>
+);
+
+export const Diamond = (p: P) => (
+  <svg {...base} {...p}><path d="M12 7l5 5-5 5-5-5z"/></svg>
+);
+
 export const Icon = {
   Pin,
   Heart,
@@ -215,4 +242,9 @@ export const Icon = {
   Vanilla,
   Snowflake,
   Sun,
+  Moon,
+  Wood,
+  Palm,
+  Sprig,
+  Diamond,
 };

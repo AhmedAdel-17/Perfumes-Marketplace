@@ -61,6 +61,8 @@ describe('motion — luxury has weight', () => {
     expect(motion.instant).toBeLessThan(motion.quick!);
     expect(motion.quick).toBeLessThan(motion.base!);
     expect(motion.base).toBeLessThan(motion.slow!);
+    expect(motion.slow).toBeLessThan(motion.ceremony!);
+    expect(motion.ceremony).toBeLessThan(motion.mist!);
   });
 });
 

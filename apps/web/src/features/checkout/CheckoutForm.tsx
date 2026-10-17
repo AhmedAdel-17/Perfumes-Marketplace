@@ -129,7 +129,7 @@ export function CheckoutForm() {
             href={localeHref(locale, '/search')}
             className="tappable mt-5 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
           >
-            <span className="border-b border-current">{copy.browse}</span>
+            <span className="link-line">{copy.browse}</span>
           </Link>
         </div>
       </div>
@@ -164,7 +164,7 @@ export function CheckoutForm() {
           {result.message}
           {result.reason === 'cart_changed' && (
             <Link href={localeHref(locale, '/cart')} className="tappable mt-2 flex min-h-touch items-center text-ink hover:text-accent">
-              <span className="border-b border-current">{copy.reviewBag}</span>
+              <span className="link-line">{copy.reviewBag}</span>
             </Link>
           )}
         </div>
@@ -424,13 +424,13 @@ function Confirmation(
           href={localeHref(locale, '/order')}
           className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          <span className="border-b border-current">{copy.track}</span>
+          <span className="link-line">{copy.track}</span>
         </Link>
         <Link
           href={localeHref(locale, '/')}
           className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
-          <span className="border-b border-current">{copy.keepBrowsing}</span>
+          <span className="link-line">{copy.keepBrowsing}</span>
         </Link>
       </div>
     </div>

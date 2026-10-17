@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Note icons · preview · 17 Oct 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans+Arabic:wght@400&family=Newsreader:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* Preview of the note index with an icon per note. Existing icons from
+     packages/ui/src/icons.tsx; NEW (drawn for this, pending approval): Wood,
+     Palm, Sprig, and the fallback Diamond. */
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  section { padding: 40px 56px 48px; }
+  .light { --ground:#E7E2D8; --raised:#F4F1EB; --line:#CEC6B8; --ink:#221F1B; --ink2:#5A554D; --ink3:#67615A; --accent:#4D5A2C; }
+  .dark { --ground:#201E1C; --raised:#2A2725; --line:#4E4844; --ink:#F8F3EB; --ink2:#CDC5BA; --ink3:#B1A89C; --accent:#EDA53E; }
+  section { background: var(--ground); color: var(--ink); }
+  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  h3 { font-family: 'IBM Plex Mono', monospace; font-weight: 400; font-size: 10.5px; letter-spacing: 2.4px; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 16px; }
+  ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; }
+  a { display: inline-flex; align-items: center; gap: 9px; height: 44px; padding-inline: 14px 16px; border: 1px solid var(--line); background: var(--raised); color: var(--ink); font-size: 15px; text-decoration: none; transition: background .24s, color .24s, border-color .24s; }
+  a svg { width: 19px; height: 19px; flex: none; color: var(--accent); transition: color .24s, transform .64s cubic-bezier(.22,1,.36,1); }
+  a .n { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink3); }
+  a:hover, a.hover { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  a:hover svg, a.hover svg { color: var(--ground); transform: rotate(-8deg) scale(1.08); }
+  a:hover .n, a.hover .n { color: var(--ground); }
+  .tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--ink3); margin-bottom: 18px; }
+  .new { display: flex; gap: 28px; margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--line); }
+  .new div { display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--ink3); }
+  .new svg { width: 40px; height: 40px; color: var(--ink); }
+</style>
+</head>
+<body>
+<script>
+const S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"';
+const I = {
+  Bergamot: '<circle cx="12" cy="13" r="7"/><path d="M12 6V4M12 6c-1.6 0-2.6-1-2.6-1M12 6c1.6 0 2.6-1 2.6-1"/><path d="M12 6v14M5.2 10.5l13.6 5M5.2 15.5l13.6-5"/>',
+  Citrus: '<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M17.7 6.3L6.3 17.7"/>',
+  Saffron: '<path d="M6 15c0-4 2.7-7 6-7s6 3 6 7"/><path d="M9 8.5c0-2 1.3-3.5 3-3.5s3 1.5 3 3.5"/><path d="M4.5 15h15v1.5a3 3 0 01-3 3h-9a3 3 0 01-3-3z"/>',
+  Jasmine: '<circle cx="12" cy="12" r="2.4"/><path d="M12 9.6c0-2.8-1.9-5-.1-5.4 1.9-.4 2 2.6.1 5.4z"/><path d="M14.4 12c2.8 0 5-1.9 5.4-.1.4 1.9-2.6 2-5.4.1z"/><path d="M12 14.4c0 2.8 1.9 5 .1 5.4-1.9.4-2-2.6-.1-5.4z"/><path d="M9.6 12c-2.8 0-5 1.9-5.4.1-.4-1.9 2.6-2 5.4-.1z"/>',
+  Jasmine2: '<circle cx="12" cy="12" r="2"/><path d="M12 10c0-3 1-4.5 0-4.5S12 7 12 10M14 12c3 0 4.5 1 4.5 0S17 12 14 12M12 14c0 3-1 4.5 0 4.5s0-1.5 0-4.5M10 12c-3 0-4.5-1-4.5 0S7 12 10 12"/>',
+  Rose: '<path d="M12 20v-5"/><circle cx="12" cy="10" r="5.5"/><path d="M12 10c0-2 1.4-3.4 3.2-3.4M12 10c0 2-1.4 3.4-3.2 3.4M12 10c-2 0-3.4-1.4-3.4-3.2"/>',
+  Leaf: '<path d="M12 20V9"/><path d="M12 12.5c-3.2 0-5.5-2.4-5.5-5.5C9.7 7 12 9.4 12 12.5z"/><path d="M12 15c3.2 0 5.5-2.4 5.5-5.5C14.3 9.5 12 11.9 12 15z"/>',
+  Oud: '<path d="M5 19c0-6 3-14 7-14s7 8 7 14z"/><path d="M8.4 19c.3-4.4 1.8-9.6 3.6-9.6s3.3 5.2 3.6 9.6"/>',
+  Amber: '<path d="M12 3.5c2.8 3.8 4.6 6.8 4.6 9.6a4.6 4.6 0 11-9.2 0c0-2.8 1.8-5.8 4.6-9.6z"/>',
+  Musk: '<path d="M4.5 16c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/><path d="M4.5 11.5c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/><path d="M4.5 7c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0"/>',
+  // NEW — drawn for the note index, same 24 grid and 1.3 stroke.
+  Wood: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/><path d="M12 4v3.2"/>',
+  Palm: '<path d="M12.4 21c.5-3.6.3-6.9-.8-9.8"/><path d="M11.6 11.2C9.4 8.6 6.4 8 3.8 9.4"/><path d="M11.6 11.2c-.4-3.2-2.4-5.6-5.2-6.6"/><path d="M11.6 11.2c1.2-3.1 3.8-4.9 6.8-4.9"/><path d="M11.6 11.2c2.9-1 5.8-.2 7.8 2"/>',
+  Sprig: '<path d="M12 21V4.5"/><path d="M12 8.5c-2.2 0-3.8-1.6-3.8-3.8 2.2 0 3.8 1.6 3.8 3.8z"/><path d="M12 8.5c2.2 0 3.8-1.6 3.8-3.8-2.2 0-3.8 1.6-3.8 3.8z"/><path d="M12 14.5c-2.7 0-4.6-1.9-4.6-4.6 2.7 0 4.6 1.9 4.6 4.6z"/><path d="M12 14.5c2.7 0 4.6-1.9 4.6-4.6-2.7 0-4.6 1.9-4.6 4.6z"/>',
+  Diamond: '<path d="M12 7l5 5-5 5-5-5z"/>',
+};
+const svg = (k) => `<svg ${S} aria-hidden="true">${I[k]}</svg>`;
+const TIERS = [
+  ['TOP NOTES', [['برغموت','Bergamot',2],['زعفران','Saffron',1],['ليمون','Citrus',1],['ليمون أخضر','Citrus',1],['نعناع','Sprig',1]]],
+  ['HEART NOTES', [['ياسمين','Jasmine',2],['إيلنغ','Jasmine2',1],['شاي أخضر','Leaf',1],['نخيل','Palm',1],['ورد دمشقي','Rose',1]]],
+  ['BASE NOTES', [['مسك','Musk',2],['خشب الأرز','Wood',1],['خشب الصندل','Wood',1],['عنبر','Amber',1],['عود','Oud',1],['نوتة جديدة','Diamond',1]]],
+];
+for (const theme of ['light', 'dark']) {
+  const tiers = TIERS.map(([h, notes]) => `<div><h3>${h}</h3><ul>${notes.map(([ar, k, n], i) =>
+    `<li><a href="#" class="${theme === 'dark' && i === 0 && h.startsWith('HEART') ? 'hover' : ''}">${svg(k)}<span>${ar}</span><span class="n">${n}</span></a></li>`).join('')}</ul></div>`).join('');
+  const fresh = theme === 'light'
+    ? `<div class="new">${['Wood', 'Palm', 'Sprig', 'Diamond'].map((k) => `<div>${svg(k)}${k.toUpperCase()}${k === 'Diamond' ? ' (NO ICON YET)' : ' (NEW)'}</div>`).join('')}</div>` : '';
+  document.body.insertAdjacentHTML('beforeend', `<section class="${theme}"><div class="tag">${theme.toUpperCase()} — ابحث بالنفحة، لا بالماركة</div><div class="tiers">${tiers}</div>${fresh}</section>`);
+}
+</script>
+</body>
+</html>

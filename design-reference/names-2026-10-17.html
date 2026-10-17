@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>Name candidates · 17 Oct 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans+Arabic:wght@400&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Noto+Naskh+Arabic:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* Name candidates rendered as the masthead would set them (Newsreader,
+     letterspaced) beside their Arabic form (Noto Naskh), in both themes.
+     Every .com here was unregistered and no brand was found, 17 Oct 2026. */
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: 'IBM Plex Sans Arabic', sans-serif; background: #E7E2D8; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; }
+  .cell { padding: 34px 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #CEC6B8; }
+  .light { background: #E7E2D8; color: #221F1B; }
+  .dark { background: #201E1C; color: #F8F3EB; border-color: #4E4844; }
+  .mark { display: flex; align-items: center; gap: 18px; }
+  .mark svg { width: 34px; height: 34px; }
+  .word { font-family: 'Newsreader', serif; font-size: 34px; letter-spacing: .3em; text-transform: uppercase; }
+  .ar { font-family: 'Noto Naskh Arabic', serif; font-size: 30px; }
+  .meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; margin-top: 8px; opacity: .7; }
+  .dark .accent { color: #EDA53E; } .light .accent { color: #4D5A2C; }
+</style>
+</head>
+<body>
+<script>
+const NAMES = [
+  ['Laylume', 'ليلوم', 'LAYL (NIGHT) + LUME (LIGHT) · LAY-LOOM'],
+  ['Olfane', 'أولفان', 'FROM OLFACTION · OL-FAHN'],
+  ['Laylene', 'ليلين', 'LAYL (NIGHT) + -ÈNE · LAY-LEEN'],
+  ['Nuitane', 'نويتان', 'NUIT (NIGHT) + -ANE · NWEE-TAHN'],
+  ['Oudrise', 'عودريز', 'OUD + BRISE (BREEZE) · OOD-REEZ'],
+];
+const mono = '<svg viewBox="0 0 48 48" fill="none"><path d="M24 2 46 24 24 46 2 24 Z" stroke="currentColor" stroke-opacity=".55" stroke-width="1.15"/><path d="M16.5 33.5 V23.4 Q16.5 17.4 24 12.6 Q31.5 17.4 31.5 23.4 V33.5" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 33.5 H28.6" stroke="currentColor" stroke-opacity=".7" stroke-width="1.5"/><circle cx="24" cy="20.4" r="1.35" fill="currentColor"/></svg>';
+for (const [en, ar, meta] of NAMES) {
+  const cell = (theme) => `<div class="cell ${theme}"><div><div class="mark">${mono}<span class="word">${en}</span></div><div class="meta accent">${meta}</div></div><span class="ar" dir="rtl">${ar}</span></div>`;
+  document.body.insertAdjacentHTML('beforeend', `<div class="row">${cell('light')}${cell('dark')}</div>`);
+}
+</script>
+</body>
+</html>

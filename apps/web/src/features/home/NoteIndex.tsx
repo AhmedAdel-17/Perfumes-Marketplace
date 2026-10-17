@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import type { IndexedNote } from '@diyar/api';
-import { data as num, HOME, langAttrs, PRODUCT, type Locale } from '@diyar/i18n';
-import { localeHref } from '@/core/href';
+import { data as num, HOME, PRODUCT, type Locale } from '@diyar/i18n';
+import { NoteChip } from '@/features/catalogue/NoteChip';
 
 type Tier = 'top' | 'heart' | 'base';
 
@@ -44,14 +43,14 @@ export function NoteIndex({ index, locale }: { index: Record<Tier, IndexedNote[]
               const shown = locale === 'en' && entry.en ? { text: entry.en, lang: 'en' as const } : { text: entry.note, lang: 'ar' as const };
               return (
                 <li key={entry.note}>
-                  <Link
-                    href={localeHref(locale, `/search?q=${encodeURIComponent(entry.note)}`)}
-                    aria-label={`${copy.searchFor(shown.text)} (${num(entry.count)})`}
-                    className="group inline-flex h-touch items-center gap-2 border border-line bg-raised px-4 text-body transition-colors duration-quick ease-out hover:border-ink hover:bg-ink hover:text-ground lg:text-bodyLg"
-                  >
-                    <span {...langAttrs(locale, shown.lang)}>{shown.text}</span>
-                    <span className="latin text-caption text-ink3 tnum group-hover:text-ground">{num(entry.count)}</span>
-                  </Link>
+                  <NoteChip
+                    note={entry.note}
+                    shown={shown}
+                    icon={entry.icon}
+                    locale={locale}
+                    label={`${copy.searchFor(shown.text)} (${num(entry.count)})`}
+                    count={num(entry.count)}
+                  />
                 </li>
               );
             })}

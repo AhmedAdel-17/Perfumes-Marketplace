@@ -91,7 +91,7 @@ export function CartView() {
           href={localeHref(locale, '/search')}
           className="tappable mt-5 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          <span className="border-b border-current">{copy.browse}</span>
+          <span className="link-line">{copy.browse}</span>
         </Link>
       </div>
     );

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { NOTE_ICONS } from '@diyar/domain';
 import { platformProcedure, router } from '../trpc';
 
 /**
@@ -17,13 +18,16 @@ export const glossaryRouter = router({
     ctx.uow.transaction((r) => r.glossary.entries())),
 
   set: platformProcedure
-    .input(z.object({ ar: note, en: note }))
+    // `icon` left out keeps the note's drawing; null clears it.
+    .input(z.object({ ar: note, en: note, icon: z.enum(NOTE_ICONS).nullable().optional() }))
     .mutation(async ({ ctx, input }) => {
       const staff = ctx.platformStaffId;
       if (!staff) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'انتهت الجلسة.' });
 
       return ctx.uow.transaction(async (r) => {
-        const { before } = await r.glossary.set(input.ar, input.en, staff);
+        const { before, beforeIcon } = await r.glossary.set(input.ar, input.en, staff, input.icon);
+        // Left out, the drawing was kept — so the entry still has the old one.
+        const afterIcon = input.icon === undefined ? beforeIcon : input.icon;
         await r.audit.record({
           action: 'policy_change',
           actorId: staff,
@@ -31,8 +35,8 @@ export const glossaryRouter = router({
           entityTable: 'note_glossary',
           // The key is the note itself, not a uuid, so it travels in the body.
           entityId: null,
-          before: before === null ? null : JSON.stringify({ ar: input.ar, en: before }),
-          after: JSON.stringify({ ar: input.ar, en: input.en }),
+          before: before === null ? null : JSON.stringify({ ar: input.ar, en: before, icon: beforeIcon }),
+          after: JSON.stringify({ ar: input.ar, en: input.en, icon: afterIcon }),
         });
         return { ar: input.ar, en: input.en };
       });

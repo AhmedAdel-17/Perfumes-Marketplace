@@ -111,7 +111,9 @@ screen is built, because these are exactly the values that get improvised incons
   "quick": 240,         // small reveals
   "base": 420,          // default transition
   "slow": 640,          // screen transitions, hero reveals
-  "$rule": "Nothing under 120ms. Nothing bouncy. Ever."
+  "ceremony": 1600,     // once-per-visit arrivals only (added 17 Oct 2026)
+  "mist": 2400,         // the masthead's spritz, once per visit
+  "$rule": "Nothing under 120ms. Nothing bouncy. Ever. Nothing a click answers is slower than slow."
 },
 "easing": {
   "out":     "cubic-bezier(0.16, 1, 0.3, 1)",     // default — decisive, settles

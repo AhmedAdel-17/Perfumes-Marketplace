@@ -303,7 +303,7 @@ theme's colours are the 'Graphite & ambre' palette in `packages/tokens` (FD-1 am
 redesign and the tokens win.*
 Do not redesign or "improve". If something looks wrong, say so and ask.
 
-Icons are in `packages/ui/src/icons.tsx` (41 components). Never draw a new one without
+Icons are in `packages/ui/src/icons.tsx` (46 components; Moon, Wood, Palm, Sprig and Diamond added 17 Oct 2026). Never draw a new one without
 asking.
 
 **Genuinely not yet designed** — ask before inventing a visual language for these: review

@@ -25,6 +25,14 @@
  */
 
 /** A row as the catalogue reads it — the product, plus the two names around it. */
+import type { NoteIcon } from '../catalogue/vocabularies';
+
+/** What the glossary says about one note, for the storefront. */
+export interface GlossaryWord {
+  readonly en: string;
+  readonly icon: NoteIcon | null;
+}
+
 export interface CatalogueProductRow {
   readonly id: string;
   readonly slug: string;
@@ -147,7 +155,7 @@ export interface CatalogueReadModel {
    * glossary does not know yet is simply absent, and the storefront shows the
    * Arabic for it.
    */
-  noteGlossary(notes: readonly string[]): Promise<ReadonlyMap<string, string>>;
+  noteGlossary(notes: readonly string[]): Promise<ReadonlyMap<string, GlossaryWord>>;
 
   /** The catalogue, narrowed. Ordering and filtering happen in SQL. */
   search(criteria: CatalogueSearchCriteria): Promise<CatalogueProductRow[]>;

@@ -160,3 +160,24 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   bordeaux), then chose this from four charcoal options rendered on the real site · the
   dark colours of `design-reference/redesign/02-noir-absolu.html` are superseded; every role
   re-proved at 4.5:1 on every surface · P5.1.3 follow-up.
+
+- 2026-10-17 · Masthead "Atomiseur" · Ahmed (founder) · the masthead is redesigned from
+  three fragrance-led concepts (`design-reference/redesign/header/`: Sillage, Atomiseur,
+  Pyramide); 02 Atomiseur chosen — the wordmark condenses out of a mist once per visit,
+  links bloom a cloud of the accent, and Perfumes opens a panel of the seven scent families
+  as vials (each linking to the filtered catalogue) beside the houses. The top line with the
+  cash-on-delivery and verification statements is removed at the founder's request (both
+  facts remain at checkout and on the verification standard) · the founder found the
+  masthead and its controls generic, and asked that every design draw on the fragrance
+  business · supersedes the masthead of `04-laboratoire.html` · P5.1.3 follow-up.
+
+- 2026-10-17 · Customer-first storefront · Ahmed (founder) · every customer page speaks only to
+  someone buying perfume. Removed from the shop: the home page's "eight checks before a house
+  can sell" section and its "apply as a house" box, the "How we verify a house" link, the
+  "Verified 8/8" stamp, the verification column of the houses table, the verification row
+  on a house page, and "register" as the name of the catalogue ("Recently registered" → "New
+  arrivals"; "The register" → "The collection"). Houses get ONE door: a band at the top of
+  the footer on every page — "Are you a perfume house?" — leading to the application form ·
+  the founder found the site addressing houses where it should address buyers · the
+  eight-point review stays where houses read it, on the apply page; reviews keep "Verified
+  purchase", which is for buyers · P5.1.3 follow-up.

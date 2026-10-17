@@ -8,6 +8,7 @@ import { sql } from 'drizzle-orm';
 import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { platformStaff } from './governance';
 import { products } from './catalogue';
+import { noteIcon } from './enums';
 
 export const announcements = pgTable('announcements', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -45,6 +46,8 @@ export const siteCuration = pgTable('site_curation', {
 export const noteGlossary = pgTable('note_glossary', {
   ar: text('ar').primaryKey(),
   en: text('en').notNull(),
+  /** The drawing beside the note (0031). Null until the platform chooses one. */
+  icon: noteIcon('icon'),
   updatedBy: uuid('updated_by').references(() => platformStaff.id),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

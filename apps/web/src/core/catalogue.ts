@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import type { CatalogueQuery } from '@diyar/domain';
 import { api } from './api';
 
@@ -36,7 +37,12 @@ export const findProductBySlug = (slug: string) => api().catalogue.detail({ slug
 
 export const findHouseBySlug = (slug: string) => api().catalogue.house({ slug });
 
-export const listHouses = () => api().catalogue.houses();
+/**
+ * Memoised for one request with React's `cache`: the masthead's Perfumes panel
+ * lists the houses on EVERY page, and the houses directory lists them again —
+ * one query between them, not two.
+ */
+export const listHouses = cache(() => api().catalogue.houses());
 
 /**
  * The catalogue, narrowed.

@@ -14,22 +14,20 @@ export const HOUSES = defineMessages(
     noPerfumes: 'لا توجد عطور معروضة من هذه الدار حاليًا.',
     deliversTo: 'يوصّل إلى',
     // A Latin label in both languages: Arabic is never set in the label face.
-    kicker: 'The register of houses',
+    kicker: 'Independent Egyptian perfume houses',
     // A kicker says something the title does not: on the English page the
     // house's Latin name WAS its title, printed twice.
-    verifiedHouse: 'Verified house',
+    perfumeHouse: 'Perfume house',
     established: (year: string) => `Est. ${year}`,
     houseLabel: 'The house',
-    // The register's columns, shared by the directory and the home page.
+    // The table's columns, shared by the directory and the home page.
     columns: {
       house: 'الدار',
       city: 'المدينة',
       since: 'منذ',
       perfumes: 'العطور',
-      verification: 'التوثيق',
     },
     founded: 'التأسيس',
-    verifiedChecks: (passed: string, total: string) => `${passed} من ${total} خطوات موثّقة`,
   },
   {
     title: 'Houses',
@@ -42,10 +40,10 @@ export const HOUSES = defineMessages(
     perfumes: 'Perfumes',
     noPerfumes: 'This house has no perfumes on show at the moment.',
     deliversTo: 'Delivers to',
-    kicker: 'The register of houses',
+    kicker: 'Independent Egyptian perfume houses',
     // A kicker says something the title does not: on the English page the
     // house's Latin name WAS its title, printed twice.
-    verifiedHouse: 'Verified house',
+    perfumeHouse: 'Perfume house',
     established: (year: string) => `Est. ${year}`,
     houseLabel: 'The house',
     columns: {
@@ -53,9 +51,7 @@ export const HOUSES = defineMessages(
       city: 'City',
       since: 'Since',
       perfumes: 'Perfumes',
-      verification: 'Verification',
     },
     founded: 'Founded',
-    verifiedChecks: (passed: string, total: string) => `${passed} of ${total} checks verified`,
   },
 );

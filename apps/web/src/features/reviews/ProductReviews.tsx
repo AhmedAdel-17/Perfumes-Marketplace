@@ -128,7 +128,7 @@ export async function ProductReviews({
           // while the TARGET is a target.
           className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          <span className="border-b border-current">{copy.openTracking}</span>
+          <span className="link-line">{copy.openTracking}</span>
         </a>
       </p>
     </section>

@@ -48,7 +48,7 @@ export default async function SellerListingPage(
         >
           {/* Back points to the reading START — right, in Arabic. The glyph
               does not mirror itself, so the arrow is chosen for the direction. */}
-          <span className="border-b border-current">→ كل المنتجات</span>
+          <span className="link-line">→ كل المنتجات</span>
         </a>
         <h1 className="font-display text-h2 leading-heading lg:text-h1">
           {listing.name || 'منتج جديد'}

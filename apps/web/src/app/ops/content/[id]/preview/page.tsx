@@ -72,7 +72,7 @@ export default async function PreviewPage(
           className="tappable mt-10 flex min-h-touch items-center border-t border-ink pt-6 text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
         >
           {/* Back points to the reading start — right, in Arabic. */}
-          <span className="border-b border-current">→ العودة إلى التحرير</span>
+          <span className="link-line">→ العودة إلى التحرير</span>
         </a>
       </main>
     </>

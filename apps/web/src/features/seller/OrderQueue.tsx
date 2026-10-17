@@ -327,7 +327,7 @@ function DeclineReasons({
         onClick={onCancel}
         className="tappable mt-4 flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-ink"
       >
-        <span className="border-b border-current">رجوع</span>
+        <span className="link-line">رجوع</span>
       </button>
     </div>
   );

@@ -153,3 +153,8 @@ export const governorate = pgEnum('governorate', [
   'south_sinai', 'beni_suef', 'faiyum', 'minya', 'asyut', 'sohag', 'qena', 'luxor', 'aswan',
   'red_sea', 'new_valley', 'matrouh',
 ]);
+
+/** The drawing beside a scent note, chosen in the glossary (migration 0031). */
+export const noteIcon = pgEnum('note_icon', [
+  'bergamot', 'citrus', 'cardamom', 'saffron', 'jasmine', 'white_flower', 'rose', 'violet', 'bloom', 'leaf', 'sprig', 'palm', 'wood', 'oud', 'amber', 'musk', 'vanilla', 'incense', 'cool',
+]);

@@ -161,7 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   href={localeHref(locale, `/house/${product.houseSlug}`)}
                   className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
                 >
-                  <span {...langAttrs(locale, house.lang)} className="border-b border-current">{house.text}</span>
+                  <span {...langAttrs(locale, house.lang)} className="link-line">{house.text}</span>
                 </Link>
                 {houseFacts.map((fact) => (
                   <span key={fact.text}>
@@ -236,6 +236,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               heart={product.notesHeart}
               base={product.notesBase}
               english={product.noteEnglish}
+              icons={product.noteIcons}
               locale={locale}
             />
             <div className="mt-8 lg:w-7/12">

@@ -5,33 +5,31 @@ import {
   DEFAULT_THEME, THEME_ATTRIBUTE, THEME_STORAGE_KEY, themes, type ThemeName,
 } from '@diyar/tokens';
 import { SHELL } from '@diyar/i18n';
+import { Icon } from '@diyar/ui';
 import { useLocale } from './LocaleProvider';
 
 /**
- * Paper (Laboratoire, the default) or Noir.
+ * Light (Laboratoire, the default) or dark (Noir) — a sun that becomes a moon.
  *
- * A SEGMENTED CONTROL, not a switch, and the difference matters here. A switch
- * shows one state and asks you to infer the other; a visitor who has never seen
- * the light theme cannot tell whether the control turns something on or reveals
- * something. Two labelled segments show both worlds and mark which one you are
- * in — no inference, no icon that has to carry a concept on its own, and it
- * reads correctly to a screen reader without an explanation.
+ * Redesigned 17 Oct 2026 at the founder's request: the PAPER / NOIR segmented
+ * pair read as generic. One square control now, matched to the language pair
+ * beside it, carrying the CURRENT appearance as a drawing: the sun by day, the
+ * moon by night. On a switch the outgoing drawing turns a quarter and fades as
+ * the incoming one turns in after it — slow, eased, no spring (law VI).
  *
- * No new icon was drawn for this. CLAUDE.md §12 says the icon set is closed
- * without asking, and a letterspaced Latin label is already the house's way of
- * naming a thing — it sits beside the wordmark rather than fighting it.
+ * A SWITCH, semantically: `role="switch"` named "dark mode", checked when dark.
+ * That is what it is — one setting, on or off — and a screen reader announces
+ * it as such. (The segmented version's `aria-pressed` pair also made every
+ * `button[aria-pressed]` on a page find the theme first, which a filter test
+ * had been quietly clicking instead of the filter it meant.)
  *
- * The five states the doctrine requires are all present: rest, hover, press
- * (`active:opacity-press`), focus (the global accent ring), and — because this
- * control's state comes from a store the server cannot read — a HYDRATION state,
- * during which neither segment claims to be active. Rendering a guess and
- * correcting it a frame later is how a toggle ends up flickering the wrong way.
+ * The whole page cross-fades where the browser has View Transitions, so a
+ * photograph, a hairline and a line of text change together instead of the
+ * ground changing under them. Elsewhere the ground-and-ink transition in
+ * globals.css carries it.
+ *
+ * Moon is the one icon drawn for this; the founder approved it (CLAUDE.md §12).
  */
-// Light first: it is the default since identity v2 (FD-1, 14 Oct 2026).
-const SEGMENTS: ReadonlyArray<{ theme: ThemeName; label: string; spoken: 'dark' | 'light' }> = [
-  { theme: 'light', label: 'PAPER', spoken: 'light' },
-  { theme: 'dark', label: 'NOIR', spoken: 'dark' },
-];
 
 /**
  * Present on the root only while a chosen switch is settling. globals.css
@@ -45,6 +43,10 @@ function paintBrowserChrome(theme: ThemeName) {
   const meta = document.querySelector('meta[name="theme-color"]');
   meta?.setAttribute('content', themes[theme].ground);
 }
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => unknown;
+};
 
 export function ThemeToggle() {
   const copy = SHELL[useLocale()];
@@ -74,22 +76,9 @@ export function ThemeToggle() {
     setTheme(attribute === 'light' || attribute === 'dark' ? attribute : DEFAULT_THEME);
   }, []);
 
-  const choose = (next: ThemeName) => {
+  const apply = (next: ThemeName) => {
     const root = document.documentElement;
-    root.setAttribute(SWITCHING_ATTRIBUTE, '');
     root.setAttribute(THEME_ATTRIBUTE, next);
-    // Cleared when the ground has settled. The timeout covers the cases that
-    // fire no transitionend: the same theme chosen twice, or reduced motion.
-    // `transitionend` bubbles, so a link finishing its own colour change must
-    // not end the body's.
-    const body = document.body;
-    const settle = () => {
-      body.removeEventListener('transitionend', onEnd);
-      root.removeAttribute(SWITCHING_ATTRIBUTE);
-    };
-    const onEnd = (event: TransitionEvent) => { if (event.target === body) settle(); };
-    body.addEventListener('transitionend', onEnd);
-    window.setTimeout(settle, 1000);
     paintBrowserChrome(next);
     setTheme(next);
     // A refused write — private mode, storage disabled — must not stop the
@@ -97,31 +86,60 @@ export function ThemeToggle() {
     try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch { /* not fatal */ }
   };
 
+  const toggle = () => {
+    const next: ThemeName = theme === 'dark' ? 'light' : 'dark';
+    const doc = document as ViewTransitionDocument;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (doc.startViewTransition && !still) {
+      doc.startViewTransition(() => apply(next));
+      return;
+    }
+    // No View Transitions: ease the ground and ink instead. Cleared when the
+    // ground has settled; the timeout covers the cases that fire no
+    // transitionend (reduced motion). `transitionend` bubbles, so a link
+    // finishing its own colour change must not end the body's.
+    const root = document.documentElement;
+    const body = document.body;
+    root.setAttribute(SWITCHING_ATTRIBUTE, '');
+    const settle = () => {
+      body.removeEventListener('transitionend', onEnd);
+      root.removeAttribute(SWITCHING_ATTRIBUTE);
+    };
+    const onEnd = (event: TransitionEvent) => { if (event.target === body) settle(); };
+    body.addEventListener('transitionend', onEnd);
+    window.setTimeout(settle, 1000);
+    apply(next);
+  };
+
+  const dark = theme === 'dark';
+  // Each drawing is either the one on show, or turned a quarter away and gone.
+  const drawing = (shown: boolean, turn: string) => [
+    'absolute h-[22px] w-[22px]',
+    'transition-[opacity,transform] duration-slow ease-out',
+    shown ? 'rotate-0 scale-100 opacity-100' : `${turn} scale-75 opacity-0`,
+  ].join(' ');
+
   return (
-    <div
-      role="group"
-      aria-label={copy.appearance}
-      className="inline-flex items-center border border-line"
+    <button
+      type="button"
+      role="switch"
+      // Unknown until hydrated: the server cannot read the visitor's choice,
+      // so the switch claims neither state rather than guessing and flipping.
+      aria-checked={theme === null ? undefined : dark}
+      aria-label={copy.dark}
+      title={dark ? copy.light : copy.dark}
+      onClick={toggle}
+      disabled={theme === null}
+      className={[
+        'tappable group relative flex h-[36px] w-[36px] items-center justify-center',
+        'border border-line text-ink2',
+        'transition-colors duration-base ease-out',
+        'hover:border-accent hover:text-accent active:opacity-press',
+        'disabled:cursor-default',
+      ].join(' ')}
     >
-      {SEGMENTS.map(({ theme: name, label, spoken }, index) => (
-        <button
-          key={name}
-          type="button"
-          onClick={() => choose(name)}
-          aria-pressed={theme === null ? undefined : theme === name}
-          aria-label={copy[spoken]}
-          className={[
-            // 32px tall so the masthead stays quiet; `tappable` carries the
-            // 44pt target the doctrine requires without inflating the chrome.
-            'tappable latin flex h-[32px] items-center px-3 text-caption tracking-label',
-            'transition-colors duration-base ease-out active:opacity-press',
-            index === 1 ? 'border-s border-line' : '',
-            theme === name ? 'text-ink' : 'text-ink3 hover:text-ink2',
-          ].join(' ')}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+      <Icon.Sun aria-hidden="true" className={drawing(theme === 'light', '-rotate-90')} />
+      <Icon.Moon aria-hidden="true" className={drawing(dark, 'rotate-90')} />
+    </button>
   );
 }

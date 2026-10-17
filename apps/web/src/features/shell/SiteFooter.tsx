@@ -1,5 +1,6 @@
 import { api } from '@/core/api';
 import { ThemeToggle } from './ThemeToggle';
+import { secondarySurface } from './primary-surface';
 import { Monogram } from './Monogram';
 import { langAttrs, localePath, pick, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
@@ -15,10 +16,16 @@ import { getLocale } from '@/core/locale';
  * place that decides what is published, and it would keep linking a page the
  * day somebody archives it — a footer pointing at a 404 on every screen.
  *
- * The houses directory, contact and apply links are FIXED rather than
+ * The houses directory and contact links are FIXED rather than
  * content-managed: they are sections of the site, not pages somebody publishes,
  * and an editor archiving one by accident would hide every maker, or leave the
  * marketplace with no contact route at all.
+ *
+ * THE ONE DOOR FOR HOUSES (founder, 17 Oct 2026). The customer site speaks to
+ * customers; a perfume house looking for a way in finds it here, in a band at
+ * the top of the footer on every page — out of a shopper's way, never out of a
+ * house's reach. It replaces a "For houses" column and the home page's
+ * verification section and apply box.
  */
 export async function SiteFooter() {
   const pages = await api().content.directory();
@@ -41,18 +48,32 @@ export async function SiteFooter() {
         { key: 'contact', href: to('/support'), label: copy.contact },
       ],
     },
-    {
-      heading: copy.footerHouses,
-      // The recruiting route. A marketplace of independent houses with no way
-      // to become one is a marketplace with a fixed number of houses.
-      links: [{ key: 'apply', href: to('/apply'), label: copy.apply }],
-    },
   ];
 
   return (
     <footer className="mt-8 border-t border-ink bg-raised">
+      {/* ------------------------------------------- the door for houses */}
+      <section aria-labelledby="join" className="border-b border-line">
+        <div className="mx-auto flex max-w-contentMax flex-col items-start justify-between gap-5 px-5 py-7 lg:flex-row lg:items-center lg:gap-10 lg:px-8 lg:py-9">
+          <div>
+            <p className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+              {copy.joinKicker.toUpperCase()}
+              <span aria-hidden="true" className="h-px w-12 bg-current" />
+            </p>
+            <h2 id="join" className="font-display text-h3 leading-heading lg:text-h2">{copy.joinTitle}</h2>
+            <p className="mt-2 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">{copy.joinBody}</p>
+          </div>
+          <a href={to('/apply')} className={`${secondarySurface} shrink-0 px-6`}>
+            {copy.joinCta}
+            <svg aria-hidden="true" width="18" height="10" viewBox="0 0 18 10" fill="none" stroke="currentColor" strokeWidth="1.2" className="rtl:-scale-x-100">
+              <path d="M0 5h17M13 1l4 4-4 4" />
+            </svg>
+          </a>
+        </div>
+      </section>
+
       <div className="mx-auto max-w-contentMax px-5 pb-6 pt-8 lg:px-8 lg:pt-[56px]">
-        <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3 text-ink">
               <Monogram size={30} className="text-ink" />

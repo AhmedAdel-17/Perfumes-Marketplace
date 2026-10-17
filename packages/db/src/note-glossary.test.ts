@@ -58,7 +58,7 @@ beforeAll(async () => {
 describe('who may read and write the glossary', () => {
   it('anyone reads it, and only the notes asked for', async () => {
     const found = await asAnon().transaction((r) => r.catalogue.noteGlossary(['عود', 'برغموت']));
-    expect([...found]).toEqual([['عود', 'Oud']]);
+    expect([...found]).toEqual([['عود', { en: 'Oud', icon: null }]]);
   });
 
   it('a visitor cannot write it', async () => {
@@ -72,7 +72,7 @@ describe('who may read and write the glossary', () => {
     await expect(asSeller().transaction((r) => r.glossary.remove('عود')))
       .resolves.toBe(false);
     const still = await asAnon().transaction((r) => r.catalogue.noteGlossary(['عود']));
-    expect(still.get('عود')).toBe('Oud');
+    expect(still.get('عود')?.en).toBe('Oud');
   });
 });
 
@@ -80,13 +80,13 @@ describe('the console view', () => {
   it('lists every note in use, untranslated first, then by how often it is used', async () => {
     const entries = await asPlatform().transaction((r) => r.glossary.entries());
     expect(entries.slice(0, 3)).toEqual([
-      { ar: 'برغموت', en: null, uses: 2 },
+      { ar: 'برغموت', en: null, icon: null, uses: 2 },
       expect.objectContaining({ en: null, uses: 1 }),
       expect.objectContaining({ en: null, uses: 1 }),
     ]);
     // Translated entries follow — including one no listing uses any more.
-    expect(entries).toContainEqual({ ar: 'عود', en: 'Oud', uses: 1 });
-    expect(entries).toContainEqual({ ar: 'فانيليا', en: 'Vanilla', uses: 0 });
+    expect(entries).toContainEqual({ ar: 'عود', en: 'Oud', icon: null, uses: 1 });
+    expect(entries).toContainEqual({ ar: 'فانيليا', en: 'Vanilla', icon: null, uses: 0 });
   });
 
   it('writing an entry reports what it replaced, for the audit trail', async () => {
@@ -96,7 +96,7 @@ describe('the console view', () => {
     expect(second.before).toBe('Bergamot');
 
     const found = await asAnon().transaction((r) => r.catalogue.noteGlossary(['برغموت']));
-    expect(found.get('برغموت')).toBe('Bergamot orange');
+    expect(found.get('برغموت')?.en).toBe('Bergamot orange');
   });
 
   it('removes an entry, and says when there was none', async () => {
@@ -106,6 +106,7 @@ describe('the console view', () => {
 
   it('refuses an empty or over-long English name at the database', async () => {
     await expect(asPlatform().transaction((r) => r.glossary.set('هيل', '   ', staffId))).rejects.toThrow();
+    await expect(asPlatform().transaction((r) => r.glossary.set('هيل', 'Cardamom', staffId, 'unicorn' as never))).rejects.toThrow();
     await expect(asPlatform().transaction((r) => r.glossary.set('هيل', 'x'.repeat(41), staffId))).rejects.toThrow();
   });
 });
@@ -152,5 +153,21 @@ describe('a listing\'s English name', () => {
       `SELECT search_text, name_en FROM products WHERE slug = 'one'`)).rows;
     expect(saved!.name_en).toBe('Cairo Night');
     expect(saved!.search_text).toContain('cairo night');
+  });
+
+  it('keeps a drawing per note, which the storefront reads and an English edit leaves alone', async () => {
+    await asPlatform().transaction((r) => r.glossary.set('زعفران', 'Saffron', staffId, 'saffron'));
+    const read = await asAnon().transaction((r) => r.catalogue.noteGlossary(['زعفران']));
+    expect(read.get('زعفران')).toEqual({ en: 'Saffron', icon: 'saffron' });
+
+    // Renaming without naming a drawing keeps the drawing…
+    const renamed = await asPlatform().transaction((r) => r.glossary.set('زعفران', 'Saffron threads', staffId));
+    expect(renamed.beforeIcon).toBe('saffron');
+    expect((await asAnon().transaction((r) => r.catalogue.noteGlossary(['زعفران']))).get('زعفران')?.icon).toBe('saffron');
+
+    // …and null clears it.
+    await asPlatform().transaction((r) => r.glossary.set('زعفران', 'Saffron threads', staffId, null));
+    const entries = await asPlatform().transaction((r) => r.glossary.entries());
+    expect(entries.find((e) => e.ar === 'زعفران')?.icon).toBeNull();
   });
 });

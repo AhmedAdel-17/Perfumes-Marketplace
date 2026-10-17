@@ -18,7 +18,7 @@
  * can use: a uuid is not information to a person. The entry's subject is named
  * by its kind; the ids stay in the database for joining.
  */
-import { LISTING_STATE_AR, MODERATION_REASON_AR, PAGE_STATE_AR } from './catalogue';
+import { LISTING_STATE_AR, MODERATION_REASON_AR, NOTE_ICON_AR, PAGE_STATE_AR } from './catalogue';
 import { COST_BEARER_AR, RETURN_REASON_AR, RETURN_STATE_AR } from './returns';
 import { internal, formatPrice, CURRENCY_LABEL } from './numerals';
 import {
@@ -63,6 +63,7 @@ export const AUDIT_FIELD_AR = {
   slug: 'الرابط',
   ar: 'النفحة',
   en: 'الاسم بالإنجليزية',
+  icon: 'الرسم',
   reference: 'المرجع',
   costBearer: 'التكلفة على',
   refundPiastres: 'المبلغ المردود',
@@ -115,6 +116,9 @@ function vocabularyFor(entityTable: string, field: string): Words | null {
       return COST_BEARER_AR;
     case 'control':
       return VERIFICATION_CONTROL_AR;
+    case 'icon':
+      // A note's drawing (0031), named as the picker names it.
+      return entityTable === 'note_glossary' ? NOTE_ICON_AR : null;
     default:
       return null;
   }

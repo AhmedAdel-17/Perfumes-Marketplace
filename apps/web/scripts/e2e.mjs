@@ -454,7 +454,8 @@ try {
      * customer who liked a house had no way to see what else it makes.
      */
     await shopper.goto(`${BASE}/p/${inStock[0]}`, { waitUntil: 'networkidle' });
-    const link = shopper.locator('a[href^="/house/"]').first();
+    // In `main`: the masthead's Perfumes panel links to the houses too (17 Oct 2026).
+    const link = shopper.locator('main a[href^="/house/"]').first();
     assert(await link.count() > 0, 'the house block must be a link');
 
     await link.click();
@@ -2362,7 +2363,7 @@ try {
       assert(marked > 0, 'Arabic content on the English page carries lang and dir');
     });
 
-    await test('an operator names a note in English, and the storefront prints it', async () => {
+    await test('an operator names a note and chooses its drawing, and the storefront prints both', async () => {
       /*
        * Its OWN operator session. The shared `ops` page is signed out — and its
        * session revoked — by "signing out ends the session for good", long
@@ -2376,17 +2377,25 @@ try {
         await editor.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
         const row = editor.locator('li', { has: editor.locator('label', { hasText: /^هيل$/ }) });
         await row.locator('input').fill('Green cardamom');
+        // The drawing (0031): incense, replacing the seeded cardamom pod.
+        await row.locator('[role="radio"][aria-label="بخور"]').click();
         await row.locator('button', { hasText: 'حفظ' }).click();
         await row.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
 
         await english.goto(`${BASE}/en/p/layl-al-qahira`, { waitUntil: 'networkidle' });
         const main = await english.locator('main').innerText();
         assert(main.includes('Green cardamom'), 'the new name on the product page');
+        // The chip carries the chosen drawing — the incense curl is the only
+        // drawing with this inner stroke.
+        const drawing = await english.locator('main a', { hasText: 'Green cardamom' }).first()
+          .locator('svg').innerHTML();
+        assert(drawing.includes('M12 17.5'), `the incense drawing on the note chip: ${drawing.slice(0, 80)}`);
 
         // And the change is on the record.
         await editor.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
         const audit = await editor.locator('main').innerText();
         assert(audit.includes('قاموس النفحات'), 'the glossary edit in the audit log');
+        assert(audit.includes('بخور'), 'and the drawing, named in words, in the audit log');
       } finally {
         await editorContext.close();
       }

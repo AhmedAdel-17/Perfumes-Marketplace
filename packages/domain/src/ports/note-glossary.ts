@@ -6,11 +6,15 @@
  * used, and editing them. The storefront's side is a single lookup on the
  * catalogue read model (`noteGlossary`), because the shopfront only ever reads.
  */
+import type { NoteIcon } from '../catalogue/vocabularies';
+
 export interface NoteGlossaryEntry {
   /** The note exactly as houses write it. */
   readonly ar: string;
   /** Its English name, or null when nobody has written one yet. */
   readonly en: string | null;
+  /** The drawing printed beside it, or null when none has been chosen. */
+  readonly icon: NoteIcon | null;
   /** How many listings use it, published or not. Zero for an entry no listing uses any more. */
   readonly uses: number;
 }
@@ -23,8 +27,14 @@ export interface NoteGlossaryRepository {
    */
   entries(): Promise<NoteGlossaryEntry[]>;
 
-  /** Writes one entry. Returns the English it replaced, for the audit trail. */
-  set(ar: string, en: string, updatedBy: string): Promise<{ before: string | null }>;
+  /**
+   * Writes one entry. Returns what it replaced, for the audit trail. `icon`
+   * left out keeps the entry's current drawing; `null` clears it.
+   */
+  set(ar: string, en: string, updatedBy: string, icon?: NoteIcon | null): Promise<{
+    before: string | null;
+    beforeIcon: NoteIcon | null;
+  }>;
 
   /** Removes one entry. False when there was none. */
   remove(ar: string): Promise<boolean>;

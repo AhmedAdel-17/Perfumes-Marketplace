@@ -46,7 +46,7 @@ export default async function OpsPageEditor(
         >
           {/* Back points to the reading START — right, in Arabic. The glyph
               does not mirror itself, so the arrow is chosen for the direction. */}
-          <span className="border-b border-current">→ كل الصفحات</span>
+          <span className="link-line">→ كل الصفحات</span>
         </a>
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <h1 className="font-display text-h2 leading-heading lg:text-h1">{page.title}</h1>

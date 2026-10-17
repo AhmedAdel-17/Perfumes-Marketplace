@@ -21,7 +21,7 @@
 import { z } from 'zod';
 import { BAND_FILL } from '@diyar/i18n';
 import type { CatalogueProductRow, CataloguePhotoRow, NoteTier } from '@diyar/domain';
-import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms } from '@diyar/domain';
+import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms, type NoteIcon } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
 import { slugSchema } from '../validation';
 import type { MediaStore } from '../providers/media';
@@ -85,6 +85,8 @@ export interface ProductDetail extends ProductCard {
    * by the Arabic note. A note with no entry is absent and shown in Arabic.
    */
   noteEnglish: Readonly<Record<string, string>>;
+  /** The drawing for each of this product's notes that has one, keyed the same way. */
+  noteIcons: Readonly<Record<string, NoteIcon>>;
   houseSlug: string;
   notesTop: string[];
   notesHeart: string[];
@@ -116,6 +118,8 @@ export interface HouseDetail {
 export interface IndexedNote {
   note: string;
   en: string | null;
+  /** The drawing the glossary assigns it, or null for the neutral mark. */
+  icon: NoteIcon | null;
   /** Published perfumes carrying it, in this tier. */
   count: number;
 }
@@ -204,7 +208,10 @@ export const catalogueRouter = router({
         ...toCard(row, map),
         brandName: row.brandName,
         brandNameEn: row.brandNameEn,
-        noteEnglish: Object.fromEntries(result.glossary),
+        noteEnglish: Object.fromEntries([...result.glossary].map(([ar, word]) => [ar, word.en])),
+        noteIcons: Object.fromEntries([...result.glossary]
+          .filter((entry): entry is [string, { en: string; icon: NoteIcon }] => entry[1].icon !== null)
+          .map(([ar, word]) => [ar, word.icon])),
         houseSlug: row.houseSlug ?? '',
         notesTop: [...row.notesTop],
         notesHeart: [...row.notesHeart],
@@ -275,7 +282,12 @@ export const catalogueRouter = router({
         return { index: counted, glossary: await r.catalogue.noteGlossary(notes) };
       });
       const named = (tier: NoteTier): IndexedNote[] =>
-        index[tier].map((n) => ({ note: n.note, en: glossary.get(n.note) ?? null, count: n.count }));
+        index[tier].map((n) => ({
+          note: n.note,
+          en: glossary.get(n.note)?.en ?? null,
+          icon: glossary.get(n.note)?.icon ?? null,
+          count: n.count,
+        }));
       return { top: named('top'), heart: named('heart'), base: named('base') };
     }),
 

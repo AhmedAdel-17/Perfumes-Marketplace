@@ -73,7 +73,7 @@ export function SupportForm() {
           onClick={() => { setSent(null); setSubject(''); setMessage(''); }}
           className="tappable mt-7 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
-          <span className="border-b border-current">{copy.sendAnother}</span>
+          <span className="link-line">{copy.sendAnother}</span>
         </button>
       </div>
     );

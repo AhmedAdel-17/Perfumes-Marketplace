@@ -31,10 +31,50 @@
  * thing an interface can do, and law VII is never shout — and it is not
  * tracked, because most labels are Arabic and tracking breaks the joins.
  */
+/*
+ * THE SWEEP (17 Oct 2026, founder brief: "dynamic styling for buttons"). The
+ * accent no longer snaps in on hover: it is a layer behind the label that
+ * fills the slab from the reading edge on the slow curve, and drains back
+ * toward it when the pointer leaves — the button seems to take a breath.
+ * `isolate` plus `-z-10` keeps the layer above the slab's own fill and below
+ * its label, so no button needs a wrapper around its text. An arrow inside
+ * eases one step forward, in the reading direction.
+ *
+ * Under reduced motion the global rule collapses the sweep to an instant
+ * fill, which is exactly the old behaviour.
+ */
 export const primarySurface = [
-  'relative flex h-control items-center justify-center gap-3 rounded-none',
+  'relative isolate flex h-control items-center justify-center gap-3 overflow-hidden rounded-none',
   'bg-ink text-bodyLg font-medium text-ground',
-  'transition-colors duration-base ease-out',
-  'hover:bg-accent-surface hover:text-on-accent active:opacity-press',
-  'disabled:opacity-disabled disabled:hover:bg-ink disabled:hover:text-ground',
+  'transition-colors duration-slow ease-out',
+  'before:absolute before:inset-0 before:-z-10 before:bg-accent-surface before:content-[""]',
+  'before:origin-[var(--edge-start)] before:scale-x-0',
+  'before:transition-transform before:duration-slow before:ease-out',
+  'hover:text-on-accent hover:before:scale-x-100',
+  'focus-visible:text-on-accent focus-visible:before:scale-x-100',
+  'active:opacity-press',
+  '[&_svg]:transition-transform [&_svg]:duration-slow [&_svg]:ease-out',
+  'ltr:hover:[&_svg]:translate-x-1 rtl:hover:[&_svg]:-translate-x-1',
+  'disabled:opacity-disabled disabled:hover:text-ground disabled:hover:before:scale-x-0',
+].join(' ');
+
+/**
+ * The SECONDARY action: ruled, not filled — for a door that matters but is not
+ * the page's purchase, such as a house applying from the footer. The same
+ * sweep as the primary, inverted: the ink fills the frame from the reading edge
+ * and the label turns to the ground. One look for every such door, not a
+ * bordered button invented per screen.
+ */
+export const secondarySurface = [
+  'relative isolate flex h-control items-center justify-center gap-3 overflow-hidden rounded-none',
+  'border border-ink text-bodyLg font-medium text-ink',
+  'transition-colors duration-slow ease-out',
+  'before:absolute before:inset-0 before:-z-10 before:bg-ink before:content-[""]',
+  'before:origin-[var(--edge-start)] before:scale-x-0',
+  'before:transition-transform before:duration-slow before:ease-out',
+  'hover:text-ground hover:before:scale-x-100',
+  'focus-visible:text-ground focus-visible:before:scale-x-100',
+  'active:opacity-press',
+  '[&_svg]:transition-transform [&_svg]:duration-slow [&_svg]:ease-out',
+  'ltr:hover:[&_svg]:translate-x-1 rtl:hover:[&_svg]:-translate-x-1',
 ].join(' ');

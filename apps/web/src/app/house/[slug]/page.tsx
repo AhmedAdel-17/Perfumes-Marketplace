@@ -11,12 +11,14 @@
  * the sellers table since migration 0000, written by nobody and read by nobody.
  *
  * The composition is deliberately NOT the homepage's. The home page opens with
- * a specimen because it is selling the idea of the register; a house opens with
- * its name and its words, because it is selling itself.
+ * a perfume worth meeting; a house opens with its name and its words, because
+ * it is selling itself.
  *
  * Visual identity v2: beside the words, the house's own LABEL — the same ruled
- * rows as a perfume's specimen sheet (city, founding year, perfumes,
- * verification, where it delivers), so a house is read the way a perfume is.
+ * rows as a perfume's specimen sheet (city, founding year, perfumes, where it
+ * delivers), so a house is read the way a perfume is. (A verification row — the
+ * 8/8 bar — was removed 17 Oct 2026: the platform's process is not what a buyer
+ * came to read.)
  */
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -29,7 +31,6 @@ import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { SpecimenCard, type CardRating } from '@/features/catalogue/SpecimenCard';
-import { VERIFICATION_CONTROLS } from '@/features/catalogue/HouseTable';
 import { SectionHead } from '@/features/shell/SectionHead';
 import { api } from '@/core/api';
 import { Track } from '@/features/analytics/Track';
@@ -97,7 +98,7 @@ export default async function HousePage(
           <div className="lg:col-span-7">
             <Reveal>
               <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
-                {[copy.verifiedHouse, house.foundedYear ? copy.established(String(house.foundedYear)) : null]
+                {[copy.perfumeHouse, house.foundedYear ? copy.established(String(house.foundedYear)) : null]
                   .filter(Boolean).join(' · ').toUpperCase()}
                 <span aria-hidden="true" className="h-px w-12 bg-current" />
               </span>
@@ -115,10 +116,7 @@ export default async function HousePage(
           </div>
 
           {/*
-            The house's label. Verification is printed because it is true of
-            every house that has a page at all: `houseBySlug` returns only live
-            houses, and migration 0001's gate puts none live short of all eight
-            controls.
+            The house's label.
 
             "Delivers to" is here rather than in a section at the foot of the
             page: it is stated BEFORE the perfumes, because every house ships
@@ -142,14 +140,6 @@ export default async function HousePage(
                   <Row label={copy.founded}>{editorialIn(locale)(house.foundedYear, false)}</Row>
                 )}
                 <Row label={copy.columns.perfumes}><span className="tnum">{num(house.products.length)}</span></Row>
-                <Row label={copy.columns.verification}>
-                  <span className="inline-flex items-center gap-2 text-accent">
-                    <span aria-hidden="true" className="inline-flex gap-[2px]">
-                      {Array.from({ length: VERIFICATION_CONTROLS }, (_, i) => <i key={i} className="h-3 w-1.5 bg-accent" />)}
-                    </span>
-                    <span>{copy.verifiedChecks(num(VERIFICATION_CONTROLS), num(VERIFICATION_CONTROLS))}</span>
-                  </span>
-                </Row>
                 {house.serviceGovernorates.length > 0 && (
                   <Row label={copy.deliversTo}>
                     {house.serviceGovernorates

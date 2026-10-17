@@ -66,6 +66,32 @@ export const SCENT_FAMILY_AR = {
   musk: 'مسك',
 } as const;
 
+/**
+ * The note drawings, named for the console's picker (each button is read out by
+ * its name). Arabic only: the console is.
+ */
+export const NOTE_ICON_AR = {
+  bergamot: 'برغموت',
+  citrus: 'حمضيات',
+  cardamom: 'هيل',
+  saffron: 'زعفران',
+  jasmine: 'ياسمين',
+  white_flower: 'زهرة بيضاء',
+  rose: 'ورد',
+  violet: 'بنفسج',
+  bloom: 'زهرة',
+  leaf: 'ورقة خضراء',
+  sprig: 'عشب',
+  palm: 'نخيل',
+  wood: 'خشب',
+  oud: 'عود',
+  amber: 'عنبر',
+  musk: 'مسك',
+  vanilla: 'فانيليا',
+  incense: 'بخور',
+  cool: 'برودة',
+} as const;
+
 export const CONCENTRATION_AR = {
   parfum: 'بارفان',
   eau_de_parfum: 'أو دو بارفان',

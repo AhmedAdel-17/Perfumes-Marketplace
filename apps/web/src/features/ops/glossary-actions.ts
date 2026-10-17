@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import type { NoteIcon } from '@diyar/domain';
 import { api } from '@/core/api';
 import { activeOperator } from './actions';
 
@@ -32,13 +33,15 @@ export async function fetchGlossary() {
   return call.glossary.entries();
 }
 
-export async function setNoteEnglish(ar: string, en: string): Promise<GlossaryResult> {
+export async function setNoteEnglish(ar: string, en: string, icon: NoteIcon | null): Promise<GlossaryResult> {
   const call = await caller();
   if (!call) return EXPIRED;
   try {
-    await call.glossary.set({ ar, en });
+    await call.glossary.set({ ar, en, icon });
     revalidatePath('/ops/notes');
     revalidatePath('/p/[slug]', 'page');
+    // The home page's note index prints the drawing too.
+    revalidatePath('/');
     return { ok: true };
   } catch {
     return { ok: false, message: 'تعذّر الحفظ. الاسم من حرف إلى ٤٠ حرفًا.' };

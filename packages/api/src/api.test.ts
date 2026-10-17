@@ -639,7 +639,7 @@ describe('public catalogue — anonymous traffic', () => {
 
     // Every seeded listing carries bergamot on top, so its count IS the shop:
     // a number larger than the published list would be counting drafts.
-    expect(index.top).toContainEqual({ note: 'برغموت', en: 'Bergamot', count: published.length });
+    expect(index.top).toContainEqual({ note: 'برغموت', en: 'Bergamot', icon: null, count: published.length });
     expect(index.heart.find((n) => n.note === 'ورد')?.en).toBeNull();
     expect(index.base.map((n) => n.note)).toContain('مسك');
   });

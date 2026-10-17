@@ -28,33 +28,44 @@ export const noteGlossaryRepository = (db: DiyarDatabase): NoteGlossaryRepositor
       }
     }
 
-    const glossary = await db.select({ ar: schema.noteGlossary.ar, en: schema.noteGlossary.en })
-      .from(schema.noteGlossary);
-    const english = new Map(glossary.map((row) => [row.ar, row.en]));
+    const glossary = await db.select({
+      ar: schema.noteGlossary.ar,
+      en: schema.noteGlossary.en,
+      icon: schema.noteGlossary.icon,
+    }).from(schema.noteGlossary);
+    const english = new Map(glossary.map((row) => [row.ar, row]));
 
     const notes = new Set([...uses.keys(), ...english.keys()]);
     return [...notes]
-      .map((ar): NoteGlossaryEntry => ({ ar, en: english.get(ar) ?? null, uses: uses.get(ar) ?? 0 }))
+      .map((ar): NoteGlossaryEntry => ({
+        ar,
+        en: english.get(ar)?.en ?? null,
+        icon: english.get(ar)?.icon ?? null,
+        uses: uses.get(ar) ?? 0,
+      }))
       .sort((a, b) =>
         Number(a.en !== null) - Number(b.en !== null)
         || b.uses - a.uses
         || a.ar.localeCompare(b.ar, 'ar'));
   },
 
-  async set(ar, en, updatedBy) {
-    const [previous] = await db.select({ en: schema.noteGlossary.en })
+  async set(ar, en, updatedBy, icon) {
+    const [previous] = await db.select({ en: schema.noteGlossary.en, icon: schema.noteGlossary.icon })
       .from(schema.noteGlossary)
       .where(eq(schema.noteGlossary.ar, ar))
       .limit(1);
 
+    // `undefined` keeps the drawing an entry already has; only an explicit
+    // value or null changes it.
+    const drawing = icon === undefined ? {} : { icon };
     await db.insert(schema.noteGlossary)
-      .values({ ar, en, updatedBy, updatedAt: new Date() })
+      .values({ ar, en, icon: icon ?? null, updatedBy, updatedAt: new Date() })
       .onConflictDoUpdate({
         target: schema.noteGlossary.ar,
-        set: { en, updatedBy, updatedAt: new Date() },
+        set: { en, ...drawing, updatedBy, updatedAt: new Date() },
       });
 
-    return { before: previous?.en ?? null };
+    return { before: previous?.en ?? null, beforeIcon: previous?.icon ?? null };
   },
 
   async remove(ar) {

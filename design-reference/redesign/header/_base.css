@@ -1,0 +1,58 @@
+/*
+  Header concepts, 17 Oct 2026 — shared base. The real palettes (tokens.json),
+  the real faces, a hero underneath for context. Each concept file adds only
+  its masthead. Open a concept directly in a browser; the photograph is read
+  from apps/web/scripts/mock-photos (git-ignored, local only).
+*/
+:root {
+  --ground: #E7E2D8; --raised: #F4F1EB; --raised2: #F9F7F2; --line: #CEC6B8;
+  --ink: #221F1B; --ink2: #5A554D; --ink3: #67615A; --accent: #4D5A2C; --on-accent: #F4F1EB;
+  --oud: #4A3328; --amber: #A8681F; --woody: #7A5C3E; --floral: #C07A90; --fresh: #5A8C7C; --gourmand: #9A6B4A; --musk: #8E8578;
+  --f-display: 'Noto Naskh Arabic', serif; --f-body: 'IBM Plex Sans Arabic', sans-serif;
+  --f-label: 'IBM Plex Mono', monospace; --f-wordmark: 'Newsreader', Georgia, serif;
+  --out: cubic-bezier(0.16, 1, 0.3, 1); --inout: cubic-bezier(0.65, 0, 0.35, 1); --entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --quick: 240ms; --base: 420ms; --slow: 640ms;
+}
+[data-theme='dark'] {
+  --ground: #201E1C; --raised: #2A2725; --raised2: #332F2C; --line: #4E4844;
+  --ink: #F8F3EB; --ink2: #CDC5BA; --ink3: #B1A89C; --accent: #EDA53E; --on-accent: #201E1C;
+}
+[dir='rtl'] { --edge-start: right; --edge-end: left; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-padding-top: 120px; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-body); font-size: 13px; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.latin { font-family: var(--f-label); letter-spacing: 2.4px; unicode-bidi: isolate; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: 32px; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--slow); animation-timing-function: var(--inout); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; } }
+
+/* ---------------------------------------------------- shared preferences */
+.prefs { display: flex; align-items: center; gap: 12px; }
+.lang { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 34px; border: 1px solid var(--line); }
+.lang > * { display: flex; align-items: center; justify-content: center; min-width: 42px; font-family: var(--f-label); font-size: 10.5px; letter-spacing: 2.4px; color: var(--ink3); transition: color var(--base) var(--out); }
+.lang > [aria-current] { color: var(--ink); }
+.lang > a:hover { color: var(--ink); }
+.lang > :nth-child(2) { border-inline-start: 1px solid var(--line); }
+.lang .bar { position: absolute; bottom: -1px; height: 2px; width: 50%; inset-inline-start: 0; background: var(--accent); transition: inset-inline-start var(--base) var(--out); min-width: 0; }
+.lang a:hover ~ .bar { inset-inline-start: 50%; }
+.theme { position: relative; width: 34px; height: 34px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink2); transition: border-color var(--base) var(--out), color var(--base) var(--out); }
+.theme:hover { border-color: var(--accent); color: var(--accent); }
+.theme svg { position: absolute; width: 20px; height: 20px; transition: opacity var(--slow) var(--out), transform var(--slow) var(--out); }
+.theme .moon { opacity: 0; transform: rotate(90deg) scale(.75); }
+[data-theme='dark'] .theme .sun { opacity: 0; transform: rotate(-90deg) scale(.75); }
+[data-theme='dark'] .theme .moon { opacity: 1; transform: none; }
+
+/* ---------------------------------------------------- the hero, for context */
+.hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 88px; align-items: center; padding-block: 88px 120px; }
+.kicker { display: flex; align-items: center; gap: 12px; font-family: var(--f-label); font-size: 10.5px; letter-spacing: 2.4px; color: var(--accent); }
+.kicker::after { content: ''; width: 48px; height: 1px; background: currentColor; }
+.hero h1 { margin-top: 24px; font-family: var(--f-display); font-weight: 500; font-size: 68px; line-height: 1.2; }
+.hero h1 em { display: block; font-style: normal; color: var(--accent); }
+.hero p { margin-top: 24px; max-width: 560px; font-size: 19px; line-height: 1.8; color: var(--ink2); }
+.hero figure { border: 1px solid var(--ink); background: var(--raised); }
+.hero figure figcaption { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--ink); font-family: var(--f-label); font-size: 9.5px; letter-spacing: 2.4px; color: var(--ink2); }
+.hero figure img { display: block; width: 100%; aspect-ratio: 4 / 4.2; object-fit: cover; }
+.filler { height: 1400px; border-top: 1px solid var(--line); }
+.note { position: fixed; inset-block-end: 16px; inset-inline-start: 16px; z-index: 99; padding: 10px 14px; background: var(--ink); color: var(--ground); font-family: var(--f-label); font-size: 10px; letter-spacing: 1.5px; }

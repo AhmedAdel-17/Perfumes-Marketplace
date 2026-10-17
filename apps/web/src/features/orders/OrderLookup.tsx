@@ -212,7 +212,7 @@ function OrderDetail({
         onClick={onBack}
         className="tappable mt-8 inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
       >
-        <span className="border-b border-current">{words.trackAnother}</span>
+        <span className="link-line">{words.trackAnother}</span>
       </button>
     </div>
   );

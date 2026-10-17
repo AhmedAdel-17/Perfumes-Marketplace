@@ -35,7 +35,7 @@ export function SectionHead({
           className="tappable inline-flex min-h-touch items-center self-end justify-self-start text-body text-ink transition-colors duration-base ease-out hover:text-accent sm:justify-self-end lg:text-bodyLg"
         >
           {/* The rule under the WORDS, not under the 44px target around them. */}
-          <span className="border-b border-current">{link.label}</span>
+          <span className="link-line">{link.label}</span>
         </Link>
       )}
     </div>

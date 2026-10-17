@@ -25,11 +25,13 @@ export function PageHead({
 }) {
   return (
     <header className={`border-b border-ink pb-4 ${flush ? '' : 'pt-8 lg:pt-12'} ${className}`}>
-      <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+      {/* The same arrival as the home page's opening, shorter: the kicker
+          fades in as its rule draws, and the title rises after it. */}
+      <span className="fade-in latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
         {kicker.toUpperCase()}
-        <span aria-hidden="true" className="h-px w-12 bg-current" />
+        <span aria-hidden="true" className="draw-in h-px w-12 bg-current [--rise-delay:120ms]" />
       </span>
-      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{title}</h1>
+      <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-h1Lg">{title}</h1>
       {children}
     </header>
   );

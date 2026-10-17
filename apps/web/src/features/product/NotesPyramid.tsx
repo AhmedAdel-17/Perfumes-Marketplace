@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { langAttrs, pick, PRODUCT, type Locale } from '@diyar/i18n';
-import { localeHref } from '@/core/href';
+import type { NoteIcon } from '@diyar/domain';
+import { pick, PRODUCT, type Locale } from '@diyar/i18n';
+import { NoteChip } from '@/features/catalogue/NoteChip';
 
 /**
  * The notes, tier by tier (visual identity v2).
@@ -26,13 +26,15 @@ const TIERS = [
 ] as const;
 
 export function NotesPyramid({
-  top, heart, base, english, locale,
+  top, heart, base, english, icons, locale,
 }: {
   top: string[];
   heart: string[];
   base: string[];
   /** English names from the platform glossary, keyed by the Arabic note. */
   english: Readonly<Record<string, string>>;
+  /** The glossary's drawing for each note that has one, keyed the same way. */
+  icons: Readonly<Record<string, NoteIcon>>;
   locale: Locale;
 }) {
   const copy = PRODUCT[locale];
@@ -55,13 +57,13 @@ export function NotesPyramid({
               const shown = pick(locale, note, english[note]);
               return (
                 <li key={note}>
-                  <Link
-                    href={localeHref(locale, `/search?q=${encodeURIComponent(note)}`)}
-                    aria-label={copy.searchNote(shown.text)}
-                    className="inline-flex h-touch items-center border border-line bg-raised px-4 text-body transition-colors duration-quick ease-out hover:border-ink hover:bg-ink hover:text-ground lg:text-bodyLg"
-                  >
-                    <span {...langAttrs(locale, shown.lang)}>{shown.text}</span>
-                  </Link>
+                  <NoteChip
+                    note={note}
+                    shown={shown}
+                    icon={icons[note] ?? null}
+                    locale={locale}
+                    label={copy.searchNote(shown.text)}
+                  />
                 </li>
               );
             })}

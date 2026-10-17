@@ -114,7 +114,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
                     aria-expanded={open === item.lineItemId}
                     className="tappable inline-flex min-h-touch items-center text-body text-ink transition-colors duration-base ease-out hover:text-accent"
                   >
-                    <span className="border-b border-current">{open === item.lineItemId ? copy.close : copy.request}</span>
+                    <span className="link-line">{open === item.lineItemId ? copy.close : copy.request}</span>
                   </button>
                 </div>
 
