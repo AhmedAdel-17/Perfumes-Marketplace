@@ -7,6 +7,7 @@ import { useLocale } from '@/features/shell/LocaleProvider';
 import { Field } from '@/features/checkout/Field';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { findTicket, openTicket, type TicketResult } from './actions';
+import { Pending } from '@/features/shell/FlaconLoader';
 
 /**
  * The way to reach a person.
@@ -150,7 +151,7 @@ export function SupportForm() {
       )}
 
       <PrimaryButton type="submit" disabled={sending} fill="full">
-        {sending ? copy.sending : copy.send}
+        {sending ? <Pending label={copy.sending} /> : copy.send}
       </PrimaryButton>
     </form>
   );
@@ -221,7 +222,7 @@ export function TicketLookup() {
       )}
 
       <PrimaryButton type="submit" disabled={searching} fill="full">
-        {searching ? copy.searching : copy.find}
+        {searching ? <Pending label={copy.searching} /> : copy.find}
       </PrimaryButton>
     </form>
   );

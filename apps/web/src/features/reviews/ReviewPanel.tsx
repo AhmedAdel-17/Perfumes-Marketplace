@@ -11,6 +11,7 @@ import { useLocale } from '@/features/shell/LocaleProvider';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { RatingInput } from './RatingInput';
 import { reviewableItems, submitReview, type ReviewableItem } from './actions';
+import { Pending } from '@/features/shell/FlaconLoader';
 
 /**
  * Writing a review, from the screen where the customer already is.
@@ -218,7 +219,7 @@ function ReviewForm({
       */}
       <div className="mt-5">
         <PrimaryButton type="submit" disabled={saving || missing.length > 0} fill="full">
-          {saving ? copy.saving : copy.submit}
+          {saving ? <Pending label={copy.saving} /> : copy.submit}
         </PrimaryButton>
         {missing.length > 0 && (
           <p className="mt-2 text-small text-ink3">

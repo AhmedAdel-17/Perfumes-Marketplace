@@ -7,6 +7,7 @@ import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { submitApplication } from './actions';
 import { APPLY } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
+import { Pending } from '@/features/shell/FlaconLoader';
 
 /**
  * A house applying to join.
@@ -134,7 +135,7 @@ export function ApplyForm() {
       )}
 
       <PrimaryButton type="submit" disabled={sending} fill="full">
-        {sending ? copy.sending : copy.send}
+        {sending ? <Pending label={copy.sending} /> : copy.send}
       </PrimaryButton>
     </form>
   );

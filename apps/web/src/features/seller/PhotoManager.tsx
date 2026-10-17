@@ -37,6 +37,7 @@ import { INTERRUPTED_UPLOAD, reasonNotToSend, sendFile } from '@/features/media/
 import {
   confirmPhoto, describePhoto, makePrimaryPhoto, removePhoto, reorderPhotos, startPhotoUpload,
 } from './photo-actions';
+import { Pending, UploadProgress } from '@/features/shell/FlaconLoader';
 
 export interface PhotoView {
   id: string;
@@ -345,31 +346,20 @@ function AddPhoto({ productId }: { productId: string }) {
       </label>
 
       {progress !== null && (
-        <div className="mb-4" aria-live="polite">
-          <div
-            role="progressbar"
-            aria-label="تقدّم رفع الصورة"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress * 100)}
-            className="relative h-[3px] w-full overflow-hidden bg-line"
-          >
-            {/* Fills from the right, like every meter on an Arabic page. */}
-            <span
-              className="absolute inset-y-0 start-0 bg-accent transition-[width] duration-base ease-out"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-small text-ink3">
-            {progress < 1 ? 'جارٍ الرفع…' : 'تم الرفع — جارٍ التحقّق من الصورة…'}
-          </p>
+        <div className="mb-4">
+          {/* The flacon fills to the real fraction sent, and sprays at the top. */}
+          <UploadProgress
+            progress={progress}
+            label="تقدّم رفع الصورة"
+            note={progress < 1 ? 'جارٍ الرفع…' : 'تم الرفع — جارٍ التحقّق من الصورة…'}
+          />
         </div>
       )}
 
       {error && <p role="alert" className="mb-4 text-small leading-relaxed text-danger">{error}</p>}
 
       <PrimaryButton type="button" fill="auto" disabled={!ready} onClick={submit}>
-        {pending ? '…' : 'رفع الصورة'}
+        {pending ? <Pending label="جارٍ الرفع…" /> : 'رفع الصورة'}
       </PrimaryButton>
     </div>
   );

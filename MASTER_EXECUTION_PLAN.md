@@ -3520,3 +3520,28 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: unit tests (db 426 incl. a new glossary case and enum parity; api 354; i18n 61);
   e2e 133/133 with the glossary test extended to choose a drawing and find it on the
   product page and, in words, in the audit log.
+
+- 2026-10-17 · Claude Code session · P5.1.3 follow-up · the flacon loader, "Le Rituel" on the
+  classic "Poire" flacon (founder's idea; concepts in design-reference/loader-2026-10-17.html,
+  the classic redraw in loader-classic-2026-10-17.html, chosen with "make it look more like a
+  perfume bottle"). A vintage atomiser — round body on a pedestal, oval label, gold collar,
+  braided tube, pear bulb and tassel — that FILLS while waiting and is squeezed and SPRAYS
+  once when done. One component (FlaconLoader) at three sizes:
+  - Large: RouteLoader over the page while the next page is on its way. Its timing is a
+    tested state machine (route-wait.ts, 5 cases on a fake clock): nothing is drawn before
+    `motion.base`, once drawn it stays `motion.slow`, sprays, lifts; abandoned at 15s.
+    Started by a click on a link to another page or back/forward; ended by the pathname or
+    query changing; the language switch (`data-full-load`) is left to its own fade.
+  - Medium: SectionLoading where a section waits (the bag pricing, checkout preparing) and
+    over the search results while a filter applies (Filters marks <html>, the results dim).
+  - Small: Pending inside nine waiting buttons, beside the label they already had.
+  - Measured: UploadProgress in the seller's photo upload and the CMS image upload — the
+    liquid at the real fraction, the spritz at 100%.
+  - The bag spritzes outward from its count when an item is added.
+  Found while verifying: the size classes were built as `flacon-${size}` and the stylesheet
+  dropped them (the page flacon rendered tiny); spelled out. Production cannot be started
+  locally (it refuses without DATABASE_URL, Sentry and R2 — by design), which is why the
+  no-flash rule is held by unit tests rather than measured in a browser.
+  Verified: next build (shared JS 103 kB, unchanged); web unit tests 29; e2e 133/133;
+  live checks on a throttled connection (shown, sprays, lifts; search loader on and off;
+  bag spritz).

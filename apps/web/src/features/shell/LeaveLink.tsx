@@ -39,5 +39,6 @@ export function LeaveLink(props: React.AnchorHTMLAttributes<HTMLAnchorElement> &
     window.setTimeout(() => window.location.assign(props.href), motion.quick);
   };
 
-  return <a {...props} onClick={onClick} />;
+  // `data-full-load`: RouteLoader leaves this navigation to the fade above.
+  return <a data-full-load="" {...props} onClick={onClick} />;
 }

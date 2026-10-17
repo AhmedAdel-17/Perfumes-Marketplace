@@ -21,6 +21,9 @@ export const SHELL = defineMessages(
     perfumesPanel: 'العطور حسب العائلة، والدور',
     allPerfumes: 'كل العطور',
     allHouses: 'كل الدور',
+    // The loaders (17 Oct 2026): what a screen reader hears, and the one quiet line under the flacon.
+    loadingPage: 'جارٍ تحميل الصفحة',
+    oneMoment: 'لحظة…',
     language: 'اللغة',
     currentLanguage: 'العربية',
     switchLanguageLabel: 'Read this page in English',
@@ -67,6 +70,8 @@ export const SHELL = defineMessages(
     perfumesPanel: 'Perfumes by family, and the houses',
     allPerfumes: 'All perfumes',
     allHouses: 'All houses',
+    loadingPage: 'Loading the page',
+    oneMoment: 'One moment…',
     language: 'Language',
     currentLanguage: 'English',
     switchLanguageLabel: 'اقرأ هذه الصفحة بالعربية',

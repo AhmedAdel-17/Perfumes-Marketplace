@@ -28,6 +28,7 @@ import { ProductPhoto } from '@/features/product/ProductPhoto';
 import {
   confirmContentImage, movePageTo, savePageDraft, startContentImageUpload,
 } from './content-actions';
+import { UploadProgress } from '@/features/shell/FlaconLoader';
 
 /** Arabic names for the block kinds, as a complete Record over the union. */
 const KIND_LABELS: Record<BlockKind, string> = {
@@ -242,7 +243,13 @@ function ImageField({ id, pageId, mediaKey, image, alt, onUploaded }: {
         JPG أو PNG أو WebP · حتى 10 ميجابايت · لا يقل الضلع الأقصر عن 800 بكسل
       </p>
       {progress !== null && (
-        <progress max={1} value={progress} aria-label="تقدّم رفع الصورة" className="mt-2 w-full accent-accent" />
+        <div className="mt-3">
+          <UploadProgress
+            progress={progress}
+            label="تقدّم رفع الصورة"
+            note={progress < 1 ? 'جارٍ الرفع…' : 'تم الرفع — جارٍ التحقّق من الصورة…'}
+          />
+        </div>
       )}
       {error && <p role="alert" className="mt-2 text-small text-danger">{error}</p>}
     </div>

@@ -12,6 +12,7 @@ import {
   requestReturn, returnableItems,
   type ExistingReturn, type ReturnableItem,
 } from './actions';
+import { Pending } from '@/features/shell/FlaconLoader';
 
 /**
  * Asking to send something back.
@@ -232,7 +233,7 @@ function ReturnForm({
           fill="full"
           disabled={saving || reason === null || note.trim().length === 0}
         >
-          {saving ? copy.sending : copy.send}
+          {saving ? <Pending label={copy.sending} /> : copy.send}
         </PrimaryButton>
         {(reason === null || note.trim().length === 0) && (
           <p className="mt-2 text-small text-ink3">

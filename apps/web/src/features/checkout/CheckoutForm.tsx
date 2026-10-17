@@ -13,6 +13,7 @@ import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
 import { placeOrder, type PlaceOrderResult } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { Pending, SectionLoading } from '@/features/shell/FlaconLoader';
 
 /**
  * Checkout.
@@ -113,7 +114,7 @@ export function CheckoutForm() {
     return (
       <div className="px-5 lg:px-0">
         <Heading title={copy.title} />
-        <p className="py-8 text-body text-ink3">{copy.preparing}</p>
+        <SectionLoading label={copy.preparing} />
       </div>
     );
   }
@@ -239,7 +240,7 @@ export function CheckoutForm() {
         <Summary cart={cart} locale={locale} />
 
         <PrimaryButton type="submit" disabled={submitting} fill="full">
-          {submitting ? copy.placing : copy.place}
+          {submitting ? <Pending label={copy.placing} /> : copy.place}
         </PrimaryButton>
 
         <p className="mt-3 text-center text-small leading-relaxed text-ink3">

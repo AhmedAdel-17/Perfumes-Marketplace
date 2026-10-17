@@ -13,6 +13,7 @@ import { useLocale } from '@/features/shell/LocaleProvider';
 import { priceCart, type PricedCartResult } from './actions';
 import { useCart } from './CartStore';
 import { primarySurface } from '@/features/shell/primary-surface';
+import { SectionLoading } from '@/features/shell/FlaconLoader';
 
 /**
  * The bag.
@@ -61,7 +62,7 @@ export function CartView() {
   }, [entries, hydrated]);
 
   if (!hydrated || (cart === null && !failed)) {
-    return <p className="px-5 py-8 text-body text-ink3 lg:px-0">{copy.pricing}</p>;
+    return <SectionLoading label={copy.pricing} />;
   }
 
   if (failed) {

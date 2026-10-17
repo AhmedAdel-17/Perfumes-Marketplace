@@ -7,6 +7,7 @@ export const SEARCH = defineMessages(
     title: 'العطور',
     // A Latin label in both languages: Arabic is never set in the label face.
     kicker: 'The collection',
+    updating: '…جارٍ تحديث النتائج',
     filters: 'التصفية',
     nothingPublished: 'لا توجد عطور معروضة حاليًا.',
     noMatch: 'لا يوجد عطر مطابق. جرّب توسيع الفلاتر أو كلمة أقصر.',
@@ -31,6 +32,7 @@ export const SEARCH = defineMessages(
     metaTitle: 'Search',
     title: 'Perfumes',
     kicker: 'The collection',
+    updating: 'Updating the results…',
     filters: 'Filters',
     nothingPublished: 'No perfumes are on show at the moment.',
     noMatch: 'No perfume matches. Try fewer filters or a shorter word.',

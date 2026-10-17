@@ -20,6 +20,7 @@ import { Track } from '@/features/analytics/Track';
 import { SpecimenCard, type CardRating } from '@/features/catalogue/SpecimenCard';
 import { api } from '@/core/api';
 import { Filters } from '@/features/catalogue/Filters';
+import { SectionLoading } from '@/features/shell/FlaconLoader';
 import { SearchBox } from '@/features/catalogue/SearchBox';
 import { searchCatalogue } from '@/core/catalogue';
 
@@ -109,7 +110,14 @@ export default async function SearchPage(
             <Filters query={query} houses={houses} />
           </aside>
 
-          <div className="lg:col-span-9">
+          <div className="relative lg:col-span-9">
+            {/* While a filter is applied: the flacon over the dimmed results. */}
+            <div className="results-loader pointer-events-none absolute inset-x-0 top-0 z-10 justify-items-center pt-[96px]">
+              {/* On a panel of its own, so the line under the flacon never sits on a photograph. */}
+              <div className="border border-line bg-raised px-10">
+                <SectionLoading label={copy.updating} delayed={false} />
+              </div>
+            </div>
             {/*
               The count is stated, always — including when it is everything.
 
@@ -141,7 +149,7 @@ export default async function SearchPage(
                 )}
               </div>
             ) : (
-              <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+              <ul className="results-dim grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
                 {products.map((product, index) => (
                   <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
                     <SpecimenCard

@@ -13,7 +13,7 @@
  * it feel immediate.
  */
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import {
   activeFilterCount, catalogueQueryToSearch, parseCatalogueQuery, SCENT_FAMILIES, SORTS,
   type CatalogueQuery, type ScentFamily, type Sort,
@@ -72,6 +72,18 @@ export function Filters({ query, houses }: {
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  /*
+   * While a filter is applied, the results column dims and the flacon rises
+   * over it (globals.css, `.results-loader`). The results are a server
+   * component, so the signal travels as an attribute on <html> rather than as
+   * props across the boundary; the delay that keeps a fast answer from
+   * blinking is in the CSS.
+   */
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-results-pending', pending);
+    return () => document.documentElement.removeAttribute('data-results-pending');
+  }, [pending]);
   const locale = useLocale();
   const copy = SEARCH[locale];
   const families: Readonly<Record<ScentFamily, string>> = SCENT_FAMILY[locale];

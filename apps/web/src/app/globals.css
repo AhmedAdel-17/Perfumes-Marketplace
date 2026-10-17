@@ -238,6 +238,48 @@
   to { transform: scaleX(1); }
 }
 
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes flacon-wave {
+  from { transform: translateX(0); }
+  to { transform: translateX(-28px); }
+}
+
+/* Empty → full, a breath at the top, back down: the indeterminate wait. */
+@keyframes flacon-fill {
+  0% { transform: translateY(34px); }
+  55%, 70% { transform: translateY(4px); }
+  100% { transform: translateY(34px); }
+}
+
+/* The bulb is squeezed once, and lets go. */
+@keyframes flacon-squeeze {
+  0%, 100% { transform: none; }
+  35% { transform: scale(0.78, 0.9); }
+}
+
+@keyframes flacon-mist {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  12% { opacity: 0.95; }
+  70%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.6); }
+}
+
+/* The bag's mist goes OUT from the count: forward in the reading direction. */
+@keyframes bag-mist {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  12% { opacity: 0.95; }
+  70%, 100% { opacity: 0; transform: translate(calc(var(--dx) * var(--forward)), var(--dy)) scale(1.6); }
+}
+
+@keyframes flacon-cloud {
+  0% { opacity: 0; transform: scale(0.3); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
 @keyframes condense {
   0% { opacity: 0; filter: blur(10px); transform: scale(1.25); }
   60% { opacity: 1; }
@@ -477,6 +519,96 @@
       radial-gradient(closest-side at 70% 40%, rgb(var(--c-accent) / 0.14), transparent 75%);
     filter: blur(8px);
     animation: spritz theme('transitionDuration.mist') theme('transitionTimingFunction.out') both;
+  }
+
+  /*
+    THE FLACON — the loading indicator, "Le Rituel" (FlaconLoader.tsx). Fills
+    while waiting (the level rises on the `mist` duration, a slow wave crossing
+    its surface on `ceremony`), sprays once when done. Every duration and curve
+    is a token; reduced motion holds a still, half-full bottle.
+  */
+  .flacon { overflow: visible; flex: none; color: theme('colors.ink'); }
+  .flacon-lg { width: 170px; height: 151px; }
+  .flacon-md { width: 81px; height: 72px; }
+  .flacon-sm { width: 27px; height: 24px; color: currentColor; }
+  .flacon-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .flacon-thin { fill: none; stroke: currentColor; stroke-width: 0.8; opacity: 0.45; vector-effect: non-scaling-stroke; }
+  .flacon-label { fill: theme('colors.ground'); stroke: currentColor; stroke-width: 0.9; vector-effect: non-scaling-stroke; }
+  .flacon-collar { fill: theme('colors.accent'); }
+  .flacon-nozzle { fill: currentColor; }
+  .flacon-liquid { fill: theme('colors.accent'); opacity: 0.88; }
+  .flacon-surface { fill: none; stroke: theme('colors.ground'); stroke-width: 1; opacity: 0.55; vector-effect: non-scaling-stroke; }
+  /* Inside a button the bottle takes the button's own ink, so it reads on any slab. */
+  .flacon-sm .flacon-liquid { fill: currentColor; opacity: 0.55; }
+  .flacon-sm .flacon-collar { fill: currentColor; }
+  .flacon-cloud, .flacon-drop { fill: theme('colors.accent'); }
+  .flacon-cloud { opacity: 0; transform-box: fill-box; transform-origin: left center; }
+  .flacon-drop { opacity: 0; }
+  .flacon-bulb { transform-box: fill-box; transform-origin: center top; }
+
+  .flacon-wave { animation: flacon-wave theme('transitionDuration.ceremony') linear infinite; }
+  .flacon-filling .flacon-level {
+    animation: flacon-fill theme('transitionDuration.mist') theme('transitionTimingFunction.inOut') infinite;
+  }
+  .flacon-determinate .flacon-level {
+    transition: transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  /* Done: the liquid settles full, the cap is pressed once, the mist leaves the nozzle. */
+  .flacon-done .flacon-level {
+    animation: none;
+    transform: translateY(3px);
+    transition: transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .flacon-done .flacon-bulb { animation: flacon-squeeze theme('transitionDuration.slow') theme('transitionTimingFunction.inOut') both; }
+  .flacon-done .flacon-drop { animation: flacon-mist theme('transitionDuration.ceremony') theme('transitionTimingFunction.out') both; }
+  .flacon-done .flacon-cloud { animation: flacon-cloud theme('transitionDuration.ceremony') theme('transitionTimingFunction.out') both; }
+
+  /* The page loader's veil: in on the base duration; out while the flacon sprays. */
+  .route-loader-arriving { animation: fade theme('transitionDuration.base') theme('transitionTimingFunction.out') both; }
+  .route-loader-leaving {
+    animation: fade-out theme('transitionDuration.slow') theme('transitionTimingFunction.inOut') both;
+    animation-delay: theme('transitionDuration.quick');
+  }
+
+  /* A loader that appears only once a wait is long enough to notice. */
+  .loader-delayed {
+    animation: fade theme('transitionDuration.base') theme('transitionTimingFunction.out') both;
+    animation-delay: theme('transitionDuration.base');
+  }
+
+  /*
+    The search results while a filter is applied (Filters marks <html>): the
+    grid dims and the medium flacon rises over it — after the same delay, so a
+    quick answer shows neither.
+  */
+  .results-loader { display: none; }
+  html[data-results-pending] .results-loader {
+    display: grid;
+    animation: fade theme('transitionDuration.base') theme('transitionTimingFunction.out') both;
+    animation-delay: theme('transitionDuration.base');
+  }
+  html[data-results-pending] .results-dim {
+    opacity: 0.35;
+    transition: opacity theme('transitionDuration.base') theme('transitionTimingFunction.out') theme('transitionDuration.base');
+  }
+
+  /* The bag's spritz: a little mist from the count when something is added. */
+  .bag-spritz { position: absolute; inset-inline-end: -6px; top: 50%; width: 1px; height: 1px; pointer-events: none; }
+  .bag-spritz i {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: theme('colors.accent');
+    opacity: 0;
+    animation: bag-mist theme('transitionDuration.ceremony') theme('transitionTimingFunction.out') both;
   }
 
   /* A control may LOOK smaller than its target; the target may not shrink. */

@@ -12,6 +12,7 @@ import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import { statusPill } from '@/features/shell/status-pill';
 import { ReviewPanel } from '@/features/reviews/ReviewPanel';
 import { ReturnPanel } from '@/features/returns/ReturnPanel';
+import { Pending } from '@/features/shell/FlaconLoader';
 
 /**
  * Order tracking, without an account.
@@ -77,7 +78,7 @@ export function OrderLookup() {
       )}
 
       <PrimaryButton type="submit" disabled={searching} fill="full">
-      {searching ? copy.searching : copy.track}
+      {searching ? <Pending label={copy.searching} /> : copy.track}
     </PrimaryButton>
     </form>
   );

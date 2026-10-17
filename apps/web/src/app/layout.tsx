@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import {
   IBM_Plex_Mono, IBM_Plex_Sans_Arabic, Newsreader, Noto_Naskh_Arabic,
@@ -7,6 +8,7 @@ import { getLocale, getPath } from '@/core/locale';
 import { LocaleProvider } from '@/features/shell/LocaleProvider';
 import { CartProvider } from '@/features/cart/CartStore';
 import { Grain } from '@/features/shell/Grain';
+import { RouteLoader } from '@/features/shell/RouteLoader';
 import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
 import { headers } from 'next/headers';
 import './globals.css';
@@ -128,6 +130,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeScript nonce={nonce} />
         <LocaleProvider locale={locale}>
           <CartProvider>{children}</CartProvider>
+          {/* The page-sized flacon while the next page is on its way. In a
+              Suspense boundary because it reads the query string, which a
+              layout must not make every page wait for. */}
+          <Suspense fallback={null}>
+            <RouteLoader label={SHELL[locale].loadingPage} caption={SHELL[locale].oneMoment} />
+          </Suspense>
         </LocaleProvider>
         {/* Sits above everything, catches no clicks. DESIGN_DOCTRINE §2. */}
         <Grain />
