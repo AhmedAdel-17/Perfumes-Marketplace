@@ -138,4 +138,41 @@ describe.skipIf(!url)('independent PostgreSQL transition transactions', () => {
     expect(workCount).toBe(1);
   });
 
+  it('serializes inventory reservations so concurrent checkouts cannot oversell', async () => {
+    const [brand] = await admin`INSERT INTO brands(seller_id,name,slug)
+      VALUES(${seller},'Concurrent inventory','concurrent-inventory-brand') RETURNING id`;
+    const [product] = await admin`INSERT INTO products
+      (seller_id,brand_id,name,slug,sku,price_piastres,volume_ml,stock)
+      VALUES(${seller},${brand!.id},'Inventory','concurrent-inventory-product','INV-CONCURRENT',10000,50,5)
+      RETURNING id`;
+    await first.unsafe("SET app.actor_role='checkout'");
+    await second.unsafe("SET app.actor_role='checkout'");
+    const keyA = crypto.randomUUID(); const keyB = crypto.randomUUID();
+    let signalReady!: () => void; let release!: () => void;
+    const ready = new Promise<void>((resolve) => { signalReady = resolve; });
+    const hold = new Promise<void>((resolve) => { release = resolve; });
+    const winner = first.begin(async (tx) => {
+      const rows = await tx`SELECT app.reserve_inventory(${product!.id},4,${keyA},now()+interval '15 minutes') AS id`;
+      signalReady(); await hold; return rows[0]!.id;
+    });
+    let loser: Promise<unknown> | undefined;
+    try {
+      await ready;
+      loser = second.begin((tx) => tx`SELECT app.reserve_inventory(${product!.id},4,${keyB},now()+interval '15 minutes')`)
+        .then(() => null, (error: unknown) => error);
+      let blocked = false;
+      for (let attempt = 0; attempt < 100 && !blocked; attempt++) {
+        blocked = (await admin`SELECT 1 FROM pg_stat_activity
+          WHERE application_name='diyar_transition_second' AND wait_event_type='Lock'`).length > 0;
+        if (!blocked) await new Promise((resolve) => setTimeout(resolve,20));
+      }
+      expect(blocked).toBe(true);
+    } finally { release(); await winner; }
+    expect(await loser).toBeInstanceOf(Error);
+    expect(await admin`SELECT on_hand,reserved FROM inventory_balances WHERE product_id=${product!.id}`)
+      .toEqual([{ on_hand:5, reserved:4 }]);
+    expect(await admin`SELECT id FROM inventory_reservations WHERE product_id=${product!.id}`)
+      .toHaveLength(1);
+  });
+
 });

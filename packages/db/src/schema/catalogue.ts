@@ -113,6 +113,7 @@ export const products = pgTable('products', {
   }).onDelete('restrict'),
   uniqueIndex('products_slug_key').on(t.slug),
   uniqueIndex('products_seller_sku_key').on(t.sellerId, t.sku),
+  uniqueIndex('products_id_seller_key').on(t.id, t.sellerId),
   index('products_status_idx').on(t.status),
   index('products_family_idx').on(t.scentFamily),
   index('products_brand_idx').on(t.brandId),

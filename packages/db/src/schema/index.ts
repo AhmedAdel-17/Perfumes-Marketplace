@@ -13,3 +13,4 @@ export * from './login-codes';
 export * from './sessions';
 
 export * from './checkout-replay';
+export * from './inventory-finance';

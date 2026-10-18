@@ -1,6 +1,6 @@
 erDiagram
     %% Code-defined data review candidate, 18 October 2026; migrations 0000..0035.
-    %% 40 application tables plus schema_migrations infrastructure (SHA-256 ledger).
+    %% 48 application tables plus schema_migrations infrastructure (SHA-256 ledger).
     %% All application columns; Drizzle plus SQL-only constraints.
     %% Composite FK products(brand_id,seller_id) -> brands(id,seller_id).
     %% Composite FK returns(line_item_id,sub_order_id) -> order_line_items(id,sub_order_id).
@@ -620,3 +620,81 @@ erDiagram
         timestamptz expires_at
     }
     %% Replay response is an opaque JSON result, not a relational order FK.
+    inventory_locations {
+        uuid id PK
+        uuid seller_id FK
+        text code
+        text kind
+    }
+    inventory_balances {
+        uuid product_id PK,FK
+        uuid location_id PK,FK
+        uuid seller_id FK
+        integer on_hand
+        integer reserved
+    }
+    inventory_reservations {
+        uuid id PK
+        uuid product_id FK
+        uuid location_id FK
+        uuid seller_id FK
+        uuid order_line_item_id FK
+        integer quantity
+        inventory_reservation_status status
+    }
+    inventory_movements {
+        uuid id PK
+        uuid product_id FK
+        uuid location_id FK
+        uuid reservation_id FK
+        inventory_movement_reason reason
+        integer delta_on_hand
+        integer delta_reserved
+    }
+    payment_attempts {
+        uuid id PK
+        uuid order_id FK
+        text provider
+        uuid idempotency_key
+        integer amount_piastres
+        text status
+    }
+    refunds {
+        uuid id PK
+        uuid order_id FK
+        uuid return_id FK
+        text provider
+        integer amount_piastres
+        text status
+    }
+    refund_allocations {
+        uuid refund_id PK,FK
+        uuid line_item_id PK,FK
+        integer amount_piastres
+    }
+    financial_postings {
+        uuid id PK
+        uuid seller_id FK
+        uuid order_id FK
+        uuid sub_order_id FK
+        uuid payout_id FK
+        uuid refund_id FK
+        text kind
+        integer amount_piastres
+    }
+    sellers ||--o{ inventory_locations : seller_id
+    sellers ||--o{ inventory_balances : seller_id
+    products ||--o{ inventory_balances : product_id
+    inventory_locations ||--o{ inventory_balances : location_id
+    inventory_balances ||--o{ inventory_reservations : product_location
+    inventory_reservations |o--o{ inventory_movements : reservation_id
+    orders ||--o{ payment_attempts : order_id
+    orders ||--o{ refunds : order_id
+    returns |o--o{ refunds : return_id
+    refunds ||--o{ refund_allocations : refund_id
+    order_line_items ||--o{ refund_allocations : line_item_id
+    sellers |o--o{ financial_postings : seller_id
+    orders |o--o{ financial_postings : order_id
+    sub_orders |o--o{ financial_postings : sub_order_id
+    payouts |o--o{ financial_postings : payout_id
+    refunds |o--o{ financial_postings : refund_id
