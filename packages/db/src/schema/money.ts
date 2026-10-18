@@ -8,7 +8,8 @@
  * same in both worlds. Recording that here means the fallback from "we pay them"
  * to "we bill them" costs the last step only, not the system.
  */
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { check, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { sellers } from './sellers';
 import { subOrders } from './orders';
 import { adjustmentType, orderSource, payoutStatus } from './enums';
@@ -41,7 +42,10 @@ export const commissionOverrides = pgTable('commission_overrides', {
   source: orderSource('source').notNull(),
   bps: integer('bps').notNull(),
   note: text('note'),
-}, (t) => [uniqueIndex('commission_overrides_unique').on(t.ruleSetId, t.sellerId, t.source)]);
+}, (t) => [
+  uniqueIndex('commission_overrides_unique').on(t.ruleSetId, t.sellerId, t.source),
+  check('commission_overrides_bps_range', sql`${t.bps} BETWEEN 0 AND 10000`),
+]);
 
 export const payouts = pgTable('payouts', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -83,6 +87,7 @@ export const payoutLines = pgTable('payout_lines', {
 }, (t) => [
   uniqueIndex('payout_lines_unique').on(t.payoutId, t.subOrderId),
   index('payout_lines_payout_idx').on(t.payoutId),
+  index('payout_lines_sub_order_idx').on(t.subOrderId),
 ]);
 
 /** Acceptance gate 6: every fee change and payout adjustment is auditable. */

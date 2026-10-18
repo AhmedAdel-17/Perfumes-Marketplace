@@ -108,6 +108,13 @@ export const listingsRouter = router({
       const sellerId = houseOrThrow(ctx);
 
       return ctx.uow.transaction(async (r) => {
+        // Facade validation: a public brand UUID is not permission to sell it.
+        // The composite FK in 0032 independently protects direct repository
+        // writes and races; this check gives callers one non-enumerating error.
+        const brands = await r.sellers.brandsFor(sellerId);
+        if (!brands.some((brand) => brand.id === input.brandId)) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'العلامة التجارية غير متاحة' });
+        }
         const listing = await r.listings.create(sellerId, input);
         return { id: listing.id };
       });

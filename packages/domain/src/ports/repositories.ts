@@ -1,3 +1,4 @@
+import type { CheckoutReplayRepository } from './checkout-replay';
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { OwnerReportRepository } from './owner-report-repository';
@@ -367,7 +368,10 @@ export interface SubOrderRepository {
    *
    * The state machine is applied by the caller (domain), the record is appended
    * here, and the database enforces the same table a third time. Implementations
-   * must write the new state and the transition row in ONE transaction, or an
+   * must lock the current row, reject a record whose expected `from` state
+   * differs, and validate actor/reason before writing. Concurrent losers must
+   * fail without adding history. Both state and history belong to ONE transaction.
+   * Implementations must write the new state and the transition row in ONE transaction, or an
    * order can end up in a state with no audit row explaining how it got there.
    */
   applyTransition(
@@ -446,6 +450,7 @@ export interface PayoutDetail extends PayoutSummary {
 
 /** All ports, handed to a use-case together. */
 export interface Repositories {
+  readonly checkoutReplay: CheckoutReplayRepository;
   readonly sellers: SellerRepository;
   readonly customers: CustomerRepository;
   readonly products: ProductRepository;

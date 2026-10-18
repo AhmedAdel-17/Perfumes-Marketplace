@@ -1,0 +1,218 @@
+erDiagram
+    %% RECOMMENDED EVOLUTION, NOT IMPLEMENTED OR APPROVED DDL.
+    %% checkout_requests UNIQUE(scope_key, request_key); flags do not imply individual uniqueness.
+    %% Status/stage legend and every proposed-entity disposition: report 04.
+    %% Existing identifiers remain. products continues to mean seller listing.
+    %% New core: idempotency, inventory, attribution decisions, ledger, refunds, jobs.
+    %% Later: normalized perfume/variant links, multiple locations, electronic payments.
+    %% Existing CMS/support/security tables remain; no physical database per seller.
+    sellers ||--o| seller_contacts : private_contact
+    sellers ||--o{ seller_staff : authorizes
+    sellers ||--o{ seller_verifications : evidences
+    sellers ||--o{ brands : owns_currently
+    sellers ||--o{ products : publishes_listing
+    brands ||--o{ products : current_brand
+    brands ||--o{ perfumes : later_scent_identity
+    perfumes ||--o{ product_variants : later_saleable_variant
+    perfumes ||--o{ perfume_note_links : later_normalization
+    scent_notes ||--o{ perfume_note_links : dictionary
+    product_variants |o--o{ products : additive_variant_id
+    products ||--o{ product_media : photographs
+    products ||--o{ product_revisions : immutable_history
+    sellers ||--o{ seller_operating_terms : versioned_contract
+    commission_rule_sets ||--o{ commission_overrides : override
+    sellers ||--o{ commission_overrides : negotiates
+    customers ||--o{ customer_addresses : saves
+    customers ||--o{ orders : places
+    checkout_requests ||--o| orders : creates_once
+    orders ||--o{ sub_orders : partitions
+    sellers ||--o{ sub_orders : tenant
+    seller_operating_terms ||--o{ sub_orders : snapshot_provenance
+    sub_orders ||--o{ order_line_items : immutable_snapshots
+    products ||--o{ order_line_items : keeps_existing_product_id
+    sub_orders ||--o{ sub_order_transitions : append_only
+    orders |o--o{ attribution_touches : evidence
+    sub_orders ||--o| attribution_decisions : immutable_source_verdict
+    commission_rule_sets ||--o{ attribution_decisions : policy_version
+    attribution_decisions ||--o{ attribution_decision_touches : considered
+    attribution_touches ||--o{ attribution_decision_touches : supports
+    sellers ||--o{ inventory_locations : default_then_multiple
+    products ||--o{ inventory_balances : stock_projection
+    inventory_locations ||--o{ inventory_balances : holds
+    inventory_balances ||--o{ inventory_movements : append_only
+    inventory_balances ||--o{ inventory_reservations : reserves_atomically
+    order_line_items ||--o{ inventory_reservations : allocated_quantity
+    sub_orders ||--o{ shipments : one_or_more_supported_later
+    shipments ||--o{ shipment_events : deduped_tracking
+    shipments ||--o{ delivery_attempts : reason_and_cost
+    shipments ||--o{ shipment_lines : later_partial_shipping
+    order_line_items ||--o{ shipment_lines : quantity_allocation
+    sub_orders ||--o{ returns : case
+    returns ||--o{ return_lines : refundable_quantity
+    order_line_items ||--o{ return_lines : purchased_line
+    returns ||--o{ refunds : approved_case
+    refunds ||--o{ refund_allocations : immutable_line_money
+    order_line_items ||--o{ refund_allocations : partial_reversal
+    orders ||--o{ payment_intents : later_electronic_lifecycle
+    payment_intents ||--o{ payment_attempts : idempotent_retry
+    payment_attempts ||--o{ payment_transactions : durable_provider_fact
+    webhook_events ||--o{ payment_transactions : reused_authenticated_inbox
+    payment_transactions |o--o{ refunds : gateway_success_reference
+    sub_orders ||--o{ cod_remittances : cash_owner_and_evidence
+    sub_orders ||--o{ ledger_transactions : source_event
+    refunds |o--o{ ledger_transactions : reversal_event
+    ledger_transactions ||--o{ ledger_postings : balanced_minor_units
+    ledger_accounts ||--o{ ledger_postings : debit_or_credit
+    ledger_transactions ||--o{ settlement_entries : eligible_seller_position
+    sellers ||--o{ settlement_entries : payable_or_receivable
+    sellers ||--o{ payouts : existing_statement_header
+    payouts ||--o{ payout_lines : existing_summarized_lines
+    payout_lines ||--o{ payout_allocations : immutable_entry_claim
+    settlement_entries ||--o| payout_allocations : allocated_once
+    sellers ||--o{ adjustments : approved_adjustment
+    adjustments |o--o{ ledger_transactions : posts_once
+    sub_orders ||--o{ cost_entries : measured_variable_cost
+    orders |o--o{ cost_entries : allocated_order_cost
+    order_line_items ||--o| reviews : delivery_gated
+    customers ||--o{ reviews : verified_buyer
+    customers ||--o{ consent_records : purpose
+    customers |o--o{ privacy_requests : rights_workflow
+    orders |o--o{ support_tickets : support
+    sub_orders |o--o{ support_tickets : tenant_case
+    ledger_transactions |o--o{ outbox_events : after_commit_delivery
+    outbox_events ||--o{ job_runs : durable_attempts
+    outbox_events ||--o{ notification_deliveries : retryable_notice
+    platform_staff ||--o{ content_revisions : publishes
+    content_pages ||--o{ content_revisions : retains
+    content_revisions |o--o{ content_pages : served_pointer
+    platform_staff ||--o{ content_images : verified_upload
+    platform_staff ||--o{ announcements : schedules
+    products |o--o{ site_curation : hero
+    platform_staff |o--o{ note_glossary : curates
+    sellers |o--o{ sessions : seller_session
+
+    checkout_requests {
+        uuid id PK
+        text scope_key
+        text request_key
+        text payload_hash
+        text state
+        uuid order_id FK
+        timestamptz expires_at
+    }
+    seller_operating_terms {
+        uuid id PK
+        uuid seller_id FK
+        integer version
+        timestamptz effective_from
+        integer reserve_days
+        integer dispute_days
+        text cash_owner
+        text settlement_direction
+    }
+    attribution_decisions {
+        uuid id PK
+        uuid sub_order_id FK
+        text source
+        integer policy_version
+        integer commission_rule_set_version
+        jsonb window_snapshot
+        text reason
+    }
+    inventory_balances {
+        uuid id PK
+        uuid seller_id FK
+        uuid product_id FK
+        uuid location_id FK
+        integer on_hand
+        integer reserved
+        integer safety_stock
+        bigint version
+    }
+    inventory_reservations {
+        uuid id PK
+        uuid balance_id FK
+        uuid order_line_id FK
+        integer quantity
+        text state
+        text operation_key UK
+        timestamptz expires_at
+    }
+    inventory_movements {
+        uuid id PK
+        uuid balance_id FK
+        uuid reservation_id FK
+        text operation_key UK
+        integer on_hand_delta
+        integer reserved_delta
+        timestamptz occurred_at
+        timestamptz recorded_at
+    }
+    ledger_transactions {
+        uuid id PK
+        text event_key UK
+        uuid sub_order_id FK
+        uuid reverses_transaction_id FK
+        text currency
+        timestamptz effective_at
+        timestamptz posted_at
+    }
+    ledger_postings {
+        uuid id PK
+        uuid transaction_id FK
+        uuid account_id FK
+        uuid seller_id FK
+        uuid order_line_id FK
+        bigint amount_piastres
+    }
+    settlement_entries {
+        uuid id PK
+        uuid seller_id FK
+        uuid ledger_transaction_id FK
+        text claim_key UK
+        text direction
+        bigint amount_piastres
+    }
+    payout_allocations {
+        uuid id PK
+        uuid payout_line_id FK
+        uuid settlement_entry_id FK
+        bigint amount_piastres
+    }
+    refunds {
+        uuid id PK
+        uuid return_id FK
+        uuid order_id FK
+        text operation_key UK
+        text provider_reference
+        text state
+        bigint amount_piastres
+    }
+    cod_remittances {
+        uuid id PK
+        uuid sub_order_id FK
+        text event_key UK
+        text cash_owner
+        bigint expected_piastres
+        bigint received_piastres
+        bigint fee_piastres
+        text reconciliation_state
+    }
+    outbox_events {
+        uuid id PK
+        text event_key UK
+        text kind
+        uuid aggregate_id
+        jsonb minimal_payload
+        timestamptz occurred_at
+    }
+    job_runs {
+        uuid id PK
+        text job_key
+        text run_key UK
+        uuid outbox_event_id FK
+        text state
+        integer attempts
+        timestamptz lease_until
+        timestamptz next_attempt_at
+    }

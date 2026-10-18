@@ -12,7 +12,7 @@ import { applyMigrations } from './migrate';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   Address, FixedClock, Money, PlaceOrder,
   repositoryContract, type ContractWorld,
@@ -33,7 +33,18 @@ const egp = (v: string) => Money.fromMajorString(v);
 const WARD = 'dar-al-ward';
 const NOUR = 'maison-nour';
 
-let client: PGlite;
+// Each contract allocates its own WASM database. Close the actual fixture,
+// including failed setups, rather than one unused global client: leaving all
+// worlds alive exhausts memory before a full regression run can finish.
+const clients: PGlite[] = [];
+const testDatabase = () => {
+  const pg = new PGlite();
+  clients.push(pg);
+  return pg;
+};
+afterEach(async () => {
+  for (const pg of clients.splice(0)) await pg.close();
+});
 
 const PLATFORM = '99999999-9999-9999-9999-999999999999';
 
@@ -44,7 +55,7 @@ const PLATFORM = '99999999-9999-9999-9999-999999999999';
  * atomicity failure in one cannot leave residue that makes the next pass.
  */
 const harness = async (): Promise<ContractWorld> => {
-  const pg = new PGlite();
+  const pg = testDatabase();
   // 0002 included deliberately: the adapter now drops to the unprivileged role
   // on every transaction, so the contract runs through RLS exactly as production
   // does rather than against an unguarded database.
@@ -133,8 +144,6 @@ const harness = async (): Promise<ContractWorld> => {
   };
 };
 
-beforeAll(async () => { client = new PGlite(); }, 120_000);
-afterAll(async () => { await client?.close(); });
 
 describe('repository contract — Drizzle + Postgres adapter', () => {
   for (const testCase of repositoryContract) {
@@ -183,7 +192,7 @@ describe('photo contract — Drizzle + Postgres adapter', () => {
  * tell which row a case actually depends on.
  */
 const contentHarness = async (): Promise<ContentContractWorld> => {
-  const pg = new PGlite();
+  const pg = testDatabase();
   await applyMigrations(pg);
   const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
 
@@ -201,7 +210,7 @@ const contentHarness = async (): Promise<ContentContractWorld> => {
 
 /** The same world the content cases use — an operator, and nothing else. */
 const siteHarness = async (): Promise<SiteContractWorld> => {
-  const pg = new PGlite();
+  const pg = testDatabase();
   await applyMigrations(pg);
   const db = drizzle(pg, { schema }) as unknown as DiyarDatabase;
 

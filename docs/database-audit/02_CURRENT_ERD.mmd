@@ -1,0 +1,609 @@
+erDiagram
+    %% AS-IS code-defined schema, 18 October 2026; not a live catalog dump.
+    %% 39 application tables plus schema_migrations infrastructure.
+    %% All current columns; keys from Drizzle plus SQL-only FKs in 0009/0010.
+    %% No edge for polymorphic principal_id, actor IDs, master_product_id, analytics product_id, or UUID arrays.
+    adjustments {
+        uuid id PK
+        uuid seller_id FK
+        uuid payout_id FK
+        uuid sub_order_id FK
+        adjustment_type type
+        integer amount_piastres
+        text reason
+        uuid created_by
+        uuid approved_by
+        timestamptz created_at
+    }
+    analytics_events {
+        uuid id PK
+        text name
+        text anonymous_id
+        uuid customer_id FK
+        uuid seller_id FK
+        uuid product_id
+        uuid order_id FK
+        text source
+        text campaign_id
+        text payload
+        timestamptz occurred_at
+    }
+    announcements {
+        uuid id PK
+        text message
+        text message_en
+        text href
+        timestamptz starts_at
+        timestamptz ends_at
+        uuid created_by FK
+        timestamptz created_at
+    }
+    attribution_touches {
+        uuid id PK
+        uuid order_id FK
+        uuid customer_id FK
+        text anonymous_id
+        touch_channel channel
+        text ref
+        uuid seller_id FK
+        timestamptz occurred_at
+        timestamptz created_at
+    }
+    audit_log {
+        uuid id PK
+        audit_action action
+        uuid actor_id
+        text actor_label
+        text entity_table
+        uuid entity_id
+        text before
+        text after
+        text note
+        timestamptz occurred_at
+        uuid request_id
+    }
+    brands {
+        uuid id PK
+        uuid seller_id FK
+        text name
+        text name_en
+        text slug UK
+        text story
+        timestamptz created_at
+    }
+    commission_overrides {
+        uuid id PK
+        uuid rule_set_id FK
+        uuid seller_id FK
+        order_source source
+        integer bps
+        text note
+    }
+    commission_rule_sets {
+        uuid id PK
+        integer version UK
+        timestamptz effective_from
+        text[] approved_by
+        integer storefront_referral_bps
+        integer direct_repeat_bps
+        integer organic_search_bps
+        integer paid_campaign_bps
+        integer creator_affiliate_bps
+        integer email_crm_bps
+        integer unknown_bps
+        integer storefront_window_days
+        integer campaign_window_days
+        integer creator_window_days
+        integer email_window_days
+        timestamptz created_at
+    }
+    consent_records {
+        uuid id PK
+        uuid customer_id FK
+        consent_purpose purpose
+        text granted
+        text source
+        text ip_hash
+        timestamptz occurred_at
+    }
+    content_images {
+        text storage_key PK
+        text content_type
+        integer byte_size
+        integer width
+        integer height
+        uuid uploaded_by FK
+        timestamptz uploaded_at
+    }
+    content_pages {
+        uuid id PK
+        text slug UK
+        text title
+        content_page_state state
+        jsonb draft_blocks
+        text title_en
+        jsonb draft_blocks_en
+        uuid published_revision_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    content_revisions {
+        uuid id PK
+        uuid page_id FK
+        text title
+        jsonb blocks
+        text title_en
+        jsonb blocks_en
+        uuid published_by FK
+        timestamptz published_at
+    }
+    customer_addresses {
+        uuid id PK
+        uuid customer_id FK
+        text label
+        governorate governorate
+        text city
+        text area
+        text street
+        text building
+        text floor
+        text apartment
+        text landmark
+        text contact_phone
+        boolean is_default
+        timestamptz created_at
+    }
+    customers {
+        uuid id PK
+        text phone UK
+        text full_name
+        text email
+        uuid auth_user_id
+        timestamptz claimed_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    login_codes {
+        text phone PK
+        text audience
+        text code_digest
+        timestamptz expires_at
+        integer attempts
+        timestamptz created_at
+    }
+    note_glossary {
+        text ar PK
+        text en
+        note_icon icon
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    order_line_items {
+        uuid id PK
+        uuid sub_order_id FK
+        uuid product_id FK
+        text product_name
+        text brand_name
+        text sku
+        integer volume_ml
+        integer quantity
+        integer unit_price_piastres
+        integer line_piastres
+        order_source commission_source
+        integer commission_bps
+        integer commission_rule_set_version
+        integer commission_piastres
+        timestamptz created_at
+    }
+    orders {
+        uuid id PK
+        text reference UK
+        uuid customer_id FK
+        text contact_phone
+        text contact_name
+        governorate governorate
+        text city
+        text area
+        text street
+        text building
+        text floor
+        text apartment
+        text landmark
+        order_source source
+        text source_ref
+        text attribution_reason
+        text attribution_windows_json
+        text campaign_id
+        text creator_code
+        uuid referring_seller_id FK
+        integer merchandise_piastres
+        integer shipping_piastres
+        integer discount_piastres
+        integer total_piastres
+        payment_method payment_method
+        payment_state payment_state
+        text payment_ref
+        timestamptz placed_at
+        timestamptz created_at
+    }
+    payout_lines {
+        uuid id PK
+        uuid payout_id FK
+        uuid sub_order_id FK
+        integer gross_piastres
+        integer commission_piastres
+        order_source commission_source
+        integer commission_bps
+        integer shipping_piastres
+        integer net_piastres
+    }
+    payouts {
+        uuid id PK
+        uuid seller_id FK
+        text reference UK
+        payout_status status
+        timestamptz period_start
+        timestamptz period_end
+        integer gross_piastres
+        integer commission_piastres
+        integer shipping_piastres
+        integer refunds_piastres
+        integer adjustments_piastres
+        integer net_piastres
+        timestamptz scheduled_for
+        timestamptz dispute_deadline
+        timestamptz paid_at
+        uuid approved_by
+        timestamptz created_at
+    }
+    platform_staff {
+        uuid id PK
+        uuid auth_user_id UK
+        text full_name
+        text phone
+        text role
+        timestamptz revoked_at
+        timestamptz created_at
+    }
+    privacy_requests {
+        uuid id PK
+        uuid customer_id FK
+        text contact_phone
+        privacy_request_type type
+        privacy_request_status status
+        uuid handled_by
+        timestamptz due_at
+        timestamptz completed_at
+        timestamptz created_at
+    }
+    product_media {
+        uuid id PK
+        uuid product_id FK
+        text storage_path
+        text alt_text
+        integer position
+        boolean is_primary
+        boolean ownership_confirmed
+        text content_type
+        integer byte_size
+        integer width
+        integer height
+        timestamptz created_at
+    }
+    product_revisions {
+        uuid id PK
+        uuid product_id FK
+        uuid changed_by
+        text[] changed_fields
+        text before
+        text after
+        timestamptz created_at
+    }
+    products {
+        uuid id PK
+        uuid seller_id FK
+        uuid brand_id FK
+        uuid master_product_id
+        text name
+        text name_en
+        text slug UK
+        text sku
+        product_status status
+        integer price_piastres
+        integer promo_price_piastres
+        integer volume_ml
+        integer stock
+        integer fulfilment_hours
+        concentration concentration
+        product_form form
+        gender_positioning gender_positioning
+        scent_family scent_family
+        text[] notes_top
+        text[] notes_heart
+        text[] notes_base
+        season[] seasons
+        day_night day_night
+        occasion[] occasions
+        projection_band projection_band
+        longevity_band longevity_band
+        performance_source performance_source
+        text responsible_party_name
+        text warnings_label_data
+        text[] evidence_refs
+        return_eligibility return_eligibility
+        text defect_route
+        text moderation_notes
+        moderation_reason moderation_reason
+        timestamptz submitted_at
+        timestamptz moderated_at
+        uuid moderated_by FK
+        timestamptz published_at
+        text search_text
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    returns {
+        uuid id PK
+        uuid sub_order_id FK
+        uuid line_item_id FK
+        return_status status
+        reason_code reason
+        text customer_note
+        text[] evidence_refs
+        cost_bearer cost_bearer
+        integer refund_piastres
+        uuid decided_by
+        timestamptz decided_at
+        timestamptz requested_at
+        timestamptz closed_at
+    }
+    reviews {
+        uuid id PK
+        uuid sub_order_id FK
+        uuid line_item_id FK, UK
+        uuid product_id FK
+        uuid customer_id FK
+        integer rating_scent
+        integer rating_longevity
+        integer rating_projection
+        integer rating_value
+        integer rating_packaging
+        integer rating_description_accuracy
+        text body
+        text author_label
+        boolean incentive_disclosed
+        uuid moderated_by
+        timestamptz moderated_at
+        text moderation_note
+        timestamptz hidden_at
+        timestamptz created_at
+    }
+    seller_contacts {
+        uuid seller_id PK, FK
+        text contact_phone
+        text contact_email
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    seller_staff {
+        uuid id PK
+        uuid seller_id FK
+        uuid auth_user_id
+        staff_role role
+        text full_name
+        text phone
+        timestamptz revoked_at
+        timestamptz created_at
+    }
+    seller_verifications {
+        uuid id PK
+        uuid seller_id FK
+        verification_control control
+        verification_status status
+        text evidence_ref
+        text notes
+        uuid reviewed_by
+        timestamptz reviewed_at
+        timestamptz created_at
+    }
+    sellers {
+        uuid id PK
+        text legal_name
+        text trading_name
+        text owner_name
+        seller_status status
+        text slug UK
+        text bio
+        text story
+        text bio_en
+        text story_en
+        integer founded_year
+        text city
+        governorate[] service_governorates
+        integer confirmation_sla_hours
+        integer dispatch_sla_hours
+        text escalation_contact
+        text privacy_contact
+        delivery_fulfilled_by delivery_fulfilled_by
+        integer payout_reserve_days
+        integer dispute_window_days
+        text application_note
+        timestamptz applied_at
+        timestamptz approved_at
+        timestamptz live_at
+        timestamptz suspended_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    sessions {
+        uuid id PK
+        text audience
+        uuid principal_id
+        uuid seller_id FK
+        timestamptz issued_at
+        timestamptz expires_at
+        timestamptz revoked_at
+        text ip_hash
+        text ua_hash
+    }
+    shipment_events {
+        uuid id PK
+        uuid shipment_id FK
+        text code
+        text description
+        text location
+        timestamptz occurred_at
+        timestamptz received_at
+    }
+    shipments {
+        uuid id PK
+        uuid sub_order_id FK
+        text courier
+        text tracking_number
+        text label_url
+        integer delivery_attempts
+        integer cod_amount_piastres
+        integer cod_collected_piastres
+        timestamptz cod_remitted_at
+        text proof_of_delivery_ref
+        timestamptz dispatched_at
+        timestamptz delivered_at
+        timestamptz created_at
+    }
+    site_curation {
+        boolean singleton PK
+        uuid hero_product_id FK
+        uuid[] featured_product_ids
+        uuid updated_by FK
+        timestamptz updated_at
+    }
+    sub_order_transitions {
+        uuid id PK
+        uuid sub_order_id FK
+        sub_order_state from_state
+        sub_order_state to_state
+        transition_actor actor
+        uuid actor_id
+        reason_code reason
+        text note
+        timestamptz occurred_at
+    }
+    sub_orders {
+        uuid id PK
+        uuid order_id FK
+        uuid seller_id FK
+        text reference UK
+        sub_order_state state
+        integer merchandise_piastres
+        integer shipping_piastres
+        integer commission_piastres
+        delivery_fulfilled_by delivery_fulfilled_by
+        integer dispatch_sla_hours
+        text recipient_name
+        text recipient_phone
+        governorate governorate
+        text city
+        text area
+        text street
+        text building
+        text floor
+        text apartment
+        text landmark
+        timestamptz confirm_due_at
+        timestamptz dispatch_due_at
+        timestamptz confirmed_at
+        timestamptz dispatched_at
+        timestamptz delivered_at
+        timestamptz closed_at
+        timestamptz created_at
+    }
+    support_tickets {
+        uuid id PK
+        text reference UK
+        uuid customer_id FK
+        uuid order_id FK
+        uuid sub_order_id FK
+        uuid seller_id FK
+        ticket_priority priority
+        ticket_status status
+        text category
+        text subject
+        text message
+        text contact_name
+        text contact_phone
+        uuid owner_id
+        text next_action
+        text resolution_code
+        timestamptz first_response_at
+        timestamptz resolved_at
+        timestamptz created_at
+    }
+    webhook_events {
+        uuid id PK
+        text provider
+        text provider_event_id
+        text event_type
+        text payload
+        timestamptz processed_at
+        integer attempts
+        text last_error
+        timestamptz received_at
+    }
+    schema_migrations {
+        text filename PK
+        timestamptz applied_at
+    }
+    sellers ||--o{ adjustments : seller_id
+    payouts |o--o{ adjustments : payout_id
+    sub_orders |o--o{ adjustments : sub_order_id
+    customers |o--o{ analytics_events : customer_id
+    sellers |o--o{ analytics_events : seller_id
+    orders |o--o{ analytics_events : order_id
+    platform_staff ||--o{ announcements : created_by
+    orders |o--o{ attribution_touches : order_id
+    customers |o--o{ attribution_touches : customer_id
+    sellers |o--o{ attribution_touches : seller_id
+    sellers ||--o{ brands : seller_id
+    commission_rule_sets ||--o{ commission_overrides : rule_set_id
+    sellers ||--o{ commission_overrides : seller_id
+    customers ||--o{ consent_records : customer_id
+    platform_staff ||--o{ content_images : uploaded_by
+    content_revisions |o--o{ content_pages : published_revision_id
+    content_pages ||--o{ content_revisions : page_id
+    platform_staff ||--o{ content_revisions : published_by
+    customers ||--o{ customer_addresses : customer_id
+    platform_staff |o--o{ note_glossary : updated_by
+    sub_orders ||--o{ order_line_items : sub_order_id
+    products ||--o{ order_line_items : product_id
+    customers ||--o{ orders : customer_id
+    sellers |o--o{ orders : referring_seller_id
+    payouts ||--o{ payout_lines : payout_id
+    sub_orders ||--o{ payout_lines : sub_order_id
+    sellers ||--o{ payouts : seller_id
+    customers |o--o{ privacy_requests : customer_id
+    products ||--o{ product_media : product_id
+    products ||--o{ product_revisions : product_id
+    sellers ||--o{ products : seller_id
+    brands ||--o{ products : brand_id
+    platform_staff |o--o{ products : moderated_by
+    sub_orders ||--o{ returns : sub_order_id
+    order_line_items |o--o{ returns : line_item_id
+    sub_orders ||--o{ reviews : sub_order_id
+    order_line_items ||--o| reviews : line_item_id
+    products ||--o{ reviews : product_id
+    customers ||--o{ reviews : customer_id
+    sellers ||--o| seller_contacts : seller_id
+    sellers ||--o{ seller_staff : seller_id
+    sellers ||--o{ seller_verifications : seller_id
+    sellers |o--o{ sessions : seller_id
+    shipments ||--o{ shipment_events : shipment_id
+    sub_orders ||--o{ shipments : sub_order_id
+    products |o--o{ site_curation : hero_product_id
+    platform_staff |o--o{ site_curation : updated_by
+    sub_orders ||--o{ sub_order_transitions : sub_order_id
+    orders ||--o{ sub_orders : order_id
+    sellers ||--o{ sub_orders : seller_id
+    customers |o--o{ support_tickets : customer_id
+    orders |o--o{ support_tickets : order_id
+    sub_orders |o--o{ support_tickets : sub_order_id
+    sellers |o--o{ support_tickets : seller_id

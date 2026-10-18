@@ -10,6 +10,7 @@
  * Typed against Drizzle's driver-agnostic `PgDatabase`, so the same code serves
  * PGlite in tests and postgres-js in production. Nothing here is driver-specific.
  */
+import { checkoutReplayRepository } from './checkout-replay-repository';
 import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
@@ -532,15 +533,19 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
       state: schema.subOrders.state,
       dispatchSlaHours: schema.subOrders.dispatchSlaHours,
     })
-      .from(schema.subOrders).where(eq(schema.subOrders.id, id)).limit(1);
+      .from(schema.subOrders).where(eq(schema.subOrders.id, id)).limit(1).for('update');
     if (!current) throw new Error(`Unknown sub-order ${id}`);
 
-    // The adapter enforces the table too. A caller passing a hand-built record
-    // must not be able to write a state the machine forbids — the database
-    // trigger is a third line of defence, not the only one.
-    if (!SubOrderLifecycle.rule(current.state, to)) {
+    // Pessimistic row lock: a competing command must observe the winner's
+    // committed state before validating. A still-reachable target does not
+    // authorize replaying a command formed against an older state.
+    if (current.state !== record.from || record.to !== to
+        || record.actor !== actor || record.reason !== reason) {
       throw new InvalidTransition(current.state, to);
     }
+    SubOrderLifecycle.transition(current.state, {
+      to, actor, ...(reason === null ? {} : { reason }),
+    }, { now: () => record.at });
 
     await db.update(schema.subOrders)
       .set({
@@ -685,6 +690,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   products: productRepository(db),
   orders: orderRepository(db),
   subOrders: subOrderRepository(db),
+  checkoutReplay: checkoutReplayRepository(db),
   payouts: payoutRepository(db),
   content: contentRepository(db),
   site: siteRepository(db),

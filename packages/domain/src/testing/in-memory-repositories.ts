@@ -8,6 +8,7 @@
  *
  * Framework-free, like everything else in this package.
  */
+import type { CheckoutReplay } from '../ports/checkout-replay';
 import { Money } from '../value-objects/money';
 import type { ContentPage } from '../content/page';
 import type { ContentRepository, ContentRevision } from '../ports/content-repository';
@@ -200,6 +201,7 @@ interface ApplicationRow {
 type PhotoRow = { -readonly [K in keyof StoredPhoto]: StoredPhoto[K] } & { seq: number };
 
 interface Store {
+  checkoutReplays: Map<string, CheckoutReplay & { expiresAt: Date }>;
   sellers: Map<string, SellerRecord>;
   applications: Map<string, ApplicationRow>;
   reviews: Map<string, ReviewRow>;
@@ -221,6 +223,7 @@ interface Store {
 }
 
 const emptyStore = (): Store => ({
+  checkoutReplays: new Map(),
   sellers: new Map(), customers: new Map(), payouts: new Map(), reviews: new Map(),
   returns: new Map(), tickets: new Map(), applications: new Map(),
   products: new Map(), orders: new Map(),
@@ -232,6 +235,7 @@ const countApproved = (row: ApplicationRow): number =>
   [...row.controls.values()].filter((c) => c.status === 'approved').length;
 
 const cloneStore = (s: Store): Store => ({
+  checkoutReplays: new Map(s.checkoutReplays),
   sellers: new Map(s.sellers),
   reviews: new Map([...s.reviews].map(([k, v]) => [k, { ...v }])),
   returns: new Map([...s.returns].map(([k, v]) => [k, { ...v }])),
@@ -684,11 +688,15 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         const row = s.subOrders.get(id);
         if (!row) throw new Error(`Unknown sub-order ${id}`);
 
-        // The adapter enforces the table too. A caller passing a hand-built
-        // record must not be able to write a state the machine forbids.
-        if (!SubOrderLifecycle.rule(row.state, to)) {
+        // Match the SQL adapter's expected-state contract. Reject a stale
+        // command even when the target is legal from the newer state.
+        if (row.state !== record.from || record.to !== to
+            || record.actor !== actor || record.reason !== reason) {
           throw new InvalidTransition(row.state, to);
         }
+        SubOrderLifecycle.transition(row.state, {
+          to, actor, ...(reason === null ? {} : { reason }),
+        }, { now: () => record.at });
 
         /*
          * The state it moved FROM, read before the row changes.
@@ -1829,6 +1837,15 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     } as unknown as Repositories['glossary'];
 
     return {
+      checkoutReplay: {
+        async lockAndRead(key, now) {
+          const row = store().checkoutReplays.get(key.toLowerCase());
+          return row && row.expiresAt > now ? { requestHash: row.requestHash, response: row.response } : null;
+        },
+        async save(key, replay, expiresAt) {
+          store().checkoutReplays.set(key.toLowerCase(), { ...replay, expiresAt });
+        },
+      },
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
       analytics, catalogue, glossary, identity,

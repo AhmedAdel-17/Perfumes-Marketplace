@@ -186,4 +186,9 @@ export const orderLineItems = pgTable('order_line_items', {
   commissionPiastres: integer('commission_piastres').notNull(),
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [index('order_line_items_sub_idx').on(t.subOrderId)]);
+}, (t) => [
+  index('order_line_items_sub_idx').on(t.subOrderId),
+  index('order_line_items_product_idx').on(t.productId),
+  uniqueIndex('order_line_items_id_sub_order_key').on(t.id, t.subOrderId),
+  uniqueIndex('order_line_items_review_identity_key').on(t.id, t.subOrderId, t.productId),
+]);

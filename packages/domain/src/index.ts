@@ -59,3 +59,5 @@ export * from './ports/return-contract';
 export * from './ports/support-repository';
 export * from './ports/application-repository';
 export * from './ports/aftercare-contract';
+
+export * from './ports/checkout-replay';
