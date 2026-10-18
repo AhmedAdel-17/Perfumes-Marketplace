@@ -698,3 +698,71 @@ erDiagram
     sub_orders |o--o{ financial_postings : sub_order_id
     payouts |o--o{ financial_postings : payout_id
     refunds |o--o{ financial_postings : refund_id
+
+    customer_profiles {
+        uuid customer_id PK,FK
+        date birth_date
+        customer_gender gender
+        customer_data_source data_source
+        timestamptz collected_at
+        timestamptz updated_at
+        timestamptz retention_until
+    }
+    customer_fragrance_preferences {
+        uuid customer_id PK,FK
+        scent_family_array fragrance_families
+        occasion_array occasions
+        season_array seasons
+        concentration_array concentrations
+        day_night_array day_night
+        integer budget_min_piastres
+        integer budget_max_piastres
+        integer_array preferred_bottle_sizes_ml
+    }
+    customer_preferred_notes {
+        uuid customer_id PK,FK
+        text note_ar PK,FK
+        customer_data_source data_source
+    }
+    customer_data_sessions {
+        uuid id PK
+        text anonymous_id UK
+        uuid customer_id FK
+        customer_event_channel channel
+        timestamptz linked_at
+        timestamptz retention_until
+    }
+    customer_behavior_events {
+        uuid id PK
+        uuid client_event_id UK
+        customer_event_name name
+        uuid session_id FK
+        uuid customer_id FK
+        uuid seller_id FK
+        uuid brand_id FK
+        uuid product_id FK
+        uuid order_id FK
+        customer_event_channel channel
+        timestamptz occurred_at
+        timestamptz retention_until
+    }
+    customer_data_changes {
+        uuid id PK
+        uuid customer_id FK
+        text entity
+        text action
+        text_array changed_fields
+        customer_data_source source
+    }
+    customers ||--o| customer_profiles : customer_id
+    customers ||--o| customer_fragrance_preferences : customer_id
+    customers ||--o{ customer_preferred_notes : customer_id
+    note_glossary ||--o{ customer_preferred_notes : note_ar
+    customers |o--o{ customer_data_sessions : customer_id
+    customer_data_sessions ||--o{ customer_behavior_events : session_id
+    customers |o--o{ customer_behavior_events : customer_id
+    sellers |o--o{ customer_behavior_events : seller_id
+    brands |o--o{ customer_behavior_events : brand_id
+    products |o--o{ customer_behavior_events : product_id
+    orders |o--o{ customer_behavior_events : order_id
+    customers |o--o{ customer_data_changes : customer_id

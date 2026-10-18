@@ -14,3 +14,4 @@ export * from './sessions';
 
 export * from './checkout-replay';
 export * from './inventory-finance';
+export * from './customer-data';

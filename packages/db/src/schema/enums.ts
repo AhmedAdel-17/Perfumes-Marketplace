@@ -136,6 +136,29 @@ export const auditAction = pgEnum('audit_action', [
 
 export const consentPurpose = pgEnum('consent_purpose', [
   'order_fulfilment', 'marketing_email', 'marketing_sms', 'marketing_whatsapp', 'analytics',
+  'personalization', 'model_training',
+]);
+
+/* ---------------------------------------------------------- customer data */
+/** Required demographic vocabulary for a completed customer profile. */
+export const customerGender = pgEnum('customer_gender', [
+  'female', 'male', 'non_binary', 'prefer_not_to_say',
+]);
+
+/** Provenance for customer-supplied and operational profile data. */
+export const customerDataSource = pgEnum('customer_data_source', [
+  'customer', 'checkout', 'support', 'platform_import',
+]);
+
+/** Client surface that produced a customer behaviour event. */
+export const customerEventChannel = pgEnum('customer_event_channel', [
+  'web', 'mobile_web', 'ios', 'android', 'server',
+]);
+
+/** Closed event vocabulary; transactional rows remain the financial source of truth. */
+export const customerEventName = pgEnum('customer_event_name', [
+  'product_viewed', 'searched', 'wishlisted', 'cart_added',
+  'purchased', 'reviewed', 'returned', 'cancelled',
 ]);
 
 export const privacyRequestType = pgEnum('privacy_request_type', ['export', 'delete', 'rectify']);
