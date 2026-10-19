@@ -25,3 +25,20 @@ Apply after adding or changing a file (stop the dev server first — PGlite has 
 ```bash
 pnpm --filter @diyar/web seed -- --fresh
 ```
+
+## `derived/` — the reveal's reliefs (Le Dévoilement)
+
+The seed also gives each mock perfume a **relief** (migration 0032) when
+`derived/<slug>-cutout.png`, `derived/<slug>-height.png` and `derived/placements.json`
+exist: the bottle cut out of the photograph, its relief map, and where it sat.
+
+They are made from the photographs above by
+`design-reference/experiences/tools/bottle_to_25d.py`, with outlines traced by hand —
+these stock photographs are not packshots on a plain background, which is exactly when
+the console's own tool (`/ops/reliefs`) asks the operator to trace the outline too.
+Not committed, like the photographs. Without them, a perfume simply has no reveal.
+
+```bash
+python design-reference/experiences/tools/bottle_to_25d.py
+```
+

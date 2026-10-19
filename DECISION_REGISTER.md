@@ -181,3 +181,22 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   the founder found the site addressing houses where it should address buyers · the
   eight-point review stays where houses read it, on the apply page; reviews keep "Verified
   purchase", which is for buyers · P5.1.3 follow-up.
+
+- 2026-10-19 · Le Dévoilement (the reveal) · Ahmed (founder) · a perfume's bottle is lifted out
+  of its own photograph and stood up in light on its product page, its notes rising from the
+  nozzle to orbit it — the first of four "experiences" prototyped on 18 Oct
+  (`design-reference/experiences/`; the order agreed: the reveal, then the details, then the
+  day-on-the-skin dial, then the scent map once the catalogue is larger). The object is a
+  2.5D RELIEF made from the house's photograph (cut-out, relief map, placement) — never a
+  generated 3D model, which would invent a back of the bottle nobody photographed. Three
+  choices, each the recommended option: (1) the platform's CONTENT TEAM makes each relief in
+  the console (`/ops/reliefs`), houses do nothing new — trust before scale; (2) the bottle is
+  cut out AUTOMATICALLY for a photograph on a plain background and TRACED BY HAND otherwise,
+  in the operator's browser, with no new library and no machine-learning model; (3) the
+  reveal opens from the PRODUCT PAGE only, first, so it can be measured before it spreads ·
+  the founder asked for a site that is not "a normal website", and approved the prototype
+  pipeline ("we will use what you have built") · migrations 0032 (reliefs) and 0033 (the
+  `reveal_open` event, with its success measure in ANALYTICS_DEFINITIONS §2b) · task P5.1.4.
+  OPEN for legal: the seller agreement must permit the platform to make derived presentations
+  (cut-outs) of the photographs a house uploads.
+

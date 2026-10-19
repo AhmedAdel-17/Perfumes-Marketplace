@@ -255,3 +255,23 @@ beyond roughly a dozen block types, or non-technical editors need to create
 NEW page templates rather than fill in existing ones, the editing UI stops
 being an afternoon and Payload becomes the cheaper answer. The block schema
 transfers; the console screens do not.
+
+---
+
+## Le Dévoilement — what the reveal uses, and does not (19 Oct 2026)
+
+No new dependency. The relief is made by `makeRelief` in `packages/domain` — plain arithmetic
+on typed arrays (scanline polygons, box-blur Gaussians, the exact distance transform, a
+multi-scale normalised convolution for the backdrop, bilinear rotation) — run in a Web Worker
+in the console. The browser decodes and encodes the images (canvas); nothing does on the
+server. The storefront draws the bottle with ~300 lines of plain WebGL 1
+(`features/product/reveal/bottle-gl.ts`): Three.js would add ~150 kB for a single mesh and a
+single shader, and is not needed. No machine-learning model: the founder chose automatic
+cut-out for plain backgrounds and hand tracing otherwise (DECISION_REGISTER, 19 Oct 2026).
+
+**One storage setting to remember when R2 is configured:** the console reads a photograph's
+pixels to make its relief, so the R2 bucket's public origin must answer GET with
+`Access-Control-Allow-Origin` for the site's own origin. Without it the console's tool reports
+that the photograph could not be loaded; the shop itself is unaffected (it shows photographs
+as images, which needs no CORS, and draws reliefs as textures, which does).
+

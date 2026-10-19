@@ -7,6 +7,7 @@ import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
+import { RevealTrigger } from '@/features/product/reveal/RevealTrigger';
 import { BuyBlock } from '@/features/product/BuyBlock';
 import { BandReading } from '@/features/catalogue/BandReading';
 import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
@@ -145,6 +146,27 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         className="h-[84%] w-auto"
                       />
                     </Reveal>
+                  )}
+                  {/* Le Dévoilement: the bottle lifted out of this photograph — only
+                      when the content team has made its relief (0032). */}
+                  {product.photo && product.relief && (
+                    <RevealTrigger
+                      relief={product.relief}
+                      photo={{ width: product.photo.width, height: product.photo.height }}
+                      product={{
+                        id: product.id,
+                        name,
+                        house,
+                        brandLatin: product.brandLatin,
+                        family: product.family,
+                        pricePiastres: product.pricePiastres,
+                        inStock: product.inStock,
+                        notes: { top: product.notesTop, heart: product.notesHeart, base: product.notesBase },
+                        english: product.noteEnglish,
+                        icons: product.noteIcons,
+                      }}
+                      locale={locale}
+                    />
                   )}
                 </div>
               </div>

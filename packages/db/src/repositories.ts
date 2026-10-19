@@ -36,6 +36,7 @@ import { auditTrail } from './audit-trail';
 import { ownerReportRepository, settlementFacts } from './owner-report-repository';
 import { photoRepository } from './photo-repository';
 import { contentImageRepository } from './content-image-repository';
+import { reliefRepository } from './relief-repository';
 import { analyticsRepository } from './analytics-repository';
 
 export type DiyarDatabase = PgDatabase<PgQueryResultHKT, typeof schema>;
@@ -697,6 +698,7 @@ export const repositoriesFor = (db: Executor): Repositories => ({
   ownerReport: ownerReportRepository(db),
   photos: photoRepository(db),
   contentImages: contentImageRepository(db),
+  reliefs: reliefRepository(db),
   analytics: analyticsRepository(db),
   catalogue: catalogueReadModel(db),
   glossary: noteGlossaryRepository(db),

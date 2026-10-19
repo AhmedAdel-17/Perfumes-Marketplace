@@ -34,6 +34,20 @@ export interface StorefrontPhoto {
   readonly height: number;
 }
 
+/**
+ * The bottle lifted out of the primary photograph (Le Dévoilement, 0032): the
+ * cut-out and relief map the reveal lights, and where the bottle sat in the
+ * photograph, so the object can lie exactly over the picture before it rises.
+ */
+export interface StorefrontRelief {
+  readonly cutoutUrl: string;
+  readonly reliefUrl: string;
+  readonly width: number;
+  readonly height: number;
+  readonly placement: { readonly centreX: number; readonly centreY: number; readonly height: number; readonly angle: number };
+  readonly opaque: boolean;
+}
+
 export interface ProductCard {
   id: string; slug: string; name: string; brandLatin: string;
   /** The house's English name for the perfume, or null — the storefront then shows `name`. */
@@ -93,6 +107,8 @@ export interface ProductDetail extends ProductCard {
   notesBase: string[];
   projection: PerformanceReading | null;
   fulfilmentHours: number;
+  /** The primary photograph's relief, when the content team has made one. Null: no reveal. */
+  relief: StorefrontRelief | null;
 }
 
 export interface HouseDetail {
@@ -194,9 +210,12 @@ export const catalogueRouter = router({
       const result = await ctx.uow.transaction(async (r) => {
         const row = await r.catalogue.productBySlug(input.slug);
         if (!row) return null;
+        const photos = await r.catalogue.primaryPhotos([row.id]);
         return {
           row,
-          photos: await r.catalogue.primaryPhotos([row.id]),
+          photos,
+          // Read as the visitor: `public_read_reliefs` shows a published perfume's only.
+          relief: photos[0] ? await r.reliefs.forPhoto(photos[0].mediaId) : null,
           glossary: await r.catalogue.noteGlossary([...row.notesTop, ...row.notesHeart, ...row.notesBase]),
         };
       });
@@ -218,6 +237,16 @@ export const catalogueRouter = router({
         notesBase: [...row.notesBase],
         projection: band(row.projectionBand, row.performanceSource),
         fulfilmentHours: row.fulfilmentHours,
+        relief: result.relief
+          ? {
+            cutoutUrl: ctx.media.publicUrl(result.relief.cutoutKey),
+            reliefUrl: ctx.media.publicUrl(result.relief.reliefKey),
+            width: result.relief.width,
+            height: result.relief.height,
+            placement: result.relief.placement,
+            opaque: result.relief.opaque,
+          }
+          : null,
       };
     }),
 

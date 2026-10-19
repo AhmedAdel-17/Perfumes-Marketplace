@@ -14,6 +14,6 @@ export * from './providers/media';
 export * from './routers/index';
 /* The storefront read-model types, so a page can name what it renders. */
 export type {
-  HouseDetail, IndexedNote, PerformanceReading, ProductCard, ProductDetail, SearchResult, StorefrontPhoto,
+  HouseDetail, IndexedNote, PerformanceReading, ProductCard, ProductDetail, SearchResult, StorefrontPhoto, StorefrontRelief,
 } from './routers/catalogue';
 export * from './http';

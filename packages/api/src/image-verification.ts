@@ -56,6 +56,7 @@ export async function verifyArrivedImage(
   media: MediaStore,
   key: string,
   declaredType: ImageType,
+  limits?: { readonly maxBytes: number; readonly minEdge: number; readonly maxEdge: number },
 ): Promise<VerifiedImage> {
   const stored = await media.describe(key);
   if (!stored) {
@@ -65,7 +66,7 @@ export async function verifyArrivedImage(
   const header = await media.readHeader(key, MEDIA_LIMITS.headerBytes);
   const facts = header ? sniffImage(header) : null;
 
-  const objections = objectionsToImage({ facts, declaredType, byteSize: stored.byteSize });
+  const objections = objectionsToImage({ facts, declaredType, byteSize: stored.byteSize, ...(limits ? { limits } : {}) });
   if (facts && stored.contentType !== null && stored.contentType !== facts.type) {
     objections.push('type_mismatch');
   }

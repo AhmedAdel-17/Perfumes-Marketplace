@@ -32,6 +32,14 @@ describe('glass palette — the stops must actually step', () => {
     }
   });
 
+  it('makes the mist the lightest stop — light, never shadow — and keeps families apart', () => {
+    for (const family of FAMILIES) {
+      const p = glassPalette(family);
+      expect(luminance(p.mist), family).toBeGreaterThan(luminance(p.caustic));
+    }
+    expect(new Set(FAMILIES.map((f) => glassPalette(f).mist)).size).toBe(FAMILIES.length);
+  });
+
   it('gives every family a visibly distinct core', () => {
     const cores = FAMILIES.map((f) => glassPalette(f).core);
     expect(new Set(cores).size).toBe(FAMILIES.length);

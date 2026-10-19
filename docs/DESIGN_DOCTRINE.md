@@ -443,3 +443,38 @@ that existed and failing the moment anything used the third depth step.
 
 Both directions, every ink against every surface, are asserted in `packages/tokens`. The audit
 runs per theme: `THEME=light pnpm --filter @diyar/web audit`.
+
+---
+
+## 8. The reveal — Le Dévoilement (founder, 19 Oct 2026)
+
+Pressing a perfume's photograph dims the room, lifts the bottle out of its picture, stands
+it up in light, and lets its notes rise from the nozzle to orbit it — top, heart, base. The
+approved prototype is `design-reference/experiences/01-devoilement.html`; the shop's version
+is `features/product/reveal`. The rules it keeps, and why:
+
+- **Nothing about the packaging is invented.** The object is the house's own photograph —
+  cut out, given a relief, relit — never a generated 3D model, which would draw a back of the
+  bottle nobody photographed. The panel says so in one line ("made from the house's own
+  photograph, with nothing added"). A claim the shop makes about a house's product is a claim
+  it can show.
+- **The room is dark in both themes.** The stage is scoped `data-theme="dark"` whatever the
+  page: opening a perfume is walking into a dark room with one light. The colours are still
+  the dark theme's roles — no new palette — and the mist and the notes' drawings are the
+  family's own colour as light (`glassPalette(family).mist`, derived from the family token).
+- **Law VI, read for a ceremony the visitor asked for.** The response to the press — the room
+  dimming, the photograph lifting off the page — is immediate and within `slow`. The bottle
+  STANDING UP is an arrival, not a response: it takes `ceremony`, the one place a click is
+  followed by a long motion, because the visitor asked to watch it. Closing runs it back
+  within `slow`. Nothing bounces; the light never comes from straight ahead (it would whiten
+  the flat glass the way no studio light does).
+- **The same object, never a substitute.** For the length of the move from page to stage the
+  object lies exactly over the bottle in the photograph — same place, same angle, same light —
+  so the eye cannot find a seam; only then does the picture dissolve around it.
+- **Opt-in, and light.** The whole photograph is the control, with its name in a corner; it
+  appears only where the browser can draw the bottle; nothing of the reveal loads until it is
+  pressed. Reduced motion: the bottle simply stands, notes placed around it, no flight, orbit
+  or mist.
+- **One entry point first.** The product page only, until `reveal_open` has been measured
+  (ANALYTICS_DEFINITIONS §2b). Cards elsewhere wait for the number.
+

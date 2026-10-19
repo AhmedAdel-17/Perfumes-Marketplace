@@ -12,6 +12,7 @@ import { listingsRouter } from './listings';
 import { ordersRouter } from './orders';
 import { photosRouter } from './photos';
 import { platformRouter } from './platform';
+import { reliefsRouter } from './reliefs';
 import { returnsRouter } from './returns';
 import { reviewsRouter } from './reviews';
 import { sellerRouter } from './seller';
@@ -32,6 +33,7 @@ export const appRouter = router({
   orders: ordersRouter,
   photos: photosRouter,
   platform: platformRouter,
+  reliefs: reliefsRouter,
   returns: returnsRouter,
   reviews: reviewsRouter,
   seller: sellerRouter,

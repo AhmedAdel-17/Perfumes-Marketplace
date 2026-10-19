@@ -1828,10 +1828,21 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       remove: refuse('NoteGlossaryRepository', 'note-glossary.test.ts'),
     } as unknown as Repositories['glossary'];
 
+    /*
+     * Reliefs, likewise: who may write one is row security in Postgres
+     * (`packages/db/src/relief-repository.test.ts`).
+     */
+    const reliefs = {
+      overview: refuse('ReliefRepository', 'relief-repository.test.ts'),
+      forPhoto: refuse('ReliefRepository', 'relief-repository.test.ts'),
+      put: refuse('ReliefRepository', 'relief-repository.test.ts'),
+      remove: refuse('ReliefRepository', 'relief-repository.test.ts'),
+    } as unknown as Repositories['reliefs'];
+
     return {
       sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
-      analytics, catalogue, glossary, identity,
+      analytics, catalogue, glossary, identity, reliefs,
     };
   }
 }

@@ -20,6 +20,18 @@ export const IMAGE_OBJECTION_AR = {
   too_large_dimensions: 'أبعاد الصورة كبيرة جدًا. يجب ألا يزيد ضلعها الأطول عن 8000 بكسل.',
 } as const;
 
+/**
+ * Why the console could not lift a bottle out of a photograph (`makeRelief`,
+ * 0032) — each sentence says what the operator can do next.
+ */
+export const RELIEF_OBJECTION_AR = {
+  busy_background: 'خلفية الصورة ليست سادة، فلا يمكن قصّ الزجاجة تلقائيًا. ارسم حدودها يدويًا.',
+  no_bottle_found: 'لم نجد زجاجة واضحة في الصورة. ارسم حدودها يدويًا.',
+  bottle_cropped: 'الزجاجة مقطوعة عند حافة الصورة. اطلب من الدار صورة تظهر فيها كاملة، أو ارسم حدودها يدويًا.',
+  outline_invalid: 'الحدود المرسومة غير مكتملة. ضع ثلاث نقاط على الأقل حول الجسم.',
+  outline_too_small: 'الحدود المرسومة أصغر من أن تكون زجاجة. ارسمها حول الزجاجة كلها.',
+} as const;
+
 /** Why a photograph cannot be added, described or removed. */
 export const PHOTO_OBJECTION_AR = {
   too_many_photos: 'وصل المنتج إلى 8 صور، وهو الحد الأقصى. احذف صورة قبل إضافة أخرى.',

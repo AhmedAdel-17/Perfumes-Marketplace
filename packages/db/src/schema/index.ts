@@ -11,3 +11,4 @@ export * from './content';
 export * from './site';
 export * from './login-codes';
 export * from './sessions';
+export * from './reliefs';

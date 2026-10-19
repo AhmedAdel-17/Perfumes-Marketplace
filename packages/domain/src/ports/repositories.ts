@@ -1,6 +1,7 @@
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { OwnerReportRepository } from './owner-report-repository';
+import type { ReliefRepository } from './relief-repository';
 import type { PhotoRepository } from './photo-repository';
 import type { ListingRepository } from './listing-repository';
 import type { ReviewRepository } from './review-repository';
@@ -466,6 +467,8 @@ export interface Repositories {
   readonly photos: PhotoRepository;
   /** The verified images an editorial page may show. */
   readonly contentImages: ContentImageRepository;
+  /** A photograph's relief (0032). Written by the platform only; RLS holds that. */
+  readonly reliefs: ReliefRepository;
   /** The browsing trail: append one event, read counts for a period. */
   readonly analytics: AnalyticsRepository;
   /**

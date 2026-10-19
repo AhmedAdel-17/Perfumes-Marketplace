@@ -122,9 +122,10 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      role="switch"
-      // Unknown until hydrated: the server cannot read the visitor's choice,
-      // so the switch claims neither state rather than guessing and flipping.
+      // Unknown until hydrated: the server cannot read the visitor's choice, so
+      // until then this is a plain (disabled) button rather than a switch — a
+      // switch must say whether it is on, and guessing would flip after paint.
+      role={theme === null ? undefined : 'switch'}
       aria-checked={theme === null ? undefined : dark}
       aria-label={copy.dark}
       title={dark ? copy.light : copy.dark}

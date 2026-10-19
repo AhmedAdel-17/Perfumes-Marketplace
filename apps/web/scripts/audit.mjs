@@ -308,6 +308,9 @@ async function auditPage(page, surface, width) {
        * user can ever reach.
        */
       .filter((e) => !e.disabled && e.getAttribute('aria-disabled') !== 'true')
+      // Inert content likewise: the page behind an open dialog is out of
+      // everyone's reach, and focusing it is the same no-op as above.
+      .filter((e) => !e.closest('[inert]'))
       .slice(0, 6);
     const bad = [];
     for (const el of controls) {
@@ -503,6 +506,36 @@ try {
   }
   await englishVisitor.close();
 
+  /*
+   * The reveal, OPEN (Le Dévoilement, 0032). A dialog that exists only after a
+   * press, so the page-level pass above never sees it: its panel, its notes,
+   * its close button and its focus ring are audited here, in the room it opens
+   * into, once the bottle stands. Only where the perfume has a relief.
+   */
+  if (wanted('product-reveal')) {
+    // The first perfume that HAS a relief: the browser suite replaces one
+    // perfume's photograph, and a relief belongs to the photograph it was made from.
+    let revealSlug = null;
+    for (const slug of ['ward-al-taif', 'nakhil', 'layl-al-qahira']) {
+      await visit(page, `${BASE}/p/${slug}`);
+      if (await page.locator('.reveal-trigger').count() > 0) { revealSlug = slug; break; }
+    }
+    for (const size of revealSlug ? WIDTHS : []) {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await visit(page, `${BASE}/p/${revealSlug}`);
+      const control = page.locator('.reveal-trigger');
+      // By the keyboard: a mouse click would take the browser out of
+      // focus-visible mode and hide the very rings the check looks for.
+      await control.focus();
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'إغلاق', undefined, { timeout: 20_000 });
+      await page.waitForTimeout(3200);
+      await auditPage(page, 'product-reveal', size.name);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1500);
+    }
+  }
+
   /* --------------------------------------------------------------- seller */
   const sellerSurfaces = ['seller-queue', 'seller-listings', 'seller-payouts', 'seller-returns', 'seller-listing-editor'];
   if (sellerSurfaces.some(wanted)) {
@@ -549,7 +582,8 @@ try {
 
   /* ------------------------------------------------------------------ ops */
   const opsSurfaces = ['ops-queue', 'ops-content', 'ops-moderation', 'ops-site', 'ops-notes', 'ops-reviews',
-    'ops-returns', 'ops-support', 'ops-houses', 'ops-audit', 'ops-insights', 'ops-page-editor', 'ops-page-preview'];
+    'ops-returns', 'ops-support', 'ops-houses', 'ops-audit', 'ops-insights', 'ops-page-editor', 'ops-page-preview',
+    'ops-reliefs', 'ops-relief-editor'];
   if (opsSurfaces.some(wanted)) {
   const opsContext = await themed(await browser.newContext({ locale: 'ar-EG', viewport: { width: 1280, height: 900 } }));
   const ops = await opsContext.newPage();
@@ -581,6 +615,9 @@ try {
     // The owner's report: the widest tables in the product, which is exactly
     // where a phone-width page scrolls sideways if a table is not contained.
     ['ops-insights', '/ops/insights'],
+    // The reveal's relief tool (Le Dévoilement, 0032): the work list, and one
+    // perfume's editor with its photograph, tracing controls and result panel.
+    ['ops-reliefs', '/ops/reliefs'],
   ];
 
   for (const size of WIDTHS) {
@@ -588,6 +625,24 @@ try {
     for (const [surface, path] of opsRoutes.filter(([s]) => wanted(s))) {
       await visit(ops, `${BASE}${path}`);
       await auditPage(ops, surface, size.name);
+    }
+  }
+
+  if (wanted('ops-relief-editor')) {
+    await visit(ops, `${BASE}/ops/reliefs`);
+    const editor = await ops.locator('main a[href^="/ops/reliefs/"]').first().getAttribute('href');
+    if (editor) {
+      for (const size of WIDTHS) {
+        await ops.setViewportSize({ width: size.width, height: size.height });
+        await visit(ops, `${BASE}${editor}`);
+        // In tracing mode: every control the tool has on screen at once. By the
+        // KEYBOARD, as an operator tabbing through would — a mouse click here
+        // would switch the browser out of focus-visible mode and hide every
+        // focus ring the check below then looks for.
+        await ops.locator('button', { hasText: 'رسم الحدود يدويًا' }).focus();
+        await ops.keyboard.press('Enter');
+        await auditPage(ops, 'ops-relief-editor', size.name);
+      }
     }
   }
 

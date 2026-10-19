@@ -303,6 +303,13 @@ theme's colours are the 'Graphite & ambre' palette in `packages/tokens` (FD-1 am
 redesign and the tokens win.*
 Do not redesign or "improve". If something looks wrong, say so and ask.
 
+**Experiences (founder, 18–19 Oct 2026):** `design-reference/experiences/` holds four
+approved interactive prototypes, built in this order — `01-devoilement` (the bottle lifted
+out of its photograph; BUILT as task P5.1.4: `features/product/reveal`, `/ops/reliefs`),
+`04-details`, `02-la-duree`, then `03-carte-olfactive` once the catalogue is larger. Serve
+them with the `experiences` launch config (WebGL cannot read `file://` images). A relief is
+made from the house's own photograph and never invents packaging (DESIGN_DOCTRINE §8).
+
 Icons are in `packages/ui/src/icons.tsx` (46 components; Moon, Wood, Palm, Sprig and Diamond added 17 Oct 2026). Never draw a new one without
 asking.
 

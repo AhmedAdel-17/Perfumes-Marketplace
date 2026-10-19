@@ -40,6 +40,13 @@ export const PRODUCT = defineMessages(
     searchNote: (note: string) => `ابحث عن العطور التي فيها ${note}`,
     reviewsIndex: '02',
     othersIndex: '03',
+    // Le Dévoilement — the bottle lifted out of its photograph (19 Oct 2026).
+    reveal: 'اكشف العطر',
+    revealLabel: (name: string) => `${name}: الزجاجة ونفحاتها`,
+    revealLight: 'حرّك المؤشر ليدور الضوء',
+    revealLightTouch: 'اسحب بإصبعك ليدور الضوء',
+    revealFrom: 'مصنوع من صورة الدار نفسها، دون أي إضافة.',
+    close: 'إغلاق',
   },
   {
     notFound: 'Not found',
@@ -79,5 +86,11 @@ export const PRODUCT = defineMessages(
     searchNote: (note: string) => `Find perfumes with ${note}`,
     reviewsIndex: '02',
     othersIndex: '03',
+    reveal: 'Reveal the perfume',
+    revealLabel: (name: string) => `${name}: the bottle and its notes`,
+    revealLight: 'Move to turn the light',
+    revealLightTouch: 'Drag to turn the light',
+    revealFrom: 'Made from the house’s own photograph, with nothing added.',
+    close: 'Close',
   },
 );

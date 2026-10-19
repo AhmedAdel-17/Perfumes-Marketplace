@@ -197,10 +197,16 @@ export function objectionsToImage(input: {
   readonly facts: ImageFacts | null;
   readonly declaredType: string;
   readonly byteSize: number;
+  /**
+   * A photograph's limits unless told otherwise. A relief's cut-out (0032) is
+   * an image the platform MADE, of one slim bottle, and is held to its own.
+   */
+  readonly limits?: { readonly maxBytes: number; readonly minEdge: number; readonly maxEdge: number };
 }): ImageObjection[] {
   const objections: ImageObjection[] = [];
+  const limits = input.limits ?? MEDIA_LIMITS;
 
-  if (input.byteSize > MEDIA_LIMITS.maxBytes) objections.push('too_large_file');
+  if (input.byteSize > limits.maxBytes) objections.push('too_large_file');
 
   if (!input.facts) {
     objections.push('unsupported_type');
@@ -211,8 +217,8 @@ export function objectionsToImage(input: {
 
   const shorter = Math.min(input.facts.width, input.facts.height);
   const longer = Math.max(input.facts.width, input.facts.height);
-  if (shorter < MEDIA_LIMITS.minEdge) objections.push('too_small_dimensions');
-  if (longer > MEDIA_LIMITS.maxEdge) objections.push('too_large_dimensions');
+  if (shorter < limits.minEdge) objections.push('too_small_dimensions');
+  if (longer > limits.maxEdge) objections.push('too_large_dimensions');
 
   return objections;
 }
@@ -238,7 +244,7 @@ export const isImageType = (value: string): value is ImageType =>
  * tell whose image a key is without a database query.
  */
 function mediaKey(
-  prefix: 'products' | 'content',
+  prefix: 'products' | 'content' | 'reliefs',
   ownerId: string,
   type: ImageType,
   randomBytes: (count: number) => Uint8Array,
@@ -269,4 +275,15 @@ export function contentMediaKey(
   randomBytes: (count: number) => Uint8Array,
 ): string {
   return mediaKey('content', pageId, type, randomBytes);
+}
+
+/**
+ * A relief's file — its cut-out or its relief map — under its product.
+ *
+ * Its own prefix, like editorial images: a relief is made by the platform,
+ * and a key that could be read as a house's photograph is a key a house's
+ * upload could be tricked into claiming (migration 0032 CHECKs the shape).
+ */
+export function reliefMediaKey(productId: string, randomBytes: (count: number) => Uint8Array): string {
+  return mediaKey('reliefs', productId, 'image/png', randomBytes);
 }

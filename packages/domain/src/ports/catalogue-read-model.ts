@@ -69,6 +69,8 @@ export interface CatalogueProductRow {
  */
 export interface CataloguePhotoRow {
   readonly productId: string;
+  /** The `product_media` row — what a relief (0032) belongs to. */
+  readonly mediaId: string;
   readonly storageKey: string;
   readonly alt: string;
   readonly width: number;

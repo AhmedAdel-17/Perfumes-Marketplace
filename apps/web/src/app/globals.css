@@ -611,6 +611,183 @@
     animation: bag-mist theme('transitionDuration.ceremony') theme('transitionTimingFunction.out') both;
   }
 
+  /*
+    LE DÉVOILEMENT — the reveal (founder, 18–19 Oct 2026; the approved prototype
+    is design-reference/experiences/01-devoilement.html). Pressing the photograph
+    dims the room, lifts the bottle out of its picture, stands it up in the light
+    and lets its notes rise to orbit it.
+
+    The stage is a dialog in a portal, scoped to the dark theme by `data-theme`
+    whatever the page is — opening a perfume dims the room in both themes. The
+    controller (features/product/reveal) moves every part each frame; these rules
+    only say what each part looks like, and how the room comes and goes.
+  */
+  .reveal-trigger {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: theme('spacing.4');
+    cursor: pointer;
+  }
+  .reveal-trigger-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: theme('spacing.touch');
+    padding-inline: theme('spacing.4');
+    background: theme('colors.ink');
+    color: theme('colors.ground');
+    font-size: theme('fontSize.small');
+    transition: background-color theme('transitionDuration.base') theme('transitionTimingFunction.out'),
+      color theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .reveal-trigger:hover .reveal-trigger-label,
+  .reveal-trigger:focus-visible .reveal-trigger-label {
+    background: theme('colors.accent-surface');
+    color: theme('colors.on-accent');
+  }
+  .reveal-trigger:focus-visible { outline: 2px solid theme('colors.accent'); outline-offset: -6px; }
+
+  .reveal { position: fixed; inset: 0; z-index: 80; color: theme('colors.ink'); }
+  .reveal-veil {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 90% at 40% 45%, rgb(var(--c-raised)) 0%, rgb(var(--c-ground)) 55%, rgb(var(--c-sunken)) 100%);
+    opacity: 0;
+    transition: opacity theme('transitionDuration.base') theme('transitionTimingFunction.inOut');
+  }
+  .reveal[data-room='dark'] .reveal-veil { opacity: 1; }
+  .reveal-scene { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+  .reveal-glass, .reveal-mist { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  /* The mist behind the glass, the glass between the notes: chips set their own z-index, 1 or 3. */
+  .reveal-mist {
+    z-index: 1;
+    mix-blend-mode: screen;
+    filter: blur(3px);
+    opacity: 0;
+    transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .reveal[data-room='dark'] .reveal-mist { opacity: 1; }
+  .reveal-glass { z-index: 2; }
+  .reveal-plinth {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 0;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(var(--c-ink) / 0.07), rgb(var(--c-ink) / 0.02) 60%, transparent);
+    opacity: 0;
+    transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .reveal[data-room='dark'] .reveal-plinth { opacity: 1; }
+  .reveal-flier { position: fixed; z-index: 6; object-fit: cover; pointer-events: none; will-change: left, top, width, height, opacity; }
+
+  .reveal-notes { list-style: none; }
+  .reveal-chip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: theme('spacing.2');
+    padding-block: 7px;
+    padding-inline: 11px 13px;
+    white-space: nowrap;
+    background: rgb(var(--c-raised) / 0.78);
+    border: 1px solid rgb(var(--c-ink) / 0.16);
+    font-size: theme('fontSize.small');
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  .reveal-chip-icon { width: 18px; height: 18px; flex: none; color: var(--reveal-mist); }
+  .reveal-chip-latin { font-size: theme('fontSize.micro'); letter-spacing: theme('letterSpacing.label'); text-transform: uppercase; color: theme('colors.ink3'); }
+  .reveal-guide {
+    position: absolute;
+    inset-inline-end: 34px;
+    z-index: 4;
+    display: none;
+    align-items: baseline;
+    gap: theme('spacing.2');
+    font-size: theme('fontSize.small');
+    color: theme('colors.ink3');
+    opacity: 0;
+    transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .reveal-guide .latin { font-size: theme('fontSize.micro'); letter-spacing: theme('letterSpacing.label'); }
+  .reveal-guide::before { content: ''; width: 28px; height: 1px; background: currentColor; align-self: center; }
+  .reveal-guide[data-on] { opacity: 1; }
+  .reveal-hint {
+    position: absolute;
+    left: 0;
+    bottom: 28px;
+    z-index: 4;
+    white-space: nowrap;
+    font-size: theme('fontSize.small');
+    color: theme('colors.ink3');
+    opacity: 0;
+    transition: opacity theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .reveal.is-revealed .reveal-hint { opacity: 0.85; transition-delay: theme('transitionDuration.ceremony'); }
+
+  /* The panel: a sheet below the bottle on a phone, a column beside it from lg. */
+  .reveal-panel {
+    position: absolute;
+    z-index: 5;
+    inset-inline: 0;
+    inset-block-end: 0;
+    display: grid;
+    gap: theme('spacing.3');
+    padding: theme('spacing.5') theme('spacing.5') calc(theme('spacing.5') + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgb(var(--c-ground)) 72%, rgb(var(--c-ground) / 0));
+  }
+  .reveal-panel > * {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.entrance'),
+      transform theme('transitionDuration.slow') theme('transitionTimingFunction.entrance');
+  }
+  .reveal.is-revealed .reveal-panel > * { opacity: 1; transform: none; }
+  .reveal-panel > :nth-child(2) { transition-delay: 80ms; }
+  .reveal-panel > :nth-child(3) { transition-delay: 160ms; }
+  .reveal-panel > :nth-child(4) { transition-delay: 240ms; }
+  .reveal-panel > :nth-child(5) { transition-delay: 320ms; }
+  .reveal-panel > :nth-child(6) { transition-delay: 400ms; }
+  .reveal-kicker { font-size: theme('fontSize.caption'); letter-spacing: theme('letterSpacing.label'); color: theme('colors.accent'); }
+  .reveal-close {
+    position: absolute;
+    z-index: 6;
+    top: theme('spacing.5');
+    inset-inline-end: theme('spacing.5');
+    width: theme('spacing.touch');
+    height: theme('spacing.touch');
+    border: 1px solid theme('colors.line');
+    color: theme('colors.ink2');
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out'),
+      border-color theme('transitionDuration.base') theme('transitionTimingFunction.out'),
+      color theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .reveal.is-revealed .reveal-close { opacity: 1; }
+  .reveal-close:hover, .reveal-close:focus-visible { border-color: theme('colors.accent'); color: theme('colors.accent'); }
+  .reveal-close:focus-visible { outline: 2px solid theme('colors.accent'); outline-offset: 2px; }
+
+  @media (min-width: 1024px) {
+    .reveal-panel {
+      inset-block: 0;
+      inset-inline-end: auto;
+      inset-inline-start: 0;
+      width: 400px;
+      align-content: center;
+      padding: 40px 44px;
+      background: none;
+    }
+    .reveal-guide { display: flex; }
+  }
+
   /* A control may LOOK smaller than its target; the target may not shrink. */
   .tappable {
     position: relative;

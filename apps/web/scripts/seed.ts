@@ -1,6 +1,6 @@
 import {
   foldArabic, objectionsToImage, publicAuthorName, REFERENCE_ALPHABET, REFERENCE_PREFIX,
-  sniffImage, type ImageType,
+  RELIEF_LIMITS, sniffImage, type ImageType,
 } from '@diyar/domain';
 import { applyMigrations } from '@diyar/db/migrate';
 /**
@@ -267,6 +267,7 @@ async function main() {
     return;
   }
 
+  const seededProducts: Array<{ slug: string; productId: string }> = [];
   for (const house of houses) {
     const s = await pg.query<{ id: string }>(
       `INSERT INTO sellers (trading_name, owner_name, slug, city, status,
@@ -350,6 +351,7 @@ async function main() {
         ],
       );
       const productId = created.rows[0]!.id;
+      seededProducts.push({ slug: p.slug, productId });
 
       /*
        * A REAL file, and the facts read from it.
@@ -404,6 +406,57 @@ async function main() {
    */
   const staffId = (await pg.query<{ id: string }>(
     `SELECT id FROM platform_staff WHERE auth_user_id = $1`, [PLATFORM])).rows[0]!.id;
+
+  /*
+   * Reliefs for the mock-up photographs (Le Dévoilement, 0032), so the reveal
+   * can be seen locally without making each one in the console first.
+   *
+   * From `scripts/mock-photos/derived/` — git-ignored like the photographs
+   * themselves, and made from them with hand-traced outlines by
+   * design-reference/experiences/tools/bottle_to_25d.py (the stock photographs
+   * are not packshots, which is exactly when the console's own tool asks for a
+   * traced outline too). A perfume with no files simply has no reveal, as on a
+   * fresh clone and in CI. Each file is held to the relief limits a console
+   * upload is held to.
+   */
+  const placementsFile = join(MOCK_PHOTOS, 'derived', 'placements.json');
+  const placements = existsSync(placementsFile)
+    ? JSON.parse(readFileSync(placementsFile, 'utf8')) as Record<string, { centre: [number, number]; height: number; angle: number }>
+    : {};
+  for (const { slug, productId } of seededProducts) {
+    const at = placements[slug];
+    const cutoutFile = join(MOCK_PHOTOS, 'derived', `${slug}-cutout.png`);
+    const reliefFile = join(MOCK_PHOTOS, 'derived', `${slug}-height.png`);
+    if (!at || !existsSync(cutoutFile) || !existsSync(reliefFile) || !existsSync(join(MOCK_PHOTOS, `${slug}.jpg`))) continue;
+
+    const files = [readFileSync(cutoutFile), readFileSync(reliefFile)];
+    const facts = files.map((bytes) => sniffImage(new Uint8Array(bytes)));
+    const [cutFacts, mapFacts] = facts;
+    if (!cutFacts || !mapFacts || cutFacts.type !== 'image/png' || cutFacts.width !== mapFacts.width || cutFacts.height !== mapFacts.height
+      || files.some((bytes, i) => objectionsToImage({ facts: facts[i]!, declaredType: 'image/png', byteSize: bytes.length, limits: RELIEF_LIMITS }).length > 0)) {
+      throw new Error(`Relief files for ${slug} would be refused as a console upload.`);
+    }
+    const keys = files.map((bytes) => {
+      const key = `reliefs/${productId}/${randomBytes(12).toString('hex')}.png`;
+      const path = join(MEDIA_DIR, key);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, bytes);
+      return key;
+    });
+    const mediaId = (await pg.query<{ id: string }>(
+      `SELECT id FROM product_media WHERE product_id = $1 AND is_primary`, [productId])).rows[0]!.id;
+    await pg.query(
+      `INSERT INTO product_media_reliefs (media_id, cutout_key, relief_key, width, height, cutout_bytes, relief_bytes,
+         centre_x_ppm, centre_y_ppm, height_ppm, angle_centidegrees, method, opaque, made_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'traced',$12,$13)`,
+      [mediaId, keys[0], keys[1], cutFacts.width, cutFacts.height, files[0]!.length, files[1]!.length,
+        Math.round(at.centre[0] * 1_000_000), Math.round(at.centre[1] * 1_000_000),
+        Math.round(at.height * 1_000_000), Math.round(at.angle * 100),
+        // The frosted green bottle of نخيل shows nothing through it.
+        slug === 'nakhil', staffId],
+    );
+    console.log(`  · relief for ${slug}`);
+  }
 
   const pages = [
     {

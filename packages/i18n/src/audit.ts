@@ -50,6 +50,7 @@ export const AUDIT_ENTITY_AR = {
   payouts: 'دفعة',
   content_pages: 'صفحة',
   note_glossary: 'قاموس النفحات',
+  product_media_reliefs: 'العرض المجسّم',
 } as const;
 
 /** Every field a router writes into `before` / `after`. */
@@ -64,6 +65,9 @@ export const AUDIT_FIELD_AR = {
   ar: 'النفحة',
   en: 'الاسم بالإنجليزية',
   icon: 'الرسم',
+  product: 'العطر',
+  method: 'طريقة القصّ',
+  opaque: 'زجاج معتم',
   reference: 'المرجع',
   costBearer: 'التكلفة على',
   refundPiastres: 'المبلغ المردود',
@@ -89,6 +93,12 @@ export interface AuditLine {
 }
 
 type Words = Readonly<Record<string, string>>;
+
+/** How a relief's outline was found — the console's own words for the two ways. */
+export const RELIEF_METHOD_AR: Readonly<Record<string, string>> = {
+  automatic: 'تلقائي',
+  traced: 'برسم الحدود يدويًا',
+};
 
 /**
  * Which vocabulary a field's value belongs to.
@@ -119,6 +129,9 @@ function vocabularyFor(entityTable: string, field: string): Words | null {
     case 'icon':
       // A note's drawing (0031), named as the picker names it.
       return entityTable === 'note_glossary' ? NOTE_ICON_AR : null;
+    case 'method':
+      // How a relief's outline was found (0032).
+      return entityTable === 'product_media_reliefs' ? RELIEF_METHOD_AR : null;
     default:
       return null;
   }

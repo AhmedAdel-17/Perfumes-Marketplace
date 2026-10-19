@@ -50,6 +50,8 @@ export const BROWSING_EVENTS = [
   'search',
   'filter_apply',
   'product_view',
+  // The reveal on a product page (Le Dévoilement, 0033): opened, carrying the perfume.
+  'reveal_open',
   'cart_add',
   'checkout_start',
 ] as const;

@@ -2404,6 +2404,87 @@ try {
     await englishContext.close();
   }
 
+  /* ============================================ the reveal (0032, 0033) */
+  group('a perfume lifted out of its photograph — Le Dévoilement');
+  {
+    const PERFUME = 'ward-al-taif';
+    // Where the rose bottle sits in its photograph, as fractions of it — the
+    // outline an operator would trace. On CI's plain seed photograph it is
+    // simply a shape on one colour, which is still a relief the shop can draw.
+    const BODY = [[462, 600], [606, 600], [606, 962], [600, 968], [468, 968], [462, 962]];
+    const CAP = [[505, 598], [505, 512], [513, 512], [513, 464], [557, 464], [557, 512], [566, 512], [566, 598]];
+    const traceAndSave = async (page) => {
+      await page.goto(`${BASE}/ops/reliefs`, { waitUntil: 'networkidle' });
+      await page.locator('main a', { hasText: 'ورد الطائف' }).click();
+      await page.waitForURL('**/ops/reliefs/**');
+      await page.locator('button', { hasText: 'رسم الحدود يدويًا' }).click();
+      const overlay = page.locator('img[alt^="الصورة الرئيسية"] + svg');
+      await overlay.scrollIntoViewIfNeeded();
+      const box = await overlay.boundingBox();
+      const click = ([x, y]) => page.mouse.click(box.x + (x / 1000) * box.width, box.y + (y / 1250) * box.height);
+      for (const point of BODY) await click(point);
+      await page.locator('button', { hasText: 'الغطاء' }).click();
+      await overlay.scrollIntoViewIfNeeded();
+      for (const point of CAP) await click(point);
+      await page.locator('button', { hasText: 'اصنع العرض المجسّم' }).click();
+      await page.locator('img[alt="الزجاجة مقصوصة"]').waitFor({ timeout: 30_000 });
+      await page.locator('button', { hasText: 'احفظ وانشر' }).click();
+      await page.locator('[role="status"]', { hasText: 'حُفظ' }).waitFor({ timeout: 30_000 });
+    };
+
+    const revealContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const visitor = await revealContext.newPage();
+    // Its own operator, signed in here: earlier groups sign the shared one out.
+    const curatorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const curator = await curatorContext.newPage();
+    try {
+      await test('the content team traces a bottle in the console and saves its relief', async () => {
+        await signIn(curator, '/ops', OPERATOR, '/ops/queue');
+        await traceAndSave(curator);
+      });
+
+      await test('a visitor opens it on the perfume page; Escape puts it back where it was', async () => {
+        await visitor.goto(`${BASE}/p/${PERFUME}`, { waitUntil: 'networkidle' });
+        const control = visitor.locator('.reveal-trigger');
+        await control.waitFor({ timeout: 15_000 });
+        await control.click();
+        const dialog = visitor.getByRole('dialog');
+        await dialog.waitFor();
+        const label = await dialog.getAttribute('aria-label');
+        assert(label?.includes('ورد الطائف'), `the dialog is named for the perfume: ${label}`);
+        const notes = await dialog.locator('.reveal-notes li').count();
+        assert(notes >= 3, `the notes, as a list a screen reader hears: ${notes}`);
+        await visitor.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'إغلاق', undefined, { timeout: 20_000 });
+        await visitor.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'detached', timeout: 20_000 });
+        const after = await visitor.evaluate(() => ({
+          focus: document.activeElement?.classList.contains('reveal-trigger') ?? false,
+          overflow: document.documentElement.style.overflow,
+        }));
+        assert(after.focus, 'focus returns to the control that opened it');
+        equal(after.overflow, '', 'the page scrolls again');
+      });
+
+      await test('removed, the control goes too — and both decisions are on the record', async () => {
+        await curator.reload({ waitUntil: 'networkidle' });
+        await curator.locator('button', { hasText: 'احذف العرض المجسّم' }).click();
+        await curator.locator('button', { hasText: 'تأكيد الحذف' }).click();
+        await curator.locator('[role="status"]', { hasText: 'حُذف' }).waitFor({ timeout: 20_000 });
+        await visitor.goto(`${BASE}/p/${PERFUME}`, { waitUntil: 'networkidle' });
+        await visitor.waitForTimeout(800);
+        equal(await visitor.locator('.reveal-trigger').count(), 0, 'a control with no relief behind it');
+        await curator.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
+        const audit = await curator.locator('main').innerText();
+        assert(audit.includes('العرض المجسّم'), 'the relief decisions in the audit log');
+        // Left as it was found: the perfume keeps a reveal for whoever opens the shop next.
+        await traceAndSave(curator);
+      });
+    } finally {
+      await revealContext.close();
+      await curatorContext.close();
+    }
+  }
+
   if (sellerContext) await sellerContext.close();
   if (opsContext) await opsContext.close();
 } finally {

@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | IN_PROGRESS | 2/20 (P5.6.4, P5.1.3 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 3/21 (P5.6.4, P5.1.3, P5.1.4 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -216,6 +216,7 @@ production (P0.1.3).
 | P5.1.1 | Journey redesign (R3) | P5 | NOT_STARTED | P2 | BUILD | GATE 5, P4.2.1 |
 | P5.1.2 | Polish: structured data, ISR, visual regression (R4) | P5 | NOT_STARTED | P2 | BUILD | P5.1.1 |
 | P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | COMPLETE | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
+| P5.1.4 | Le Dévoilement — the bottle lifted out of its photograph, on the product page | P5 | COMPLETE | P1 | BUILD | DR Le Dévoilement (decided 19 Oct 2026) |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2264,6 +2265,42 @@ for it returned 200); e2e 133/133 from a cold server with a fresh seed; 1,674 un
 pass; typecheck and guard clean; `next build` succeeds (shared JS 103 kB, pages 124–138 kB
 first load); no Amiri, Bodoni or brass remains in `apps`, `packages` or `scripts`.
 
+#### P5.1.4 Le Dévoilement — the bottle lifted out of its photograph, on the product page
+**Status:** COMPLETE (19 Oct 2026) · **Priority:** P1 · **Type:** BUILD — the success
+measure is a separate VALIDATE question, open until `reveal_open` has real traffic.
+**Why:** the founder asked for a site that is "not a normal website" — creative, with
+advanced motion, and fragrance-led — and proposed lifting each perfume's bottle out of its
+photograph in 3D and showing its notes. Four experiences were prototyped on 18 Oct
+(`design-reference/experiences/`); the founder approved the photograph-to-relief pipeline
+and the order: this reveal first, then the details (04), the day-on-the-skin dial (02), and
+the scent map (03) once the catalogue is larger. Decisions in `DECISION_REGISTER.md` §E,
+19 Oct 2026.
+**Change control (doc 04 §9):** *user problem* — a flat photograph cannot show the object or
+what it smells like, and a perfume bought online is bought unsmelt; *evidence* — founder
+direction (no buyer test yet — recorded as a gap, as DR-07 was for FD-1); *success metric* —
+of visitors who open a perfume's reveal, the share who put that perfume in the bag, against
+visitors who view a perfume that has a reveal without opening it (ANALYTICS_DEFINITIONS §2b,
+event `reveal_open`, 0033); *operational owner* — the content/category manager, who makes
+each relief in `/ops/reliefs`; *legal dependency* — the seller agreement must permit the
+platform to make derived presentations (cut-outs) of uploaded photographs (OPEN, for
+counsel); *cost* — no runtime cost (made in the operator's browser, drawn in the visitor's),
+two small PNGs per perfume in storage, no new dependency.
+**What it is:** a RELIEF per photograph — cut-out, relief map, placement — made by
+`makeRelief` (domain, pure, tested: automatic for a plain background, traced by hand
+otherwise) in a worker in the console; verified and stored by `reliefs.*` (platform only,
+audited) in `product_media_reliefs` (0032, RLS: public reads a published perfume's, a house
+reads its own, only the platform writes); drawn on the product page by a plain-WebGL
+renderer (no Three.js) loaded only when the visitor presses the photograph.
+**Acceptance criteria:** domain, database, API and token suites green; a relief made and
+saved in the console appears on the product page, and removing it removes the control;
+the reveal opens and closes by pointer, touch and keyboard (Escape; focus to close and back
+to the control; the page scrolls again after); reduced motion stands the bottle still with
+its notes; nothing loads for a visitor who does not press; `audit.mjs` clean; browser suite
+green; `next build` succeeds with shared JS unchanged.
+**Do not do:** generate geometry the photograph does not show; let a house make or change a
+relief (founder, 19 Oct); open the reveal from cards before the product page has been
+measured; add a machine-learning model or a 3D library.
+
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
 **Goal:** campaign registry (UTM ids, spend entries), `paid_campaign` touches already
@@ -3545,3 +3582,36 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   Verified: next build (shared JS 103 kB, unchanged); web unit tests 29; e2e 133/133;
   live checks on a throttled connection (shown, sprays, lifts; search loader on and off;
   bag spritz).
+
+- 2026-10-19 · Claude Code session · P5.1.4 COMPLETE · Le Dévoilement, the first of the
+  four approved experiences. A perfume's bottle is lifted out of its own photograph on the
+  product page and stood up in light, its notes orbiting it. Built:
+  - `makeRelief` in the domain: cut-out, relief map and placement, automatic or traced.
+    Pure and tested (34 tests).
+  - Migration 0032 `product_media_reliefs`, with RLS and a repository tested against
+    Postgres (12 tests).
+  - The `reliefs.*` router: platform only, verified uploads, audited (11 tests).
+  - The storefront stage: plain WebGL, loaded on press, `inert` page behind it.
+  - The console tool `/ops/reliefs`, running the pipeline in a worker.
+  - Migration 0033, adding the `reveal_open` event, defined first in
+    ANALYTICS_DEFINITIONS §2b.
+
+  Found and fixed on the way:
+  - The renderer drew during the photograph's flight.
+  - React's class name wiped the room's state; it moved to data attributes.
+  - The WebGL context was lost under React's double effect in development.
+  - Notes ran off a phone screen.
+  - The theme switch claimed `switch` before it knew its state (an older bug the audit
+    caught).
+
+  Verified:
+  - Domain 721, database relief, parity, policy and read-model 94, API 366, i18n 61,
+    tokens 124: all pass.
+  - Browser suite: the 133 existing tests pass in the full run. The new reveal journey
+    passes 3/3 when run on its own, after a fix to sign in its own operator.
+  - `audit.mjs`: no findings in light or dark at all six widths on the product pages
+    (AR and EN), the open reveal and both console screens.
+  - Guard clean; typecheck clean.
+  - `next build` succeeds: shared JS 103 kB, unchanged. The stage is in no first-load
+    chunk of `/p/[slug]`.
+  - Seeded locally from the mock photographs' derived files (DEBT #26).

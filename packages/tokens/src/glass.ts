@@ -27,6 +27,12 @@ export interface GlassPalette {
   air: string;
   /** The light the bottle throws onto the surface it stands on. */
   caustic: string;
+  /**
+   * The perfume in the air: the family's colour as light, for the reveal's
+   * mist and its notes on the dark stage (Le Dévoilement, 19 Oct 2026). The
+   * lightest stop — mist is lit from within, never a shadow.
+   */
+  mist: string;
 }
 
 const clamp = (n: number): number => Math.min(255, Math.max(0, Math.round(n)));
@@ -93,6 +99,7 @@ export function glassPalette(family: ScentFamily | string): GlassPalette {
     core: mix(base, WARM_WHITE, 0.3),
     air: emptyGlass(mix(base, BLACK, 0.5)),
     caustic: mix(base, WARM_WHITE, 0.4),
+    mist: mix(base, WARM_WHITE, 0.55),
   };
 }
 

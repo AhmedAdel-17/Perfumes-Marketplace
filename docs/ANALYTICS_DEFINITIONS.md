@@ -62,8 +62,19 @@ ratio of two different periods' counts.
 | Searched | `search` | `/search` with words typed |
 | Narrowed | `filter_apply` | `/search` with filters and no words |
 | Looked at a perfume | `product_view` | `/p/[slug]`, carrying the perfume |
+| Opened its reveal | `reveal_open` | the reveal control on `/p/[slug]`, carrying the perfume (since 19 Oct 2026, 0033) |
 | Put one in the bag | `cart_add` | the add-to-bag control |
 | Started checkout | `checkout_start` | `/checkout` |
+
+**`reveal_open` is not a stage every visitor passes.** The reveal (Le Dévoilement — the
+bottle lifted out of its photograph) exists only on perfumes the content team has made a
+relief for, and opening it is a choice. It sits in the table where a visitor meets it, but
+its count is read as *uptake*, not as a step of the funnel. **Its success measure, set
+before it shipped (founder, 19 Oct 2026):** of the visitors who opened a perfume's reveal,
+the share who then put *that* perfume in the bag — against the same share for visitors who
+looked at a perfume that HAS a reveal without opening it. Visitors, not events, on both
+sides; the same perfumes on both sides, so a comparison with perfumes that have no reveal
+cannot flatter it.
 
 **Counted two ways, and the difference matters.** *Events* counts rows; *visitors* counts
 distinct anonymous ids. One person refreshing a perfume page twenty times is one visitor

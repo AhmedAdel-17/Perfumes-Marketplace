@@ -244,6 +244,7 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
     const rows = await db
       .select({
         productId: schema.productMedia.productId,
+        mediaId: schema.productMedia.id,
         storageKey: schema.productMedia.storagePath,
         alt: schema.productMedia.altText,
         width: schema.productMedia.width,
@@ -269,6 +270,7 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
         r.width !== null && r.height !== null)
       .map((r): CataloguePhotoRow => ({
         productId: r.productId,
+        mediaId: r.mediaId,
         storageKey: r.storageKey,
         alt: r.alt,
         width: r.width,
