@@ -1,0 +1,35 @@
+/*
+  Experience prototypes, 18 Oct 2026 — shared base. The real palettes
+  (packages/tokens), the real faces, the real motion curves. Served by the
+  `experiences` launch config (python http.server on 127.0.0.1:4200 from the
+  repository root), because WebGL may not read images from file://.
+*/
+:root {
+  --ground: #E7E2D8; --raised: #F4F1EB; --raised2: #F9F7F2; --line: #CEC6B8;
+  --ink: #221F1B; --ink2: #5A554D; --ink3: #67615A; --accent: #4D5A2C; --on-accent: #F4F1EB;
+  --f-display: 'Noto Naskh Arabic', serif; --f-body: 'IBM Plex Sans Arabic', sans-serif;
+  --f-label: 'IBM Plex Mono', monospace; --f-latin: 'Newsreader', Georgia, serif;
+  --out: cubic-bezier(0.16, 1, 0.3, 1); --inout: cubic-bezier(0.65, 0, 0.35, 1); --entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --quick: 240ms; --base: 420ms; --slow: 640ms; --ceremony: 1600ms;
+}
+/* The stage is Noir whatever the page is: opening a perfume dims the room. */
+.noir, [data-theme='dark'] {
+  --ground: #201E1C; --raised: #2A2725; --raised2: #332F2C; --line: #4E4844;
+  --ink: #F8F3EB; --ink2: #CDC5BA; --ink3: #B1A89C; --accent: #EDA53E; --on-accent: #201E1C;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.7; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.latin { font-family: var(--f-label); letter-spacing: 2.4px; unicode-bidi: isolate; text-transform: uppercase; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: 32px; }
+.kicker { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-label); font-size: 10.5px; letter-spacing: 2.4px; color: var(--accent); text-transform: uppercase; }
+.kicker::after { content: ''; width: 48px; height: 1px; background: currentColor; }
+.display { font-family: var(--f-display); font-weight: 500; line-height: 1.25; }
+.mast { display: flex; align-items: center; justify-content: space-between; height: 72px; border-bottom: 1px solid var(--ink); }
+.wordmark { font-family: var(--f-latin); font-size: 24px; letter-spacing: .3em; direction: ltr; }
+.mast nav { display: flex; gap: 28px; font-size: 13px; color: var(--ink2); }
+.mast nav a[aria-current] { color: var(--ink); border-bottom: 1px solid var(--accent); }
+.note-chip svg, .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

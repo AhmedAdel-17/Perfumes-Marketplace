@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experience 03 · La Carte olfactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_shared.css">
+<style>
+/*
+  EXPERIENCE 03 — LA CARTE OLFACTIVE (the scent map).
+  The catalogue as a night sky, drawn as an astrolabe. The seven families are
+  the sectors of the wheel, ordered as a perfumer's wheel is — each family
+  between its relatives. Every perfume stands in its family; every note is a
+  star in the family it belongs to by nature; and lines join each perfume to
+  its notes, so a perfume's character is literally its constellation: one that
+  reaches across the sky is a perfume of contrasts.
+  Turn the sky with a drag (it carries on, and settles); touch a perfume to see
+  its constellation, a note to see every perfume that carries it, a family to
+  bring it round. It is the catalogue's own data drawn, nothing more — which is
+  why the controlled vocabulary of notes and families matters (CLAUDE.md §4).
+*/
+body { overflow-x: hidden; }
+.mast { border-bottom-color: var(--line); }
+.atlas { display: grid; grid-template-columns: 380px 1fr; gap: 24px; min-height: calc(100vh - 72px); }
+.panel { position: relative; z-index: 2; align-self: center; padding-block: 32px; }
+.view { display: grid; gap: 16px; animation: view-in 460ms var(--entrance) both; }
+@keyframes view-in { from { opacity: 0; transform: translateY(10px); } }
+.view h1 { font-size: 48px; line-height: 1.2; }
+.view h2 { font-size: 40px; line-height: 1.2; }
+.view p { color: var(--ink2); font-size: 16px; max-width: 34ch; }
+.view .en-name { font-family: var(--f-latin); font-style: italic; font-weight: 300; font-size: 19px; color: var(--ink2); direction: ltr; text-align: end; margin-top: -10px; }
+.legend { list-style: none; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.legend button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink2); text-align: start; transition: color var(--base) var(--out); }
+.legend button:hover, .legend button:focus-visible { color: var(--ink); outline: none; }
+.legend .latin { font-size: 8.5px; color: var(--ink3); margin-inline-start: auto; padding-inline-end: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 10px var(--c); }
+.howto { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--ink3); }
+.howto .latin { font-size: 8.5px; }
+.figure { display: grid; place-items: center; height: 230px; position: relative; }
+.figure::before { content: ''; position: absolute; inset: 10% 20%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 35%, transparent), transparent); }
+.figure img { position: relative; height: 210px; width: auto; max-width: 100%; object-fit: contain; filter: drop-shadow(0 18px 24px rgba(0,0,0,.45)); animation: float 6s var(--inout) infinite alternate; }
+@keyframes float { to { transform: translateY(-8px); } }
+dl.facts { display: grid; grid-template-columns: auto 1fr; border-top: 1px solid var(--line); }
+dl.facts dt, dl.facts dd { padding-block: 9px; border-bottom: 1px solid var(--line); font-size: 14px; }
+dl.facts dt { color: var(--ink3); padding-inline-end: 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; }
+.chip .icon { width: 15px; height: 15px; color: var(--c); }
+.row-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; height: 48px; padding-inline: 22px; border: 1px solid var(--line); font-size: 14px; transition: border-color var(--base) var(--out), color var(--base) var(--out); }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.solid { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.btn.solid:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.mini { list-style: none; border-top: 1px solid var(--line); }
+.mini li { display: flex; align-items: center; gap: 14px; padding-block: 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.mini img { height: 46px; width: 34px; object-fit: contain; }
+.mini .nm { font-family: var(--f-display); font-size: 18px; line-height: 1.3; }
+.mini .hs { font-family: var(--f-label); font-size: 8.5px; letter-spacing: 1.6px; color: var(--ink3); }
+.mini .pr { margin-inline-start: auto; font-family: var(--f-label); font-size: 13px; }
+.back { justify-self: start; font-size: 12.5px; color: var(--ink3); min-height: 44px; }
+.back:hover { color: var(--accent); }
+
+.sky-wrap { position: relative; display: grid; place-items: center; min-height: 0; }
+#sky { width: min(100%, calc(100vh - 96px)); aspect-ratio: 1; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; overflow: visible; }
+#sky.grabbing { cursor: grabbing; }
+/* The items carry their own focus marks; the sky itself takes none. */
+#sky:focus, #sky:focus-visible { outline: none; }
+.fs { fill: var(--ink); animation: twinkle 5s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes twinkle { 50% { opacity: .2; } }
+.wedge { fill: var(--glow); fill-opacity: .035; transition: fill-opacity 500ms var(--out); cursor: pointer; }
+.wedge.lit { fill-opacity: .12; }
+.sep { stroke: var(--line); stroke-width: 1; opacity: .8; }
+.ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.ring.dash { stroke-dasharray: 2 7; opacity: .8; }
+.limb { stroke: var(--ink3); stroke-width: .8; opacity: .5; }
+.limb.major { opacity: .95; }
+.thread { fill: none; stroke: var(--glow); stroke-width: .7; opacity: .13; transition: opacity 400ms var(--out); }
+.thread.dim { opacity: .04; }
+.hl { fill: none; stroke: var(--glow); stroke-width: 1.3; stroke-linecap: round; opacity: 0; stroke-dasharray: var(--len); stroke-dashoffset: var(--len);
+  transition: stroke-dashoffset 900ms var(--out), opacity 350ms var(--out); }
+.hl.on { opacity: .95; stroke-dashoffset: 0; }
+.item { cursor: pointer; transition: opacity 450ms var(--out); outline: none; }
+.item.dim { opacity: .28; }
+.hit { fill: transparent; }
+.star .core { fill: var(--ink); transition: r 350ms var(--out); }
+.star .halo { fill: var(--glow); opacity: .2; transition: opacity 350ms var(--out), r 350ms var(--out); }
+.star.lit .halo { opacity: .55; r: 13px; }
+.star.lit .core { r: 3.6px; }
+.star:focus-visible .halo, .planet:focus-visible .aura-ring { stroke: var(--accent); stroke-width: 1.2; }
+.nlabel .ar { font-family: var(--f-body); font-size: 12.5px; fill: var(--ink2); transition: fill 300ms; }
+.nlabel .en { font-family: var(--f-label); font-size: 7.5px; letter-spacing: 1.6px; fill: var(--glow); opacity: 0; transition: opacity 300ms; }
+.star.lit .nlabel .ar { fill: var(--ink); }
+.star.lit .nlabel .en { opacity: 1; }
+.planet .glow { transition: opacity 400ms var(--out); opacity: .5; }
+.planet.lit .glow { opacity: 1; }
+.planet .aura-ring { fill: none; stroke: var(--glow); stroke-width: .8; opacity: .5; stroke-dasharray: 1 3; }
+.planet .body { transition: transform 500ms var(--out); transform-box: fill-box; transform-origin: center; }
+.planet.lit .body { transform: scale(1.1); }
+.pname { font-family: var(--f-display); font-size: 14px; fill: var(--ink); text-anchor: middle; }
+.flabel .ar { font-family: var(--f-display); font-size: 17px; fill: var(--ink); text-anchor: middle; }
+.flabel .en { font-family: var(--f-label); font-size: 7.5px; letter-spacing: 2px; fill: var(--glow); text-anchor: middle; }
+.flabel.empty .ar { fill: var(--ink3); }
+.c-ar { font-family: var(--f-display); font-size: 21px; fill: var(--ink); text-anchor: middle; }
+.c-en { font-family: var(--f-label); font-size: 7.5px; letter-spacing: 2px; fill: var(--ink3); text-anchor: middle; }
+.hint-line { position: absolute; inset-block-end: 14px; inset-inline: 0; display: flex; justify-content: center; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink3); pointer-events: none; }
+.hint-line .latin { font-size: 9px; }
+@media (max-width: 980px) { .atlas { grid-template-columns: 1fr; } .panel { order: 2; padding-inline: 24px; } #sky { width: 100%; } }
+</style>
+</head>
+<body class="noir">
+<header class="wrap mast">
+  <span class="wordmark">DIYAR</span>
+  <nav><a href="01-devoilement.html">Le Dévoilement</a><a href="02-la-duree.html">La Durée</a><a aria-current="page" href="03-carte-olfactive.html">La Carte</a><a href="04-details.html">Les Détails</a></nav>
+</header>
+<main class="wrap atlas">
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+  <div class="sky-wrap">
+    <svg id="sky" viewBox="-440 -440 880 880" role="group" aria-label="خريطة العطور: العائلات والعطور والنوتات"></svg>
+    <span class="hint-line"><span>اسحب لتدوير السماء</span><span class="latin">DRAG TO TURN THE SKY</span></span>
+  </div>
+</main>
+
+<script type="module">
+import { PERFUMES, FAMILY, icon, EASE, reducedMotion } from './_data.js';
+
+const $ = (s) => document.querySelector(s);
+const still = reducedMotion();
+const NS = 'http://www.w3.org/2000/svg';
+const node = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.append(e);
+  return e;
+};
+const TAU = Math.PI * 2;
+const deg = (r) => (r * 180) / Math.PI;
+
+// ---------------------------------------------------------------- the wheel's order and the notes' families
+// Neighbours are relatives, as on a perfumer's wheel: fresh beside floral,
+// floral softening into musk, musk into gourmand, gourmand warming into amber,
+// amber darkening into oud, oud into woods, and woods back to fresh.
+const ORDER = ['fresh', 'floral', 'musk', 'gourmand', 'amber', 'oud', 'woody'];
+const W = TAU / ORDER.length;
+const sectorStart = (i) => -Math.PI / 2 + i * W;
+// The family a note belongs to by nature — in production, a column of the notes glossary.
+const NOTE_FAMILY = {
+  Bergamot: 'fresh', Lemon: 'fresh', Mint: 'fresh', Lime: 'fresh', 'Green tea': 'fresh', Palm: 'fresh',
+  'Damask rose': 'floral', 'Taif rose': 'floral', Jasmine: 'floral', 'Ylang-ylang': 'floral',
+  Musk: 'musk', 'White musk': 'musk',
+  Saffron: 'amber', Cardamom: 'amber', Amber: 'amber',
+  Oud: 'oud', Sandalwood: 'woody', Cedarwood: 'woody',
+};
+const TIER_AR = { top: 'القمة', heart: 'القلب', base: 'القاعدة' };
+// The same words in the construct state, for "in the heart of …".
+const TIER_OF = { top: 'قمة', heart: 'قلب', base: 'قاعدة' };
+const hash = (s) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 1000) / 1000; };
+
+const notes = new Map();
+for (const p of PERFUMES) for (const tier of ['top', 'heart', 'base']) for (const n of p.notes[tier]) {
+  if (!notes.has(n.en)) notes.set(n.en, { ...n, family: NOTE_FAMILY[n.en] ?? p.family, perfumes: [] });
+  notes.get(n.en).perfumes.push({ p, tier });
+}
+const byFamily = (list) => Object.fromEntries(ORDER.map((f) => [f, list.filter((x) => x.family === f)]));
+const notesBy = byFamily([...notes.values()]);
+const perfumesBy = byFamily(PERFUMES);
+
+// Stars sit in their family's sector, staggered on two orbits, never in a ruled line.
+for (const [fam, list] of Object.entries(notesBy)) {
+  const i = ORDER.indexOf(fam);
+  list.forEach((n, j) => {
+    const a = sectorStart(i) + W * (0.14 + 0.72 * (list.length === 1 ? 0.5 : j / (list.length - 1)));
+    const r = 286 + (j % 2 ? 42 : 0) + (hash(n.en) - 0.5) * 18;
+    Object.assign(n, { a, r, x: Math.cos(a) * r, y: Math.sin(a) * r });
+  });
+}
+for (const [fam, list] of Object.entries(perfumesBy)) {
+  const i = ORDER.indexOf(fam);
+  list.forEach((p, j) => {
+    const a = sectorStart(i) + W * (list.length === 1 ? 0.5 : 0.28 + 0.44 * (j / (list.length - 1)));
+    const r = 178;
+    p.map = { a, r, x: Math.cos(a) * r, y: Math.sin(a) * r };
+  });
+}
+
+// ---------------------------------------------------------------- drawing the sky
+const sky = $('#sky');
+const defs = node('defs', {}, sky);
+for (const f of ORDER) {
+  const g = node('radialGradient', { id: `glow-${f}` }, defs);
+  node('stop', { offset: '0', 'stop-color': FAMILY[f].mist, 'stop-opacity': '.5' }, g);
+  node('stop', { offset: '1', 'stop-color': FAMILY[f].mist, 'stop-opacity': '0' }, g);
+}
+
+// The field: far stars, turning slower than the wheel, for depth.
+const field = node('g', {}, sky);
+for (let i = 0; i < 230; i++) {
+  const a = hash(`a${i}`) * TAU, r = Math.sqrt(hash(`r${i}`)) * 440;
+  const c = node('circle', { cx: (Math.cos(a) * r).toFixed(1), cy: (Math.sin(a) * r).toFixed(1), r: (0.35 + hash(`s${i}`) * 0.9).toFixed(2), class: 'fs', opacity: (0.18 + hash(`o${i}`) * 0.45).toFixed(2) }, field);
+  c.style.setProperty('--d', `${(-hash(`d${i}`) * 5).toFixed(2)}s`);
+  if (still) c.style.animation = 'none';
+}
+
+const wheel = node('g', {}, sky);
+const wedgeOf = {};
+ORDER.forEach((f, i) => {
+  const a0 = sectorStart(i), a1 = a0 + W, r0 = 112, r1 = 362;
+  const p = (r, a) => `${(Math.cos(a) * r).toFixed(2)} ${(Math.sin(a) * r).toFixed(2)}`;
+  const d = `M${p(r0, a0)}L${p(r1, a0)}A${r1} ${r1} 0 0 1 ${p(r1, a1)}L${p(r0, a1)}A${r0} ${r0} 0 0 0 ${p(r0, a0)}Z`;
+  const w = node('path', { d, class: 'wedge', 'data-kind': 'family', 'data-id': f }, wheel);
+  w.style.setProperty('--glow', FAMILY[f].mist);
+  wedgeOf[f] = w;
+  node('line', { x1: Math.cos(a0) * r0, y1: Math.sin(a0) * r0, x2: Math.cos(a0) * 378, y2: Math.sin(a0) * 378, class: 'sep' }, wheel);
+});
+node('circle', { r: 112, class: 'ring' }, wheel);
+node('circle', { r: 240, class: 'ring dash' }, wheel);
+node('circle', { r: 362, class: 'ring' }, wheel);
+node('circle', { r: 378, class: 'ring' }, wheel);
+// The limb: an astrolabe's graduated rim, every three degrees.
+for (let k = 0; k < 120; k++) {
+  const a = (k / 120) * TAU, major = k % 5 === 0, r0 = major ? 364 : 368;
+  node('line', { x1: Math.cos(a) * r0, y1: Math.sin(a) * r0, x2: Math.cos(a) * 376, y2: Math.sin(a) * 376, class: major ? 'limb major' : 'limb' }, wheel);
+}
+
+// The threads: every perfume to every one of its notes, faint, always there.
+const curve = (p, n) => { const mx = (p.x + n.x) / 2 * 0.7, my = (p.y + n.y) / 2 * 0.7; return `M${p.x.toFixed(1)} ${p.y.toFixed(1)}Q${mx.toFixed(1)} ${my.toFixed(1)} ${n.x.toFixed(1)} ${n.y.toFixed(1)}`; };
+const threads = node('g', {}, wheel), highlights = node('g', {}, wheel);
+const links = [];
+for (const p of PERFUMES) for (const tier of ['top', 'heart', 'base']) for (const n0 of p.notes[tier]) {
+  const n = notes.get(n0.en);
+  const d = curve(p.map, n);
+  const base = node('path', { d, class: 'thread' }, threads);
+  const hl = node('path', { d, class: 'hl' }, highlights);
+  for (const e of [base, hl]) e.style.setProperty('--glow', FAMILY[p.family].mist);
+  hl.style.setProperty('--len', hl.getTotalLength().toFixed(0));
+  links.push({ p, n, base, hl });
+}
+
+// Uprights: everything that must stay level as the wheel turns (bottles, words).
+const uprights = [];
+const upright = (x, y, parent, attrs = {}) => { const g = node('g', attrs, parent); uprights.push({ g, x, y }); return g; };
+
+const starLayer = node('g', {}, wheel);
+for (const n of notes.values()) {
+  const g = node('g', { class: 'item star', tabindex: '0', role: 'button', 'data-kind': 'note', 'data-id': n.en, 'aria-label': `نوتة ${n.ar}` }, starLayer);
+  g.style.setProperty('--glow', FAMILY[n.family].mist);
+  node('circle', { cx: n.x, cy: n.y, r: 20, class: 'hit' }, g);
+  node('circle', { cx: n.x, cy: n.y, r: 8, class: 'halo' }, g);
+  node('circle', { cx: n.x, cy: n.y, r: 2.4, class: 'core' }, g);
+  const label = upright(n.x, n.y, g, { class: 'nlabel' });
+  const ar = node('text', { class: 'ar', direction: 'ltr' }, label); ar.textContent = n.ar;
+  const en = node('text', { class: 'en', direction: 'ltr', dy: 13 }, label); en.textContent = n.en.toUpperCase();
+  n.el = g; n.label = { ar, en };
+}
+
+const planetLayer = node('g', {}, wheel);
+for (const p of PERFUMES) {
+  const g = node('g', { class: 'item planet', tabindex: '0', role: 'button', 'data-kind': 'perfume', 'data-id': p.slug, 'aria-label': `${p.name} من ${p.house}` }, planetLayer);
+  g.style.setProperty('--glow', FAMILY[p.family].mist);
+  const u = upright(p.map.x, p.map.y, g);
+  node('circle', { r: 58, class: 'glow', fill: `url(#glow-${p.family})` }, u);
+  node('circle', { r: 44, class: 'aura-ring' }, u);
+  node('circle', { r: 46, class: 'hit' }, u);
+  const body = node('g', { class: 'body' }, u);
+  node('image', { href: p.cutout, x: -36, y: -40, width: 72, height: 72, preserveAspectRatio: 'xMidYMid meet' }, body);
+  node('text', { class: 'pname', y: 50 }, u).textContent = p.name;
+  p.el = g;
+}
+
+const labelLayer = node('g', {}, wheel);
+ORDER.forEach((f, i) => {
+  const a = sectorStart(i) + W / 2, r = 404;
+  const g = upright(Math.cos(a) * r, Math.sin(a) * r, labelLayer, { class: `flabel${perfumesBy[f].length ? '' : ' empty'}` });
+  g.style.setProperty('--glow', FAMILY[f].mist);
+  node('text', { class: 'ar', y: 2 }, g).textContent = FAMILY[f].ar;
+  node('text', { class: 'en', y: 16, direction: 'ltr' }, g).textContent = FAMILY[f].en.toUpperCase();
+});
+
+// The centre: the sky's title, or the family under the pointer.
+const centre = node('g', {}, sky);
+const cAr = node('text', { class: 'c-ar', y: -4 }, centre);
+const cEn = node('text', { class: 'c-en', y: 20, direction: 'ltr' }, centre);
+const setCentre = (ar, en) => { cAr.textContent = ar; cEn.textContent = en; };
+const DEFAULT_CENTRE = ['خريطة العطور', `${PERFUMES.length} PERFUMES · ${notes.size} NOTES`];
+setCentre(...DEFAULT_CENTRE);
+
+// ---------------------------------------------------------------- turning
+let angle = -0.18, omega = 0, tweenTo = null, drag = null, lastInput = 0;
+let pointer = { x: 0, y: 0 };
+function place(now) {
+  const d = deg(angle);
+  wheel.setAttribute('transform', `rotate(${d.toFixed(3)})`);
+  field.setAttribute('transform', `translate(${(pointer.x * -10).toFixed(2)} ${(pointer.y * -10).toFixed(2)}) rotate(${(d * 0.35).toFixed(3)})`);
+  for (const u of uprights) u.g.setAttribute('transform', `translate(${u.x.toFixed(2)} ${u.y.toFixed(2)}) rotate(${(-d).toFixed(3)})`);
+  // Each note's label sits outward from its star, on the side away from the centre.
+  for (const n of notes.values()) {
+    const sa = n.a + angle, right = Math.cos(sa) >= 0;
+    const dx = Math.cos(sa) * 14, dy = Math.sin(sa) * 14 + 4;
+    for (const t of [n.label.ar, n.label.en]) { t.setAttribute('x', dx.toFixed(1)); t.setAttribute('text-anchor', right ? 'start' : 'end'); }
+    n.label.ar.setAttribute('y', dy.toFixed(1)); n.label.en.setAttribute('y', (dy + 13).toFixed(1));
+  }
+}
+const local = (e) => {
+  const r = sky.getBoundingClientRect();
+  return { x: ((e.clientX - r.left) / r.width - 0.5) * 880, y: ((e.clientY - r.top) / r.height - 0.5) * 880 };
+};
+const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
+sky.addEventListener('pointerdown', (e) => {
+  const p = local(e);
+  drag = { id: e.pointerId, a: Math.atan2(p.y, p.x), t: performance.now(), moved: 0, target: e.target.closest('[data-kind]') };
+  sky.setPointerCapture(e.pointerId);
+  sky.classList.add('grabbing');
+  omega = 0; tweenTo = null;
+});
+sky.addEventListener('pointermove', (e) => {
+  const r = sky.getBoundingClientRect();
+  pointer = { x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 };
+  lastInput = performance.now();
+  if (!drag || e.pointerId !== drag.id) return;
+  const p = local(e), a = Math.atan2(p.y, p.x), now = performance.now();
+  const da = wrapPi(a - drag.a), dt = Math.max(1, now - drag.t) / 1000;
+  angle += da;
+  omega = omega * 0.6 + (da / dt) * 0.4;
+  drag.moved += Math.abs(da) * Math.hypot(p.x, p.y);
+  drag.a = a; drag.t = now;
+});
+const release = (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  sky.classList.remove('grabbing');
+  // A press that did not turn the sky is a choice.
+  if (drag.moved < 8) { activate(drag.target); omega = 0; }
+  if (still) omega = 0;
+  drag = null;
+};
+sky.addEventListener('pointerup', release);
+sky.addEventListener('pointercancel', release);
+
+// ---------------------------------------------------------------- focus and highlight
+let hover = null, chosen = null;
+const ref = (el) => (el ? { kind: el.dataset.kind, id: el.dataset.id } : null);
+sky.addEventListener('pointerover', (e) => { if (!drag) { hover = ref(e.target.closest('.item, .wedge')); highlight(); } });
+sky.addEventListener('pointerleave', () => { hover = null; highlight(); });
+sky.addEventListener('focusin', (e) => { hover = ref(e.target.closest('.item')); highlight(); });
+sky.addEventListener('focusout', () => { hover = null; highlight(); });
+sky.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(e.target.closest('[data-kind]')); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); spinTo(angle + (e.key === 'ArrowLeft' ? -W : W)); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { chosen = null; hover = null; highlight(); renderPanel(); } });
+
+function activate(el) {
+  chosen = ref(el);
+  if (chosen?.kind === 'family') spinTo(-(sectorStart(ORDER.indexOf(chosen.id)) + W / 2) - Math.PI / 2);
+  highlight(); renderPanel();
+}
+function spinTo(target) {
+  // The nearest way round.
+  const goal = angle + wrapPi(target - angle);
+  tweenTo = { from: angle, to: goal, start: performance.now(), ms: still ? 1 : 1100 };
+  omega = 0;
+}
+
+function highlight() {
+  const h = hover ?? chosen;
+  const litP = new Set(), litN = new Set(), litF = new Set(), litLinks = new Set();
+  if (h?.kind === 'perfume') {
+    const p = PERFUMES.find((x) => x.slug === h.id);
+    litP.add(p); links.filter((l) => l.p === p).forEach((l) => { litLinks.add(l); litN.add(l.n); });
+  } else if (h?.kind === 'note') {
+    const n = notes.get(h.id);
+    litN.add(n); links.filter((l) => l.n === n).forEach((l) => { litLinks.add(l); litP.add(l.p); });
+  } else if (h?.kind === 'family') {
+    litF.add(h.id);
+    perfumesBy[h.id].forEach((p) => litP.add(p)); notesBy[h.id].forEach((n) => litN.add(n));
+    links.filter((l) => l.p.family === h.id).forEach((l) => litLinks.add(l));
+  }
+  const any = !!h;
+  for (const p of PERFUMES) { p.el.classList.toggle('lit', litP.has(p)); p.el.classList.toggle('dim', any && !litP.has(p)); }
+  for (const n of notes.values()) { n.el.classList.toggle('lit', litN.has(n)); n.el.classList.toggle('dim', any && !litN.has(n)); }
+  for (const l of links) { l.hl.classList.toggle('on', litLinks.has(l)); l.base.classList.toggle('dim', any && !litLinks.has(l)); }
+  for (const f of ORDER) wedgeOf[f].classList.toggle('lit', litF.has(f) || (h?.kind === 'perfume' && PERFUMES.find((x) => x.slug === h.id)?.family === f));
+  if (h?.kind === 'family') setCentre(FAMILY[h.id].ar, `${FAMILY[h.id].en.toUpperCase()} · ${perfumesBy[h.id].length} PERFUME${perfumesBy[h.id].length === 1 ? '' : 'S'}`);
+  else setCentre(...DEFAULT_CENTRE);
+}
+
+// ---------------------------------------------------------------- the panel
+const panel = $('#panel');
+const priceOf = (p) => `${p.price} <span class="latin" style="font-size:9px">EGP</span>`;
+const miniList = (list) => `<ul class="mini">${list.map((p) => `
+  <li data-pick="${p.slug}"><img src="${p.cutout}" alt=""><div><div class="nm">${p.name}</div><div class="hs latin">${p.houseEn}</div></div><span class="pr">${priceOf(p)}</span></li>`).join('')}</ul>`;
+function renderPanel() {
+  const c = chosen;
+  let html = '';
+  if (!c) {
+    html = `
+      <span class="kicker">Experience 03 — La Carte olfactive</span>
+      <h1 class="display">خريطة العطور</h1>
+      <p>كل عطر في عائلته، وكل نوتة نجمة في عائلتها، والخيوط تصل كل عطر بنوتاته — فشخصية العطر هي كوكبته. مرّر على عطر لترى كوكبته، أو على نجمة لترى كل عطر يحملها.</p>
+      <ul class="legend">${ORDER.map((f) => `<li><button type="button" data-family="${f}" style="--c:${FAMILY[f].mist}"><span class="dot"></span>${FAMILY[f].ar}<span class="latin">${perfumesBy[f].length}</span></button></li>`).join('')}</ul>
+      <div class="howto"><span>اسحب لتدوير السماء · اضغط لتختار</span><span class="latin">DRAG · TOUCH · ARROWS</span></div>`;
+  } else if (c.kind === 'perfume') {
+    const p = PERFUMES.find((x) => x.slug === c.id), f = FAMILY[p.family];
+    html = `
+      <button class="back" type="button" data-back>→ كل الخريطة</button>
+      <div class="figure" style="--c:${f.mist}"><img src="${p.cutout}" alt="${p.name}"></div>
+      <span class="kicker">${p.houseEn} · EST. ${p.founded}</span>
+      <h2 class="display">${p.name}</h2>
+      <div class="en-name">${p.nameEn}</div>
+      <dl class="facts">
+        ${['top', 'heart', 'base'].map((t) => `<dt>${TIER_AR[t]}</dt><dd><span class="chips">${p.notes[t].map((n) => `<span class="chip" style="--c:${FAMILY[notes.get(n.en).family].mist}">${icon(n.icon)}${n.ar}</span>`).join('')}</span></dd>`).join('')}
+        <dt>العائلة</dt><dd>${f.ar}</dd>
+      </dl>
+      <div class="row-actions"><a class="btn solid" href="01-devoilement.html?open=${p.slug}">اكشف العطر · ${priceOf(p)}</a><a class="btn" href="02-la-duree.html?p=${p.slug}">يومه على الجلد</a></div>`;
+  } else if (c.kind === 'note') {
+    const n = notes.get(c.id), f = FAMILY[n.family];
+    const list = [...new Set(n.perfumes.map((x) => x.p))];
+    html = `
+      <button class="back" type="button" data-back>→ كل الخريطة</button>
+      <span class="kicker" style="color:${f.mist}">${n.en} · ${f.en}</span>
+      <h2 class="display" style="display:flex;align-items:center;gap:14px"><span style="color:${f.mist};display:inline-flex">${icon(n.icon).replace('class="icon"', 'class="icon" style="width:34px;height:34px;stroke-width:1"')}</span>${n.ar}</h2>
+      <p>نوتة من عائلة ${f.ar}. تجدها في ${list.length === 1 ? 'عطر واحد' : list.length === 2 ? 'عطرين' : `${list.length} عطور`} على الخريطة — ${n.perfumes.map((x) => `في ${TIER_OF[x.tier]} ${x.p.name}`).join('، و')}.</p>
+      ${miniList(list)}`;
+  } else if (c.kind === 'family') {
+    const f = FAMILY[c.id], list = perfumesBy[c.id];
+    html = `
+      <button class="back" type="button" data-back>→ كل الخريطة</button>
+      <span class="kicker" style="color:${f.mist}">${f.en} · ${notesBy[c.id].length} NOTES</span>
+      <h2 class="display">${f.ar}</h2>
+      <p>${list.length ? `في هذه العائلة ${list.length === 1 ? 'عطر واحد' : `${list.length} عطور`} حتى الآن، ونوتاتها: ${notesBy[c.id].map((n) => n.ar).join('، ')}.` : 'لا عطور في هذه العائلة بعد. حين تنضم دار بعطر منها يظهر هنا في مكانه.'}</p>
+      ${list.length ? miniList(list) : ''}`;
+  }
+  panel.innerHTML = `<div class="view">${html}</div>`;
+}
+panel.addEventListener('click', (e) => {
+  const fam = e.target.closest('[data-family]'), pick = e.target.closest('[data-pick]'), back = e.target.closest('[data-back]');
+  if (fam) activate(wedgeOf[fam.dataset.family]);
+  if (pick) activate(PERFUMES.find((p) => p.slug === pick.dataset.pick).el);
+  if (back) { chosen = null; highlight(); renderPanel(); }
+});
+panel.addEventListener('pointerover', (e) => {
+  const fam = e.target.closest('[data-family]');
+  if (fam) { hover = { kind: 'family', id: fam.dataset.family }; highlight(); }
+});
+panel.addEventListener('pointerout', (e) => { if (e.target.closest('[data-family]')) { hover = null; highlight(); } });
+
+// ---------------------------------------------------------------- the frame
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (tweenTo) {
+    const k = Math.min(1, (now - tweenTo.start) / tweenTo.ms);
+    angle = tweenTo.from + (tweenTo.to - tweenTo.from) * EASE.inOut(k);
+    if (k >= 1) tweenTo = null;
+  } else if (!drag && !still) {
+    // Thrown, it carries on and settles; left alone, the sky turns by itself.
+    angle += omega * dt;
+    omega *= Math.exp(-dt * 1.6);
+    if (Math.abs(omega) < 0.02 && now - lastInput > 2500 && !hover) angle += 0.018 * dt;
+  }
+  place(now);
+  requestAnimationFrame(frame);
+}
+renderPanel();
+highlight();
+requestAnimationFrame(frame);
+
+// For screenshots: ?pick=<kind>:<id>
+const pick = new URLSearchParams(location.search).get('pick');
+if (pick) {
+  const [kind, id] = pick.split(':');
+  const el = kind === 'family' ? wedgeOf[id] : document.querySelector(`[data-kind="${kind}"][data-id="${id}"]`);
+  setTimeout(() => activate(el), 400);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experience 02 · La Durée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_shared.css">
+<style>
+/*
+  EXPERIENCE 02 — LA DURÉE (a day on the skin).
+  A perfume is not one smell but a sequence: the top notes are gone within the
+  half hour, the heart holds for hours, the base is what is left by evening.
+  Scrolling winds a watch dial through twelve hours on the skin. Its three
+  rings record each tier as the hours pass — thick where the tier is strong,
+  thinning as it fades — the notes sit on their ring like beads and evaporate
+  when their time is over, and the sillage around the dial swells and fades.
+
+  The spans are drawn from the house's DECLARED longevity and projection
+  bands, and the page says so beside the dial at all times: an illustration
+  of a seller-provided band, never a measurement (CLAUDE.md §4).
+*/
+:root { --c-top: #C68A3C; --c-heart: #A8681F; --c-base: #75491A; --c-mist: #F0B35E; }
+.intro { padding-block: 64px 24px; max-width: 760px; }
+.intro h1 { font-size: 52px; margin-top: 18px; }
+.intro p { margin-top: 14px; color: var(--ink2); font-size: 18px; }
+
+/* ------------------------------------------------------------------ the pin */
+.track { position: relative; height: 620vh; }
+.pin { position: sticky; top: 0; height: 100vh; display: grid; grid-template-rows: auto 1fr; padding-block: 18px 58px; overflow: hidden; }
+.pin-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.picker { display: flex; gap: 4px; }
+.pick { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 16px 6px 12px; border: 1px solid transparent; color: var(--ink2);
+  transition: border-color var(--base) var(--out), color var(--base) var(--out), background-color var(--base) var(--out); }
+.pick img { height: 42px; width: auto; transition: transform var(--slow) var(--out); }
+.pick:hover img { transform: translateY(-2px) rotate(-2deg); }
+.pick .nm { display: block; font-family: var(--f-display); font-size: 18px; line-height: 1.3; text-align: start; }
+.pick .hs { display: block; font-family: var(--f-label); font-size: 9px; letter-spacing: 1.8px; color: var(--ink3); text-transform: uppercase; text-align: start; }
+.pick:hover { color: var(--ink); }
+.pick[aria-checked='true'] { border-color: var(--line); background: var(--raised); color: var(--ink); }
+.pick:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.badge { font-family: var(--f-label); font-size: 9.5px; letter-spacing: 2.2px; color: var(--ink3); text-transform: uppercase; }
+
+.pin-main { display: grid; grid-template-columns: minmax(300px, 400px) 1fr; gap: 56px; align-items: center; min-height: 0; }
+
+/* ------------------------------------------------------------------ the story */
+.story { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 16px; }
+.phase { display: grid; gap: 12px; transition: opacity 280ms var(--out), transform 280ms var(--out); }
+.phase.swap { opacity: 0; transform: translateY(10px); }
+.phase h2 { font-size: 42px; line-height: 1.25; }
+.phase p { color: var(--ink2); font-size: 16.5px; max-width: 36ch; min-height: 5.1em; }
+.tiers { list-style: none; border-top: 1px solid var(--line); }
+.tier { display: grid; grid-template-columns: 76px 1fr; gap: 6px 14px; align-items: center; padding-block: 11px; border-bottom: 1px solid var(--line); transition: opacity 240ms linear; }
+.tier .lab { grid-row: span 2; font-size: 13px; color: var(--ink2); }
+.tier .lab .latin { display: block; font-size: 8.5px; letter-spacing: 2px; color: var(--ink3); }
+.tier .notes { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.tier .n { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.tier .n .icon { width: 16px; height: 16px; color: var(--c); }
+.tier .presence { position: relative; height: 1px; background: var(--line); }
+/* Intensity fills from the reading start: the right, in Arabic. */
+.tier .presence i { position: absolute; inset-block: -1px; inset-inline-start: 0; width: 0; background: var(--c); }
+.tier.top { --c: var(--c-top); } .tier.heart { --c: var(--c-heart); } .tier.base { --c: var(--c-base); }
+.source { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink3); max-width: 44ch; }
+.source .latin { flex: none; font-size: 8.5px; letter-spacing: 1.8px; border: 1px solid var(--line); padding: 1px 6px; }
+
+/* ------------------------------------------------------------------ the dial */
+.dial-wrap { position: relative; justify-self: center; height: min(calc(100vh - 190px), 660px); aspect-ratio: 1; max-width: 100%; }
+.dial-wrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.aura { position: absolute; inset: -16%; border-radius: 50%; pointer-events: none; opacity: 0; transform: scale(.6);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c-mist) 70%, transparent) 0%, color-mix(in srgb, var(--c-mist) 30%, transparent) 45%, transparent 100%); }
+.vapour { position: absolute; inset-block-start: -22%; inset-inline-start: -22%; width: 144%; height: 144%; pointer-events: none; }
+.readout { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.readout .lbl { font-family: var(--f-label); font-size: 8.5px; letter-spacing: 2.4px; color: var(--ink3); }
+.readout .time { font-family: var(--f-label); font-size: 34px; line-height: 1.3; letter-spacing: 1px; direction: ltr; font-variant-numeric: tabular-nums; }
+.readout .unit { font-size: 12px; color: var(--ink3); }
+
+.bezel { fill: none; stroke: var(--ink); stroke-width: 1; }
+.bezel.inner { opacity: .25; }
+.sub { fill: none; stroke: var(--line); stroke-width: 1; }
+.g-line { fill: none; stroke: var(--ink); stroke-width: .55; opacity: .17; stroke-dasharray: var(--len); stroke-dashoffset: var(--len);
+  animation: engrave 2.6s var(--inout) forwards; animation-delay: calc(var(--i) * 45ms); }
+@keyframes engrave { to { stroke-dashoffset: 0; } }
+.tick { stroke: var(--ink); stroke-width: .8; opacity: .35; }
+.tick.major { stroke-width: 1.3; opacity: .85; }
+.numeral { font-family: var(--f-label); font-size: 11px; letter-spacing: 1px; fill: var(--ink2); text-anchor: middle; dominant-baseline: central; }
+.ring-guide { fill: none; stroke: var(--ink3); stroke-width: .8; stroke-dasharray: 1 5; opacity: .55; }
+.seg { fill: none; }
+.seg.top { stroke: var(--c-top); } .seg.heart { stroke: var(--c-heart); } .seg.base { stroke: var(--c-base); }
+.ring-name { font-family: var(--f-label); font-size: 8px; letter-spacing: 1.6px; fill: var(--ink3); dominant-baseline: central; }
+
+.bead { --c: var(--c-heart); --on: var(--raised2); transition: opacity 600ms var(--out); }
+.bead.top { --c: var(--c-top); --on: var(--ink); } .bead.base { --c: var(--c-base); }
+.bead .pop { transform-box: fill-box; transform-origin: center; transition: transform 500ms var(--out); animation: bead-in 700ms var(--entrance) backwards; }
+@keyframes bead-in { from { opacity: 0; transform: scale(.4); } }
+.bead-disc { fill: var(--ground); stroke: var(--c); stroke-width: 1; transition: fill 420ms var(--out); }
+.bead-icon { fill: none; stroke: var(--c); stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; transition: stroke 420ms var(--out); }
+.bead.lit .bead-disc { fill: var(--c); }
+.bead.lit .bead-icon { stroke: var(--on); }
+.bead.lit .pop { transform: scale(1.12); }
+.bead.gone { opacity: .2; }
+
+.needle-line { stroke: var(--accent); stroke-width: 1.4; stroke-linecap: round; }
+.needle-tail { fill: var(--accent); }
+.needle-dot { stroke: var(--ground); stroke-width: 1.5; }
+.needle-dot.top { fill: var(--c-top); } .needle-dot.heart { fill: var(--c-heart); } .needle-dot.base { fill: var(--c-base); }
+
+/* ------------------------------------------------------------------ hint and timeline */
+.hint { position: absolute; inset-block-end: 22px; inset-inline: 0; display: flex; justify-content: center; gap: 12px; font-size: 12px; color: var(--ink3); transition: opacity var(--slow) var(--out); }
+.hint .latin { font-size: 9px; }
+.timeline { position: absolute; inset-block-end: 0; inset-inline: 0; height: 1px; background: var(--line); }
+.timeline i { position: absolute; inset-block: 0; inset-inline-start: 0; width: 0; background: var(--ink); }
+
+.coda { padding-block: 96px 120px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; border-top: 1px solid var(--line); }
+.coda h2 { font-size: 34px; }
+.coda p { color: var(--ink2); margin-top: 12px; max-width: 46ch; }
+.cta { display: inline-flex; align-items: center; height: 52px; padding-inline: 28px; margin-top: 24px; background: var(--ink); color: var(--ground); font-weight: 500; position: relative; isolation: isolate; overflow: hidden; }
+.cta::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--accent); transform: scaleX(0); transform-origin: right; transition: transform var(--slow) var(--out); }
+.cta:hover::before { transform: scaleX(1); }
+.note { font-family: var(--f-label); font-size: 11px; line-height: 1.9; color: var(--ink3); border: 1px solid var(--line); padding: 20px 22px; direction: ltr; text-align: left; }
+
+@media (max-width: 980px) {
+  .pin-main { grid-template-columns: 1fr; gap: 12px; }
+  .story { order: 2; } .phase p { min-height: 0; } .tiers, .source { display: none; }
+  .dial-wrap { height: min(52vh, 92vw); }
+  .picker .hs { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="wrap mast">
+  <span class="wordmark">DIYAR</span>
+  <nav><a href="01-devoilement.html">Le Dévoilement</a><a aria-current="page" href="02-la-duree.html">La Durée</a><a href="03-carte-olfactive.html">La Carte</a><a href="04-details.html">Les Détails</a></nav>
+</header>
+<main>
+  <section class="wrap intro">
+    <span class="kicker">Experience 02 — La Durée</span>
+    <h1 class="display">يومٌ على الجلد</h1>
+    <p>العطر ليس رائحة واحدة بل حكاية تتكشّف مع الساعات. مرّر الصفحة لتمضي الساعات على القرص: تتطاير القمة أولًا، ثم يتفتّح القلب، وتبقى القاعدة حتى المساء.</p>
+  </section>
+
+  <section class="track" id="track">
+    <div class="pin wrap">
+      <div class="pin-top">
+        <div class="picker" id="picker" role="radiogroup" aria-label="اختر عطرًا"></div>
+        <span class="badge">Illustration · seller-provided bands</span>
+      </div>
+      <div class="pin-main">
+        <aside class="story" id="story">
+          <div class="phase" id="phase" aria-live="polite">
+            <span class="kicker" id="phase-kicker"></span>
+            <h2 class="display" id="phase-title"></h2>
+            <p id="phase-text"></p>
+          </div>
+          <ul class="tiers" id="tiers"></ul>
+          <p class="source" id="source"></p>
+        </aside>
+        <div class="dial-wrap" id="dial-wrap">
+          <div class="aura" id="aura"></div>
+          <canvas class="vapour" id="vapour"></canvas>
+          <svg id="dial" viewBox="-320 -320 640 640" role="img" aria-label="قرص الساعات: ثبات العطر على الجلد عبر اثنتي عشرة ساعة"></svg>
+          <div class="readout" aria-hidden="true">
+            <span class="lbl">ON THE SKIN</span>
+            <span class="time" id="time">0:00</span>
+            <span class="unit">ساعة على الجلد</span>
+          </div>
+        </div>
+      </div>
+      <div class="hint" id="hint"><span>مرّر لتمضي الساعات</span><span class="latin">SCROLL TO PASS THE HOURS</span></div>
+      <div class="timeline"><i id="timeline"></i></div>
+    </div>
+  </section>
+
+  <section class="wrap coda">
+    <div>
+      <span class="kicker">On every product page</span>
+      <h2 class="display" style="margin-top:14px">كل عطر يحكي يومه</h2>
+      <p>القرص نفسه يظهر في صفحة كل عطر، مبنيًّا من نطاقَي الثبات والانتشار المسجّلين في الكتالوج. وحين تتوفّر اختبارات المنصّة أو تقييمات المشترين يتغيّر مصدر الرسم ويُكتب ذلك بجانبه.</p>
+      <a class="cta" id="cta" href="01-devoilement.html">اكشف هذا العطر</a>
+    </div>
+    <p class="note">PRODUCTION NOTE — The spans are derived from the catalogue's controlled longevity and projection bands (CLAUDE.md §4). The source label is part of the component, not optional copy: seller-provided, platform test, or review aggregate. Scroll-linked with a damped needle; reduced motion snaps the needle and drops the vapour. SVG + one canvas, no library.</p>
+  </section>
+</main>
+
+<script type="module">
+import { PERFUMES, FAMILY, ICONS, icon, EASE, reducedMotion } from './_data.js';
+
+const $ = (s) => document.querySelector(s);
+const still = reducedMotion();
+const NS = 'http://www.w3.org/2000/svg';
+const node = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.append(e);
+  return e;
+};
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const smooth = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+
+// ---------------------------------------------------------------- the model
+// Hours on the skin for each declared band — an illustration of the band, not a measurement.
+const SPAN = { short: 3, moderate: 5, long: 8, very_long: 11 };
+const REACH = { intimate: 0.62, moderate: 0.78, strong: 0.94, enormous: 1.08 };
+const WEIGHT = { top: 1, heart: 0.85, base: 0.72 };
+const TIERS = ['top', 'heart', 'base'];
+const specsFor = (p) => {
+  const total = SPAN[p.longevity.band];
+  return {
+    total,
+    // The top: there at the spray, gone within the half hour.
+    top: { start: 0, peakStart: 0, peakEnd: 0.2, end: 0.8 },
+    heart: { start: 0.12, peakStart: 0.6, peakEnd: total * 0.45, end: total * 0.72 },
+    base: { start: 0.45, peakStart: 1.7, peakEnd: total * 0.8, end: total },
+  };
+};
+const env = (s, t) => {
+  if (t < s.start || t > s.end) return 0;
+  const rise = s.peakStart > s.start ? smooth(s.start, s.peakStart, t) : 1;
+  return rise * (1 - smooth(s.peakEnd, s.end, t));
+};
+const lerpSpecs = (a, b, k) => {
+  const out = { total: lerp(a.total, b.total, k) };
+  for (const tier of TIERS) out[tier] = Object.fromEntries(Object.keys(a[tier]).map((key) => [key, lerp(a[tier][key], b[tier][key], k)]));
+  return out;
+};
+
+// ---------------------------------------------------------------- colours
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const toHex = (rgb) => '#' + rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, k) => { const A = hex(a), B = hex(b); return toHex(A.map((v, i) => v + (B[i] - v) * k)); };
+const tones = (family) => {
+  const f = FAMILY[family];
+  return { top: mix(f.colour, f.mist, 0.45), heart: f.colour, base: mix(f.colour, '#221F1B', 0.34), mist: f.mist };
+};
+const paint = (t) => {
+  const root = document.documentElement.style;
+  root.setProperty('--c-top', t.top); root.setProperty('--c-heart', t.heart);
+  root.setProperty('--c-base', t.base); root.setProperty('--c-mist', t.mist);
+};
+
+// ---------------------------------------------------------------- the dial
+const svg = $('#dial');
+const R = { bezel: 300, tickOut: 292, tickIn: 286, majorIn: 278, numeral: 265, top: 238, heart: 204, base: 170, gOut: 146, gIn: 84, sub: 76 };
+const HOURS = 12;
+const polar = (r, h) => { const a = (h / HOURS) * Math.PI * 2 - Math.PI / 2; return [Math.cos(a) * r, Math.sin(a) * r]; };
+const arc = (r, h0, h1) => {
+  const [x0, y0] = polar(r, h0), [x1, y1] = polar(r, h1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${(h1 - h0) / HOURS > 0.5 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+};
+
+node('circle', { r: R.bezel, class: 'bezel' }, svg);
+node('circle', { r: R.bezel - 5, class: 'bezel inner' }, svg);
+node('circle', { r: R.sub, class: 'sub' }, svg);
+
+// The guilloché: twenty-two waved rings, each a little out of phase with the
+// last, which is how a rose engine cuts a dial — engraved in on arrival.
+const engraving = node('g', {}, svg);
+for (let i = 0; i < 22; i++) {
+  const base = R.gIn + 3 + i * ((R.gOut - R.gIn - 6) / 21);
+  let d = '';
+  for (let s = 0; s <= 720; s++) {
+    const a = (s / 720) * Math.PI * 2;
+    const r = base + 2.4 * Math.sin(a * 36 + i * 0.95);
+    d += `${s ? 'L' : 'M'}${(Math.cos(a) * r).toFixed(2)} ${(Math.sin(a) * r).toFixed(2)}`;
+  }
+  const path = node('path', { d: `${d}Z`, class: 'g-line' }, engraving);
+  path.style.setProperty('--i', i);
+  path.style.setProperty('--len', path.getTotalLength().toFixed(0));
+  if (still) path.style.animation = 'none', path.style.strokeDashoffset = '0';
+}
+
+const ticks = node('g', {}, svg);
+for (let m = 0; m < HOURS * 4; m++) {
+  const h = m / 4, major = m % 4 === 0;
+  const [x0, y0] = polar(major ? R.majorIn : R.tickIn, h), [x1, y1] = polar(R.tickOut, h);
+  node('line', { x1: x0, y1: y0, x2: x1, y2: y1, class: major ? 'tick major' : 'tick' }, ticks);
+}
+for (let h = 0; h < HOURS; h += 1) {
+  if (h % 2) continue;
+  const [x, y] = polar(R.numeral, h);
+  node('text', { x, y, class: 'numeral' }, ticks).textContent = String(h);
+}
+
+// The three rings: a dotted guide, and a recording of the tier made of short
+// segments — one every six minutes — thick and dark where the tier is strong.
+const SEG = 120;
+const segs = {};
+const ringLayer = node('g', {}, svg);
+for (const tier of TIERS) {
+  node('circle', { r: R[tier], class: 'ring-guide' }, ringLayer);
+  segs[tier] = [];
+  for (let i = 0; i < SEG; i++) {
+    const h0 = (i / SEG) * HOURS, h1 = ((i + 1) / SEG) * HOURS;
+    const path = node('path', { d: arc(R[tier], h0, h1 + 0.012), class: `seg ${tier}`, opacity: 0 }, ringLayer);
+    segs[tier].push({ path, h: (h0 + h1) / 2, key: '' });
+  }
+}
+// The ring names, just before the twelve, where the needle starts.
+for (const [tier, label] of [['top', 'TOP'], ['heart', 'HEART'], ['base', 'BASE']]) {
+  const [x, y] = polar(R[tier], -0.34);
+  node('text', { x, y, class: 'ring-name', 'text-anchor': 'end' }, svg).textContent = label;
+}
+
+const beadLayer = node('g', {}, svg);
+const needle = node('g', {}, svg);
+node('line', { x1: 0, y1: -R.sub - 4, x2: 0, y2: -R.tickOut + 1, class: 'needle-line' }, needle);
+node('line', { x1: 0, y1: R.sub + 4, x2: 0, y2: R.sub + 30, class: 'needle-line' }, needle);
+node('path', { d: `M0 ${R.sub + 24}l4 9-4 9-4-9z`, class: 'needle-tail' }, needle);
+const needleDots = Object.fromEntries(TIERS.map((tier) => [tier, node('circle', { cy: -R[tier], r: 3, class: `needle-dot ${tier}` }, needle)]));
+
+// ---------------------------------------------------------------- the notes on their rings
+let beads = [];
+const beadTime = (specs, tier, i, n) => {
+  // Spread a tier's notes across the hours it is strongest.
+  const s = specs[tier];
+  const [a, b] = tier === 'top' ? [0.06, 0.62] : tier === 'heart' ? [s.peakStart + 0.2, Math.max(s.peakStart + 1, s.peakEnd)] : [s.peakStart + 0.8, Math.max(s.peakStart + 2, s.peakEnd)];
+  return n === 1 ? (a + b) / 2 : a + ((b - a) * i) / (n - 1);
+};
+function placeBeads(p, s) {
+  beadLayer.replaceChildren();
+  beads = [];
+  for (const tier of TIERS) {
+    p.notes[tier].forEach((note, i, list) => {
+      const h = beadTime(s, tier, i, list.length);
+      const [x, y] = polar(R[tier], h);
+      const g = node('g', { class: `bead ${tier}`, transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` }, beadLayer);
+      const pop = node('g', { class: 'pop' }, g);
+      pop.style.animationDelay = `${(TIERS.indexOf(tier) * 3 + i) * 60}ms`;
+      node('circle', { r: 11.5, class: 'bead-disc' }, pop);
+      const ic = node('g', { class: 'bead-icon', transform: 'translate(-7 -7) scale(0.5833)' }, pop);
+      ic.innerHTML = ICONS[note.icon] ?? '';
+      node('title', {}, g).textContent = `${note.ar} · ${note.en}`;
+      beads.push({ g, tier, h, x, y, state: '' });
+    });
+  }
+}
+
+// ---------------------------------------------------------------- the story
+const tierLabel = { top: ['القمة', 'TOP'], heart: ['القلب', 'HEART'], base: ['القاعدة', 'BASE'] };
+const andList = (list) => list.map((n) => n.ar).join(' و');
+const hoursAr = (n) => (n === 1 ? 'ساعة' : n === 2 ? 'ساعتين' : n <= 10 ? `${n} ساعات` : `${n} ساعة`);
+const PHASES = {
+  top: (p) => ['TOP NOTES · THE FIRST HALF HOUR', 'الرشّة الأولى', `أول ما يصل إليك: ${andList(p.notes.top)}. نفحات مشرقة خفيفة تتطاير قبل غيرها — بعد نصف ساعة لا يبقى منها إلا القليل.`],
+  heart: (p) => ['HEART NOTES · THE HOURS', 'يتفتّح القلب', `حين تهدأ القمة يظهر قلب العطر: ${andList(p.notes.heart)}. هذا هو العطر كما أرادته الدار، ويبقى معك ساعات.`],
+  base: (p) => ['BASE NOTES · INTO THE EVENING', 'تستقرّ القاعدة', `${andList(p.notes.base)} — ما يبقى قريبًا من الجلد حتى آخر اليوم، يدفأ معه ويصير جزءًا منك.`],
+  trace: (p) => ['THE TRACE', 'الأثر', `بعد نحو ${hoursAr(SPAN[p.longevity.band])} لا يبقى على الجلد إلا أثر خفيف — وعلى القماش يبقى أطول.`],
+};
+let phaseKey = '';
+function setPhase(key, p, force = false) {
+  if (key === phaseKey && !force) return;
+  phaseKey = key;
+  const box = $('#phase');
+  const [kicker, title, text] = PHASES[key](p);
+  const apply = () => { $('#phase-kicker').textContent = kicker; $('#phase-title').textContent = title; $('#phase-text').textContent = text; box.classList.remove('swap'); };
+  if (still || !$('#phase-title').textContent) { apply(); return; }
+  box.classList.add('swap');
+  setTimeout(apply, 220);
+}
+function renderTiers(p) {
+  $('#tiers').innerHTML = TIERS.map((tier) => `
+    <li class="tier ${tier}" data-tier="${tier}">
+      <span class="lab">${tierLabel[tier][0]}<span class="latin">${tierLabel[tier][1]}</span></span>
+      <span class="notes">${p.notes[tier].map((n) => `<span class="n">${icon(n.icon)}${n.ar}</span>`).join('')}</span>
+      <span class="presence"><i></i></span>
+    </li>`).join('');
+  $('#source').innerHTML = `<span class="latin">SELLER-PROVIDED</span><span>رسم توضيحي لما أعلنته الدار: ثبات ${p.longevity.ar}، وانتشار ${p.projection.ar}. ليس قياسًا.</span>`;
+  $('#cta').href = `01-devoilement.html?open=${p.slug}`;
+}
+
+// ---------------------------------------------------------------- the picker
+let current = PERFUMES[0];
+let specs = specsFor(current);
+let specsTween = null;
+const picker = $('#picker');
+for (const p of PERFUMES) {
+  const b = document.createElement('button');
+  b.className = 'pick'; b.type = 'button';
+  b.setAttribute('role', 'radio');
+  b.setAttribute('aria-checked', String(p === current));
+  b.innerHTML = `<img src="${p.cutout}" alt=""><span><span class="nm">${p.name}</span><span class="hs">${p.houseEn}</span></span>`;
+  b.addEventListener('click', () => choose(p));
+  picker.append(b);
+}
+picker.addEventListener('keydown', (e) => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const i = PERFUMES.indexOf(current), step = e.key === 'ArrowLeft' ? 1 : -1;   // RTL: left is next
+  const next = PERFUMES[(i + step + PERFUMES.length) % PERFUMES.length];
+  choose(next); picker.children[PERFUMES.indexOf(next)].focus();
+});
+function choose(p) {
+  if (p === current) return;
+  current = p;
+  [...picker.children].forEach((b, i) => b.setAttribute('aria-checked', String(PERFUMES[i] === p)));
+  const from = specs, to = specsFor(p);
+  specsTween = { from, to, start: performance.now(), ms: still ? 1 : 900 };
+  paint(tones(p.family));
+  placeBeads(p, to);
+  renderTiers(p);
+  setPhase(phaseKey || 'top', p, true);
+  dirty = true;
+}
+
+// ---------------------------------------------------------------- vapour
+const vapour = $('#vapour'), vctx = vapour.getContext('2d');
+const sprites = new Map();
+const spriteFor = (colour) => {
+  if (sprites.has(colour)) return sprites.get(colour);
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const g = c.getContext('2d'), [r, gr, b] = hex(colour);
+  const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, `rgba(${r},${gr},${b},1)`); grad.addColorStop(0.45, `rgba(${r},${gr},${b},.5)`); grad.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+  g.fillStyle = grad; g.fillRect(0, 0, 32, 32);
+  sprites.set(colour, c);
+  return c;
+};
+const motes = [];
+const wrap = $('#dial-wrap');
+const toCanvas = (x, y) => { const s = wrap.clientWidth / 640; return [(x + 320) * s + wrap.clientWidth * 0.22, (y + 320) * s + wrap.clientWidth * 0.22]; };
+function emit(x, y, colour, n, strong = false) {
+  if (still) return;
+  const [cx, cy] = toCanvas(x, y);
+  for (let i = 0; i < n; i++) {
+    motes.push({ x: cx + (Math.random() - 0.5) * 10, y: cy + (Math.random() - 0.5) * 10, vx: (Math.random() - 0.5) * (strong ? 40 : 14), vy: -(14 + Math.random() * (strong ? 46 : 22)),
+      r: 3 + Math.random() * (strong ? 7 : 4), life: 0, max: 1.4 + Math.random() * 1.6, sprite: spriteFor(colour), seed: Math.random() * 10 });
+  }
+}
+function stepVapour(dt, t) {
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  const w = vapour.clientWidth, h = vapour.clientHeight;
+  if (vapour.width !== Math.round(w * ratio)) { vapour.width = Math.round(w * ratio); vapour.height = Math.round(h * ratio); }
+  vctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  vctx.clearRect(0, 0, w, h);
+  for (let i = motes.length - 1; i >= 0; i--) {
+    const m = motes[i];
+    m.life += dt;
+    if (m.life > m.max) { motes.splice(i, 1); continue; }
+    m.vx += Math.sin(t * 1.4 + m.seed + m.life) * 10 * dt;
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    m.vx *= Math.pow(0.5, dt); m.vy *= Math.pow(0.8, dt);
+    const k = m.life / m.max, r = m.r * (1 + k * 2.2);
+    vctx.globalAlpha = 0.5 * Math.sin(Math.PI * k);
+    vctx.drawImage(m.sprite, m.x - r, m.y - r, r * 2, r * 2);
+  }
+  vctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------- scroll → hours
+const track = $('#track');
+const target = () => {
+  const r = track.getBoundingClientRect();
+  return clamp(-r.top / Math.max(1, r.height - innerHeight)) * HOURS;
+};
+let shown = 0, lastShown = 0, dirty = true;
+const prevEnv = { top: 1, heart: 0, base: 0 };
+const time = $('#time'), timeline = $('#timeline'), aura = $('#aura'), hint = $('#hint');
+
+function draw(t, s, dt, forward) {
+  // The recording: what has happened is inked, what is to come is a ghost.
+  for (const tier of TIERS) {
+    for (const seg of segs[tier]) {
+      const e = env(s[tier], seg.h) * WEIGHT[tier];
+      const done = seg.h <= t;
+      const opacity = e < 0.012 ? 0 : done ? 0.3 + 0.7 * e : 0.1 + 0.08 * e;
+      const width = done ? 1 + 6 * e : 1 + 2.5 * e;
+      const key = `${opacity.toFixed(2)}|${width.toFixed(1)}`;
+      if (key !== seg.key) { seg.key = key; seg.path.setAttribute('opacity', opacity.toFixed(2)); seg.path.setAttribute('stroke-width', width.toFixed(1)); }
+    }
+  }
+  needle.setAttribute('transform', `rotate(${((t / HOURS) * 360).toFixed(2)})`);
+  const e = Object.fromEntries(TIERS.map((tier) => [tier, env(s[tier], t)]));
+  for (const tier of TIERS) needleDots[tier].setAttribute('r', (1.5 + 4.5 * e[tier] * WEIGHT[tier]).toFixed(2));
+
+  // The beads light as the needle reaches them and evaporate when their tier is spent.
+  for (const b of beads) {
+    const strength = e[b.tier];
+    const state = t < b.h - 0.02 ? 'wait' : strength > 0.14 ? 'lit' : 'gone';
+    if (state !== b.state) {
+      if (state === 'gone' && b.state === 'lit' && forward) emit(b.x, b.y, getComputedStyle(b.g).getPropertyValue('--c').trim() || '#A8681F', 26, true);
+      b.state = state;
+      b.g.classList.toggle('lit', state === 'lit');
+      b.g.classList.toggle('gone', state === 'gone');
+    }
+    if (state === 'lit' && Math.random() < dt * 2.2 * strength) emit(b.x, b.y, getComputedStyle(b.g).getPropertyValue('--c').trim(), 1);
+  }
+  // A fading tier gives itself up into the air where the needle crosses it.
+  for (const tier of TIERS) {
+    const fall = prevEnv[tier] - e[tier];
+    if (fall > 0.002 && forward) {
+      const [x, y] = polar(R[tier], t);
+      emit(x, y, getComputedStyle(document.documentElement).getPropertyValue(`--c-${tier}`).trim(), Math.min(6, Math.ceil(fall * 120)));
+    }
+    prevEnv[tier] = e[tier];
+  }
+
+  // The sillage: how far the perfume reaches now.
+  const strength = Math.max(e.top * WEIGHT.top, e.heart * WEIGHT.heart, e.base * WEIGHT.base);
+  aura.style.opacity = (0.08 + 0.42 * strength).toFixed(3);
+  aura.style.transform = `scale(${(REACH[current.projection.band] * (0.62 + 0.38 * strength)).toFixed(3)})`;
+
+  // The panel.
+  const h = Math.floor(t), m = Math.floor((t - h) * 60);
+  time.textContent = `${h}:${String(m).padStart(2, '0')}`;
+  for (const li of document.querySelectorAll('.tier')) {
+    const v = e[li.dataset.tier];
+    li.style.opacity = (0.32 + 0.68 * Math.min(1, v * 1.3)).toFixed(2);
+    li.querySelector('.presence i').style.width = `${(v * 100).toFixed(1)}%`;
+  }
+  const key = t < 0.42 ? 'top' : t > s.base.end - 0.3 ? 'trace' : e.heart * WEIGHT.heart >= e.base * WEIGHT.base ? 'heart' : 'base';
+  setPhase(key, current);
+  timeline.style.width = `${((t / HOURS) * 100).toFixed(2)}%`;
+  hint.style.opacity = t > 0.3 ? '0' : '1';
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (specsTween) {
+    const k = clamp((now - specsTween.start) / specsTween.ms);
+    specs = lerpSpecs(specsTween.from, specsTween.to, EASE.inOut(k));
+    if (k >= 1) specsTween = null;
+    dirty = true;
+  }
+  // A weighted needle: it follows the scroll, it does not jump to it.
+  const goal = target();
+  shown = still ? goal : shown + (goal - shown) * (1 - Math.exp(-dt * 5.5));
+  if (Math.abs(goal - shown) < 0.0005) shown = goal;
+  // Every frame: the segments only touch the DOM when their own value changes.
+  draw(shown, specs, dt, shown > lastShown + 1e-5);
+  lastShown = shown; dirty = false;
+  stepVapour(dt, now / 1000);
+  requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------- start
+const wanted = new URLSearchParams(location.search);
+const first = PERFUMES.find((p) => p.slug === wanted.get('p')) ?? PERFUMES[0];
+current = first; specs = specsFor(first);
+[...picker.children].forEach((b, i) => b.setAttribute('aria-checked', String(PERFUMES[i] === first)));
+paint(tones(first.family));
+placeBeads(first, specs);
+renderTiers(first);
+setPhase('top', first, true);
+if (wanted.has('t')) {
+  // For screenshots: ?t=<hours> scrolls the track to that hour.
+  const top = track.getBoundingClientRect().top + scrollY;
+  scrollTo(0, top + (Number(wanted.get('t')) / HOURS) * (track.offsetHeight - innerHeight));
+  shown = target();
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
