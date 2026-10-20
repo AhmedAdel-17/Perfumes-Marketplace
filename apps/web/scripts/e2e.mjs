@@ -2363,7 +2363,7 @@ try {
       assert(marked > 0, 'Arabic content on the English page carries lang and dir');
     });
 
-    await test('an operator names a note and chooses its drawing, and the storefront prints both', async () => {
+    await test('an operator names a note, chooses its drawing and its family, and the storefront prints all three', async () => {
       /*
        * Its OWN operator session. The shared `ops` page is signed out — and its
        * session revoked — by "signing out ends the session for good", long
@@ -2391,11 +2391,30 @@ try {
           .locator('svg').innerHTML();
         assert(drawing.includes('M12 17.5'), `the incense drawing on the note chip: ${drawing.slice(0, 80)}`);
 
+        // Its family on the scent map (0035): among the gourmands for a moment.
+        await editor.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
+        const placed = editor.locator('li', { has: editor.locator('label', { hasText: /^هيل$/ }) });
+        await placed.locator('[role="radio"][aria-label="عائلة حلواني"]').click();
+        await placed.locator('button', { hasText: 'حفظ' }).click();
+        await placed.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
+        await editor.goto(`${BASE}/scent-map`, { waitUntil: 'networkidle' });
+        await editor.locator('.map-legend button', { hasText: 'حلواني' }).click();
+        const sky = await editor.locator('.map-panel').innerText();
+        assert(sky.includes('هيل'), `the note now stands among the gourmands: ${sky.slice(0, 120)}`);
+
         // And the change is on the record.
         await editor.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
         const audit = await editor.locator('main').innerText();
         assert(audit.includes('قاموس النفحات'), 'the glossary edit in the audit log');
         assert(audit.includes('بخور'), 'and the drawing, named in words, in the audit log');
+        assert(audit.includes('حلواني'), 'and the family, named in words, in the audit log');
+
+        // Left as it was found: back among the ambers.
+        await editor.goto(`${BASE}/ops/notes`, { waitUntil: 'networkidle' });
+        const again = editor.locator('li', { has: editor.locator('label', { hasText: /^هيل$/ }) });
+        await again.locator('[role="radio"][aria-label="عائلة عنبر"]').click();
+        await again.locator('button', { hasText: 'حفظ' }).click();
+        await again.locator('button', { hasText: 'تم الحفظ' }).waitFor({ timeout: 10_000 });
       } finally {
         await editorContext.close();
       }
@@ -2485,7 +2504,7 @@ try {
     }
   }
 
-  group('the details and the day on the skin — the experiences');
+  group('the details, the day on the skin and the scent map — the experiences');
   {
     const visitorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
     const visitor = await visitorContext.newPage();
@@ -2559,6 +2578,23 @@ try {
         equal(await dial.getAttribute('aria-valuenow'), '0.00', 'the hand rests at the spray until asked');
         await visitor.locator('figure.skin-dial button', { hasText: 'رُشّ' }).click();
         await visitor.waitForFunction(() => Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow')) >= 2, undefined, { timeout: 8_000 });
+      });
+
+      await test('the scent map stands every perfume in its family, and its words reach every one', async () => {
+        await visitor.goto(`${BASE}/scent-map`, { waitUntil: 'networkidle' });
+        equal(await visitor.locator('h1').innerText(), 'خريطة العطور', 'the map’s title');
+        equal(await visitor.locator('.map-legend button').count(), 7, 'seven families, as buttons');
+        await visitor.locator('.map-legend button', { hasText: 'عنبر' }).click();
+        await visitor.locator('.map-panel button', { hasText: 'ليل القاهرة' }).click();
+        const link = visitor.locator('.map-panel a', { hasText: 'صفحة العطر' });
+        equal(await link.getAttribute('href'), '/p/layl-al-qahira', 'the perfume’s page, from the map');
+        await visitor.locator('.map-panel button.map-chip', { hasText: 'برغموت' }).click();
+        const rows = await visitor.locator('.map-panel .map-list button').count();
+        assert(rows >= 2, `a note shared by several perfumes lists them all: ${rows}`);
+        await visitor.keyboard.press('Escape');
+        await visitor.locator('.map-legend').waitFor();
+        const door = await visitor.locator('header a[href="/scent-map"]').count();
+        assert(door >= 1, 'the masthead leads to the map');
       });
     } finally {
       await visitorContext.close();

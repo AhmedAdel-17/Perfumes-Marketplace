@@ -32,6 +32,7 @@ export const noteGlossaryRepository = (db: DiyarDatabase): NoteGlossaryRepositor
       ar: schema.noteGlossary.ar,
       en: schema.noteGlossary.en,
       icon: schema.noteGlossary.icon,
+      family: schema.noteGlossary.family,
     }).from(schema.noteGlossary);
     const english = new Map(glossary.map((row) => [row.ar, row]));
 
@@ -41,6 +42,7 @@ export const noteGlossaryRepository = (db: DiyarDatabase): NoteGlossaryRepositor
         ar,
         en: english.get(ar)?.en ?? null,
         icon: english.get(ar)?.icon ?? null,
+        family: english.get(ar)?.family ?? null,
         uses: uses.get(ar) ?? 0,
       }))
       .sort((a, b) =>
@@ -49,23 +51,24 @@ export const noteGlossaryRepository = (db: DiyarDatabase): NoteGlossaryRepositor
         || a.ar.localeCompare(b.ar, 'ar'));
   },
 
-  async set(ar, en, updatedBy, icon) {
-    const [previous] = await db.select({ en: schema.noteGlossary.en, icon: schema.noteGlossary.icon })
+  async set(ar, en, updatedBy, icon, family) {
+    const [previous] = await db.select({ en: schema.noteGlossary.en, icon: schema.noteGlossary.icon, family: schema.noteGlossary.family })
       .from(schema.noteGlossary)
       .where(eq(schema.noteGlossary.ar, ar))
       .limit(1);
 
-    // `undefined` keeps the drawing an entry already has; only an explicit
-    // value or null changes it.
+    // `undefined` keeps the drawing (or the family) an entry already has; only
+    // an explicit value or null changes it.
     const drawing = icon === undefined ? {} : { icon };
+    const kin = family === undefined ? {} : { family };
     await db.insert(schema.noteGlossary)
-      .values({ ar, en, icon: icon ?? null, updatedBy, updatedAt: new Date() })
+      .values({ ar, en, icon: icon ?? null, family: family ?? null, updatedBy, updatedAt: new Date() })
       .onConflictDoUpdate({
         target: schema.noteGlossary.ar,
-        set: { en, ...drawing, updatedBy, updatedAt: new Date() },
+        set: { en, ...drawing, ...kin, updatedBy, updatedAt: new Date() },
       });
 
-    return { before: previous?.en ?? null, beforeIcon: previous?.icon ?? null };
+    return { before: previous?.en ?? null, beforeIcon: previous?.icon ?? null, beforeFamily: previous?.family ?? null };
   },
 
   async remove(ar) {

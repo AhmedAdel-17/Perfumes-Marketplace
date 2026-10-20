@@ -545,3 +545,30 @@ perfume's air swells and fades around the face. The approved prototype is
 - **Compact.** One figure beside the notes, never the prototype's six-screen scroll pin. On a
   phone a finger on the middle of the face scrolls the page; only one laid on the rings turns
   the hand. Reduced motion: the hand goes where it is sent, no mist rises.
+
+---
+
+## 11. The scent map — La Carte olfactive (founder, 19–20 Oct 2026)
+
+The catalogue drawn as a night sky, as an astrolabe: the seven families are the sectors of the
+wheel in a perfumer's order, every perfume stands in its family, every note is a star in the
+family it belongs to by nature, and threads join each perfume to its notes — a perfume's
+character is literally its constellation. The approved prototype is
+`design-reference/experiences/03-carte-olfactive.html`; the shop's version is `/scent-map`
+(`features/map`). The rules:
+
+- **Only the catalogue's own data.** The graph is the domain's `scentMap` (tested): a perfume's
+  family is its listing's, a note's is the glossary's (0035, chosen by the content team in
+  `/ops/notes`). A note nobody has classified is left OFF the map, never guessed from the
+  perfume that carries it.
+- **The panel is the map's words.** Everything the sky shows is reachable from the panel as
+  real, full-size controls — the families, then a family's perfumes and notes, a perfume's
+  notes, a note's perfumes — so the sky itself is hidden from assistive technology and a press
+  on it simply opens the same view. On a phone a note's name shows only when its star is lit.
+- **A night sky in both themes.** The map is scoped `data-theme="dark"` and restates `text-ink`,
+  as the reveal's room is; the families glow in their own `mist`.
+- **A heavy wheel.** Dragged, the sky turns under the hand and, let go, carries on and settles —
+  never a spring. Left alone it drifts very slowly; it stops for a hand over it, for a page out
+  of sight, and for a visitor who asked for less motion.
+- **One door, then measured.** The masthead's Perfumes panel leads to it; `scent_map_view`
+  (ANALYTICS_DEFINITIONS §2b) says whether it sends anyone on to a perfume.

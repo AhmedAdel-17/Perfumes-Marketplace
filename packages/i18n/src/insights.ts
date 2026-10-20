@@ -66,6 +66,7 @@ export const BROWSING_EVENT_AR = {
   storefront_view: 'فتح صفحة دار',
   search: 'بحث بكلمات',
   filter_apply: 'استخدم الفلاتر',
+  scent_map_view: 'فتح خريطة العطور',
   product_view: 'فتح صفحة عطر',
   reveal_open: 'كشف العطر في العرض المجسّم',
   dial_turn: 'أدار قرص يومه على الجلد',

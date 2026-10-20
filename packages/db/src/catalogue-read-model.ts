@@ -68,10 +68,10 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
     const wanted = [...new Set(notes)];
     if (wanted.length === 0) return new Map();
     const rows = await db
-      .select({ ar: schema.noteGlossary.ar, en: schema.noteGlossary.en, icon: schema.noteGlossary.icon })
+      .select({ ar: schema.noteGlossary.ar, en: schema.noteGlossary.en, icon: schema.noteGlossary.icon, family: schema.noteGlossary.family })
       .from(schema.noteGlossary)
       .where(inArray(schema.noteGlossary.ar, wanted));
-    return new Map(rows.map((row) => [row.ar, { en: row.en, icon: row.icon }]));
+    return new Map(rows.map((row) => [row.ar, { en: row.en, icon: row.icon, family: row.family }]));
   },
 
   async publishedProducts() {

@@ -644,6 +644,23 @@ describe('public catalogue — anonymous traffic', () => {
     expect(index.base.map((n) => n.note)).toContain('مسك');
   });
 
+  it('draws the scent map from the published catalogue, as anyone may read it', async () => {
+    await pg.query(`INSERT INTO note_glossary (ar, en, family) VALUES ('مسك', 'Musk', 'musk')
+                    ON CONFLICT (ar) DO UPDATE SET family = EXCLUDED.family`);
+    const anon = caller({ role: 'anon', id: null });
+    const map = await anon.catalogue.scentMap();
+    const published = await anon.catalogue.published();
+    // Every published perfume, and nothing else: a draft is not a star.
+    expect(map.perfumes.map((p) => p.id).sort()).toEqual(published.map((p) => p.id).sort());
+    const ward = map.perfumes.find((p) => p.slug === 'dar-al-ward-product');
+    expect(ward?.notesTop.length).toBeGreaterThan(0);
+    expect(Number.isInteger(ward?.pricePiastres)).toBe(true);
+    // Only notes the glossary knows, with the family it gave them.
+    expect(map.glossary.find((w) => w.note === 'مسك')).toMatchObject({ en: 'Musk', family: 'musk' });
+    const used = new Set(map.perfumes.flatMap((p) => [...p.notesTop, ...p.notesHeart, ...p.notesBase]));
+    expect(map.glossary.every((w) => used.has(w.note))).toBe(true);
+  });
+
   it('carries each card’s first notes for its blotter, named and drawn by the glossary', async () => {
     await pg.query(`INSERT INTO note_glossary (ar, en, icon) VALUES ('برغموت', 'Bergamot', 'bergamot')
                     ON CONFLICT (ar) DO UPDATE SET en = EXCLUDED.en, icon = EXCLUDED.icon`);
@@ -1273,6 +1290,27 @@ describe('the audit trail records who decided what', () => {
   const trail = async (entityTable: string, entityId: string) =>
     (await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
       .transaction((r) => r.audit.recent({ entityTable, entityId })));
+
+  it('records a note given its family for the scent map, before and after', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    await ops.glossary.set({ ar: 'ورد', en: 'Rose', family: 'floral' });
+    await ops.glossary.set({ ar: 'ورد', en: 'Rose', family: 'musk' });
+    const [entry] = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ entityTable: 'note_glossary' }));
+    expect(entry!.actorId).toBe(OPERATOR.staffId);
+    expect(JSON.parse(entry!.before!)).toMatchObject({ ar: 'ورد', family: 'floral' });
+    expect(JSON.parse(entry!.after!)).toMatchObject({ ar: 'ورد', family: 'musk' });
+
+    // Left out, the family is kept — renaming a note does not unplace it.
+    await ops.glossary.set({ ar: 'ورد', en: 'Rosa' });
+    const map = await caller({ role: 'anon', id: null }).catalogue.scentMap();
+    expect(map.glossary.find((w) => w.note === 'ورد')).toMatchObject({ en: 'Rosa', family: 'musk' });
+  });
+
+  it('refuses a family the vocabulary does not have, at the boundary', async () => {
+    const ops = caller(PLATFORM_ACTOR, null, OPERATOR);
+    await expect(ops.glossary.set({ ar: 'ورد', en: 'Rose', family: 'citrusy' as never })).rejects.toThrow();
+  });
 
   it('records a payout, with the numbers that were released', async () => {
     const ops = caller(PLATFORM_ACTOR, null, OPERATOR);

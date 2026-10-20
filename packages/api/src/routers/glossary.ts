@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { NOTE_ICONS } from '@diyar/domain';
+import { NOTE_ICONS, SCENT_FAMILIES } from '@diyar/domain';
 import { platformProcedure, router } from '../trpc';
 
 /**
@@ -18,16 +18,23 @@ export const glossaryRouter = router({
     ctx.uow.transaction((r) => r.glossary.entries())),
 
   set: platformProcedure
-    // `icon` left out keeps the note's drawing; null clears it.
-    .input(z.object({ ar: note, en: note, icon: z.enum(NOTE_ICONS).nullable().optional() }))
+    // `icon` or `family` left out keeps what the note has; null clears it.
+    .input(z.object({
+      ar: note,
+      en: note,
+      icon: z.enum(NOTE_ICONS).nullable().optional(),
+      // The family it belongs to by nature, for the scent map (0035).
+      family: z.enum(SCENT_FAMILIES).nullable().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const staff = ctx.platformStaffId;
       if (!staff) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'انتهت الجلسة.' });
 
       return ctx.uow.transaction(async (r) => {
-        const { before, beforeIcon } = await r.glossary.set(input.ar, input.en, staff, input.icon);
+        const { before, beforeIcon, beforeFamily } = await r.glossary.set(input.ar, input.en, staff, input.icon, input.family);
         // Left out, the drawing was kept — so the entry still has the old one.
         const afterIcon = input.icon === undefined ? beforeIcon : input.icon;
+        const afterFamily = input.family === undefined ? beforeFamily : input.family;
         await r.audit.record({
           action: 'policy_change',
           actorId: staff,
@@ -35,8 +42,8 @@ export const glossaryRouter = router({
           entityTable: 'note_glossary',
           // The key is the note itself, not a uuid, so it travels in the body.
           entityId: null,
-          before: before === null ? null : JSON.stringify({ ar: input.ar, en: before, icon: beforeIcon }),
-          after: JSON.stringify({ ar: input.ar, en: input.en, icon: afterIcon }),
+          before: before === null ? null : JSON.stringify({ ar: input.ar, en: before, icon: beforeIcon, family: beforeFamily }),
+          after: JSON.stringify({ ar: input.ar, en: input.en, icon: afterIcon, family: afterFamily }),
         });
         return { ar: input.ar, en: input.en };
       });

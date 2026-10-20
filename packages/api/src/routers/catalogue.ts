@@ -21,7 +21,7 @@
 import { z } from 'zod';
 import { BAND_FILL } from '@diyar/i18n';
 import type { CatalogueProductRow, CataloguePhotoRow, GlossaryWord, NoteTier } from '@diyar/domain';
-import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms, type NoteIcon } from '@diyar/domain';
+import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms, type NoteIcon, type ScentFamily } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
 import { slugSchema } from '../validation';
 import type { MediaStore } from '../providers/media';
@@ -143,6 +143,25 @@ export interface HouseDetail {
   products: ProductCard[];
 }
 
+/**
+ * The scent map's catalogue (La Carte olfactive, 20 Oct 2026): every published
+ * perfume with its notes and the picture the map stands it as, and the
+ * glossary's word for each note — its English, its drawing, its family.
+ */
+export interface ScentMapData {
+  perfumes: Array<{
+    id: string; slug: string; name: string; nameEn: string | null;
+    brandName: string; brandNameEn: string | null; brandLatin: string;
+    family: string; pricePiastres: number;
+    /** The bottle cut out of its photograph, when the content team has made its relief. */
+    cutout: { url: string; width: number; height: number } | null;
+    photo: StorefrontPhoto | null;
+    notesTop: string[]; notesHeart: string[]; notesBase: string[];
+  }>;
+  /** Only the notes the glossary knows; the map leaves any other off, never guessing. */
+  glossary: Array<{ note: string; en: string; icon: NoteIcon | null; family: ScentFamily | null }>;
+}
+
 /** One note in the notes index, with its English name when the glossary has one. */
 export interface IndexedNote {
   note: string;
@@ -255,7 +274,7 @@ export const catalogueRouter = router({
         brandNameEn: row.brandNameEn,
         noteEnglish: Object.fromEntries([...result.glossary].map(([ar, word]) => [ar, word.en])),
         noteIcons: Object.fromEntries([...result.glossary]
-          .filter((entry): entry is [string, { en: string; icon: NoteIcon }] => entry[1].icon !== null)
+          .filter((entry): entry is [string, GlossaryWord & { icon: NoteIcon }] => entry[1].icon !== null)
           .map(([ar, word]) => [ar, word.icon])),
         houseSlug: row.houseSlug ?? '',
         notesTop: [...row.notesTop],
@@ -310,6 +329,46 @@ export const catalogueRouter = router({
         products: rows.map((row) => toCard(row, map, glossary)),
       };
     }),
+
+  /**
+   * The scent map: the whole published catalogue, as anyone may read it. Each
+   * perfume's relief is read as the visitor (RLS shows a published perfume's
+   * only), one perfume at a time inside the transaction — a catalogue of tens,
+   * where a batched read would be a second query shape to keep in step.
+   */
+  scentMap: publicProcedure.query(async ({ ctx }): Promise<ScentMapData> => {
+    const { rows, photos, reliefs, glossary } = await ctx.uow.transaction(async (r) => {
+      const found = await r.catalogue.publishedProducts();
+      const shots = await r.catalogue.primaryPhotos(found.map((p) => p.id));
+      const lifted = new Map<string, Awaited<ReturnType<typeof r.reliefs.forPhoto>>>();
+      for (const shot of shots) lifted.set(shot.productId, await r.reliefs.forPhoto(shot.mediaId));
+      const notes = [...new Set(found.flatMap((p) => [...p.notesTop, ...p.notesHeart, ...p.notesBase]))];
+      return { rows: found, photos: shots, reliefs: lifted, glossary: await r.catalogue.noteGlossary(notes) };
+    });
+    const map = photoMap(photos, ctx.media);
+    return {
+      perfumes: rows.map((row) => {
+        const relief = reliefs.get(row.id);
+        return {
+          id: row.id,
+          slug: row.slug,
+          name: row.name,
+          nameEn: row.nameEn,
+          brandName: row.brandName,
+          brandNameEn: row.brandNameEn,
+          brandLatin: latin(row.brandName, row.brandNameEn),
+          family: row.scentFamily ?? 'amber',
+          pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
+          cutout: relief ? { url: ctx.media.publicUrl(relief.cutoutKey), width: relief.width, height: relief.height } : null,
+          photo: map.get(row.id) ?? null,
+          notesTop: [...row.notesTop],
+          notesHeart: [...row.notesHeart],
+          notesBase: [...row.notesBase],
+        };
+      }),
+      glossary: [...glossary].map(([note, word]) => ({ note, en: word.en, icon: word.icon, family: word.family })),
+    };
+  }),
 
   /** Every live house that has something to sell — for the directory. */
   houses: publicProcedure.query(async ({ ctx }) => {

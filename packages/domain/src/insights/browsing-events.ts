@@ -49,6 +49,8 @@ export const BROWSING_EVENTS = [
   'storefront_view',
   'search',
   'filter_apply',
+  // The scent map (La Carte olfactive, 0036): opened. The whole catalogue, so no perfume.
+  'scent_map_view',
   'product_view',
   // The reveal on a product page (Le Dévoilement, 0033): opened, carrying the perfume.
   'reveal_open',

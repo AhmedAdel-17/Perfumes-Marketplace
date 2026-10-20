@@ -20,6 +20,7 @@ export const SHELL = defineMessages(
     housesKicker: 'The houses',
     perfumesPanel: 'العطور حسب العائلة، والدور',
     allPerfumes: 'كل العطور',
+    scentMap: 'خريطة العطور',
     allHouses: 'كل الدور',
     // The loaders (17 Oct 2026): what a screen reader hears, and the one quiet line under the flacon.
     loadingPage: 'جارٍ تحميل الصفحة',
@@ -69,6 +70,7 @@ export const SHELL = defineMessages(
     housesKicker: 'The houses',
     perfumesPanel: 'Perfumes by family, and the houses',
     allPerfumes: 'All perfumes',
+    scentMap: 'The scent map',
     allHouses: 'All houses',
     loadingPage: 'Loading the page',
     oneMoment: 'One moment…',

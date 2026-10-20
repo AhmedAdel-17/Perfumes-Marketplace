@@ -25,12 +25,14 @@
  */
 
 /** A row as the catalogue reads it — the product, plus the two names around it. */
-import type { NoteIcon } from '../catalogue/vocabularies';
+import type { NoteIcon, ScentFamily } from '../catalogue/vocabularies';
 
 /** What the glossary says about one note, for the storefront. */
 export interface GlossaryWord {
   readonly en: string;
   readonly icon: NoteIcon | null;
+  /** The family it belongs to by nature (0035), or null until the content team chooses one. */
+  readonly family: ScentFamily | null;
 }
 
 export interface CatalogueProductRow {

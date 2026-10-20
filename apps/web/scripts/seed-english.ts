@@ -79,6 +79,30 @@ export const NOTE_ICONS_SEED: Readonly<Record<string, string>> = {
   'مسك أبيض': 'musk',
   'خشب الأرز': 'wood',
 };
+/**
+ * The family each seeded note belongs to by nature — what the content team
+ * would choose in /ops/notes — so the scent map has every star (0035).
+ */
+export const NOTE_FAMILIES_SEED: Readonly<Record<string, string>> = {
+  'برغموت': 'fresh',
+  'زعفران': 'amber',
+  'هيل': 'amber',
+  'ورد دمشقي': 'floral',
+  'ياسمين': 'floral',
+  'عود': 'oud',
+  'عنبر': 'amber',
+  'مسك': 'musk',
+  'ليمون': 'fresh',
+  'ورد طائفي': 'floral',
+  'إيلنغ': 'floral',
+  'خشب الصندل': 'woody',
+  'نعناع': 'fresh',
+  'ليمون أخضر': 'fresh',
+  'نخيل': 'fresh',
+  'شاي أخضر': 'fresh',
+  'مسك أبيض': 'musk',
+  'خشب الأرز': 'woody',
+};
 
 type Block =
   | { kind: 'heading'; level: 2 | 3; text: string }
@@ -254,12 +278,15 @@ export async function seedEnglish(pg: PGlite, staffId: string): Promise<void> {
   }
 
   for (const [ar, en] of Object.entries(NOTES_EN)) {
-    // A database seeded before the drawings existed gets them filled in; one an
-    // operator has already chosen is left alone.
+    // A database seeded before the drawings (or the families) existed gets them
+    // filled in; what an operator has already chosen is left alone.
     const inserted = await pg.query(
-      `INSERT INTO note_glossary (ar, en, icon, updated_by) VALUES ($1,$2,$3::note_icon,$4)
-       ON CONFLICT (ar) DO UPDATE SET icon = EXCLUDED.icon WHERE note_glossary.icon IS NULL`,
-      [ar, en, NOTE_ICONS_SEED[ar] ?? null, staffId]);
+      `INSERT INTO note_glossary (ar, en, icon, family, updated_by) VALUES ($1,$2,$3::note_icon,$4::scent_family,$5)
+       ON CONFLICT (ar) DO UPDATE SET
+         icon = coalesce(note_glossary.icon, EXCLUDED.icon),
+         family = coalesce(note_glossary.family, EXCLUDED.family)
+       WHERE note_glossary.icon IS NULL OR note_glossary.family IS NULL`,
+      [ar, en, NOTE_ICONS_SEED[ar] ?? null, NOTE_FAMILIES_SEED[ar] ?? null, staffId]);
     filled += inserted.affectedRows ?? 0;
   }
 

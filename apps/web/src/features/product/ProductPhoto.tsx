@@ -1,6 +1,23 @@
 import Image, { getImageProps } from 'next/image';
 import type { StorefrontPhoto } from '@/core/catalogue';
 
+/**
+ * A small copy of a photograph or a cut-out — `width` pixels wide at most, for
+ * a picture drawn small, such as a perfume on the scent map — through the same
+ * pipeline as every other photograph.
+ */
+export function thumbnail(url: string, naturalWidth: number, naturalHeight: number, width: number): string {
+  // `getImageProps` answers with its 2x rendition, so half the wanted width is asked for.
+  const half = Math.ceil(Math.min(width, naturalWidth) / 2);
+  const { props } = getImageProps({
+    src: url,
+    alt: '',
+    width: half,
+    height: Math.max(1, Math.round((half * naturalHeight) / naturalWidth)),
+  });
+  return props.src;
+}
+
 /** The widest copy of a photograph the loupe will ever load — beyond it, bytes for nobody's eye. */
 const LOUPE_MAX_WIDTH = 2048;
 
@@ -10,20 +27,12 @@ const LOUPE_MAX_WIDTH = 2048;
  * decision still lives in this file alone. Never wider than the photograph
  * itself: the optimiser does not enlarge, and the loupe is told the true width
  * so it never magnifies past the detail the house's photograph holds.
- *
- * `getImageProps` answers with its 2x rendition, so half the wanted width is
- * asked for.
  */
 export function loupeSource(photo: StorefrontPhoto): { src: string; width: number } {
-  const width = Math.min(photo.width, LOUPE_MAX_WIDTH);
-  const half = Math.ceil(width / 2);
-  const { props } = getImageProps({
-    src: photo.url,
-    alt: '',
-    width: half,
-    height: Math.max(1, Math.round((half * photo.height) / photo.width)),
-  });
-  return { src: props.src, width };
+  return {
+    src: thumbnail(photo.url, photo.width, photo.height, LOUPE_MAX_WIDTH),
+    width: Math.min(photo.width, LOUPE_MAX_WIDTH),
+  };
 }
 
 /**

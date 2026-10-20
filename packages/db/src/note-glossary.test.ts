@@ -58,7 +58,7 @@ beforeAll(async () => {
 describe('who may read and write the glossary', () => {
   it('anyone reads it, and only the notes asked for', async () => {
     const found = await asAnon().transaction((r) => r.catalogue.noteGlossary(['عود', 'برغموت']));
-    expect([...found]).toEqual([['عود', { en: 'Oud', icon: null }]]);
+    expect([...found]).toEqual([['عود', { en: 'Oud', icon: null, family: null }]]);
   });
 
   it('a visitor cannot write it', async () => {
@@ -80,13 +80,13 @@ describe('the console view', () => {
   it('lists every note in use, untranslated first, then by how often it is used', async () => {
     const entries = await asPlatform().transaction((r) => r.glossary.entries());
     expect(entries.slice(0, 3)).toEqual([
-      { ar: 'برغموت', en: null, icon: null, uses: 2 },
+      { ar: 'برغموت', en: null, icon: null, family: null, uses: 2 },
       expect.objectContaining({ en: null, uses: 1 }),
       expect.objectContaining({ en: null, uses: 1 }),
     ]);
     // Translated entries follow — including one no listing uses any more.
-    expect(entries).toContainEqual({ ar: 'عود', en: 'Oud', icon: null, uses: 1 });
-    expect(entries).toContainEqual({ ar: 'فانيليا', en: 'Vanilla', icon: null, uses: 0 });
+    expect(entries).toContainEqual({ ar: 'عود', en: 'Oud', icon: null, family: null, uses: 1 });
+    expect(entries).toContainEqual({ ar: 'فانيليا', en: 'Vanilla', icon: null, family: null, uses: 0 });
   });
 
   it('writing an entry reports what it replaced, for the audit trail', async () => {
@@ -97,6 +97,26 @@ describe('the console view', () => {
 
     const found = await asAnon().transaction((r) => r.catalogue.noteGlossary(['برغموت']));
     expect(found.get('برغموت')?.en).toBe('Bergamot orange');
+  });
+
+  it('gives a note its family for the scent map, keeps it when left out, and reports what it replaced', async () => {
+    const first = await asPlatform().transaction((r) => r.glossary.set('عود', 'Oud', staffId, undefined, 'oud'));
+    expect(first.beforeFamily).toBeNull();
+    // Renaming the note without naming a family keeps the one it has.
+    const renamed = await asPlatform().transaction((r) => r.glossary.set('عود', 'Agarwood', staffId));
+    expect(renamed.beforeFamily).toBe('oud');
+
+    const found = await asAnon().transaction((r) => r.catalogue.noteGlossary(['عود']));
+    expect(found.get('عود')).toEqual({ en: 'Agarwood', icon: null, family: 'oud' });
+
+    // Cleared, it is off the map until somebody places it again.
+    await asPlatform().transaction((r) => r.glossary.set('عود', 'Agarwood', staffId, undefined, null));
+    const cleared = await asAnon().transaction((r) => r.catalogue.noteGlossary(['عود']));
+    expect(cleared.get('عود')?.family).toBeNull();
+  });
+
+  it('refuses a family the vocabulary does not have, at the database', async () => {
+    await expect(pg.query("UPDATE note_glossary SET family = 'citrusy' WHERE ar = 'عود'")).rejects.toThrow();
   });
 
   it('removes an entry, and says when there was none', async () => {
@@ -158,7 +178,7 @@ describe('a listing\'s English name', () => {
   it('keeps a drawing per note, which the storefront reads and an English edit leaves alone', async () => {
     await asPlatform().transaction((r) => r.glossary.set('زعفران', 'Saffron', staffId, 'saffron'));
     const read = await asAnon().transaction((r) => r.catalogue.noteGlossary(['زعفران']));
-    expect(read.get('زعفران')).toEqual({ en: 'Saffron', icon: 'saffron' });
+    expect(read.get('زعفران')).toEqual({ en: 'Saffron', icon: 'saffron', family: null });
 
     // Renaming without naming a drawing keeps the drawing…
     const renamed = await asPlatform().transaction((r) => r.glossary.set('زعفران', 'Saffron threads', staffId));

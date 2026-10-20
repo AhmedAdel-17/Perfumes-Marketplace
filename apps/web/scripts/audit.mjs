@@ -462,6 +462,8 @@ try {
     ['legal-privacy', '/privacy'],
     ['houses', '/houses'],
     ['house', '/house/maison-nour'],
+    // La Carte olfactive (20 Oct 2026): the catalogue as a night sky, dark in both themes.
+    ['scent-map', '/scent-map'],
     // The two sign-in screens. Every run passed THROUGH them and none had
     // ever audited them — the first screen a house or an operator sees.
     ['seller-sign-in', '/seller'],
@@ -474,7 +476,7 @@ try {
    * The English site (P5.6.2): every customer screen again under `/en`.
    *
    * A second direction is a second layout. Left-to-right moves every logical
-   * margin, mirrors the evolution curve, and swaps the heading face to the Latin one —
+   * margin, turns every fill and every ink stroke the other way, and swaps the heading face to the Latin one —
    * each a place where a contrast, an overflow or a heading order can break
    * that the Arabic run cannot see. The sign-in screens are left out: the seller
    * portal and the console are Arabic-only until steps 4 and 5.

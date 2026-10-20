@@ -1,0 +1,24 @@
+-- =============================================================================
+-- 0035 — A family for every scent note (La Carte olfactive — founder, 19–20 Oct
+--        2026; design-reference/experiences/03-carte-olfactive.html)
+--
+-- The scent map stands every perfume in its family and every note as a star in
+-- the family it belongs to BY NATURE — bergamot with the fresh notes, oud with
+-- the ouds — and draws a line from each perfume to its notes. A perfume's
+-- family is already a listing field; a note's is not, because notes are free
+-- text written by houses. So, as with its English name (0030) and its drawing
+-- (0031), the family belongs to the NOTE, in the glossary the platform keeps,
+-- chosen by the content team from the same closed set of families a listing
+-- uses (CLAUDE.md §4, controlled vocabularies only).
+--
+-- Nullable, and deliberately so: a note nobody has classified is left OFF the
+-- map rather than guessed from the perfume that carries it — a guess would put
+-- a rose among the ouds the first time an oud house lists one.
+--
+-- Nothing else changes: the glossary's RLS already lets everyone read and only
+-- the platform write, which is exactly who should see and choose a family.
+--
+-- rollback: ALTER TABLE note_glossary DROP COLUMN family;
+-- =============================================================================
+
+ALTER TABLE note_glossary ADD COLUMN family scent_family;

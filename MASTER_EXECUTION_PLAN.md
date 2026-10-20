@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | IN_PROGRESS | 5/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5, P5.1.6 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 6/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5, P5.1.6, P5.1.7 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -219,7 +219,7 @@ production (P0.1.3).
 | P5.1.4 | Le Dévoilement — the bottle lifted out of its photograph, on the product page | P5 | COMPLETE | P1 | BUILD | DR Le Dévoilement (decided 19 Oct 2026) |
 | P5.1.5 | Les Détails — the drop, the loupe, the ink, the blotter, the sillage | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.4 |
 | P5.1.6 | La Durée — the day-on-the-skin dial on the product page | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.5 |
-| P5.1.7 | La Carte olfactive — the scent map, and a family for every note | P5 | NOT_STARTED | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.6 |
+| P5.1.7 | La Carte olfactive — the scent map, and a family for every note | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.6 |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2382,13 +2382,33 @@ green; `next build` succeeds.
 **Do not do:** print a duration for a perfume; autoplay; present the bands as a measurement.
 
 #### P5.1.7 La Carte olfactive — the scent map, and a family for every note
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Status:** COMPLETE (20 Oct 2026) · **Priority:** P1 · **Type:** BUILD — the success measure
+is a VALIDATE question, open until `scent_map_view` has real traffic.
 **Why:** the fourth approved experience (`design-reference/experiences/03-carte-olfactive.html`);
 the founder asked for it on 19 Oct although the register said "once the catalogue is larger".
-**What it will be:** a family for every note in the glossary (migration, `/ops/notes` picker,
-audited); a `/scent-map` page drawn from the catalogue, dark in both themes, reached from the
-masthead's Perfumes panel; a note with no family is left off, never guessed; a new event,
-`scent_map_view`.
+With three perfumes, four of the seven families stand empty, as in the prototype.
+**Change control (doc 04 §9):** *user problem* — a visitor who knows what they like (a rose, an
+oud) cannot see which perfumes share it, nor what a perfume is made of at a glance; *evidence*
+— founder direction, no buyer test; *success metric* — of visitors who open the map, the share
+whose next product view in the visit follows it (ANALYTICS_DEFINITIONS §2b, `scent_map_view`,
+0036); *operational owner* — the content/category manager, who gives each note its family in
+`/ops/notes` (the console counts notes without one); *legal dependency* — none (the catalogue's
+own data, no claims); *cost* — no runtime cost, no new dependency, small image copies only.
+**What it is:** migration 0035 gives the glossary a `family` per note (the listing's closed set
+of families, nullable: an unclassified note is left off the map, never guessed); the
+repository, read model and `glossary.set` carry it, audited and named in words in the audit
+log; `/ops/notes` has a family row under each note's drawings. `scentMap` in the domain (pure,
+7 tests) builds the graph; `features/map` lays it out on the wheel (`layout.ts`, 5 tests) and
+`SkyController` turns it. `catalogue.scentMap` reads the published catalogue with each
+perfume's cut-out where it has a relief. The page `/scent-map` is dark in both themes, its
+panel server-rendered and the whole map in words; the masthead's Perfumes panel leads there.
+**Acceptance criteria:** domain, database, API, i18n and web suites green; an operator gives a
+note its family, it is audited, and the map stands it there; a note without a family is not
+drawn; the panel reaches every family, perfume and note with real controls; the sky turns by
+drag and settles, stands still for reduced motion; `audit.mjs` clean on the map in both themes
+and both languages; browser suite green; `next build` succeeds.
+**Do not do:** guess a note's family; draw a perfume that is not published; put words in the
+sky that the panel does not also give.
 
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
@@ -3772,3 +3792,41 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   - `audit.mjs` on the product pages (Arabic and English) and the owner's report: no
     findings in either theme at any width, after the overflow fix.
   - `next build` succeeds: shared JS 103 kB; the product page's first load 149 → 154 kB.
+
+- 2026-10-20 · Claude Code session · P5.1.7 COMPLETE · La Carte olfactive, the fourth and last
+  of the approved experiences: the catalogue as a night sky at `/scent-map`. Built:
+  - Migration 0035: a `family` for every note in the glossary (nullable — a note nobody has
+    placed is left off the map, never guessed). The repository, the read model and
+    `glossary.set` carry it; it is audited and named in words in the audit log; `/ops/notes`
+    has a family row under each note and counts the notes without one.
+  - `scentMap` in the domain (pure, 7 tests): who stands where and what joins them.
+    `features/map/layout.ts` (5 tests) puts it on the wheel; `SkyController` turns it.
+  - `catalogue.scentMap` (2 API tests): the published catalogue, each perfume's cut-out where
+    it has a relief, and the glossary's word for each note.
+  - The page: server-rendered, dark in both themes, the panel the whole map in words (the
+    families, a family's perfumes and notes, a perfume's notes, a note's perfumes). The
+    masthead's Perfumes panel leads to it.
+  - Migration 0036, the `scent_map_view` event (defined first in ANALYTICS_DEFINITIONS §2b).
+  - The seed gives every seeded note its family.
+
+  Found and fixed on the way:
+  - The sky's words followed the page's right-to-left direction: a label's anchor flipped
+    inward over the threads and "3 PERFUMES" printed as "PERFUMES 3". The sky lays its words
+    out left to right (an Arabic word still reads right to left inside it).
+  - A legend button pressed and gone never reported the pointer leaving, so its family stayed
+    lit over every later choice; choosing now clears the hover.
+  - The first event of a visit refreshes the page (the visitor cookie); the sky was keyed by
+    its props' identity and jumped back. It is keyed by content, as the dial is now.
+  - The browser suite's new console journey was the operator's sixth one-time code in an hour,
+    past the console's limit of five; its steps joined the existing glossary journey instead.
+
+  Verified:
+  - Every package's typecheck and unit tests pass (turbo, 13/13); guard clean.
+  - Browser suite 142/142 from a fresh seed — every experience's journey included (the drop,
+    the ink, the blotter, the dial by keyboard and by "spray", the map's panel, an operator
+    giving a note its family and the map standing it there, audited).
+  - `audit.mjs` on every surface, the map in Arabic and English included: one finding per
+    theme ("0 visible h1" on the apply page at 1024 in light, the support page at 1280 in
+    dark), neither on a page this work touched and both clean when rerun alone — the same
+    flake an earlier session saw on the apply page.
+  - `next build` succeeds: shared JS 103 kB; `/scent-map` 153 kB first load.

@@ -106,6 +106,10 @@ export async function PerfumesPanel({ locale }: { locale: Locale }) {
             <Link href={localeHref(locale, '/search')} className="inline-flex min-h-touch min-w-touch items-center text-body">
               <span className="link-line">{copy.allPerfumes}</span>
             </Link>
+            {/* La Carte olfactive: the same catalogue, as a sky (20 Oct 2026). */}
+            <Link href={localeHref(locale, '/scent-map')} className="inline-flex min-h-touch min-w-touch items-center text-body">
+              <span className="link-line">{copy.scentMap}</span>
+            </Link>
           </div>
         </div>
       </div>

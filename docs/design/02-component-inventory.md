@@ -41,7 +41,7 @@ list = loading/empty/error/offline/end.
 | Trust band | new |
 | Filters (chips with counts, clear all, sheet on phone) | partial |
 | Compare tray + compare table | new |
-| Product page: gallery, buy block, trust row, notes pyramid, evolution curve, meters, house panel, reviews, rails | partial (no gallery/trust row/house panel) |
+| Product page: gallery, buy block, trust row, notes pyramid, day-on-the-skin dial (replaced the evolution curve, 20 Oct 2026), meters, house panel, reviews, rails | partial (no gallery/trust row/house panel) |
 | Rating summary | partial (`Ratings`) |
 | Reviews list + six-dimension form | built |
 | Shipment group (cart/checkout/tracking) | partial |

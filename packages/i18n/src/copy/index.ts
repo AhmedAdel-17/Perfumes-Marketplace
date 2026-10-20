@@ -1,6 +1,7 @@
 export * from './shell';
 export * from './home';
 export * from './product';
+export * from './map';
 export * from './houses';
 export * from './search';
 export * from './cart';

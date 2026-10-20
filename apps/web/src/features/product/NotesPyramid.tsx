@@ -11,9 +11,10 @@ import { NoteChip } from '@/features/catalogue/NoteChip';
  * gradient spine of the first identity are gone — they were the pyramid
  * illustrated, and this is the pyramid stated.
  *
- * The tier colours survive as a single dot each. They are data-visualisation
- * roles (`--c-note-*`, theme.ts) and the evolution curve below uses the same
- * three, so the dot is the legend that ties a tier to its band of the chart.
+ * The tier colours survive as a single dot each — data-visualisation roles
+ * (`--c-note-*`, theme.ts), the same on every perfume. The day-on-the-skin
+ * dial below draws the tiers in the perfume's OWN colours instead (its family's,
+ * La Durée, 20 Oct 2026), and carries its own legend.
  *
  * EVERY NOTE IS A SEARCH, as on the home page's index: `/search?q=<the note as
  * the house wrote it>`, because search already matches notes and the visitor

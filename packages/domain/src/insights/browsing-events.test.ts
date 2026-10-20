@@ -16,7 +16,7 @@ const draft = (over: Partial<BrowsingEventDraft> = {}): BrowsingEventDraft => ({
 describe('the events this site records', () => {
   it('is the pre-order half of doc 04 §6, and nothing the site cannot honestly fire', () => {
     expect([...BROWSING_EVENTS]).toEqual([
-      'landing_view', 'storefront_view', 'search', 'filter_apply',
+      'landing_view', 'storefront_view', 'search', 'filter_apply', 'scent_map_view',
       'product_view', 'reveal_open', 'dial_turn', 'cart_add', 'checkout_start',
     ]);
   });

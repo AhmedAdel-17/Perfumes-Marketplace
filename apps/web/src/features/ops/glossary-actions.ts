@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { NoteIcon } from '@diyar/domain';
+import type { NoteIcon, ScentFamily } from '@diyar/domain';
 import { api } from '@/core/api';
 import { activeOperator } from './actions';
 
@@ -33,15 +33,17 @@ export async function fetchGlossary() {
   return call.glossary.entries();
 }
 
-export async function setNoteEnglish(ar: string, en: string, icon: NoteIcon | null): Promise<GlossaryResult> {
+export async function setNoteEnglish(ar: string, en: string, icon: NoteIcon | null, family: ScentFamily | null): Promise<GlossaryResult> {
   const call = await caller();
   if (!call) return EXPIRED;
   try {
-    await call.glossary.set({ ar, en, icon });
+    await call.glossary.set({ ar, en, icon, family });
     revalidatePath('/ops/notes');
     revalidatePath('/p/[slug]', 'page');
     // The home page's note index prints the drawing too.
     revalidatePath('/');
+    // And the scent map stands the note in its family.
+    revalidatePath('/scent-map');
     return { ok: true };
   } catch {
     return { ok: false, message: 'تعذّر الحفظ. الاسم من حرف إلى ٤٠ حرفًا.' };
@@ -55,6 +57,7 @@ export async function removeNoteEnglish(ar: string): Promise<GlossaryResult> {
     await call.glossary.remove({ ar });
     revalidatePath('/ops/notes');
     revalidatePath('/p/[slug]', 'page');
+    revalidatePath('/scent-map');
     return { ok: true };
   } catch {
     return { ok: false, message: 'تعذّر الحذف.' };
