@@ -152,6 +152,14 @@ describe('a visitor sees a published perfume’s relief, and only that', () => {
     await expect(asAnon().transaction((r) => r.reliefs.forPhoto(ids.draftMedia!))).resolves.toBeNull();
   });
 
+  it('reads a page of cards’ reliefs at once — the published ones, keyed by photograph', async () => {
+    const found = await asAnon().transaction((r) => r.reliefs.forPhotos([ids.laylMedia!, ids.draftMedia!, ids.taifMedia!]));
+    // Layl has one; the draft's is hidden from a visitor; Taif has none yet.
+    expect([...found.keys()]).toEqual([ids.laylMedia]);
+    expect(found.get(ids.laylMedia!)?.placement.centreX).toBeCloseTo(0.4716, 4);
+    await expect(asAnon().transaction((r) => r.reliefs.forPhotos([]))).resolves.toEqual(new Map());
+  });
+
   it('cannot write one', async () => {
     await expect(asAnon().transaction((r) => r.reliefs.put(relief(ids.taifMedia!)))).rejects.toThrow();
   });

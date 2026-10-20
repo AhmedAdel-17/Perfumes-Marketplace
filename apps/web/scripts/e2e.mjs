@@ -2484,6 +2484,92 @@ try {
         equal(after.overflow, '', 'the page scrolls again');
       });
 
+      /*
+       * The reveal as the way in (P5.1.8, 20 Oct 2026). Each in its own browser
+       * context: a visit remembers the perfumes it has seen revealed, and the
+       * visitor above has already opened this one.
+       */
+      const pressCard = async (page) => {
+        await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+        // Wherever the home page shows this perfume — the opening specimen or a card — its kit says so.
+        const frame = page.locator(`[data-reveal-card*="/p/${PERFUME}"] [data-reveal-frame]`).first();
+        await frame.scrollIntoViewIfNeeded();
+        // The photograph is what lifts: a card whose picture is still loading is left a plain link.
+        await frame.locator('img').evaluate((img) => (img.complete && img.naturalWidth > 0)
+          || new Promise((done) => img.addEventListener('load', done, { once: true })));
+        await frame.click();
+      };
+      const landedState = (page) => page.evaluate(() => {
+        const img = document.querySelector('.reveal-trigger')?.parentElement?.querySelector('img');
+        return {
+          path: location.pathname,
+          overflow: document.documentElement.style.overflow,
+          inert: [...document.body.children].some((el) => el.hasAttribute('inert')),
+          photo: img ? getComputedStyle(img).visibility === 'visible' && !img.style.opacity : false,
+        };
+      });
+
+      await test('the first press of its card plays the reveal on the way to its page, and lands there', async () => {
+        const wayContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+        const way = await wayContext.newPage();
+        try {
+          await pressCard(way);
+          const room = way.locator('[role="dialog"][data-mode="arrival"]');
+          await room.waitFor({ timeout: 10_000 });
+          const label = await room.getAttribute('aria-label');
+          assert(label?.includes('ورد الطائف'), `the room is named for the perfume: ${label}`);
+          // The way on is offered at once, not only once the bottle stands.
+          await way.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'تابع إلى صفحة العطر',
+            undefined, { timeout: 5_000 });
+          await room.waitFor({ state: 'detached', timeout: 30_000 });
+          const landed = await landedState(way);
+          equal(landed.path, `/p/${PERFUME}`, 'the perfume’s page');
+          assert(landed.photo && landed.overflow === '' && !landed.inert, `the page left as a page: ${JSON.stringify(landed)}`);
+
+          // Back to the shop, and the same card again: a plain link the second time in a visit —
+          // and Back leaves nothing standing over the page (the route loader once did, for 15 s).
+          await way.goBack({ waitUntil: 'networkidle' });
+          await way.locator(`[data-reveal-card*="/p/${PERFUME}"] [data-reveal-frame]`).first().click({ timeout: 5_000 });
+          await way.waitForURL(`**/p/${PERFUME}`, { timeout: 15_000 });
+          equal(await way.locator('[role="dialog"][data-mode="arrival"]').count(), 0, 'no reveal the second time');
+        } finally {
+          await wayContext.close();
+        }
+      });
+
+      await test('any key goes straight to the page, from wherever the reveal has got to', async () => {
+        const wayContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+        const way = await wayContext.newPage();
+        try {
+          await pressCard(way);
+          const room = way.locator('[role="dialog"][data-mode="arrival"]');
+          await room.waitFor({ timeout: 10_000 });
+          await way.waitForTimeout(400);
+          const pressed = Date.now();
+          await way.keyboard.press('Escape');
+          await room.waitFor({ state: 'detached', timeout: 15_000 });
+          const landed = await landedState(way);
+          equal(landed.path, `/p/${PERFUME}`, 'still the perfume’s page');
+          assert(landed.photo && !landed.inert, `its photograph shown: ${JSON.stringify(landed)}`);
+          // The whole reveal is some eight seconds; pressed through, it is the landing alone.
+          assert(Date.now() - pressed < 6_000, `cut short: ${Date.now() - pressed} ms`);
+        } finally {
+          await wayContext.close();
+        }
+      });
+
+      await test('a visitor who asked for less motion is taken to the page as by any link', async () => {
+        const stillContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG', reducedMotion: 'reduce' });
+        const still = await stillContext.newPage();
+        try {
+          await pressCard(still);
+          await still.waitForURL(`**/p/${PERFUME}`, { timeout: 15_000 });
+          equal(await still.locator('.reveal').count(), 0, 'no room');
+        } finally {
+          await stillContext.close();
+        }
+      });
+
       await test('removed, the control goes too — and both decisions are on the record', async () => {
         await curator.reload({ waitUntil: 'networkidle' });
         await curator.locator('button', { hasText: 'احذف العرض المجسّم' }).click();
@@ -2492,6 +2578,8 @@ try {
         await visitor.goto(`${BASE}/p/${PERFUME}`, { waitUntil: 'networkidle' });
         await visitor.waitForTimeout(800);
         equal(await visitor.locator('.reveal-trigger').count(), 0, 'a control with no relief behind it');
+        await visitor.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+        equal(await visitor.locator(`[data-reveal-card*="/p/${PERFUME}"]`).count(), 0, 'and its cards are plain links again');
         await curator.goto(`${BASE}/ops/audit`, { waitUntil: 'networkidle' });
         const audit = await curator.locator('main').innerText();
         assert(audit.includes('العرض المجسّم'), 'the relief decisions in the audit log');

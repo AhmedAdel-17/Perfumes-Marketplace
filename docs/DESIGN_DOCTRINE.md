@@ -465,18 +465,32 @@ is `features/product/reveal`. The rules it keeps, and why:
 - **Law VI, read for a ceremony the visitor asked for.** The response to the press — the room
   dimming, the photograph lifting off the page — is immediate and within `slow`. The bottle
   STANDING UP is an arrival, not a response: it takes `ceremony`, the one place a click is
-  followed by a long motion, because the visitor asked to watch it. Closing runs it back
-  within `slow`. Nothing bounces; the light never comes from straight ahead (it would whiten
+  followed by a long motion — because the visitor asked to watch it, or, on the way in from a
+  card, because it is the perfume's first arrival in the visit and any press cuts it short.
+  Closing runs it back within `slow`. Nothing bounces; the light never comes from straight ahead (it would whiten
   the flat glass the way no studio light does).
 - **The same object, never a substitute.** For the length of the move from page to stage the
   object lies exactly over the bottle in the photograph — same place, same angle, same light —
   so the eye cannot find a seam; only then does the picture dissolve around it.
-- **Opt-in, and light.** The whole photograph is the control, with its name in a corner; it
-  appears only where the browser can draw the bottle; nothing of the reveal loads until it is
-  pressed. Reduced motion: the bottle simply stands, notes placed around it, no flight, orbit
-  or mist.
-- **One entry point first.** The product page only, until `reveal_open` has been measured
-  (ANALYTICS_DEFINITIONS §2b). Cards elsewhere wait for the number.
+- **Light.** On the perfume's page the whole photograph is the control, with its name in a
+  corner; it appears only where the browser can draw the bottle. Nothing of the reveal loads
+  with a page: its code is fetched once a page with cards is being read, or when the control is
+  pressed — and then rendered at once, never held back behind a loading boundary. Reduced
+  motion: on the page, the bottle simply stands, notes placed around it, no flight, orbit or
+  mist.
+- **The way in, once (founder, 20 Oct 2026 — replacing "the product page only, first").** The
+  first time a perfume is opened in a visit, from any card, its reveal IS the passage to its
+  page: the card's photograph lifts into the room, the bottle stands, its notes rise, and it
+  lies down into the photograph at the top of the perfume's page, which has arrived behind the
+  room — the same object all the way, from one photograph into the other. The second time in
+  the visit the card is a plain link: a ceremony repeated on every press stops being one. Not
+  played at all for reduced motion, a new-tab press, or a browser that cannot draw the bottle.
+- **The hand outranks the ceremony.** On the way in, any press or key goes straight to the page
+  from wherever the reveal has got to — in the air, the photograph flies on into the page's;
+  rising or standing, the bottle lies down from where it is — and nothing is replayed to get
+  there. The way on is offered from the first frame (the one button, "continue to the
+  perfume's page"), and the panel names the perfume only: no price and no bag to reach for in
+  a room that is about to leave.
 
 
 ---

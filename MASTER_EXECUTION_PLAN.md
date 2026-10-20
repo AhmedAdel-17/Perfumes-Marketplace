@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | IN_PROGRESS | 6/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5, P5.1.6, P5.1.7 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 7/25 (P5.6.4, P5.1.3, P5.1.4, P5.1.5, P5.1.6, P5.1.7, P5.1.8 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -220,6 +220,7 @@ production (P0.1.3).
 | P5.1.5 | Les Détails — the drop, the loupe, the ink, the blotter, the sillage | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.4 |
 | P5.1.6 | La Durée — the day-on-the-skin dial on the product page | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.5 |
 | P5.1.7 | La Carte olfactive — the scent map, and a family for every note | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.6 |
+| P5.1.8 | Le Dévoilement as the way in — the reveal from any card, once a visit | P5 | COMPLETE | P1 | BUILD | DR The reveal as the way in (20 Oct 2026), P5.1.4 |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2410,6 +2411,35 @@ and both languages; browser suite green; `next build` succeeds.
 **Do not do:** guess a note's family; draw a perfume that is not published; put words in the
 sky that the panel does not also give.
 
+#### P5.1.8 Le Dévoilement as the way in — the reveal from any card, once a visit
+**Status:** COMPLETE (20 Oct 2026) · **Priority:** P1 · **Type:** BUILD — the success measure
+is a VALIDATE question, open until `reveal_arrive` has real traffic.
+**Why:** the founder found the reveal too far from the hand behind a button on the product page,
+and asked that pressing a perfume's card anywhere play it on the way to the page (DECISION_REGISTER,
+20 Oct 2026 — reversing "the product page only, first").
+**Change control (doc 04 §9):** *user problem* — the shop's most distinctive moment was hidden
+behind a control most visitors never press; *evidence* — founder direction, no buyer test;
+*success metric* — the share of arrivals watched through, and the bag rate after one
+(ANALYTICS_DEFINITIONS §2b, `reveal_arrive` / `reveal_skip`, 0037); *operational owner* — the
+content team, whose reliefs decide which cards play it; *legal dependency* — the open
+cut-outs question of P5.1.4, unchanged; *cost* — no new dependency; a card with a relief carries
+its kit in the page (about 0.8 kB of HTML each, measured: 2.3 kB for the home page's three).
+**What it is:** cards carry their perfume's relief (`ProductCard.relief`, one batched read,
+`reliefs.forPhotos`) and write a kit on themselves (`data-reveal-card`); `RevealDirector` in the
+root layout takes the first plain press of a perfume per visit (`visit.ts`), plays the reveal
+from the card's photograph while the page changes behind the room, and hands it the page's own
+photograph and words, offered by `RevealTrigger`, to land in. Any press or key goes straight on
+(`skip`: the photograph flies on, or the bottle lies down from where it is). The stage is
+fetched while a page with cards is read and rendered without a Suspense boundary
+(`stage-loader.ts`), so the room answers the press in its first frame. Two events, 0037.
+**Acceptance criteria:** from any card with a relief, the first press in a visit plays the whole
+reveal and lands on the perfume's page with its photograph shown, the page scrolling and nothing
+left inert; any press or key cuts it short at any point and still lands; the second press is a
+plain link; reduced motion, a new-tab press and a browser without WebGL get the plain link;
+domain, database, API and web suites green; browser suite green; `next build` succeeds.
+**Do not do:** play it on every press; count an automatic play as a `reveal_open`; put a price or
+a bag in a room that is about to leave; hold the press back behind a loading boundary.
+
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
 **Goal:** campaign registry (UTM ids, spend entries), `paid_campaign` touches already
@@ -3830,3 +3860,46 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
     dark), neither on a page this work touched and both clean when rerun alone — the same
     flake an earlier session saw on the apply page.
   - `next build` succeeds: shared JS 103 kB; `/scent-map` 153 kB first load.
+
+- 2026-10-20 · Claude Code session · P5.1.8 COMPLETE · Le Dévoilement as the way in: the first
+  press of a perfume's card in a visit, anywhere in the shop, plays its reveal on the way to its
+  page, and any press goes straight there (founder: "the first time a perfume is opened in a
+  visit, the full reveal plays as the transition to its page, and any tap skips it"). Built:
+  - `reliefs.forPhotos`, one query for a page of cards (port, Drizzle, 1 database test as the
+    visitor — a draft's relief stays hidden); `ProductCard.relief` on every card list (home,
+    house, search, a perfume's "from other houses", and the scent map's read moved onto it),
+    1 API test across the listings.
+  - `reveal/kit.ts`: a card with a relief writes what the start needs on itself
+    (`data-reveal-card`); its house and notes come with the page. `press.ts` and `visit.ts`:
+    which presses it takes, and once per perfume per visit (9 tests).
+  - `RevealDirector` in the root layout (a mediator: the card knows where it starts, the page
+    where it lands); `RevealTrigger` offers the page's photograph and words to land in.
+  - The controller learnt `arrive`, `home`, `skip` and `dismiss`: a skip in the air flies the
+    photograph on into the page's, a skip as it rises lays the bottle down from where it is.
+    `Tweens` gained interruptible motions.
+  - Migration 0037: `reveal_arrive` and `reveal_skip`, defined first (ANALYTICS_DEFINITIONS §2b,
+    which also records why the 19 Oct measure for `reveal_open` is superseded).
+
+  Found and fixed on the way:
+  - The stage came through `next/dynamic`, and Suspense held it back ~300 ms even when already
+    loaded — measured: the room answered a press a third of a second late, on the product page
+    as well. It is loaded by `stage-loader.ts` and rendered directly: the first frame follows
+    the press.
+  - Back, after ANY page, left the route loader's veil standing over the page for fifteen
+    seconds, catching every press: the router had restored the page before the loader heard
+    `popstate`, so nothing ended its wait. It now waits only for a page not yet on screen.
+  - The scent map's solid button had lost its style since P5.1.7: its hover rule named two
+    colour roles in camelCase (`accentSurface`, `onAccent`), and Tailwind dropped the class.
+
+  Verified:
+  - Every package's typecheck and unit tests pass (turbo, 13/13; 1,791 tests); guard clean.
+  - Browser suite 145/145 from a fresh seed, the three new journeys included: a card's first
+    press plays the reveal and lands on the page (its photograph shown, the page scrolling,
+    nothing inert), then is a plain link after Back; a key cuts it short and still lands; a
+    visitor who asked for less motion gets the link; removing the relief removes the card's kit.
+  - Measured in a browser script: the room appears in the press's own frame; the full reveal
+    is ~8.3 s on a desktop and a phone; a press while it rises lands in ~1.2 s; a key while the
+    photograph is in the air lands as soon as the page has arrived. Arabic and English, both
+    directions.
+  - `audit.mjs` on every surface in both themes: no findings.
+  - `next build` succeeds: shared JS 103 kB (unchanged); `/p/[slug]` 156 kB first load (+1 kB).

@@ -172,6 +172,21 @@ describe('reliefs.confirm', () => {
     expect(JSON.parse(trail.at(-1)!.after!)).toEqual({ product: 'layl-al-qahira', method: 'traced', opaque: false });
   });
 
+  it('rides on the perfume’s card in every listing, as a visitor reads it — the reveal plays from a card', async () => {
+    const shop = visitor();
+    const card = (await shop.catalogue.published()).find((p) => p.id === productId);
+    expect(card?.relief).toMatchObject({ width: 517, height: 860, opaque: false });
+    expect(card?.relief?.placement.angle).toBeCloseTo(28.1, 2);
+    // The same relief wherever the card is drawn, and on the perfume's own page.
+    const inHouse = (await shop.catalogue.house({ slug: 'maison-nour' }))?.products.find((p) => p.id === productId);
+    const inSearch = (await shop.catalogue.search({ text: '' })).products.find((p) => p.id === productId);
+    expect(inHouse?.relief).toEqual(card?.relief);
+    expect(inSearch?.relief).toEqual(card?.relief);
+    expect((await shop.catalogue.detail({ slug: 'layl-al-qahira' }))?.relief).toEqual(card?.relief);
+    // A perfume nobody has made a relief for has none: its card opens its page as any link does.
+    expect((await shop.catalogue.published()).find((p) => p.id === otherProductId)?.relief).toBeNull();
+  });
+
   it('replacing a relief removes the old files from the store', async () => {
     const [before] = await ops().reliefs.list({ productId });
     const oldCutout = new URL(before!.relief!.cutoutUrl).pathname.replace('/dev-media/', '');

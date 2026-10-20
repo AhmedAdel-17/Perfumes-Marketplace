@@ -219,3 +219,26 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   `/ops/notes`, audited), a `/scent-map` page dark in both themes reached from the masthead's
   Perfumes panel, a note with no family left off the map rather than guessed, and a new event,
   `scent_map_view` · the founder asked for all three after approving Le Dévoilement.
+
+- 2026-10-20 · The reveal as the way into a perfume's page · Ahmed (founder) · REVERSES choice
+  (3) of 19 Oct — "the product page only, first, so it can be measured before it spreads". The
+  founder found a reveal behind a button too far from the hand, and asked that pressing a
+  perfume's card, anywhere in the shop, play it on the way to the perfume's page: "the first
+  time a perfume is opened in a visit, the full reveal plays as the transition to its page, and
+  any tap skips it". So: from any card with a relief behind it — the home grid, the home page's
+  opening specimen, a house's page, search, a perfume page's "from other houses" — the card's
+  photograph lifts into the dark room, the bottle stands and its notes rise, and it lies down
+  into the photograph at the top of the perfume's page, which has arrived behind the room; any
+  press or key goes straight there, from wherever it has got to. Choices taken, each the
+  recommended option: (1) a VISIT is the browser tab's session, and a perfume counts once its
+  reveal has PLAYED (from a card, or the page's control) — not once its page was merely seen;
+  (2) not played for a visitor who asked for less motion, a browser that cannot draw the bottle,
+  a press for a new tab, or a photograph not yet loaded — the card is then a plain link; (3) the
+  panel on the way names the perfume only — no price, no bag, which the page has a moment later;
+  (4) the control on the product page stays, for a visitor who came straight to the page and for
+  a second look; (5) measured by two new events, `reveal_arrive` and `reveal_skip` (definitions
+  first, ANALYTICS_DEFINITIONS §2b) — how many press through is the number that says whether
+  it is wanted, or in the way · migration 0037 · task P5.1.8. Consequence on the record: the
+  19 Oct measure for `reveal_open` (bag rate of openers against non-openers) no longer has a
+  clean comparison — most visitors now meet the reveal without choosing it; it is replaced as
+  written in §2b.

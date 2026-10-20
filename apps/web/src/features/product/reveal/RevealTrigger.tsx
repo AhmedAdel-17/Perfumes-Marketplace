@@ -1,27 +1,29 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 import { PRODUCT, type Locale } from '@diyar/i18n';
 import type { StorefrontRelief } from '@/core/catalogue';
-import { canRenderBottle } from './support';
+import { useRevealArrivals } from './RevealDirector';
 import type { RevealProduct } from './RevealStage';
+import { loadedStage, loadStage, type StageComponent } from './stage-loader';
+import { canRenderBottle } from './support';
+import { rememberRevealed } from './visit';
 
 /**
- * Loaded when pressed, never before: the stage, its renderer and its mist are
- * the reveal's whole weight, and a visitor who only reads the page should not
- * download any of it (CLAUDE.md §14: check bundle impact).
- */
-const RevealStage = dynamic(() => import('./RevealStage').then((m) => m.RevealStage), { ssr: false });
-
-/**
- * The control that opens a perfume's reveal (Le Dévoilement, founder 19 Oct
- * 2026: the product page only, first).
+ * The control that opens a perfume's reveal on its own page (Le Dévoilement,
+ * founder 19 Oct 2026) — and, since 20 Oct, the place a reveal that started
+ * on a CARD lands: this page offers the director its photograph and its words
+ * (`useRevealArrivals`), and the bottle lies down here. The control stays for a
+ * visitor who came straight to the page, and for a second look.
  *
  * The whole photograph is the control — a bottle invites the hand — with its
  * name printed in a corner, so it reads as something to press and a screen
  * reader hears what it does. Shown only when this browser can draw the bottle:
  * a control that opened nothing would be worse than none.
+ *
+ * The stage is fetched when pressed, never before (`stage-loader`): it is the
+ * reveal's whole weight, and a visitor who only reads the page should not
+ * download any of it (CLAUDE.md §14: check bundle impact).
  */
 export function RevealTrigger({ relief, photo, product, locale }: {
   relief: StorefrontRelief;
@@ -31,12 +33,20 @@ export function RevealTrigger({ relief, photo, product, locale }: {
 }) {
   const copy = PRODUCT[locale];
   const button = useRef<HTMLButtonElement>(null);
+  const arrivals = useRevealArrivals();
   const [supported, setSupported] = useState(false);
   const [open, setOpen] = useState(false);
   const [frame, setFrame] = useState<HTMLElement | null>(null);
+  const [Stage, setStage] = useState<StageComponent | null>(null);
   const returning = useRef(false);
 
   useEffect(() => { setSupported(canRenderBottle()); }, []);
+
+  // A reveal on its way here from a card lands in this photograph, and names the perfume with these words.
+  useEffect(() => {
+    const plate = button.current?.parentElement;
+    if (supported && plate) arrivals?.offer(product.id, { frame: plate, product });
+  }, [supported, arrivals, product]);
 
   /*
    * Focus goes back to this control once the room has GONE, not when it says
@@ -62,14 +72,25 @@ export function RevealTrigger({ relief, photo, product, locale }: {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => {
-          setFrame(button.current?.parentElement ?? null);
-          setOpen(true);
+          const plate = button.current?.parentElement ?? null;
+          const show = (stage: StageComponent) => {
+            // Seen now: a card leading here later in the visit opens the page as a plain link.
+            rememberRevealed(product.id);
+            setStage(() => stage);
+            setFrame(plate);
+            setOpen(true);
+          };
+          const ready = loadedStage();
+          if (ready) show(ready);
+          // A stage that could not be fetched opens nothing; the page is as it was.
+          else loadStage().then(show, () => undefined);
         }}
       >
         <span className="reveal-trigger-label">{copy.reveal}</span>
       </button>
-      {open && frame && (
-        <RevealStage
+      {open && frame && Stage && (
+        <Stage
+          mode="open"
           frame={frame}
           relief={relief}
           photo={photo}

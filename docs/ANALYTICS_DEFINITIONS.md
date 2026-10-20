@@ -63,6 +63,8 @@ ratio of two different periods' counts.
 | Narrowed | `filter_apply` | `/search` with filters and no words |
 | Looked at a perfume | `product_view` | `/p/[slug]`, carrying the perfume |
 | Opened its reveal | `reveal_open` | the reveal control on `/p/[slug]`, carrying the perfume (since 19 Oct 2026, 0033) |
+| Came in through its reveal | `reveal_arrive` | a card pressed for the first time in the visit, whose reveal plays on the way to `/p/[slug]`, carrying the perfume (since 20 Oct 2026, 0037) |
+| Pressed through it | `reveal_skip` | a press or key that cut that reveal short, carrying the perfume (since 20 Oct 2026, 0037) |
 | Turned its dial | `dial_turn` | the day-on-the-skin dial on `/p/[slug]`, on the first turn of a page view, carrying the perfume (since 20 Oct 2026, 0034) |
 | Opened the scent map | `scent_map_view` | `/scent-map` (since 20 Oct 2026, 0036) |
 | Put one in the bag | `cart_add` | the add-to-bag control |
@@ -77,6 +79,23 @@ the share who then put *that* perfume in the bag — against the same share for 
 looked at a perfume that HAS a reveal without opening it. Visitors, not events, on both
 sides; the same perfumes on both sides, so a comparison with perfumes that have no reveal
 cannot flatter it.
+
+**Superseded on 20 Oct 2026, when the reveal became the way in** (DECISION_REGISTER, 20 Oct).
+The first time a perfume is opened in a visit from a card, its reveal now plays without being
+asked for, so most visitors meet it and the comparison above has no clean other side.
+`reveal_open` stays what it was — the visitor's own press of the control on the perfume's page,
+now a SECOND look or a visitor who came straight to the page — and is read as uptake only. An
+automatic play is never a `reveal_open`; it is a `reveal_arrive`, and a press that cut it short
+is a `reveal_skip` (once per arrival at most). **The measure that replaces it:**
+
+1. **Watched through** — of the visitors with a `reveal_arrive`, the share with no `reveal_skip`
+   for that perfume in the same visit. Visitors, not events. Read against itself over time; a
+   reveal that most visitors press through is in the way, and that is the number that says so.
+2. **Into the bag** — of the visitors who came in through a perfume's reveal, the share who then
+   put *that* perfume in the bag, against the same share for visitors who reached the same
+   perfumes WITHOUT it (straight to the page from a link, or a second opening in the visit). The
+   two groups did not choose their side at random — a direct arrival is often a house's own
+   follower — so this is read as a direction only, never as the reveal's effect.
 
 **`dial_turn` is uptake too, measured the same way (La Durée — founder, 19–20 Oct 2026).**
 Every published perfume has a dial, so the comparison is simpler: of the visitors who turned

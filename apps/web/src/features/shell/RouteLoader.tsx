@@ -20,11 +20,14 @@ import { RouteWait, type WaitPhase } from './route-wait';
  *
  * Not caught, on purpose: a full page load (the language switch fades the
  * page out itself — LeaveLink, `data-full-load`), a new tab, a download, a
- * link to the page you are on, and in-page anchors.
+ * link to the page you are on, in-page anchors, and a press something else
+ * has already taken — the reveal, when it is the way into a perfume's page
+ * (RevealDirector), is its own passage there.
  */
 const TIMINGS = { appearAfter: motion.base!, hold: motion.slow!, giveUp: 15_000 };
 
 function leadsElsewhere(event: MouseEvent): boolean {
+  if (event.defaultPrevented) return false;
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
   const anchor = (event.target as Element | null)?.closest?.('a[href]');
   if (!(anchor instanceof HTMLAnchorElement)) return false;

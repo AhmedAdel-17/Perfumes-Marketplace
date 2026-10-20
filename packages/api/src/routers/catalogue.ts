@@ -20,7 +20,9 @@
  */
 import { z } from 'zod';
 import { BAND_FILL } from '@diyar/i18n';
-import type { CatalogueProductRow, CataloguePhotoRow, GlossaryWord, NoteTier } from '@diyar/domain';
+import type {
+  CatalogueProductRow, CataloguePhotoRow, GlossaryWord, NoteTier, Repositories, StoredRelief,
+} from '@diyar/domain';
 import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms, type NoteIcon, type ScentFamily } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
 import { slugSchema } from '../validation';
@@ -84,6 +86,13 @@ export interface ProductCard {
    * with its English name and drawing from the glossary.
    */
   topNotes: CardNote[];
+  /**
+   * The primary photograph's relief, when the content team has made one (0032).
+   * Null: no reveal. On the CARD since the reveal became the way into a
+   * perfume's page (founder, 20 Oct 2026): pressing a card starts loading the
+   * bottle at once, while its photograph is still in the air.
+   */
+  relief: StorefrontRelief | null;
 }
 
 /** One note as a card prints it: the house's word, its English, its drawing. */
@@ -120,8 +129,6 @@ export interface ProductDetail extends ProductCard {
   notesBase: string[];
   projection: PerformanceReading | null;
   fulfilmentHours: number;
-  /** The primary photograph's relief, when the content team has made one. Null: no reveal. */
-  relief: StorefrontRelief | null;
 }
 
 export interface HouseDetail {
@@ -194,6 +201,46 @@ const photoMap = (rows: readonly CataloguePhotoRow[], media: MediaStore) => {
   return found;
 };
 
+const storefrontRelief = (relief: StoredRelief, media: MediaStore): StorefrontRelief => ({
+  cutoutUrl: media.publicUrl(relief.cutoutKey),
+  reliefUrl: media.publicUrl(relief.reliefKey),
+  width: relief.width,
+  height: relief.height,
+  placement: relief.placement,
+  opaque: relief.opaque,
+});
+
+/** A page's primary photographs and their reliefs, as read — before they are URLs. */
+interface PicturesRead {
+  readonly photos: readonly CataloguePhotoRow[];
+  readonly reliefs: ReadonlyMap<string, StoredRelief>;
+}
+
+/** The same, by product and as a storefront renders them: what a card shows, and what the reveal lifts. */
+interface CardPictures {
+  readonly photos: ReadonlyMap<string, StorefrontPhoto>;
+  readonly reliefs: ReadonlyMap<string, StorefrontRelief>;
+}
+
+/**
+ * Read inside the caller's transaction, as the visitor: `public_read_reliefs`
+ * decides which reliefs a page may show (a published perfume's only). Two
+ * queries for a page of any length.
+ */
+const readPictures = async (r: Repositories, productIds: readonly string[]): Promise<PicturesRead> => {
+  const photos = await r.catalogue.primaryPhotos(productIds);
+  return { photos, reliefs: await r.reliefs.forPhotos(photos.map((p) => p.mediaId)) };
+};
+
+const cardPictures = (read: PicturesRead, media: MediaStore): CardPictures => {
+  const reliefs = new Map<string, StorefrontRelief>();
+  for (const photo of read.photos) {
+    const relief = read.reliefs.get(photo.mediaId);
+    if (relief) reliefs.set(photo.productId, storefrontRelief(relief, media));
+  }
+  return { photos: photoMap(read.photos, media), reliefs };
+};
+
 /**
  * A performance band, with the three things a meter needs and the one thing
  * doc 06 §4 requires: where the claim came from.
@@ -209,7 +256,7 @@ const band = (value: string | null, source: string | null): PerformanceReading |
 
 const toCard = (
   row: CatalogueProductRow,
-  photos: ReadonlyMap<string, StorefrontPhoto>,
+  pictures: CardPictures,
   glossary: ReadonlyMap<string, GlossaryWord>,
 ): ProductCard => ({
   id: row.id,
@@ -220,7 +267,7 @@ const toCard = (
   pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
   volumeMl: row.volumeMl,
   family: row.scentFamily ?? 'amber',
-  photo: photos.get(row.id) ?? null,
+  photo: pictures.photos.get(row.id) ?? null,
   concentration: row.concentration ?? '',
   longevity: band(row.longevityBand, row.performanceSource),
   inStock: row.stock > 0,
@@ -229,6 +276,7 @@ const toCard = (
     en: glossary.get(note)?.en ?? null,
     icon: glossary.get(note)?.icon ?? null,
   })),
+  relief: pictures.reliefs.get(row.id) ?? null,
 });
 
 /** Every top note of a list of perfumes, for one glossary read. */
@@ -237,16 +285,16 @@ const topNotesOf = (rows: readonly CatalogueProductRow[]): string[] => [...new S
 export const catalogueRouter = router({
   /** Every published product, for the home grid. */
   published: publicProcedure.query(async ({ ctx }): Promise<ProductCard[]> => {
-    const { rows, photos, glossary } = await ctx.uow.transaction(async (r) => {
+    const { rows, pictures, glossary } = await ctx.uow.transaction(async (r) => {
       const found = await r.catalogue.publishedProducts();
       return {
         rows: found,
-        photos: await r.catalogue.primaryPhotos(found.map((p) => p.id)),
+        pictures: await readPictures(r, found.map((p) => p.id)),
         glossary: await r.catalogue.noteGlossary(topNotesOf(found)),
       };
     });
-    const map = photoMap(photos, ctx.media);
-    return rows.map((row) => toCard(row, map, glossary));
+    const shown = cardPictures(pictures, ctx.media);
+    return rows.map((row) => toCard(row, shown, glossary));
   }),
 
   detail: publicProcedure
@@ -255,21 +303,17 @@ export const catalogueRouter = router({
       const result = await ctx.uow.transaction(async (r) => {
         const row = await r.catalogue.productBySlug(input.slug);
         if (!row) return null;
-        const photos = await r.catalogue.primaryPhotos([row.id]);
         return {
           row,
-          photos,
-          // Read as the visitor: `public_read_reliefs` shows a published perfume's only.
-          relief: photos[0] ? await r.reliefs.forPhoto(photos[0].mediaId) : null,
+          pictures: await readPictures(r, [row.id]),
           glossary: await r.catalogue.noteGlossary([...row.notesTop, ...row.notesHeart, ...row.notesBase]),
         };
       });
       if (!result) return null;
 
       const { row } = result;
-      const map = photoMap(result.photos, ctx.media);
       return {
-        ...toCard(row, map, result.glossary),
+        ...toCard(row, cardPictures(result.pictures, ctx.media), result.glossary),
         brandName: row.brandName,
         brandNameEn: row.brandNameEn,
         noteEnglish: Object.fromEntries([...result.glossary].map(([ar, word]) => [ar, word.en])),
@@ -282,16 +326,6 @@ export const catalogueRouter = router({
         notesBase: [...row.notesBase],
         projection: band(row.projectionBand, row.performanceSource),
         fulfilmentHours: row.fulfilmentHours,
-        relief: result.relief
-          ? {
-            cutoutUrl: ctx.media.publicUrl(result.relief.cutoutKey),
-            reliefUrl: ctx.media.publicUrl(result.relief.reliefKey),
-            width: result.relief.width,
-            height: result.relief.height,
-            placement: result.relief.placement,
-            opaque: result.relief.opaque,
-          }
-          : null,
       };
     }),
 
@@ -305,14 +339,14 @@ export const catalogueRouter = router({
         return {
           house,
           rows,
-          photos: await r.catalogue.primaryPhotos(rows.map((p) => p.id)),
+          pictures: await readPictures(r, rows.map((p) => p.id)),
           glossary: await r.catalogue.noteGlossary(topNotesOf(rows)),
         };
       });
       if (!result) return null;
 
       const { house, rows, glossary } = result;
-      const map = photoMap(result.photos, ctx.media);
+      const shown = cardPictures(result.pictures, ctx.media);
       return {
         id: house.id,
         slug: house.slug,
@@ -326,29 +360,29 @@ export const catalogueRouter = router({
         foundedYear: house.foundedYear,
         city: house.city,
         serviceGovernorates: [...house.serviceGovernorates],
-        products: rows.map((row) => toCard(row, map, glossary)),
+        products: rows.map((row) => toCard(row, shown, glossary)),
       };
     }),
 
   /**
    * The scent map: the whole published catalogue, as anyone may read it. Each
    * perfume's relief is read as the visitor (RLS shows a published perfume's
-   * only), one perfume at a time inside the transaction — a catalogue of tens,
-   * where a batched read would be a second query shape to keep in step.
+   * only), in the same batched read the cards use.
    */
   scentMap: publicProcedure.query(async ({ ctx }): Promise<ScentMapData> => {
-    const { rows, photos, reliefs, glossary } = await ctx.uow.transaction(async (r) => {
+    const { rows, pictures, glossary } = await ctx.uow.transaction(async (r) => {
       const found = await r.catalogue.publishedProducts();
-      const shots = await r.catalogue.primaryPhotos(found.map((p) => p.id));
-      const lifted = new Map<string, Awaited<ReturnType<typeof r.reliefs.forPhoto>>>();
-      for (const shot of shots) lifted.set(shot.productId, await r.reliefs.forPhoto(shot.mediaId));
       const notes = [...new Set(found.flatMap((p) => [...p.notesTop, ...p.notesHeart, ...p.notesBase]))];
-      return { rows: found, photos: shots, reliefs: lifted, glossary: await r.catalogue.noteGlossary(notes) };
+      return {
+        rows: found,
+        pictures: await readPictures(r, found.map((p) => p.id)),
+        glossary: await r.catalogue.noteGlossary(notes),
+      };
     });
-    const map = photoMap(photos, ctx.media);
+    const shown = cardPictures(pictures, ctx.media);
     return {
       perfumes: rows.map((row) => {
-        const relief = reliefs.get(row.id);
+        const relief = shown.reliefs.get(row.id);
         return {
           id: row.id,
           slug: row.slug,
@@ -359,8 +393,8 @@ export const catalogueRouter = router({
           brandLatin: latin(row.brandName, row.brandNameEn),
           family: row.scentFamily ?? 'amber',
           pricePiastres: row.promoPricePiastres ?? row.pricePiastres,
-          cutout: relief ? { url: ctx.media.publicUrl(relief.cutoutKey), width: relief.width, height: relief.height } : null,
-          photo: map.get(row.id) ?? null,
+          cutout: relief ? { url: relief.cutoutUrl, width: relief.width, height: relief.height } : null,
+          photo: shown.photos.get(row.id) ?? null,
           notesTop: [...row.notesTop],
           notesHeart: [...row.notesHeart],
           notesBase: [...row.notesBase],
@@ -445,19 +479,19 @@ export const catalogueRouter = router({
         sort: input.sort,
       };
 
-      const { rows, houses, photos, glossary } = await ctx.uow.transaction(async (r) => {
+      const { rows, houses, pictures, glossary } = await ctx.uow.transaction(async (r) => {
         const found = await r.catalogue.search(criteria);
         return {
           rows: found,
           houses: await r.catalogue.houseFilterOptions(),
-          photos: await r.catalogue.primaryPhotos(found.map((p) => p.id)),
+          pictures: await readPictures(r, found.map((p) => p.id)),
           glossary: await r.catalogue.noteGlossary(topNotesOf(found)),
         };
       });
 
-      const map = photoMap(photos, ctx.media);
+      const shown = cardPictures(pictures, ctx.media);
       return {
-        products: rows.map((row) => toCard(row, map, glossary)),
+        products: rows.map((row) => toCard(row, shown, glossary)),
         houses,
         total: rows.length,
       };

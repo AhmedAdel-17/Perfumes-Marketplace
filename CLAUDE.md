@@ -313,6 +313,9 @@ day-on-the-skin dial that replaced the evolution chart, `features/product/day`, 
 is chosen in `/ops/notes`, migration 0035). All four are built. Serve
 them with the `experiences` launch config (WebGL cannot read `file://` images). A relief is
 made from the house's own photograph and never invents packaging (DESIGN_DOCTRINE §8).
+Since 20 Oct 2026 (P5.1.8) the reveal is also the WAY INTO a perfume's page: the first press
+of a card in a visit plays it from the card to the page, and any press skips it
+(`RevealDirector` in the root layout; a card opts in by writing a kit, `reveal/kit.ts`).
 Shared motion code lives in `features/motion/` (the tokens as functions, `Vapour`).
 
 Icons are in `packages/ui/src/icons.tsx` (46 components; Moon, Wood, Palm, Sprig and Diamond added 17 Oct 2026). Never draw a new one without

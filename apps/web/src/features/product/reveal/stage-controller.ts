@@ -16,11 +16,23 @@
  *   Closing runs it back: the notes return to the nozzle, and the bottle lies
  *   down into its photograph as the lights come up.
  *
+ * AS THE WAY INTO A PAGE (founder, 20 Oct 2026). The first time a perfume is
+ * opened in a visit, all of it plays as the passage from a card to the
+ * perfume's page (`arrive`): it lifts the CARD's photograph, the page changes
+ * behind the dark room, and the closing lays the bottle down into the
+ * photograph at the top of the NEW page (`home`). Any press cuts it short
+ * (`skip`) from wherever it has got to — still in the air, the photograph
+ * itself flies on into the page's; rising or standing, the bottle lies down
+ * from where it is. Nothing is replayed to get there.
+ *
  * Pattern — an IMPERATIVE CONTROLLER behind a presentational component
  * (ENGINEERING_PRINCIPLES §4, presentational/container split). React renders
  * the stage's parts once; this moves them, sixty times a second, through one
  * frame loop and one clock (`Tweens`). A choreography of this kind expressed
- * as React state would re-render the tree every frame.
+ * as React state would re-render the tree every frame. Its course is a STATE
+ * machine (`phase`): each step asks where the visitor has taken it before it
+ * goes on, so a close, a skip or a failed load each leave the page exactly as
+ * a finished reveal would.
  *
  * Nothing about the packaging is invented: the object is the house's own
  * photograph (`makeRelief` in the domain) — see the panel's note.
@@ -39,6 +51,9 @@ const RING: Record<Tier, { v: number; r: number; speed: number }> = {
   base: { v: 0.86, r: 0.98, speed: 0.06 },
 };
 
+/** How long a note takes to rise from the nozzle to its ring, in seconds. */
+const BIRTH_S = 1.25;
+
 export interface Chip { readonly el: HTMLElement; readonly tier: Tier; readonly index: number; readonly count: number }
 
 export interface StageParts {
@@ -46,11 +61,10 @@ export interface StageParts {
   readonly glass: HTMLCanvasElement;
   readonly mist: HTMLCanvasElement;
   readonly plinth: HTMLElement;
-  readonly chips: readonly Chip[];
   readonly guides: Partial<Record<Tier, HTMLElement>>;
   readonly hint: HTMLElement | null;
   readonly panel: HTMLElement;
-  /** The photograph's frame on the page: where the bottle comes from and goes back to. */
+  /** The photograph's frame on the page: where the bottle comes from. */
   readonly frame: HTMLElement;
 }
 
@@ -73,9 +87,22 @@ interface ChipMotion {
   half: { w: number; h: number } | null;
 }
 
+/** A promise, and the hand that settles it. */
+interface Signal { readonly promise: Promise<void>; readonly resolve: () => void }
+
+function signal(): Signal {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const px = (n: number) => `${n.toFixed(1)}px`;
+const lerpRect = (a: Rect, b: Rect, k: number): Rect => ({
+  left: lerp(a.left, b.left, k), top: lerp(a.top, b.top, k),
+  width: lerp(a.width, b.width, k), height: lerp(a.height, b.height, k),
+});
 
 /** Where an image drawn `object-fit: cover` in a frame actually is — the whole image, overflow included. */
 function coverRect(frame: DOMRect, width: number, height: number): Rect {
@@ -89,7 +116,11 @@ export class RevealController {
   private readonly mist: Mist;
   private readonly tweens: Tweens;
   private readonly wide = window.matchMedia('(min-width: 1024px)');
-  private phase: 'idle' | 'flying' | 'rising' | 'open' | 'closing' | 'closed' = 'idle';
+  /**
+   * `held`: pressed through while it was rising — the bottle stays where it
+   * had got to, half-stood, until the page it lies down into is there.
+   */
+  private phase: 'idle' | 'flying' | 'rising' | 'held' | 'open' | 'closing' | 'closed' = 'idle';
   /** 0 while the object is still the photograph — no tilt, no bob; 1 once it stands. */
   private settle = 0;
   private readonly look = { rx: 0, ry: 0, light: [0.35, 0.55, 1] as [number, number, number] };
@@ -102,18 +133,27 @@ export class RevealController {
   private flier: HTMLImageElement | null = null;
   /** Escape pressed while the bottle was still rising: honoured the moment it stands. */
   private closeAsked = false;
+  /** The photograph the bottle goes back into: the one it came from, or — on the way into a page — the page's. */
+  private plate: HTMLElement;
+  /** The picture hidden while its photograph is in the air, given back however the reveal ends. */
+  private lifted: HTMLImageElement | null = null;
+  /** The reveal is the way into a page (`arrive`), not a dialog opened in place. */
+  private arriving = false;
+  /** Settled once `plate` is the page's own photograph. */
+  private readonly homed = signal();
+  /** Pressed through: on the way into a page, straight there. */
+  private skipped = false;
+  private readonly skipping = signal();
+  /** When the bottle stood up; null until then. */
+  private stoodAt: number | null = null;
+  /** An arrival waiting for the notes to have had their moment — released by the frame loop. */
+  private lingering: (() => void) | null = null;
 
   constructor(private readonly parts: StageParts, private readonly setup: StageSetup) {
+    this.plate = parts.frame;
     this.glass = new BottleGL(parts.glass);
     this.mist = new Mist(parts.mist, setup.mistColour);
     this.tweens = new Tweens(setup.still);
-    this.chips = parts.chips.map((chip) => ({
-      chip,
-      angle0: (chip.index / chip.count) * Math.PI * 2 + (chip.tier === 'heart' ? 0.5 : chip.tier === 'base' ? 1.1 : 0),
-      born: Number.POSITIVE_INFINITY,
-      recall: 0,
-      half: null,
-    }));
     // Unseen until it is laid over its own photograph.
     this.glass.state.opacity = 0;
     this.raf = requestAnimationFrame(this.frame);
@@ -135,12 +175,32 @@ export class RevealController {
     this.pointer = { x, y, active };
   }
 
+  /**
+   * The notes, as the stage has drawn them — handed over when they are known:
+   * at once when the reveal is opened on the perfume's page, with the page
+   * when it is the way into one. The same elements handed over again (a
+   * re-render) keep their motion.
+   */
+  notes(chips: readonly Chip[]): void {
+    const same = chips.length === this.chips.length && chips.every((c, i) => this.chips[i]?.chip.el === c.el);
+    if (same) return;
+    this.chips = chips.map((chip) => ({
+      chip,
+      angle0: (chip.index / chip.count) * Math.PI * 2 + (chip.tier === 'heart' ? 0.5 : chip.tier === 'base' ? 1.1 : 0),
+      born: Number.POSITIVE_INFINITY,
+      recall: 0,
+      half: null,
+    }));
+    // Words that came after the bottle stood (a slow page) come out now.
+    if (this.phase === 'open') this.bear(performance.now());
+  }
+
   // ------------------------------------------------------------------ layout
 
-  private photoImage(): HTMLImageElement | null { return this.parts.frame.querySelector('img'); }
+  private photoImage(): HTMLImageElement | null { return this.plate.querySelector('img'); }
 
   private photoRect(): Rect {
-    return coverRect(this.parts.frame.getBoundingClientRect(), this.setup.photo.width, this.setup.photo.height);
+    return coverRect(this.plate.getBoundingClientRect(), this.setup.photo.width, this.setup.photo.height);
   }
 
   /** The middle of the room the panel leaves free: beside it on a desktop, above it on a phone. */
@@ -175,14 +235,18 @@ export class RevealController {
     return { left: f.cx - w / 2, top: f.cy - h / 2, width: w, height: h };
   }
 
+  private place(flier: HTMLElement, r: Rect): void {
+    Object.assign(flier.style, { left: px(r.left), top: px(r.top), width: px(r.width), height: px(r.height) });
+  }
+
   // ------------------------------------------------------------------ open
 
   async open(): Promise<void> {
     if (this.phase !== 'idle') return;
     this.phase = 'flying';
-    const { root, frame } = this.parts;
+    const { root } = this.parts;
     const img = this.photoImage();
-    const start = frame.getBoundingClientRect();
+    const start = this.plate.getBoundingClientRect();
     const loading = this.glass.load(this.setup.cutoutUrl, this.setup.reliefUrl);
 
     // 1. The photograph itself lifts off the page — the bytes already loaded.
@@ -190,24 +254,26 @@ export class RevealController {
     flier.src = img?.currentSrc || img?.src || '';
     flier.alt = '';
     flier.className = 'reveal-flier';
-    const place = (r: Rect) => Object.assign(flier.style, { left: px(r.left), top: px(r.top), width: px(r.width), height: px(r.height) });
-    place(start);
+    this.place(flier, start);
     root.append(flier);
     this.flier = flier;
-    if (img) img.style.visibility = 'hidden';
+    if (img) { img.style.visibility = 'hidden'; this.lifted = img; }
     this.room(true);
 
     const to = this.flierTarget();
-    await this.tweens.run(MS.slow, EASE.entrance, (k) => place({
-      left: lerp(start.left, to.left, k), top: lerp(start.top, to.top, k),
-      width: lerp(start.width, to.width, k), height: lerp(start.height, to.height, k),
-    }));
-    try {
-      await loading;
-    } catch (error) {
-      this.abort(error);
+    await this.tweens.run(MS.slow, EASE.entrance, (k) => this.place(flier, lerpRect(start, to, k)), true);
+    // Pressed through while it was in the air: there is no bottle yet, only the
+    // photograph — it goes on, from where it is, into the page's own.
+    if (this.skipped) return this.landPhotograph(flier);
+    const loaded = await Promise.race([
+      loading.then(() => 'ready' as const, (error: unknown) => ({ error })),
+      this.skipping.promise.then(() => 'skipped' as const),
+    ]);
+    if (typeof loaded === 'object') {
+      this.abort(loaded.error);
       return;
     }
+    if (this.skipped) return this.landPhotograph(flier);
 
     // 2. The object over its own picture, flat and in the picture's light.
     const over = this.glass.poseOver(to, this.setup.placement);
@@ -219,31 +285,39 @@ export class RevealController {
       flier.style.opacity = String(1 - k);
       flier.style.filter = `blur(${(k * 10).toFixed(1)}px)`;
     }).then(() => { flier.remove(); this.flier = null; });
-    if (!this.setup.still) await new Promise((r) => setTimeout(r, MS.quick));
+    if (!this.setup.still && !this.skipped) await new Promise((r) => setTimeout(r, MS.quick));
 
     // 3. It stands up out of it.
-    const stand = this.standingPose();
-    const s = this.glass.state;
-    await this.tweens.run(MS.ceremony, EASE.inOut, (k) => {
-      s.x = lerp(over.x, stand.x, k); s.y = lerp(over.y, stand.y, k);
-      s.scale = lerp(over.scale, stand.scale, k); s.rz = lerp(over.rz, 0, k);
-      s.depth = Math.min(1, k * 1.5); s.relight = k;
-      s.reflect = Math.max(0, (k - 0.55) / 0.45);
-      this.settle = k;
-    });
+    if (!this.skipped) {
+      const stand = this.standingPose();
+      const s = this.glass.state;
+      await this.tweens.run(MS.ceremony, EASE.inOut, (k) => {
+        s.x = lerp(over.x, stand.x, k); s.y = lerp(over.y, stand.y, k);
+        s.scale = lerp(over.scale, stand.scale, k); s.rz = lerp(over.rz, 0, k);
+        s.depth = Math.min(1, k * 1.5); s.relight = k;
+        s.reflect = Math.max(0, (k - 0.55) / 0.45);
+        this.settle = k;
+      }, true);
+    }
+    // Pressed through as it rose: it stays where it had got to — the picture
+    // still dissolving around it — and lies down into the page from there.
+    if (this.skipped) { this.phase = 'held'; return; }
     await dissolve;
     this.phase = 'open';
+    this.stoodAt = performance.now();
     this.setup.onStanding();
     if (this.closeAsked) { void this.close(); return; }
+    this.bear(this.stoodAt);
+  }
 
-    // 4. The notes, tier by tier, each with a spritz.
-    const now = performance.now();
+  /** 4. The notes, tier by tier, each with a spritz. */
+  private bear(now: number): void {
     TIERS.forEach((tier, t) => {
       const delay = this.setup.still ? 0 : 250 + t * MS.base * 2;
       for (const c of this.chips.filter((m) => m.chip.tier === tier)) c.born = now + delay + (this.setup.still ? 0 : c.chip.index * 170);
       if (!this.setup.still) window.setTimeout(() => this.phase === 'open' && this.mist.burst(this.nozzle), delay - 60);
       const guide = this.parts.guides[tier];
-      if (guide) window.setTimeout(() => { guide.dataset.on = 'true'; }, delay + 300);
+      if (guide) window.setTimeout(() => { if (this.phase === 'open') guide.dataset.on = 'true'; }, delay + 300);
     });
   }
 
@@ -252,33 +326,127 @@ export class RevealController {
     console.warn('The reveal could not load its relief; the page is left as it was.', error);
     this.flier?.remove();
     this.flier = null;
-    const img = this.photoImage();
-    if (img) img.style.visibility = '';
+    if (this.lifted) this.lifted.style.visibility = '';
     this.room(false);
     this.phase = 'closed';
     this.setup.onClosed();
+  }
+
+  // ------------------------------------------------------------------ the way into a page
+
+  /**
+   * The reveal as the way into the perfume's page: all of it, then the bottle
+   * lies down into the photograph at the top of the page that has arrived
+   * behind the room. A press at any point goes straight there (`skip`).
+   */
+  async arrive(): Promise<void> {
+    this.arriving = true;
+    await this.open();
+    if (this.phase !== 'open' && this.phase !== 'held') return;
+    await this.homed.promise;
+    if (!this.skipped) await new Promise<void>((go) => { this.lingering = go; });
+    await this.close();
+  }
+
+  /**
+   * The page the reveal leads to has arrived behind the room: from now on the
+   * bottle goes back into the photograph at its top — hidden until it does, so
+   * the picture is never there twice. The card's picture, if its element
+   * outlived the old page, is given back now.
+   */
+  home(plate: HTMLElement): void {
+    if (this.lifted && this.lifted !== plate.querySelector('img')) this.lifted.style.visibility = '';
+    this.plate = plate;
+    const img = this.photoImage();
+    if (img) { img.style.visibility = 'hidden'; this.lifted = img; }
+    this.homed.resolve();
+  }
+
+  /**
+   * A press on the way in: straight to the page, from wherever the reveal has
+   * got to. False when there is nothing left to cut short — it is already
+   * lying down, or this is the dialog, which closes instead.
+   */
+  skip(): boolean {
+    if (!this.arriving || this.skipped || this.phase === 'closing' || this.phase === 'closed') return false;
+    this.skipped = true;
+    this.skipping.resolve();
+    // The flight or the rise stops where it is; the landing starts from there.
+    this.tweens.interrupt();
+    return true;
+  }
+
+  /** When the last note has reached its ring and been seen there a moment. */
+  private lingerUntil(): number {
+    const births = this.chips.map((c) => c.born).filter(Number.isFinite);
+    const lastSeen = births.length > 0 ? Math.max(...births) + BIRTH_S * 1000 : this.stoodAt ?? 0;
+    return lastSeen + MS.slow;
+  }
+
+  /**
+   * Pressed through before the bottle stood: the photograph flies on into the
+   * page's — the same picture, in the same frame — and simply becomes it.
+   */
+  private async landPhotograph(flier: HTMLImageElement): Promise<void> {
+    this.phase = 'closing';
+    this.setup.onLeaving();
+    await this.homed.promise;
+    const from = flier.getBoundingClientRect();
+    this.room(false);
+    await this.tweens.run(MS.slow, EASE.inOut, (k) => this.place(flier, lerpRect(from, this.plate.getBoundingClientRect(), k)));
+    if (this.lifted) this.lifted.style.visibility = '';
+    await this.tweens.run(MS.quick, EASE.inOut, (k) => { flier.style.opacity = String(1 - k); });
+    flier.remove();
+    this.flier = null;
+    this.finish();
+  }
+
+  /**
+   * The page never came to land in — the visitor went back, or it failed —
+   * and the room simply lifts over whatever page is there, within `base`.
+   */
+  dismiss(): void {
+    if (this.phase === 'closing' || this.phase === 'closed') return;
+    this.phase = 'closing';
+    // Whatever was moving stops where it is; nothing waits on it any more.
+    this.tweens.clear();
+    this.lingering = null;
+    this.setup.onLeaving();
+    this.room(false);
+    const { root } = this.parts;
+    root.style.transition = `opacity ${MS.base}ms`;
+    root.style.opacity = '0';
+    window.setTimeout(() => this.finish(), MS.base);
   }
 
   // ------------------------------------------------------------------ close
 
   async close(): Promise<void> {
     if (this.phase === 'flying' || this.phase === 'rising') { this.closeAsked = true; return; }
-    if (this.phase !== 'open') return;
+    if (this.phase !== 'open' && this.phase !== 'held') return;
     this.phase = 'closing';
     this.setup.onLeaving();
-    // The notes go back into the nozzle…
-    await Promise.all(this.chips.map((c) => this.tweens.run(MS.base, EASE.inOut, (k) => { c.recall = k; })));
+    // The notes go back into the nozzle — those that came out; the rest never will.
+    const now = performance.now();
+    const out = this.chips.filter((c) => c.born <= now);
+    for (const c of this.chips) if (c.born > now) c.born = Number.POSITIVE_INFINITY;
+    await Promise.all(out.map((c) => this.tweens.run(MS.base, EASE.inOut, (k) => { c.recall = k; })));
     for (const guide of Object.values(this.parts.guides)) if (guide) delete guide.dataset.on;
 
-    // …and the bottle lies back down into its photograph as the lights come up.
+    // …and the bottle lies back down into its photograph as the lights come
+    // up — from wherever it had got to: all the way up, or part-way when the
+    // visitor pressed through as it rose.
     this.room(false);
-    const s = this.glass.state, from = { x: s.x, y: s.y, scale: s.scale, rz: s.rz };
+    const s = this.glass.state;
+    const from = { x: s.x, y: s.y, scale: s.scale, rz: s.rz, relight: s.relight, depth: s.depth, reflect: s.reflect, settle: this.settle };
     const into = this.glass.poseOver(this.photoRect(), this.setup.placement);
     await this.tweens.run(MS.slow, EASE.inOut, (k) => {
       s.x = lerp(from.x, into.x, k); s.y = lerp(from.y, into.y, k);
       s.scale = lerp(from.scale, into.scale, k); s.rz = lerp(from.rz, into.rz, k);
-      s.relight = 1 - k; s.depth = Math.max(0, 1 - k * 1.4); s.reflect = Math.max(0, 1 - k * 2.5);
-      this.settle = 1 - k;
+      s.relight = from.relight * (1 - k);
+      s.depth = from.depth * Math.max(0, 1 - k * 1.4);
+      s.reflect = from.reflect * Math.max(0, 1 - k * 2.5);
+      this.settle = from.settle * (1 - k);
     });
     // The picture returns under it, and the object is gone into the picture.
     const img = this.photoImage();
@@ -286,18 +454,22 @@ export class RevealController {
     await this.tweens.run(MS.quick, EASE.inOut, (k) => { if (img) img.style.opacity = String(k); });
     await this.tweens.run(MS.quick, EASE.inOut, (k) => { s.opacity = 1 - k; });
     if (img) img.style.opacity = '';
+    this.finish();
+  }
+
+  private finish(): void {
     this.phase = 'closed';
     this.mist.clear();
     this.setup.onClosed();
   }
 
-  /** Everything returned: the loop, the GPU's memory, the photograph's visibility. */
+  /** Everything returned: the loop, the GPU's memory, the photographs' visibility. */
   destroy(): void {
     cancelAnimationFrame(this.raf);
     this.tweens.clear();
+    this.lingering = null;
     this.flier?.remove();
-    const img = this.photoImage();
-    if (img) { img.style.visibility = ''; img.style.opacity = ''; }
+    for (const img of [this.lifted, this.photoImage()]) if (img) { img.style.visibility = ''; img.style.opacity = ''; }
     this.glass.dispose();
   }
 
@@ -309,7 +481,15 @@ export class RevealController {
     const t = now / 1000;
     this.tweens.step(now);
     // Nothing to draw while the photograph is still in flight, nor once it is back.
-    if (this.glass.ready && (this.phase === 'rising' || this.phase === 'open' || this.phase === 'closing')) this.draw(now, t, dt);
+    if (this.glass.ready && (this.phase === 'rising' || this.phase === 'held' || this.phase === 'open' || this.phase === 'closing')) {
+      this.draw(now, t, dt);
+    }
+    // On the way in: the notes have had their moment, or the visitor pressed on.
+    if (this.lingering && (this.skipped || now >= this.lingerUntil())) {
+      const go = this.lingering;
+      this.lingering = null;
+      go();
+    }
     this.raf = requestAnimationFrame(this.frame);
   };
 
@@ -367,7 +547,7 @@ export class RevealController {
       const age = (now - c.born) / 1000;
       const el = c.chip.el;
       if (age < 0) { el.style.opacity = '0'; continue; }
-      const birth = still ? 1 : EASE.out(Math.min(1, age / 1.25));
+      const birth = still ? 1 : EASE.out(Math.min(1, age / BIRTH_S));
       const angle = c.angle0 + (still ? 0 : t * ring.speed * Math.PI * 0.5);
       const rx = width * 0.5 * ring.r + gap, ry = rx * 0.17;
       const depth = Math.sin(angle);

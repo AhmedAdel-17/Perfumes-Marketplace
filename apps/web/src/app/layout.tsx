@@ -7,6 +7,7 @@ import { directionOf, localePath, SHELL } from '@diyar/i18n';
 import { getLocale, getPath } from '@/core/locale';
 import { LocaleProvider } from '@/features/shell/LocaleProvider';
 import { CartProvider } from '@/features/cart/CartStore';
+import { RevealDirector } from '@/features/product/reveal/RevealDirector';
 import { Grain } from '@/features/shell/Grain';
 import { RouteLoader } from '@/features/shell/RouteLoader';
 import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
@@ -129,7 +130,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             page is painted. See ThemeScript for why this cannot be an effect. */}
         <ThemeScript nonce={nonce} />
         <LocaleProvider locale={locale}>
-          <CartProvider>{children}</CartProvider>
+          <CartProvider>
+            {/* The reveal as the way into a perfume's page, from any card: it
+                lives here because the layout is what outlives the change of page. */}
+            <RevealDirector locale={locale}>{children}</RevealDirector>
+          </CartProvider>
           {/* The page-sized flacon while the next page is on its way. In a
               Suspense boundary because it reads the query string, which a
               layout must not make every page wait for. */}

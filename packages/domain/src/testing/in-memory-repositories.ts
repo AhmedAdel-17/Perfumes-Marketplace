@@ -1835,6 +1835,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const reliefs = {
       overview: refuse('ReliefRepository', 'relief-repository.test.ts'),
       forPhoto: refuse('ReliefRepository', 'relief-repository.test.ts'),
+      forPhotos: refuse('ReliefRepository', 'relief-repository.test.ts'),
       put: refuse('ReliefRepository', 'relief-repository.test.ts'),
       remove: refuse('ReliefRepository', 'relief-repository.test.ts'),
     } as unknown as Repositories['reliefs'];

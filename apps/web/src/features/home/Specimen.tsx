@@ -4,6 +4,7 @@ import { AddToBag } from '@/features/cart/AddToBag';
 import { BandReading } from '@/features/catalogue/BandReading';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
+import { writeKit } from '@/features/product/reveal/kit';
 import { Sillage } from '@/features/motion/Sillage';
 import { primarySurface } from '@/features/shell/primary-surface';
 import {
@@ -39,6 +40,8 @@ export function Specimen({
   const name = pick(locale, product.name, product.nameEn);
   const houseName = pick(locale, product.brandName, product.brandNameEn);
   const href = localeHref(locale, `/p/${product.slug}`);
+  // Le Dévoilement as the way in: its photograph and its name both lead to the perfume through the reveal.
+  const kit = writeKit(product, href, name);
 
   const notes = (list: readonly string[]) => list.map((note, i) => {
     const english = locale === 'en' ? product.noteEnglish[note] : undefined;
@@ -57,13 +60,19 @@ export function Specimen({
   if (house?.foundedYear) facts.push({ text: HOUSES[locale].since(editorialIn(locale)(house.foundedYear, false)), lang: locale });
 
   return (
-    <article aria-labelledby="specimen-name" className="relative border border-ink bg-raised">
+    <article aria-labelledby="specimen-name" data-reveal-card={kit} className="relative border border-ink bg-raised">
       <div className="latin flex justify-between border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
         <span>{copy.specimen.toUpperCase()}</span>
         <span>{product.brandLatin}</span>
       </div>
 
-      <Link href={href} tabIndex={-1} aria-hidden="true" className="relative block aspect-[5/4] overflow-hidden border-b border-ink bg-plate">
+      <Link
+        href={href}
+        tabIndex={-1}
+        aria-hidden="true"
+        data-reveal-frame={kit ? '' : undefined}
+        className="relative block aspect-[5/4] overflow-hidden border-b border-ink bg-plate"
+      >
         {product.photo ? (
           <ProductPhoto photo={product.photo} sizes="(min-width: 1024px) 40vw, 100vw" priority />
         ) : (

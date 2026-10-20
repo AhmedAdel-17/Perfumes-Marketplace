@@ -69,6 +69,8 @@ export const BROWSING_EVENT_AR = {
   scent_map_view: 'فتح خريطة العطور',
   product_view: 'فتح صفحة عطر',
   reveal_open: 'كشف العطر في العرض المجسّم',
+  reveal_arrive: 'دخل صفحة عطر عبر العرض المجسّم',
+  reveal_skip: 'تخطّى العرض المجسّم إلى الصفحة',
   dial_turn: 'أدار قرص يومه على الجلد',
   cart_add: 'أضاف إلى الحقيبة',
   checkout_start: 'بدأ إتمام الطلب',

@@ -1012,6 +1012,20 @@
   }
 
   /*
+    The reveal as the way into a perfume's page (founder, 20 Oct 2026). The way
+    on — the one button — is there from the moment the room is dark, not only
+    once the bottle stands: a visitor may press on at any point. On a desktop
+    the panel stands where the page's words will be, so the bottle stands over
+    where the page's photograph will be and lies down into it nearly in place;
+    the tier guides move across with it, their rules still pointing at the glass.
+  */
+  .reveal[data-mode='arrival'][data-room='dark'] .reveal-close { opacity: 1; }
+  @media (min-width: 1024px) {
+    .reveal[data-mode='arrival'] .reveal-panel { inset-inline-start: auto; inset-inline-end: 0; }
+    .reveal[data-mode='arrival'] .reveal-guide { inset-inline-end: auto; inset-inline-start: 34px; flex-direction: row-reverse; }
+  }
+
+  /*
     LA DURÉE — the day-on-the-skin dial (features/product/day). Its tiers are
     the family's own colours (tierTones in packages/tokens), one set per theme,
     handed in as variables; everything else is the theme's roles. The face is

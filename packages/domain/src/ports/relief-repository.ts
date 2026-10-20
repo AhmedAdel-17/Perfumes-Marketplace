@@ -57,6 +57,14 @@ export interface ReliefRepository {
   forPhoto(mediaId: string): Promise<StoredRelief | null>;
 
   /**
+   * The reliefs of many photographs, keyed by photograph: a page of perfume
+   * cards reads them in one query, not one each (the reveal plays from a card
+   * since 20 Oct 2026). A photograph absent from the map has no relief this
+   * reader may see.
+   */
+  forPhotos(mediaIds: readonly string[]): Promise<ReadonlyMap<string, StoredRelief>>;
+
+  /**
    * Writes a photograph's relief, replacing any it had. Returns the one it
    * replaced, so the caller can remove that one's files from the store.
    */

@@ -54,6 +54,9 @@ export const BROWSING_EVENTS = [
   'product_view',
   // The reveal on a product page (Le Dévoilement, 0033): opened, carrying the perfume.
   'reveal_open',
+  // The reveal as the way into a perfume's page from a card (0037): played, and pressed through.
+  'reveal_arrive',
+  'reveal_skip',
   // The day-on-the-skin dial on a product page (La Durée, 0034): first turn of a page view.
   'dial_turn',
   'cart_add',

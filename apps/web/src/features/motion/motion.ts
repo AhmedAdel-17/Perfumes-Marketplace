@@ -66,13 +66,20 @@ export const canHover = (): boolean =>
 
 /** Tweens run by the frame loop that owns them, so every motion shares one clock. */
 export class Tweens {
-  private readonly running = new Set<{ start: number; ms: number; ease: Ease; fn: (k: number) => void; done: () => void }>();
+  private readonly running = new Set<{
+    start: number; ms: number; ease: Ease; fn: (k: number) => void; done: () => void; interruptible: boolean;
+  }>();
 
   constructor(private readonly still: boolean) {}
 
-  run(ms: number, ease: Ease, fn: (k: number) => void): Promise<void> {
+  /**
+   * `interruptible`: `interrupt()` may end it where it is. For a motion the
+   * visitor can cut short — the reveal on its way into a page, which a press
+   * sends straight there from wherever it has got to.
+   */
+  run(ms: number, ease: Ease, fn: (k: number) => void, interruptible = false): Promise<void> {
     return new Promise((done) => {
-      this.running.add({ start: performance.now(), ms: this.still ? 1 : ms, ease, fn, done });
+      this.running.add({ start: performance.now(), ms: this.still ? 1 : ms, ease, fn, done, interruptible });
     });
   }
 
@@ -84,5 +91,11 @@ export class Tweens {
     }
   }
 
+  /** Ends every interruptible tween where it last drew; what awaited it goes on from there. */
+  interrupt(): void {
+    for (const t of this.running) if (t.interruptible) { this.running.delete(t); t.done(); }
+  }
+
+  /** Drops every tween; nothing that awaited one goes on. */
   clear(): void { this.running.clear(); }
 }

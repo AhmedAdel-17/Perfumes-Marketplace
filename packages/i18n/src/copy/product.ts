@@ -76,6 +76,10 @@ export const PRODUCT = defineMessages(
     revealLight: 'حرّك المؤشر ليدور الضوء',
     revealLightTouch: 'اسحب بإصبعك ليدور الضوء',
     revealFrom: 'مصنوع من صورة الدار نفسها، دون أي إضافة.',
+    // The reveal as the way into a perfume's page (20 Oct 2026): any press goes straight there.
+    revealOnward: 'انقر في أي مكان للمتابعة',
+    revealOnwardTouch: 'المس الشاشة للمتابعة',
+    revealOnwardLabel: 'تابع إلى صفحة العطر',
     close: 'إغلاق',
   },
   {
@@ -148,6 +152,9 @@ export const PRODUCT = defineMessages(
     revealLight: 'Move to turn the light',
     revealLightTouch: 'Drag to turn the light',
     revealFrom: 'Made from the house’s own photograph, with nothing added.',
+    revealOnward: 'Click anywhere to continue',
+    revealOnwardTouch: 'Tap anywhere to continue',
+    revealOnwardLabel: 'Continue to the perfume’s page',
     close: 'Close',
   },
 );

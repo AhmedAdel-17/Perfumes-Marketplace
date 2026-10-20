@@ -6,7 +6,7 @@
  * lets a house or a visitor — a write from either affects no row, or is
  * refused, never quietly accepted.
  */
-import { and, asc, eq, isNotNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { NewRelief, ReliefMethod, ReliefOverviewRow, ReliefRepository, StoredRelief } from '@diyar/domain';
 import * as schema from './schema/index';
 import type { DiyarDatabase } from './repositories';
@@ -97,6 +97,13 @@ export const reliefRepository = (db: DiyarDatabase): ReliefRepository => ({
     const [row] = await db.select().from(schema.productMediaReliefs)
       .where(eq(schema.productMediaReliefs.mediaId, mediaId)).limit(1);
     return row ? toRelief(row) : null;
+  },
+
+  async forPhotos(mediaIds) {
+    if (mediaIds.length === 0) return new Map();
+    const rows = await db.select().from(schema.productMediaReliefs)
+      .where(inArray(schema.productMediaReliefs.mediaId, [...mediaIds]));
+    return new Map(rows.map((row) => [row.mediaId, toRelief(row)]));
   },
 
   async put(relief) {

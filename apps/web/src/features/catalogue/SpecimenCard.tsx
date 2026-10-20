@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
+import { writeKit } from '@/features/product/reveal/kit';
 import { BandReading } from './BandReading';
 import { NoteIconMark } from './NoteChip';
 import { glassPalette, scentFamily } from '@diyar/tokens';
@@ -49,13 +50,17 @@ export function SpecimenCard({
   const strength = [labelOf(CONCENTRATION, locale, product.concentration), `${num(product.volumeMl)} ${PRODUCT[locale].ml}`]
     .filter(Boolean)
     .join(' · ');
+  const href = localeHref(locale, `/p/${product.slug}`);
+  // Le Dévoilement as the way in: the first press in a visit lifts this photograph into the reveal (RevealDirector).
+  const kit = writeKit(product, href, name);
 
   return (
     <Link
-      href={localeHref(locale, `/p/${product.slug}`)}
+      href={href}
+      data-reveal-card={kit}
       className="group flex h-full flex-col border border-line bg-raised transition-colors duration-base ease-out hover:border-ink"
     >
-      <div className="relative aspect-square overflow-hidden border-b border-line bg-plate">
+      <div data-reveal-frame={kit ? '' : undefined} className="relative aspect-square overflow-hidden border-b border-line bg-plate">
         {product.photo ? (
           <ProductPhoto
             photo={product.photo}
