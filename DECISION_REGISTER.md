@@ -197,8 +197,9 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   the founder asked for a site that is not "a normal website", and approved the prototype
   pipeline ("we will use what you have built") · migrations 0032 (reliefs) and 0033 (the
   `reveal_open` event, with its success measure in ANALYTICS_DEFINITIONS §2b) · task P5.1.4.
-  OPEN for legal: the seller agreement must permit the platform to make derived presentations
-  (cut-outs) of the photographs a house uploads.
+  The legal question raised here — may the platform make derived presentations (cut-outs) of
+  the photographs a house uploads? — was DECIDED by the founder on 21 Oct 2026: permitted
+  (entry below).
 
 - 2026-10-19 · The experiences, steps 2–4 (Les Détails, La Durée, La Carte) · Ahmed (founder) ·
   the plan approved on 19 Oct ("build steps 2, 3 and 4 as planned"), built 20 Oct as tasks
@@ -242,3 +243,11 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   19 Oct measure for `reveal_open` (bag rate of openers against non-openers) no longer has a
   clean comparison — most visitors now meet the reveal without choosing it; it is replaced as
   written in §2b.
+
+- 2026-10-21 · Cut-outs of a house's photographs · Ahmed (founder) · the platform may make
+  derived presentations of the photographs a house uploads — the cut-out, relief map and
+  placement the reveal is drawn from (P5.1.4, P5.1.8). Raised as OPEN for legal on 19 Oct; the
+  founder ruled it permitted ("it is legal"), closing the question. The seller agreement, when
+  it is drafted, states the permission in its media clause, so a house knows what is made from
+  what it uploads. The rule that a relief is made only from the house's own photograph and
+  never invents packaging (DESIGN_DOCTRINE §8) stands unchanged.

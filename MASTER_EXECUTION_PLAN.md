@@ -2285,9 +2285,9 @@ direction (no buyer test yet — recorded as a gap, as DR-07 was for FD-1); *suc
 of visitors who open a perfume's reveal, the share who put that perfume in the bag, against
 visitors who view a perfume that has a reveal without opening it (ANALYTICS_DEFINITIONS §2b,
 event `reveal_open`, 0033); *operational owner* — the content/category manager, who makes
-each relief in `/ops/reliefs`; *legal dependency* — the seller agreement must permit the
-platform to make derived presentations (cut-outs) of uploaded photographs (OPEN, for
-counsel); *cost* — no runtime cost (made in the operator's browser, drawn in the visitor's),
+each relief in `/ops/reliefs`; *legal dependency* — derived presentations (cut-outs) of
+uploaded photographs: DECIDED permitted by the founder on 21 Oct 2026 (DECISION_REGISTER);
+the seller agreement states it when drafted; *cost* — no runtime cost (made in the operator's browser, drawn in the visitor's),
 two small PNGs per perfume in storage, no new dependency.
 **What it is:** a RELIEF per photograph — cut-out, relief map, placement — made by
 `makeRelief` (domain, pure, tested: automatic for a plain background, traced by hand
@@ -2421,8 +2421,8 @@ and asked that pressing a perfume's card anywhere play it on the way to the page
 behind a control most visitors never press; *evidence* — founder direction, no buyer test;
 *success metric* — the share of arrivals watched through, and the bag rate after one
 (ANALYTICS_DEFINITIONS §2b, `reveal_arrive` / `reveal_skip`, 0037); *operational owner* — the
-content team, whose reliefs decide which cards play it; *legal dependency* — the open
-cut-outs question of P5.1.4, unchanged; *cost* — no new dependency; a card with a relief carries
+content team, whose reliefs decide which cards play it; *legal dependency* — none left:
+the cut-outs question of P5.1.4 was decided permitted on 21 Oct 2026; *cost* — no new dependency; a card with a relief carries
 its kit in the page (about 0.8 kB of HTML each, measured: 2.3 kB for the home page's three).
 **What it is:** cards carry their perfume's relief (`ProductCard.relief`, one batched read,
 `reliefs.forPhotos`) and write a kit on themselves (`data-reveal-card`); `RevealDirector` in the
