@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { findHouseBySlug, findProductBySlug, listPublishedProducts } from '@/core/catalogue';
 import { api } from '@/core/api';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
-import { EvolutionCurve } from '@/features/product/EvolutionCurve';
+import { SkinDial } from '@/features/product/day/SkinDial';
 import { Flacon } from '@/features/product/Flacon';
 import { loupeSource, ProductPhoto } from '@/features/product/ProductPhoto';
 import { Loupe } from '@/features/product/Loupe';
@@ -19,8 +19,10 @@ import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
+import { isLongevityBand, isProjectionBand } from '@diyar/domain';
 import {
-  CONCENTRATION, data as num, editorialIn, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn, pick, PRODUCT,
+  BAND_AR, BAND_EN, CONCENTRATION, data as num, editorialIn, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn,
+  PERFORMANCE_SOURCE, pick, PRODUCT,
   SCENT_FAMILY, SHELL, type Locale,
 } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
@@ -91,6 +93,26 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const days = nounIn(locale, arrival.max, NOUN.day);
   // La Loupe: the photograph again, larger, loaded only when the glass is first raised.
   const loupe = product.photo ? loupeSource(product.photo) : null;
+  // La Durée needs both declared bands — a published perfume always has them
+  // (the publish gate requires them), so a page without them simply has no dial.
+  const bandWord = (band: string) => (locale === 'ar'
+    ? BAND_AR[band as keyof typeof BAND_AR] ?? band
+    : (BAND_EN[band as keyof typeof BAND_EN] ?? band).toLowerCase());
+  const longevityBand = product.longevity?.band ?? '';
+  const projectionBand = product.projection?.band ?? '';
+  const dial = product.longevity && isLongevityBand(longevityBand) && isProjectionBand(projectionBand)
+    ? {
+      productId: product.id,
+      family: product.family,
+      longevity: { band: longevityBand, source: product.longevity.source, word: bandWord(longevityBand) },
+      projection: { band: projectionBand, word: bandWord(projectionBand) },
+      sourceWord: labelOf(PERFORMANCE_SOURCE, locale, product.longevity.source),
+      notes: { top: product.notesTop, heart: product.notesHeart, base: product.notesBase },
+      english: product.noteEnglish,
+      icons: product.noteIcons,
+      locale,
+    }
+    : null;
 
   // Each fact its own span: the city is whatever the house typed, usually
   // Arabic, and on the English page it has to be marked as such.
@@ -274,14 +296,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               icons={product.noteIcons}
               locale={locale}
             />
-            <div className="mt-8 lg:w-7/12">
-              <EvolutionCurve
-                topCount={product.notesTop.length}
-                heartCount={product.notesHeart.length}
-                baseCount={product.notesBase.length}
-                locale={locale}
-              />
-            </div>
+            {/* La Durée: its day on the skin, drawn from the bands it declared. */}
+            {dial && (
+              <div id="day" className="mt-8 scroll-mt-[120px] lg:mt-9">
+                <SkinDial {...dial} />
+              </div>
+            )}
           </section>
 
           {/*

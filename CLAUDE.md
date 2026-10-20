@@ -307,8 +307,9 @@ Do not redesign or "improve". If something looks wrong, say so and ask.
 approved interactive prototypes, built in this order — `01-devoilement` (the bottle lifted
 out of its photograph; BUILT as task P5.1.4: `features/product/reveal`, `/ops/reliefs`),
 `04-details` (BUILT as P5.1.5 — the drop, loupe, ink, blotter and sillage, DESIGN_DOCTRINE
-§9; the size picker deferred until sizes exist), `02-la-duree`, then `03-carte-olfactive`
-(both asked for by the founder on 19 Oct; tasks P5.1.6 and P5.1.7). Serve
+§9; the size picker deferred until sizes exist), `02-la-duree` (BUILT as P5.1.6 — the
+day-on-the-skin dial that replaced the evolution chart, `features/product/day`, §10), then
+`03-carte-olfactive` (asked for by the founder on 19 Oct; task P5.1.7). Serve
 them with the `experiences` launch config (WebGL cannot read `file://` images). A relief is
 made from the house's own photograph and never invents packaging (DESIGN_DOCTRINE §8).
 Shared motion code lives in `features/motion/` (the tokens as functions, `Vapour`).

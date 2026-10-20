@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { glassPalette, LENS, luminance, withAlpha, type ScentFamily } from './glass';
+import { glassPalette, LENS, luminance, tierTones, withAlpha, type ScentFamily } from './glass';
 import { scentFamily } from './index';
 
 const FAMILIES = Object.keys(scentFamily) as ScentFamily[];
@@ -61,6 +61,31 @@ describe('glass palette — the stops must actually step', () => {
 
   it('is pure — the same family always yields the same palette', () => {
     expect(glassPalette('oud')).toEqual(glassPalette('oud'));
+  });
+});
+
+describe('tier tones — the three rings of the day-on-the-skin dial', () => {
+  const families = Object.keys(scentFamily) as ScentFamily[];
+
+  it('steps the same way in every family and theme: the opening lightest, the base deepest', () => {
+    for (const family of families) {
+      const { paper, night } = tierTones(family);
+      for (const tones of [paper, night]) {
+        expect(luminance(tones.top)).toBeGreaterThan(luminance(tones.heart));
+        expect(luminance(tones.heart)).toBeGreaterThan(luminance(tones.base));
+      }
+    }
+  });
+
+  it('keeps the family itself as the heart on paper', () => {
+    for (const family of families) expect(tierTones(family).paper.heart.toLowerCase()).toBe(scentFamily[family].toLowerCase());
+  });
+
+  it('never lets a tier sink into the dark room: every night tone is lighter than its family', () => {
+    for (const family of families) {
+      const { night } = tierTones(family);
+      expect(luminance(night.base)).toBeGreaterThan(luminance(scentFamily[family]));
+    }
   });
 });
 

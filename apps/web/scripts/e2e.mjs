@@ -2485,7 +2485,7 @@ try {
     }
   }
 
-  group('the details — Les Détails');
+  group('the details and the day on the skin — the experiences');
   {
     const visitorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
     const visitor = await visitorContext.newPage();
@@ -2530,6 +2530,35 @@ try {
         assert(notes >= 1, `the blotter names the top notes: ${notes}`);
         const said = await card.locator('.sr-only').innerText();
         assert(said.startsWith('أول ما تشمّه'), `and says them to a screen reader: "${said}"`);
+      });
+
+      await test('the dial turns from the keyboard, says where it is, and names its source', async () => {
+        await visitor.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+        const dial = visitor.getByRole('slider');
+        await dial.scrollIntoViewIfNeeded();
+        const caption = await visitor.locator('figure.skin-dial figcaption').innerText();
+        assert(caption.includes('ليس قياسًا'), `the dial says it is not a measurement: ${caption}`);
+        await dial.focus();
+        await visitor.keyboard.press('End');
+        // The hand travels with weight; the words follow it to the end of the day.
+        await visitor.waitForFunction(() => document.querySelector('[role=slider]')?.getAttribute('aria-valuetext')?.includes('الأثر'), undefined, { timeout: 8_000 });
+        const late = Number(await dial.getAttribute('aria-valuenow'));
+        assert(late > 9, `at the end of the day, the hand is late: ${late}`);
+        await visitor.keyboard.press('Home');
+        await visitor.waitForFunction(() => Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow')) === 0, undefined, { timeout: 5_000 });
+        const words = await visitor.locator('figure.skin-dial [aria-live]').innerText();
+        assert(words.includes('الرشّة الأولى'), `back at the spray: ${words.slice(0, 80)}`);
+        assert(!/\d+\s*ساع/.test(caption + words), 'no sentence gives the perfume a number of hours');
+      });
+
+      await test('“spray” plays the day, and nothing plays by itself', async () => {
+        await visitor.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+        const dial = visitor.getByRole('slider');
+        await dial.scrollIntoViewIfNeeded();
+        await visitor.waitForTimeout(1500);
+        equal(await dial.getAttribute('aria-valuenow'), '0.00', 'the hand rests at the spray until asked');
+        await visitor.locator('figure.skin-dial button', { hasText: 'رُشّ' }).click();
+        await visitor.waitForFunction(() => Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow')) >= 2, undefined, { timeout: 8_000 });
       });
     } finally {
       await visitorContext.close();

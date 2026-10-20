@@ -13,6 +13,7 @@
  */
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { BROWSING_EVENTS } from '@diyar/domain';
 import { applyMigrations } from '../migrate';
 
 let db: PGlite;
@@ -50,6 +51,25 @@ beforeAll(async () => {
   db = new PGlite();
   await applyMigrations(db);
 }, 180_000);
+
+describe('the names the database accepts are the names the domain fires', () => {
+  /*
+   * Every event the site fires is listed twice — in the domain
+   * (`BROWSING_EVENTS`) and in the insert policy, which each new event's
+   * migration replaces whole (0033, 0034). A name missing from the policy is
+   * refused SILENTLY in production — the visitor's request succeeds and the
+   * count is simply low — so the two lists are held together here.
+   */
+  it('takes every one of the domain’s events', () => within(async () => {
+    for (const name of BROWSING_EVENTS) {
+      await expect(record('name, anonymous_id', `'${name}', '${VISITOR}'`), name).resolves.toBeDefined();
+    }
+  }));
+
+  it('refuses a name the domain does not know', () => within(async () => {
+    await expect(record('name, anonymous_id', `'not_an_event', '${VISITOR}'`)).rejects.toThrow();
+  }));
+});
 
 describe('what the analytics role may write', () => {
   it('records an event with a name, a visitor, and the perfume it is about', () => within(async () => {

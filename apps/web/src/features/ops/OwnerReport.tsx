@@ -180,7 +180,7 @@ export function OwnerReport({ report }: { report: OwnerReportView }) {
         {report.preOrder.isEmpty ? (
           <p className="text-small text-ink3">لم يُسجَّل نشاط تصفّح في هذه الفترة.</p>
         ) : (
-          <ol className="grid grid-cols-1 gap-y-2 sm:grid-cols-4 sm:gap-x-4 lg:grid-cols-7">
+          <ol className="grid grid-cols-1 gap-y-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5">
             {report.preOrder.stages.map((stage) => (
               <li
                 key={stage.event}

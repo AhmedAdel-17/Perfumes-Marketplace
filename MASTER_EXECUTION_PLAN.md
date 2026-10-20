@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | IN_PROGRESS | 4/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 5/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5, P5.1.6 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -218,7 +218,7 @@ production (P0.1.3).
 | P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | COMPLETE | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
 | P5.1.4 | Le Dévoilement — the bottle lifted out of its photograph, on the product page | P5 | COMPLETE | P1 | BUILD | DR Le Dévoilement (decided 19 Oct 2026) |
 | P5.1.5 | Les Détails — the drop, the loupe, the ink, the blotter, the sillage | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.4 |
-| P5.1.6 | La Durée — the day-on-the-skin dial on the product page | P5 | NOT_STARTED | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.5 |
+| P5.1.6 | La Durée — the day-on-the-skin dial on the product page | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.5 |
 | P5.1.7 | La Carte olfactive — the scent map, and a family for every note | P5 | NOT_STARTED | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.6 |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
@@ -2354,12 +2354,32 @@ browser suite green; `next build` succeeds.
 show the size picker before size variants exist.
 
 #### P5.1.6 La Durée — the day-on-the-skin dial on the product page
-**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
-**Why:** the third approved experience (`design-reference/experiences/02-la-duree.html`).
-**What it will be:** the dial replaces the evolution chart on the product page, compact (no
-six-screen scroll): drag the needle or use the arrow keys, or press "spray" to watch the day
-pass; never plays by itself. Drawn from the declared longevity and projection bands with
-their source always beside it; no sentence says "lasts N hours". A new event, `dial_turn`.
+**Status:** COMPLETE (20 Oct 2026) · **Priority:** P1 · **Type:** BUILD — the success measure
+is a VALIDATE question, open until `dial_turn` has real traffic.
+**Why:** the third approved experience (`design-reference/experiences/02-la-duree.html`): a
+perfume is not one smell but a sequence, and a perfume bought online is bought unsmelt.
+**Change control (doc 04 §9):** *user problem* — the evolution chart was a shape weighted by
+how many notes a perfume lists, which says little about how it wears; *evidence* — founder
+direction, no buyer test (the same gap as P5.1.4); *success metric* — of visitors who turned a
+perfume's dial, the share who put that perfume in the bag, against those who viewed it and
+left the dial alone (ANALYTICS_DEFINITIONS §2b, `dial_turn`, 0034); *operational owner* —
+none new (the bands are listing fields; their source is printed); *legal dependency* — none,
+since the dial adds no claim (it draws the recorded bands and says it is an illustration);
+*cost* — no runtime cost, no new dependency.
+**What it is:** `skinDay` in the domain (pure, 8 tests) turns the two bands into a day's
+shape; `features/product/day` draws it — React renders the face once (server-rendered, so it
+stands whole without script) and `DialController` winds it: drag the hand, the arrow keys
+(a slider to assistive technology, spoken to the quarter hour with the part of the day), or
+"spray" to play; never by itself. The rings are the family's colours (`tierTones`, tested in
+both themes). The evolution chart and its copy are removed. The owner's report lists nine
+pre-order stages now, five to a row. A database test now holds the event policy to the
+domain's list of events — a name missing from the policy is refused silently.
+**Acceptance criteria:** domain, token, database and web suites green; the dial turns by
+pointer, touch and keyboard, says where it is, and names its bands' source; no sentence
+gives a number of hours; "spray" plays and nothing plays by itself; reduced motion snaps the
+hand and drops the mist; `audit.mjs` clean on the product pages in both themes; browser suite
+green; `next build` succeeds.
+**Do not do:** print a duration for a perfume; autoplay; present the bands as a measurement.
 
 #### P5.1.7 La Carte olfactive — the scent map, and a family for every note
 **Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
@@ -3721,3 +3741,34 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
     on the shop's pages (the product page 145 → 149 kB, the home page 143 → 148 kB).
   - Seen in a headless browser: the drop in flight, the loupe at its true power, a title
     mid-stroke, the blotter, the sillage, in both themes and at 375 px.
+
+- 2026-10-20 · Claude Code session · P5.1.6 COMPLETE · La Durée, the third experience: the
+  day-on-the-skin dial replaces the evolution chart on the product page. Built:
+  - `skinDay` in the domain (pure, 8 tests): the shape of a day from the two recorded bands.
+  - `features/product/day`: the face drawn by React on the server (whole without script);
+    `DialController` winds it — drag, the arrow keys (a slider, spoken to the quarter hour
+    with the part of the day), or "spray". It never plays by itself. Its colours are the
+    family's own (`tierTones`, tested in both themes). The controller is fetched when the
+    page is idle or the dial comes near, and a key pressed before it arrives is kept.
+  - Migration 0034, the `dial_turn` event (defined first in ANALYTICS_DEFINITIONS §2b), and a
+    database test that the event policy accepts every event the domain names.
+  - The evolution chart and its copy are removed; the owner's report shows nine stages.
+
+  Found and fixed on the way:
+  - The caption said "what the house declared" over bands whose source was buyers' reviews;
+    it now speaks of the recorded bands and names their source, whichever it is.
+  - Server and browser rounded the face's ticks differently (a hydration mismatch);
+    coordinates are printed to the hundredth.
+  - The first event of a visit sets the visitor's cookie and Next refreshes the page; the
+    dial, keyed by its props' identity, was rebuilt mid-turn. It is keyed by content now.
+  - The glow and the mist overflowed a phone's width by up to 30px; the panel clips them.
+  - In development React mounts effects twice; the controller now removes its own rings.
+
+  Verified:
+  - Every package's typecheck and unit tests pass (turbo, 13/13); guard clean.
+  - Browser suite: 139 of 141 on the first run; the two failures were the new dial journeys
+    reading the hand mid-travel. Fixed to wait for the end state, they pass on their own; the
+    whole suite runs again with step 4.
+  - `audit.mjs` on the product pages (Arabic and English) and the owner's report: no
+    findings in either theme at any width, after the overflow fix.
+  - `next build` succeeds: shared JS 103 kB; the product page's first load 149 → 154 kB.

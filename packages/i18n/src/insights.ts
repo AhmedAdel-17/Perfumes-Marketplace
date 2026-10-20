@@ -68,6 +68,7 @@ export const BROWSING_EVENT_AR = {
   filter_apply: 'استخدم الفلاتر',
   product_view: 'فتح صفحة عطر',
   reveal_open: 'كشف العطر في العرض المجسّم',
+  dial_turn: 'أدار قرص يومه على الجلد',
   cart_add: 'أضاف إلى الحقيبة',
   checkout_start: 'بدأ إتمام الطلب',
 } as const;

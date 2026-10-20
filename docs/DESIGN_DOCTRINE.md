@@ -515,3 +515,33 @@ named below. The rules they keep:
 | La Mouillette — the blotter | product cards | `features/catalogue/SpecimenCard.tsx` (CSS) |
 | Le Sillage — the trail | the home page's opening perfume | `features/motion/Sillage.tsx`, `vapour.ts` |
 | Le Flacon — the size picker | deferred: no size variants yet | — |
+
+---
+
+## 10. The day on the skin — La Durée (founder, 19–20 Oct 2026)
+
+A perfume is not one smell but a sequence, and the product page draws it as a watch dial: three
+rings record the three tiers as the hand passes the hours, the notes sit on their rings as
+beads that light when the hand reaches them and evaporate when their time is over, and the
+perfume's air swells and fades around the face. The approved prototype is
+`design-reference/experiences/02-la-duree.html`; the shop's version is
+`features/product/day/SkinDial.tsx`, and it replaced the "evolution" chart. The rules:
+
+- **An illustration of two recorded words, said so.** Every shape is `skinDay` of the
+  perfume's longevity and projection bands (`packages/domain`, tested). The caption is part
+  of the component, not optional copy: "an illustration of the recorded bands, not a
+  measurement", the bands, and their source — the house's word, a platform test or buyers'
+  reviews, whichever it is. No sentence on the dial says how many hours a perfume lasts — a band
+  is a word, never a number. The face carries hours because a clock does.
+- **The visitor turns it.** Drag the hand round the face, use the arrow keys (it is a slider to
+  assistive technology, with its position spoken as an hour and a part of the day), or press
+  "spray" to watch the day pass at a steady pace. It never plays by itself: a long motion
+  nobody asked for is the opposite of law VI. The hand has weight; it follows, it does not jump.
+- **A clock is a real thing, so it does not flip.** The hand turns clockwise in both languages;
+  the words beside it are Arabic-first.
+- **The perfume's own colours.** The three rings are the family's colour stepped lighter for
+  the top and deeper for the base (`tierTones`), one set per theme so an oud base never sinks
+  into the dark room; the vapour is the same colours. Nothing else is coloured.
+- **Compact.** One figure beside the notes, never the prototype's six-screen scroll pin. On a
+  phone a finger on the middle of the face scrolls the page; only one laid on the rings turns
+  the hand. Reduced motion: the hand goes where it is sent, no mist rises.

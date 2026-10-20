@@ -4,6 +4,7 @@ export * from './state-machines/sub-order';
 export * from './catalogue/arabic-search';
 export * from './catalogue/catalogue-query';
 export * from './catalogue/note-index';
+export * from './catalogue/skin-day';
 export * from './content/blocks';
 export * from './content/announcement';
 export * from './content/page';

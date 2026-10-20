@@ -118,6 +118,30 @@ export const LENS = {
   fringeCool: hex(90, 150, 255),
 } as const;
 
+/**
+ * A perfume's three tiers as colours of its own family (La Durée, 20 Oct
+ * 2026): the opening lighter, the heart the family itself, the base deeper —
+ * the order a perfume fades in, drawn on the dial's three rings.
+ *
+ * Two sets, one per theme, because the rings stand on the page's ground: on
+ * paper the base deepens toward black; in the dark room every tier steps
+ * toward the light instead, or an oud base would vanish into the ground. In
+ * both, the three step in the same direction, so the order reads the same.
+ */
+export interface TierTones {
+  readonly top: string;
+  readonly heart: string;
+  readonly base: string;
+}
+
+export function tierTones(family: ScentFamily | string): { paper: TierTones; night: TierTones } {
+  const base = (scentFamily as Record<string, string>)[family] ?? scentFamily.amber;
+  return {
+    paper: { top: mix(base, WARM_WHITE, 0.25), heart: base, base: mix(base, BLACK, 0.34) },
+    night: { top: mix(base, WARM_WHITE, 0.62), heart: mix(base, WARM_WHITE, 0.42), base: mix(base, WARM_WHITE, 0.2) },
+  };
+}
+
 /** A token colour with an alpha, as CSS — for glass and light, never for an ink. */
 export function withAlpha(colour: string, alpha: number): string {
   const [r, g, b] = parse(colour);

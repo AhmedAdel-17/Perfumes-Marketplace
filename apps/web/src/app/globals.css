@@ -318,6 +318,13 @@
   to { -webkit-mask-position: 0% 0; mask-position: 0% 0; filter: none; }
 }
 
+/* La Durée: the guilloché is cut into the dial as it arrives; a note settles onto its ring. */
+@keyframes engrave {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes bead-in {
+  from { opacity: 0; transform: scale(0.4); }
+}
 /* A line that is already drawn retracts toward the end, then redraws from the start. */
 @keyframes redraw {
   0% { transform: scaleX(1); transform-origin: var(--edge-end); }
@@ -996,6 +1003,79 @@
     }
     .reveal-guide { display: flex; }
   }
+
+  /*
+    LA DURÉE — the day-on-the-skin dial (features/product/day). Its tiers are
+    the family's own colours (tierTones in packages/tokens), one set per theme,
+    handed in as variables; everything else is the theme's roles. The face is
+    drawn in a 640-unit square, so sizes here are the drawing's units.
+  */
+  /* The glow and the mist reach past the face; the panel clips them, never the page. */
+  .skin-dial { overflow: clip; --dial-top: var(--dial-top-paper); --dial-heart: var(--dial-heart-paper); --dial-base: var(--dial-base-paper); --dial-on-top: theme('colors.ink'); --dial-on: theme('colors.raised'); }
+  [data-theme='dark'] .skin-dial { --dial-top: var(--dial-top-night); --dial-heart: var(--dial-heart-night); --dial-base: var(--dial-base-night); --dial-on-top: theme('colors.ground'); --dial-on: theme('colors.ground'); }
+  .dial-wrap { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1 / 1; margin-inline: auto; }
+  .dial-aura {
+    position: absolute;
+    inset: -16%;
+    border-radius: 9999px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.6);
+    background: radial-gradient(closest-side,
+      color-mix(in srgb, var(--dial-mist) 70%, transparent) 0%,
+      color-mix(in srgb, var(--dial-mist) 30%, transparent) 45%,
+      transparent 100%);
+  }
+  .dial-vapour { position: absolute; inset-block-start: -22%; inset-inline-start: -22%; width: 144%; height: 144%; pointer-events: none; }
+  .dial-face { position: relative; width: 100%; height: 100%; border-radius: 9999px; cursor: grab; touch-action: manipulation; }
+  .dial-face:active { cursor: grabbing; }
+  .dial-face:focus-visible { outline: 2px solid theme('colors.accent'); outline-offset: 2px; }
+  .dial-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .dial-bezel { fill: none; stroke: theme('colors.ink'); stroke-width: 1.5; }
+  .dial-bezel-inner { opacity: 0.25; }
+  .dial-sub { fill: none; stroke: theme('colors.line'); stroke-width: 1.5; }
+  .dial-engraving { fill: none; stroke: theme('colors.ink'); stroke-width: 0.8; opacity: 0.17; }
+  .dial-engraving-in {
+    stroke-dasharray: var(--len);
+    stroke-dashoffset: var(--len);
+    animation: engrave theme('transitionDuration.ceremony') theme('transitionTimingFunction.inOut') forwards;
+    animation-delay: calc(var(--i) * 30ms);
+  }
+  .dial-tick { stroke: theme('colors.ink'); stroke-width: 1.2; opacity: 0.35; }
+  .dial-tick-major { stroke-width: 2; opacity: 0.85; }
+  .dial-numeral { font-family: var(--f-label); font-size: 26px; letter-spacing: 1px; fill: theme('colors.ink2'); text-anchor: middle; dominant-baseline: central; }
+  .dial-guide { fill: none; stroke: theme('colors.ink3'); stroke-width: 1.2; stroke-dasharray: 1.5 7; opacity: 0.55; }
+  .dial-seg { fill: none; }
+  .dial-seg.dial-top, .dial-dot.dial-top, .dial-swatch.dial-top { --c: var(--dial-top); }
+  .dial-seg.dial-heart, .dial-dot.dial-heart, .dial-swatch.dial-heart { --c: var(--dial-heart); }
+  .dial-seg.dial-base, .dial-dot.dial-base, .dial-swatch.dial-base { --c: var(--dial-base); }
+  .dial-seg { stroke: var(--c); }
+  .dial-bead.dial-top { --c: var(--dial-top); --on-c: var(--dial-on-top); }
+  .dial-bead.dial-heart { --c: var(--dial-heart); --on-c: var(--dial-on); }
+  .dial-bead.dial-base { --c: var(--dial-base); --on-c: var(--dial-on); }
+  .dial-bead { transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out'); }
+  .dial-bead-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+    animation: bead-in theme('transitionDuration.slow') theme('transitionTimingFunction.entrance') backwards;
+  }
+  .dial-bead-disc { fill: theme('colors.raised'); stroke: var(--c); stroke-width: 1.5; transition: fill theme('transitionDuration.base') theme('transitionTimingFunction.out'); }
+  .dial-bead-icon { color: var(--c); transition: color theme('transitionDuration.base') theme('transitionTimingFunction.out'); }
+  /* The icon's line stays the house's 1.3, whatever size the face is drawn at. */
+  .dial-bead-icon * { vector-effect: non-scaling-stroke; stroke-width: 1.3px; }
+  .dial-bead[data-lit] .dial-bead-disc { fill: var(--c); }
+  .dial-bead[data-lit] .dial-bead-icon { color: var(--on-c); }
+  .dial-bead[data-lit] .dial-bead-pop { transform: scale(1.12); }
+  .dial-bead[data-gone] { opacity: 0.2; }
+  .dial-needle-line { stroke: theme('colors.accent'); stroke-width: 2.4; stroke-linecap: round; }
+  .dial-needle-tail { fill: theme('colors.accent'); }
+  .dial-dot { fill: var(--c); stroke: theme('colors.raised'); stroke-width: 2; }
+  .dial-readout { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; pointer-events: none; }
+  .dial-readout-label { font-size: theme('fontSize.micro'); letter-spacing: theme('letterSpacing.label'); color: theme('colors.ink3'); }
+  .dial-readout-time { font-size: theme('fontSize.h3'); line-height: theme('lineHeight.heading'); direction: ltr; color: theme('colors.ink'); }
+  .dial-readout-unit { font-size: theme('fontSize.small'); color: theme('colors.ink3'); }
+  .dial-swatch { display: block; width: 14px; height: 3px; background: var(--c); }
 
   /* A control may LOOK smaller than its target; the target may not shrink. */
   .tappable {

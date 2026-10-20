@@ -1,6 +1,6 @@
 import { defineMessages } from '../messages';
 
-/** The product page and the pieces it is built from: tile, buy block, notes, curve, meters. */
+/** The product page and the pieces it is built from: tile, buy block, notes, the dial, meters. */
 export const PRODUCT = defineMessages(
   {
     notFound: 'غير موجود',
@@ -23,8 +23,6 @@ export const PRODUCT = defineMessages(
     topWhen: 'أول ٣٠ دقيقة',
     heartWhen: 'ساعتان',
     baseWhen: 'حتى ٨ ساعات',
-    curveLabel: 'منحنى تطوّر العطر على مدار ثماني ساعات',
-    spray: 'الرشّة',
     specimen: 'Specimen',
     theHouse: 'The house',
     family: 'العائلة',
@@ -35,8 +33,40 @@ export const PRODUCT = defineMessages(
     notesIndex: '01',
     notesTitle: 'النفحات',
     notesLede: 'العطر يتغيّر على البشرة مع الوقت. هذه طبقاته الثلاث بالترتيب الذي تُشمّ به.',
-    curveTitle: 'تطوّر العطر',
-    curveIllustrative: 'رسم توضيحي مبنيّ على النفحات التي ذكرتها الدار، وليس قياسًا.',
+    // La Durée — the day-on-the-skin dial (20 Oct 2026). An illustration of the
+    // two bands the house declared, and it says so; no sentence gives a number
+    // of hours — a band is a word, never a number.
+    dialTitle: 'يومه على الجلد',
+    dialSource: (longevity: string, projection: string) =>
+      `رسم توضيحي لنطاقَي الثبات والانتشار المسجّلين للعطر، وليس قياسًا: ثبات ${longevity}، وانتشار ${projection}.`,
+    dialLabel: 'قرص يومه على الجلد',
+    dialValue: (hours: string, minutes: string, phase: string) => `${hours}:${minutes} منذ الرشّة — ${phase}`,
+    dialSince: 'منذ الرشّة',
+    dialSpray: 'رُشّ وشاهد يومه',
+    dialHint: 'أو أدِر العقرب لتمضي الساعات.',
+    dialAnd: (notes: readonly string[]) => new Intl.ListFormat('ar', { type: 'conjunction' }).format(notes),
+    dialPhase: {
+      top: {
+        kicker: 'TOP NOTES · THE OPENING',
+        title: 'الرشّة الأولى',
+        text: (notes: string) => `أول ما يصل إليك: ${notes}. نفحات مشرقة خفيفة تتطاير قبل غيرها.`,
+      },
+      heart: {
+        kicker: 'HEART NOTES · THE HOURS',
+        title: 'يتفتّح القلب',
+        text: (notes: string) => `حين تهدأ القمة يظهر قلب العطر: ${notes}. هذا هو العطر كما أرادته الدار.`,
+      },
+      base: {
+        kicker: 'BASE NOTES · INTO THE EVENING',
+        title: 'تستقرّ القاعدة',
+        text: (notes: string) => `${notes}: ما يبقى قريبًا من الجلد حتى آخر اليوم، يدفأ معه ويصير جزءًا منك.`,
+      },
+      trace: {
+        kicker: 'THE TRACE',
+        title: 'الأثر',
+        text: (_notes: string) => 'لا يبقى على الجلد إلا أثر خفيف — وعلى القماش يبقى أطول.',
+      },
+    },
     searchNote: (note: string) => `ابحث عن العطور التي فيها ${note}`,
     reviewsIndex: '02',
     othersIndex: '03',
@@ -69,8 +99,6 @@ export const PRODUCT = defineMessages(
     topWhen: 'First 30 minutes',
     heartWhen: 'Two hours',
     baseWhen: 'Up to 8 hours',
-    curveLabel: 'How the perfume evolves over eight hours',
-    spray: 'Spray',
     specimen: 'Specimen',
     theHouse: 'The house',
     family: 'Family',
@@ -81,8 +109,37 @@ export const PRODUCT = defineMessages(
     notesIndex: '01',
     notesTitle: 'The notes',
     notesLede: 'A perfume changes on the skin over time. These are its three layers, in the order you smell them.',
-    curveTitle: 'How it evolves',
-    curveIllustrative: 'An illustration drawn from the notes the house lists — not a measurement.',
+    dialTitle: 'Its day on the skin',
+    dialSource: (longevity: string, projection: string) =>
+      `An illustration of the perfume’s recorded longevity and projection bands, not a measurement: ${longevity} longevity, ${projection} projection.`,
+    dialLabel: 'The day-on-the-skin dial',
+    dialValue: (hours: string, minutes: string, phase: string) => `${hours}:${minutes} since the spray — ${phase}`,
+    dialSince: 'since the spray',
+    dialSpray: 'Spray, and watch its day',
+    dialHint: 'Or turn the hand to pass the hours.',
+    dialAnd: (notes: readonly string[]) => new Intl.ListFormat('en', { type: 'conjunction' }).format(notes),
+    dialPhase: {
+      top: {
+        kicker: 'TOP NOTES · THE OPENING',
+        title: 'The first spray',
+        text: (notes: string) => `What reaches you first: ${notes}. Bright, light notes that leave before the rest.`,
+      },
+      heart: {
+        kicker: 'HEART NOTES · THE HOURS',
+        title: 'The heart opens',
+        text: (notes: string) => `As the top settles, the heart appears: ${notes}. This is the perfume as the house meant it.`,
+      },
+      base: {
+        kicker: 'BASE NOTES · INTO THE EVENING',
+        title: 'The base settles',
+        text: (notes: string) => `${notes}: what stays close to the skin to the end of the day, warming with it.`,
+      },
+      trace: {
+        kicker: 'THE TRACE',
+        title: 'The trace',
+        text: (_notes: string) => 'Only a light trace is left on the skin — on fabric, it stays longer.',
+      },
+    },
     searchNote: (note: string) => `Find perfumes with ${note}`,
     reviewsIndex: '02',
     othersIndex: '03',

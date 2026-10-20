@@ -31,10 +31,15 @@ const DRAWING: Record<NoteIcon, (props: React.SVGProps<SVGSVGElement>) => React.
   cool: Icon.Snowflake,
 };
 
-/** A note's drawing: the one the glossary assigns, or the house's diamond. */
-export function NoteIconMark({ icon, className = '' }: { icon: NoteIcon | null; className?: string }) {
+/**
+ * A note's drawing: the one the glossary assigns, or the house's diamond.
+ * `x`, `y`, `width` and `height` place it inside another drawing — a bead on
+ * the day-on-the-skin dial — where an SVG nested without them fills its parent.
+ */
+export function NoteIconMark({ icon, className = '', ...place }: { icon: NoteIcon | null; className?: string }
+  & Pick<React.SVGProps<SVGSVGElement>, 'x' | 'y' | 'width' | 'height'>) {
   const Drawing = icon ? DRAWING[icon] : Icon.Diamond;
-  return <Drawing aria-hidden="true" className={className} />;
+  return <Drawing aria-hidden="true" className={className} {...place} />;
 }
 
 /**
