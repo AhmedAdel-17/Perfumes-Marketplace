@@ -200,3 +200,22 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   OPEN for legal: the seller agreement must permit the platform to make derived presentations
   (cut-outs) of the photographs a house uploads.
 
+- 2026-10-19 · The experiences, steps 2–4 (Les Détails, La Durée, La Carte) · Ahmed (founder) ·
+  the plan approved on 19 Oct ("build steps 2, 3 and 4 as planned"), built 20 Oct as tasks
+  P5.1.5–P5.1.7, in the founder's order. Choices taken in it, each the recommended option:
+  (1) LE SILLAGE trails the mouse over the HOME page's opening perfume, not the product
+  photograph — that photograph is already the reveal and the loupe, and one surface does one
+  thing under the pointer; (2) LE FLACON, the size picker, is DEFERRED — every perfume has one
+  size in the catalogue and a picker would show prices that do not exist; it returns with
+  size variants; (3) the prototype's BAG JUMP is left out of La Goutte — it overshoots, which
+  law VI and the tokens forbid; the bag spritzes and its count rises as the drop lands;
+  (4) L'ENCRE writes a title in `ceremony` (1.6 s), not the prototype's 3 s — tokens only;
+  (5) the LOUPE never magnifies past the photograph's own pixels and prints its true power;
+  (6) LA DURÉE replaces the evolution chart on the product page as a compact dial (drag,
+  arrow keys, or "spray" to play; never by itself), drawn from the declared bands with their
+  source beside it, and no sentence says "lasts N hours" — a band is a word, never a number;
+  measured by a new event, `dial_turn`; (7) LA CARTE is built now although this register said
+  "once the catalogue is larger": a family for every note in the glossary (chosen in
+  `/ops/notes`, audited), a `/scent-map` page dark in both themes reached from the masthead's
+  Perfumes panel, a note with no family left off the map rather than guessed, and a new event,
+  `scent_map_view` · the founder asked for all three after approving Le Dévoilement.

@@ -292,6 +292,32 @@
   100% { opacity: 0; transform: scale(1.4); }
 }
 
+/* La Goutte: the drop's wake fades and draws in behind it. */
+@keyframes drop-trail {
+  to { opacity: 0; transform: scale(0.2); }
+}
+
+/* The bag's new number rises into its square from below. */
+@keyframes count-rise {
+  from { transform: translateY(100%); }
+}
+
+/*
+  L'Encre: the mask slides one way for Arabic, the other for English, so the
+  ink always arrives from the reading edge (features/shell/ink-mask.ts). The
+  words come out of a slight blur, as ink settles into paper.
+*/
+@keyframes ink-rtl {
+  from { -webkit-mask-position: 0% 0; mask-position: 0% 0; filter: blur(1.6px); }
+  60% { filter: blur(0.4px); }
+  to { -webkit-mask-position: 100% 0; mask-position: 100% 0; filter: none; }
+}
+@keyframes ink-ltr {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0; filter: blur(1.6px); }
+  60% { filter: blur(0.4px); }
+  to { -webkit-mask-position: 0% 0; mask-position: 0% 0; filter: none; }
+}
+
 /* A line that is already drawn retracts toward the end, then redraws from the start. */
 @keyframes redraw {
   0% { transform: scaleX(1); transform-origin: var(--edge-end); }
@@ -609,6 +635,189 @@
     background: theme('colors.accent');
     opacity: 0;
     animation: bag-mist theme('transitionDuration.ceremony') theme('transitionTimingFunction.out') both;
+  }
+  .bag-count { animation: count-rise theme('transitionDuration.slow') theme('transitionTimingFunction.out') both; }
+
+  /*
+    LA GOUTTE — the drop that carries a perfume to the bag (Les Détails, 20 Oct
+    2026; features/cart/drop.ts). The slab leans toward the pointer and its
+    label a little further, both easing back on the slow curve; the flight is
+    drawn on one fixed overlay above the masthead and removed when it lands.
+    `button.` because the slab's colour transition is a utility, and only a
+    selector that outranks it can add `transform` to what it eases.
+  */
+  button.drop-slab {
+    transition-property: color, background-color, border-color, opacity, transform;
+  }
+  .drop-label {
+    display: inline-block;
+    transition: transform theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .drop-words { display: inline-block; animation: fade theme('transitionDuration.quick') theme('transitionTimingFunction.out') both; }
+  .drop-flight {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .drop-trail {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drop-trail theme('transitionDuration.slow') theme('transitionTimingFunction.out') forwards;
+  }
+
+  /*
+    LA LOUPE — a glass over the house's photograph (features/product/Loupe.tsx).
+    Its colours are light through glass, the same in both themes because the
+    photograph is (LENS in packages/tokens), handed in as variables. Placed
+    from the PHYSICAL top-left on purpose: the component measures the pointer
+    in viewport pixels, which have no reading direction.
+  */
+  /*
+    L'ENCRE — a section title written in ink on first view (InkTitle.tsx).
+    Hidden only once armed — by script, for a title still below the fold —
+    and the mask is removed when the ink has dried.
+  */
+  .ink-line { display: inline-block; }
+  .ink-line[data-ink] {
+    -webkit-mask-image: var(--ink-mask);
+    mask-image: var(--ink-mask);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .ink-line[data-ink-dir='rtl'][data-ink='armed'] { -webkit-mask-position: 0% 0; mask-position: 0% 0; }
+  .ink-line[data-ink-dir='ltr'][data-ink='armed'] { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+  .ink-line[data-ink-dir='rtl'][data-ink='writing'] {
+    animation: ink-rtl theme('transitionDuration.ceremony') theme('transitionTimingFunction.inOut') forwards;
+  }
+  .ink-line[data-ink-dir='ltr'][data-ink='writing'] {
+    animation: ink-ltr theme('transitionDuration.ceremony') theme('transitionTimingFunction.inOut') forwards;
+  }
+  @media print { .ink-line[data-ink] { -webkit-mask-image: none; mask-image: none; } }
+
+  [data-loupe] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  [data-loupe='on'], [data-loupe='on'] * { cursor: none; }
+  .loupe-lens {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    border-radius: 9999px;
+    pointer-events: none;
+    opacity: 0;
+    background-color: theme('colors.plate');
+    background-repeat: no-repeat;
+    box-shadow:
+      0 0 0 1px var(--lens-rim),
+      0 0 0 6px var(--lens-shade-soft),
+      0 22px 44px var(--lens-shade),
+      inset 0 0 26px var(--lens-shade);
+    transition: opacity theme('transitionDuration.quick') theme('transitionTimingFunction.out');
+  }
+  .loupe-lens[data-on] { opacity: 1; }
+  /* Where the light falls on the glass, and the faint fringe at its rim. */
+  .loupe-lens::before,
+  .loupe-lens::after { content: ''; position: absolute; inset: 0; border-radius: 9999px; }
+  .loupe-lens::before { background: radial-gradient(60% 45% at 32% 22%, var(--lens-light), transparent 70%); }
+  .loupe-lens::after {
+    background: conic-gradient(from 210deg, var(--lens-warm), transparent 18%, var(--lens-cool) 48%, transparent 66%, var(--lens-warm));
+    -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 93%);
+    mask: radial-gradient(closest-side, transparent 86%, #000 93%);
+  }
+  /*
+    LA MOUILLETTE — the blotter a product card draws out under the pointer
+    (SpecimenCard.tsx). The strip rises at the frame's reading start and leans
+    outward; its pointed tip takes the perfume's colour; then the card with the
+    first notes settles across from it. A hover state for a mouse only (a tap
+    on a phone opens the perfume), and a focus state for the keyboard.
+    Everything here answers the pointer, so nothing is slower than `slow`.
+  */
+  .blotter { position: absolute; inset: 0; z-index: 1; pointer-events: none; --blotter-ink: var(--blotter-ink-paper); }
+  [data-theme='dark'] .blotter { --blotter-ink: var(--blotter-ink-night); }
+  .blotter-strip {
+    position: absolute;
+    inset-block-end: 8%;
+    inset-inline-start: 13%;
+    width: 22px;
+    height: 56%;
+    background: theme('colors.raised2');
+    clip-path: polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%);
+    transform-origin: 50% 100%;
+    transform: translateY(80%);
+    opacity: 0;
+    transition:
+      transform theme('transitionDuration.slow') theme('transitionTimingFunction.entrance'),
+      opacity theme('transitionDuration.quick') theme('transitionTimingFunction.out');
+  }
+  .blotter-brand {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-90deg);
+    font-size: theme('fontSize.micro');
+    letter-spacing: theme('letterSpacing.label');
+    color: theme('colors.ink3');
+    white-space: nowrap;
+  }
+  .blotter-ink {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 0;
+    background: linear-gradient(to top,
+      color-mix(in srgb, var(--blotter-ink) 72%, transparent),
+      color-mix(in srgb, var(--blotter-ink) 26%, transparent) 70%,
+      transparent);
+    transition: height theme('transitionDuration.slow') theme('transitionTimingFunction.out') theme('transitionDuration.quick');
+  }
+  .blotter-card {
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 10px;
+    display: grid;
+    gap: 4px;
+    max-width: 58%;
+    padding: 8px 10px;
+    background: theme('colors.raised2');
+    border: 1px solid theme('colors.line');
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity theme('transitionDuration.base') theme('transitionTimingFunction.out'),
+      transform theme('transitionDuration.base') theme('transitionTimingFunction.out');
+  }
+  .blotter-kicker { font-size: theme('fontSize.micro'); letter-spacing: theme('letterSpacing.label'); color: theme('colors.ink3'); }
+  .blotter-note { display: flex; align-items: center; gap: 7px; font-size: theme('fontSize.small'); color: theme('colors.ink'); line-height: theme('lineHeight.normal'); }
+  .blotter-icon { width: 15px; height: 15px; flex: none; color: var(--blotter-ink); }
+  /* The strip leans outward: away from the middle, toward the reading start. */
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .blotter-strip { opacity: 1; transform: translateY(-4%) rotate(calc(-10deg * var(--forward))); }
+    .group:hover .blotter-ink { height: 38%; }
+    .group:hover .blotter-card { opacity: 1; transform: none; transition-delay: theme('transitionDuration.slow'); }
+  }
+  .group:focus-visible .blotter-strip { opacity: 1; transform: translateY(-4%) rotate(calc(-10deg * var(--forward))); }
+  .group:focus-visible .blotter-ink { height: 38%; }
+  .group:focus-visible .blotter-card { opacity: 1; transform: none; transition-delay: theme('transitionDuration.slow'); }
+
+  /* The power the glass reaches, printed under it: over the photograph, so in
+     the glass's own dark with a halo of its light, readable on a pale ground
+     or a dark one, in either theme. A figure, so left to right. */
+  .loupe-power {
+    position: absolute;
+    inset-block-end: -26px;
+    inset-inline: 0;
+    text-align: center;
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-size: theme('fontSize.micro');
+    letter-spacing: theme('letterSpacing.label');
+    color: var(--lens-ink);
+    text-shadow: 0 0 3px var(--lens-rim), 0 0 9px var(--lens-rim);
   }
 
   /*

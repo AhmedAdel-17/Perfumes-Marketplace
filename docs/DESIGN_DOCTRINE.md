@@ -478,3 +478,40 @@ is `features/product/reveal`. The rules it keeps, and why:
 - **One entry point first.** The product page only, until `reveal_open` has been measured
   (ANALYTICS_DEFINITIONS §2b). Cards elsewhere wait for the number.
 
+
+---
+
+## 9. The details — Les Détails (founder, 19–20 Oct 2026)
+
+Luxury does not raise its voice; it shows in small things done the same way everywhere. The
+approved prototype is `design-reference/experiences/04-details.html`; the shop's versions are
+named below. The rules they keep:
+
+- **Each answers the hand, and none is slower than `slow`.** The drop to the bag, the blotter,
+  the glass all respond to a pointer or a press, so they stay inside law VI's response window.
+  Only the ink, an ARRIVAL that nobody pressed for, takes `ceremony`.
+- **One surface, one behaviour.** The product photograph is the reveal (press) and the loupe
+  (hover, long press); the sillage therefore lives on the home page's opening perfume, never
+  over the same photograph, and never over text.
+- **Nothing pretends.** The loupe never magnifies past the house's photograph and prints the
+  power it really reaches (`loupe-fit.ts`). The blotter prints the house's own top notes, named
+  and drawn by the glossary. There is no size picker until there are sizes to pick.
+- **No bounce, anywhere.** The prototype's bag jumped as it took the drop; the shop's bag
+  breathes its spritz and lets its new number rise into the square. Overshoot is forbidden
+  (`tokens.json`, `easing.$forbidden`).
+- **From the reading edge.** The ink arrives from the right in Arabic and the left in English
+  (asserted in `ink-mask.test.ts`); the blotter rises at the frame's reading start and leans
+  outward; the drop's mist leaves the count forward.
+- **A mouse's details stay a mouse's.** The lean, the sillage and the blotter need a pointer
+  that hovers; a phone gets the drop, the loupe by long press and the ink, and a tap that
+  opens the perfume is never delayed by any of them. Reduced motion stands every one still;
+  the loupe still magnifies, without its glide.
+
+| Detail | Where | File |
+|---|---|---|
+| La Goutte — the drop to the bag | every add-to-bag outside the reveal | `features/cart/drop.ts`, `AddToBag`, `BagLink` |
+| La Loupe — the glass | the product photograph | `features/product/Loupe.tsx`, `loupe-fit.ts` |
+| L'Encre — the ink | every `SectionHead` title | `features/shell/InkTitle.tsx`, `ink-mask.ts` |
+| La Mouillette — the blotter | product cards | `features/catalogue/SpecimenCard.tsx` (CSS) |
+| Le Sillage — the trail | the home page's opening perfume | `features/motion/Sillage.tsx`, `vapour.ts` |
+| Le Flacon — the size picker | deferred: no size variants yet | — |

@@ -2485,6 +2485,57 @@ try {
     }
   }
 
+  group('the details — Les Détails');
+  {
+    const visitorContext = await browser.newContext({ viewport: DESKTOP, locale: 'ar-EG' });
+    const visitor = await visitorContext.newPage();
+    try {
+      await test('adding to the bag sends a drop, and the bag answers when it lands', async () => {
+        await visitor.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+        await visitor.evaluate(() => localStorage.removeItem('diyar.cart.v1'));
+        await visitor.reload({ waitUntil: 'networkidle' });
+        const { button, enabled } = await buyButton(visitor);
+        assert(enabled, 'the perfume must be sellable');
+        await button.click();
+        const inFlight = await visitor.evaluate(() => ({
+          drop: document.querySelectorAll('.drop-flight').length,
+          count: document.querySelector('header [data-bag-target]')?.textContent ?? null,
+        }));
+        equal(inFlight.drop, 1, 'a drop is in the air');
+        assert(!inFlight.count, `the bag waits for the drop before it counts: "${inFlight.count}"`);
+        await visitor.waitForFunction(() => document.querySelector('header [data-bag-target]')?.textContent === '1', undefined, { timeout: 5_000 });
+        equal((await cartEntries(visitor)).length, 1, 'the bag holds it, whatever the drop does');
+      });
+
+      await test('section titles are written in ink as they arrive, and none on screen is hidden', async () => {
+        await visitor.goto(`${BASE}/p/layl-al-qahira`, { waitUntil: 'networkidle' });
+        const onScreen = await visitor.evaluate(() => [...document.querySelectorAll('.ink-line')]
+          .filter((el) => el.getBoundingClientRect().top < innerHeight)
+          .some((el) => el.hasAttribute('data-ink')));
+        assert(!onScreen, 'a title already in view is never hidden');
+        await visitor.locator('#others').scrollIntoViewIfNeeded();
+        await visitor.waitForFunction(() => document.querySelector('#others .ink-line')?.getAttribute('data-ink') === 'writing', undefined, { timeout: 10_000 });
+        const dir = await visitor.locator('#others .ink-line').getAttribute('data-ink-dir');
+        equal(dir, 'rtl', 'the ink arrives from the right, as Arabic is written');
+        await visitor.waitForFunction(() => !document.querySelector('#others .ink-line')?.hasAttribute('data-ink'), undefined, { timeout: 10_000 });
+      });
+
+      await test('a card draws its blotter under the pointer, with the first notes', async () => {
+        await visitor.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+        const card = visitor.locator('a.group', { has: visitor.locator('.blotter') }).first();
+        await card.scrollIntoViewIfNeeded();
+        await card.hover();
+        await visitor.waitForFunction((el) => Number(getComputedStyle(el.querySelector('.blotter-card')).opacity) > 0.95, await card.elementHandle(), { timeout: 5_000 });
+        const notes = await card.locator('.blotter-note').count();
+        assert(notes >= 1, `the blotter names the top notes: ${notes}`);
+        const said = await card.locator('.sr-only').innerText();
+        assert(said.startsWith('أول ما تشمّه'), `and says them to a screen reader: "${said}"`);
+      });
+    } finally {
+      await visitorContext.close();
+    }
+  }
+
   if (sellerContext) await sellerContext.close();
   if (opsContext) await opsContext.close();
 } finally {

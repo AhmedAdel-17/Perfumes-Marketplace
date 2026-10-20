@@ -38,6 +38,8 @@ export const HOME = defineMessages(
     strength: 'التركيز',
     reviewsCount: (count: string) => `(${count})`,
     noReviews: 'لا تقييمات بعد',
+    firstImpression: 'FIRST IMPRESSION',
+    firstImpressionSaid: (notes: string) => `أول ما تشمّه: ${notes}`,
 
     notesIndex: '03',
     notesTitle: 'ابحث بالنفحة، لا بالماركة',
@@ -72,6 +74,11 @@ export const HOME = defineMessages(
     strength: 'Strength',
     reviewsCount: (count: string) => `(${count})`,
     noReviews: 'No reviews yet',
+    // La Mouillette: the blotter a card draws out under the pointer. The label is
+    // Latin in both languages, like every label on a specimen; the sentence is
+    // what a screen reader hears instead of the drawing.
+    firstImpression: 'FIRST IMPRESSION',
+    firstImpressionSaid: (notes: string) => `First impression: ${notes}`,
 
     notesIndex: '03',
     notesTitle: 'Search by the note, not the brand',

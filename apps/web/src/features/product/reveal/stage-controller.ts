@@ -27,7 +27,7 @@
  */
 import { BottleGL, type Placement, type Pose, type Rect } from './bottle-gl';
 import { Mist } from './mist';
-import { EASE, MS, Tweens, lerp } from './motion';
+import { EASE, MS, Tweens, lerp } from '@/features/motion/motion';
 
 export type Tier = 'top' | 'heart' | 'base';
 export const TIERS: readonly Tier[] = ['top', 'heart', 'base'];

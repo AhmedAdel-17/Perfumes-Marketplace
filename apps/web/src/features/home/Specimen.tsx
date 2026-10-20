@@ -4,6 +4,7 @@ import { AddToBag } from '@/features/cart/AddToBag';
 import { BandReading } from '@/features/catalogue/BandReading';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
+import { Sillage } from '@/features/motion/Sillage';
 import { primarySurface } from '@/features/shell/primary-surface';
 import {
   CONCENTRATION, CURRENCY_LABEL, data as num, editorialIn, formatPrice, HOME, HOUSES, labelOf, langAttrs,
@@ -73,6 +74,8 @@ export function Specimen({
             className="absolute inset-0 h-full w-full px-[30%] py-[6%]"
           />
         )}
+        {/* Le Sillage: the perfume's trail behind the pointer, inside the frame only. */}
+        <Sillage family={product.family} />
       </Link>
 
       <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-4">
@@ -118,6 +121,7 @@ export function Specimen({
           productId={product.id}
           pricePiastres={product.pricePiastres}
           inStock={product.inStock}
+          family={product.family}
           className={`${primarySurface} px-5`}
         />
       </div>

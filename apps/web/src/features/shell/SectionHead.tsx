@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
+import { InkTitle } from './InkTitle';
 
 /**
  * A register's section head (identity v2 — `.sh` in 04-laboratoire.html): the
@@ -26,9 +27,10 @@ export function SectionHead({
   return (
     <div className="mb-7 grid grid-cols-1 items-end gap-1.5 border-b border-ink pb-4 sm:grid-cols-[auto_1fr_auto] sm:gap-6 lg:mb-8">
       <span className="latin text-small text-ink3 tnum">{index}</span>
-      <h2 id={id} className="font-display text-h2 leading-heading lg:text-h2Lg xl:text-h1Lg">
+      {/* Written in ink the first time it scrolls into view (L'Encre, 20 Oct 2026). */}
+      <InkTitle id={id} className="font-display text-h2 leading-heading lg:text-h2Lg xl:text-h1Lg">
         {title}
-      </h2>
+      </InkTitle>
       {link && (
         <Link
           href={link.href}

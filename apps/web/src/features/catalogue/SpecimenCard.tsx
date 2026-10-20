@@ -3,6 +3,8 @@ import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { BandReading } from './BandReading';
+import { NoteIconMark } from './NoteChip';
+import { glassPalette, scentFamily } from '@diyar/tokens';
 import {
   CONCENTRATION, CURRENCY_LABEL, data as num, formatPrice, HOME, labelOf, langAttrs, pick,
   PRODUCT, SCENT_FAMILY, type Locale,
@@ -68,7 +70,11 @@ export function SpecimenCard({
             className="absolute inset-0 h-full w-full px-[22%] py-[8%]"
           />
         )}
+        {product.topNotes.length > 0 && <Blotter product={product} locale={locale} />}
       </div>
+      {product.topNotes.length > 0 && (
+        <span className="sr-only">{copy.firstImpressionSaid(firstNotes(product, locale).map((n) => n.text).join(copy.listSeparator))}</span>
+      )}
 
       <div className="px-4 pb-3 pt-4">
         <span className="latin block text-micro tracking-label text-ink3 lg:text-caption">{product.brandLatin}</span>
@@ -100,6 +106,57 @@ export function SpecimenCard({
         )}
       </div>
     </Link>
+  );
+}
+
+/** The top notes as this visitor reads them: English where the glossary has it. */
+function firstNotes(product: ProductCard, locale: Locale) {
+  return product.topNotes.map((n) => ({
+    key: n.note,
+    icon: n.icon,
+    ...(locale === 'en' && n.en ? { text: n.en, lang: 'en' as const } : { text: n.note, lang: 'ar' as const }),
+  }));
+}
+
+/**
+ * LA MOUILLETTE — the blotter (Les Détails, founder 19 Oct 2026;
+ * design-reference/experiences/04-details.html, No. 05). As at a perfumer's
+ * counter: under the pointer, or on keyboard focus, a paper strip is drawn up
+ * beside the bottle, its tip wet with the perfume's colour, and a small card
+ * says what would reach you first — the top notes, with their drawings.
+ *
+ * All CSS, no script: it is a hover and a focus state of the card, so a phone,
+ * where a tap opens the perfume, never sees it, and it costs nothing to load.
+ * Decorative to assistive technology — the card says the same notes in words
+ * (`firstImpressionSaid`).
+ *
+ * The real card shows the house's whole photograph, where the prototype stood a
+ * cut-out on a floor, so the strip rises at the reading start of the frame and
+ * the card sits across from it, leaving the bottle in the middle uncovered.
+ */
+function Blotter({ product, locale }: { product: ProductCard; locale: Locale }) {
+  const glass = glassPalette(product.family);
+  const own = (scentFamily as Record<string, string>)[product.family] ?? glass.core;
+  return (
+    <span
+      aria-hidden="true"
+      className="blotter"
+      style={{ ['--blotter-ink-paper' as string]: own, ['--blotter-ink-night' as string]: glass.core }}
+    >
+      <span className="blotter-strip">
+        <span className="blotter-brand latin">DIYAR</span>
+        <span className="blotter-ink" />
+      </span>
+      <span className="blotter-card">
+        <span className="latin blotter-kicker">{HOME[locale].firstImpression}</span>
+        {firstNotes(product, locale).map((n) => (
+          <span key={n.key} {...langAttrs(locale, n.lang)} className="blotter-note">
+            <NoteIconMark icon={n.icon} className="blotter-icon" />
+            {n.text}
+          </span>
+        ))}
+      </span>
+    </span>
   );
 }
 

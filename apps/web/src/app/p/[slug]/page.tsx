@@ -6,7 +6,8 @@ import { api } from '@/core/api';
 import { NotesPyramid } from '@/features/product/NotesPyramid';
 import { EvolutionCurve } from '@/features/product/EvolutionCurve';
 import { Flacon } from '@/features/product/Flacon';
-import { ProductPhoto } from '@/features/product/ProductPhoto';
+import { loupeSource, ProductPhoto } from '@/features/product/ProductPhoto';
+import { Loupe } from '@/features/product/Loupe';
 import { RevealTrigger } from '@/features/product/reveal/RevealTrigger';
 import { BuyBlock } from '@/features/product/BuyBlock';
 import { BandReading } from '@/features/catalogue/BandReading';
@@ -88,6 +89,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const name = pick(locale, product.name, product.nameEn);
   const house = pick(locale, product.brandName, product.brandNameEn);
   const days = nounIn(locale, arrival.max, NOUN.day);
+  // La Loupe: the photograph again, larger, loaded only when the glass is first raised.
+  const loupe = product.photo ? loupeSource(product.photo) : null;
 
   // Each fact its own span: the city is whatever the house typed, usually
   // Arabic, and on the English page it has to be marked as such.
@@ -168,6 +171,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                       locale={locale}
                     />
                   )}
+                  {/* La Loupe: a glass over the same photograph — hover, or a long press. */}
+                  {product.photo && loupe && (
+                    <Loupe
+                      src={loupe.src}
+                      width={loupe.width}
+                      naturalWidth={product.photo.width}
+                      naturalHeight={product.photo.height}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -198,6 +210,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   productId={product.id}
                   pricePiastres={product.pricePiastres}
                   inStock={product.inStock}
+                  family={product.family}
                   variant="inline"
                   locale={locale}
                 />
@@ -312,6 +325,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         productId={product.id}
         pricePiastres={product.pricePiastres}
         inStock={product.inStock}
+        family={product.family}
         variant="bar"
         locale={locale}
       />

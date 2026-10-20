@@ -306,9 +306,12 @@ Do not redesign or "improve". If something looks wrong, say so and ask.
 **Experiences (founder, 18–19 Oct 2026):** `design-reference/experiences/` holds four
 approved interactive prototypes, built in this order — `01-devoilement` (the bottle lifted
 out of its photograph; BUILT as task P5.1.4: `features/product/reveal`, `/ops/reliefs`),
-`04-details`, `02-la-duree`, then `03-carte-olfactive` once the catalogue is larger. Serve
+`04-details` (BUILT as P5.1.5 — the drop, loupe, ink, blotter and sillage, DESIGN_DOCTRINE
+§9; the size picker deferred until sizes exist), `02-la-duree`, then `03-carte-olfactive`
+(both asked for by the founder on 19 Oct; tasks P5.1.6 and P5.1.7). Serve
 them with the `experiences` launch config (WebGL cannot read `file://` images). A relief is
 made from the house's own photograph and never invents packaging (DESIGN_DOCTRINE §8).
+Shared motion code lives in `features/motion/` (the tokens as functions, `Vapour`).
 
 Icons are in `packages/ui/src/icons.tsx` (46 components; Moon, Wood, Palm, Sprig and Diamond added 17 Oct 2026). Never draw a new one without
 asking.

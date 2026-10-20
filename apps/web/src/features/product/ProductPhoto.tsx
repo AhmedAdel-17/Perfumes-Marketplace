@@ -1,5 +1,30 @@
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import type { StorefrontPhoto } from '@/core/catalogue';
+
+/** The widest copy of a photograph the loupe will ever load — beyond it, bytes for nobody's eye. */
+const LOUPE_MAX_WIDTH = 2048;
+
+/**
+ * The same photograph, larger, for the loupe (Les Détails, 20 Oct 2026) —
+ * through the SAME image pipeline as every other photograph, so the loader
+ * decision still lives in this file alone. Never wider than the photograph
+ * itself: the optimiser does not enlarge, and the loupe is told the true width
+ * so it never magnifies past the detail the house's photograph holds.
+ *
+ * `getImageProps` answers with its 2x rendition, so half the wanted width is
+ * asked for.
+ */
+export function loupeSource(photo: StorefrontPhoto): { src: string; width: number } {
+  const width = Math.min(photo.width, LOUPE_MAX_WIDTH);
+  const half = Math.ceil(width / 2);
+  const { props } = getImageProps({
+    src: photo.url,
+    alt: '',
+    width: half,
+    height: Math.max(1, Math.round((half * photo.height) / photo.width)),
+  });
+  return { src: props.src, width };
+}
 
 /**
  * A product photograph on the storefront.

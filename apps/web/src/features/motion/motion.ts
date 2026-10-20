@@ -5,7 +5,12 @@ import { easing, motion } from '@diyar/tokens';
  *
  * CSS reads `cubic-bezier(…)` itself; a WebGL bottle and a mist on a canvas
  * cannot, so the SAME curves from tokens.json are evaluated here — never
- * re-typed, so the reveal cannot drift from the rest of the site's motion.
+ * re-typed, so no experience can drift from the rest of the site's motion.
+ *
+ * Shared by every experience that moves things itself (20 Oct 2026): the
+ * reveal's stage, the drop that carries a perfume to the bag, the loupe, the
+ * day-on-the-skin dial and the scent map. It lived in the reveal's folder
+ * while the reveal was its only user.
  */
 export type Ease = (t: number) => number;
 
@@ -41,9 +46,23 @@ export const MS = {
   base: motion.base ?? 420,
   slow: motion.slow ?? 640,
   ceremony: motion.ceremony ?? 1600,
+  mist: motion.mist ?? 2400,
 } as const;
 
 export const lerp = (a: number, b: number, k: number): number => a + (b - a) * k;
+
+export const clamp = (x: number, lo = 0, hi = 1): number => Math.min(hi, Math.max(lo, x));
+
+/**
+ * Whether the visitor has asked for less motion. Read when an effect starts,
+ * not once at load, so changing the setting takes hold without a reload.
+ */
+export const prefersStill = (): boolean =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Whether the main pointer can hover — a mouse or a pen, not a finger. */
+export const canHover = (): boolean =>
+  typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /** Tweens run by the frame loop that owns them, so every motion shares one clock. */
 export class Tweens {

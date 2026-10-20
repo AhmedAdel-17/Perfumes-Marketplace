@@ -15,12 +15,15 @@ export function BuyBlock({
   productId,
   pricePiastres,
   inStock,
+  family,
   variant,
   locale,
 }: {
   productId: string;
   pricePiastres: number;
   inStock: boolean;
+  /** The scent-family code — the colour of the drop that carries it to the bag. */
+  family: string;
   variant: 'bar' | 'inline';
   locale: Locale;
 }) {
@@ -44,6 +47,7 @@ export function BuyBlock({
       productId={productId}
       pricePiastres={pricePiastres}
       inStock={inStock}
+      family={family}
       className={[primarySurface, variant === 'bar' ? 'flex-1' : 'w-full'].join(' ')}
     />
   );

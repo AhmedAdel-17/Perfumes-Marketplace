@@ -34,8 +34,23 @@ export function RevealTrigger({ relief, photo, product, locale }: {
   const [supported, setSupported] = useState(false);
   const [open, setOpen] = useState(false);
   const [frame, setFrame] = useState<HTMLElement | null>(null);
+  const returning = useRef(false);
 
   useEffect(() => { setSupported(canRenderBottle()); }, []);
+
+  /*
+   * Focus goes back to this control once the room has GONE, not when it says
+   * it is closing. While the stage is mounted the page behind it is `inert`,
+   * and a browser ignores focus() on an inert element — so focusing in the
+   * close callback left focus on the body, and the browser suite caught it
+   * (20 Oct 2026). The stage's own clean-up releases the page before this
+   * effect runs: React runs every unmount's clean-up before new effects.
+   */
+  useEffect(() => {
+    if (open || !returning.current) return;
+    returning.current = false;
+    button.current?.focus({ preventScroll: true });
+  }, [open]);
   if (!supported) return null;
 
   return (
@@ -61,8 +76,8 @@ export function RevealTrigger({ relief, photo, product, locale }: {
           product={product}
           locale={locale}
           onClosed={() => {
+            returning.current = true;
             setOpen(false);
-            button.current?.focus({ preventScroll: true });
           }}
         />
       )}

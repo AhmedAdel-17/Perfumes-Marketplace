@@ -155,8 +155,15 @@ export const Oud = (p: P) => (
   <svg {...base} {...p}><path d="M5 19c0-6 3-14 7-14s7 8 7 14z"/><path d="M8.4 19c.3-4.4 1.8-9.6 3.6-9.6s3.3 5.2 3.6 9.6"/></svg>
 );
 
+/**
+ * The Amber note's outline, as path data: also the drop that carries a perfume
+ * to the bag (La Goutte, 20 Oct 2026), drawn filled on a canvas-free overlay
+ * where a React component cannot go. One drawing, two uses — not a new icon.
+ */
+export const amberPath = 'M12 3.5c2.8 3.8 4.6 6.8 4.6 9.6a4.6 4.6 0 11-9.2 0c0-2.8 1.8-5.8 4.6-9.6z';
+
 export const Amber = (p: P) => (
-  <svg {...base} {...p}><path d="M12 3.5c2.8 3.8 4.6 6.8 4.6 9.6a4.6 4.6 0 11-9.2 0c0-2.8 1.8-5.8 4.6-9.6z"/></svg>
+  <svg {...base} {...p}><path d={amberPath}/></svg>
 );
 
 export const Musk = (p: P) => (

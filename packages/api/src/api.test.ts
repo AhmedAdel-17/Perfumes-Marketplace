@@ -643,6 +643,20 @@ describe('public catalogue — anonymous traffic', () => {
     expect(index.heart.find((n) => n.note === 'ورد')?.en).toBeNull();
     expect(index.base.map((n) => n.note)).toContain('مسك');
   });
+
+  it('carries each card’s first notes for its blotter, named and drawn by the glossary', async () => {
+    await pg.query(`INSERT INTO note_glossary (ar, en, icon) VALUES ('برغموت', 'Bergamot', 'bergamot')
+                    ON CONFLICT (ar) DO UPDATE SET en = EXCLUDED.en, icon = EXCLUDED.icon`);
+    const api = caller({ role: 'anon', id: null });
+    const card = (await api.catalogue.published()).find((p) => p.slug === 'dar-al-ward-product');
+
+    // The top notes as the house wrote them, in its order, each with what the
+    // glossary knows — and a note it does not know stays the house's word.
+    expect(card?.topNotes[0]).toEqual({ note: 'برغموت', en: 'Bergamot', icon: 'bergamot' });
+    expect(card?.topNotes.every((n) => typeof n.note === 'string' && n.note.length > 0)).toBe(true);
+    const searched = await api.catalogue.search({ text: '' });
+    expect(searched.products.find((p) => p.slug === 'dar-al-ward-product')?.topNotes).toEqual(card?.topNotes);
+  });
 });
 
 describe('authorisation — defence in depth, through the whole stack', () => {

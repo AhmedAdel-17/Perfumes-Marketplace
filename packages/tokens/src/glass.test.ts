@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { glassPalette, luminance, type ScentFamily } from './glass';
+import { glassPalette, LENS, luminance, withAlpha, type ScentFamily } from './glass';
 import { scentFamily } from './index';
 
 const FAMILIES = Object.keys(scentFamily) as ScentFamily[];
@@ -61,5 +61,12 @@ describe('glass palette — the stops must actually step', () => {
 
   it('is pure — the same family always yields the same palette', () => {
     expect(glassPalette('oud')).toEqual(glassPalette('oud'));
+  });
+});
+
+describe('the loupe’s glass', () => {
+  it('is light through glass in both themes, with an alpha only through withAlpha', () => {
+    expect(LENS.light).toMatch(/^#[0-9a-f]{6}$/);
+    expect(withAlpha(LENS.shade, 0.38)).toBe('rgba(18, 14, 10, 0.38)');
   });
 });

@@ -215,6 +215,9 @@ export function RevealStage({
           productId={product.id}
           pricePiastres={product.pricePiastres}
           inStock={product.inStock}
+          family={product.family}
+          // The dark room stands over the masthead: no bag for a drop to reach.
+          drop={false}
           className={`${primarySurface} w-full`}
         />
         <p className="text-small text-ink3">{copy.revealFrom}</p>

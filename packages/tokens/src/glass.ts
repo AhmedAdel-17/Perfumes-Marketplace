@@ -103,6 +103,27 @@ export function glassPalette(family: ScentFamily | string): GlassPalette {
   };
 }
 
+/**
+ * The loupe's glass (Les Détails, 20 Oct 2026): a lens held over the house's
+ * photograph. The photograph is the same in both themes, so the glass over it
+ * is too — these are values of LIGHT THROUGH A LENS, not of the interface, as
+ * the flacon's highlights are (DR-13): the tungsten light on its rim and in its
+ * highlight, the shade it casts, and the warm and cool fringe a real lens shows
+ * at its edge (chromatic aberration), which is what makes a disc read as glass.
+ */
+export const LENS = {
+  light: hex(...WARM_WHITE),
+  shade: hex(18, 14, 10),
+  fringeWarm: hex(255, 140, 90),
+  fringeCool: hex(90, 150, 255),
+} as const;
+
+/** A token colour with an alpha, as CSS — for glass and light, never for an ink. */
+export function withAlpha(colour: string, alpha: number): string {
+  const [r, g, b] = parse(colour);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 /** Relative luminance, for asserting the stops actually step. */
 export function luminance(colour: string): number {
   const [r, g, b] = parse(colour).map((c) => {

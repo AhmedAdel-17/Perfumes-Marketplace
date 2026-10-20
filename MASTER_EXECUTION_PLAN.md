@@ -110,7 +110,7 @@ production (P0.1.3).
 | P2 Validation pilot | NOT_STARTED | 0/17 | GATE 2 → 3 → 4 | GATE 1, seller agreement (P0.3.3), cohort (P0.4.2) |
 | P3 Money correctness & automation | IN_PROGRESS | 2/15 (P3.4.1, P3.4.2 — DR-15) | required for GATE 4 | GATE 1 |
 | P4 Trust layer, tools, integrations | NOT_STARTED | 0/13 | GATE 5 | GATE 4 = continue |
-| P5 Growth | IN_PROGRESS | 3/21 (P5.6.4, P5.1.3, P5.1.4 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
+| P5 Growth | IN_PROGRESS | 4/24 (P5.6.4, P5.1.3, P5.1.4, P5.1.5 — brought forward on founder instruction; P5.6.2 in progress) | GATE 6 | GATE 5 |
 | P6 Operational maturity | NOT_STARTED | 0/7 | GATE 7/8/9 inputs | GATE 6 |
 | P7 Fulfilment | DEFERRED | 0/3 | GATE 7 | order density evidence |
 | P8 Mobile | DEFERRED | 0/8 | GATE 8 | retention evidence (doc 03 §10) |
@@ -217,6 +217,9 @@ production (P0.1.3).
 | P5.1.2 | Polish: structured data, ISR, visual regression (R4) | P5 | NOT_STARTED | P2 | BUILD | P5.1.1 |
 | P5.1.3 | Visual identity v2 — Laboratoire (light) and Noir (dark) across every screen | P5 | COMPLETE | P1 | BUILD | DR FD-1 (decided 14 Oct 2026) |
 | P5.1.4 | Le Dévoilement — the bottle lifted out of its photograph, on the product page | P5 | COMPLETE | P1 | BUILD | DR Le Dévoilement (decided 19 Oct 2026) |
+| P5.1.5 | Les Détails — the drop, the loupe, the ink, the blotter, the sillage | P5 | COMPLETE | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.4 |
+| P5.1.6 | La Durée — the day-on-the-skin dial on the product page | P5 | NOT_STARTED | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.5 |
+| P5.1.7 | La Carte olfactive — the scent map, and a family for every note | P5 | NOT_STARTED | P1 | BUILD | DR Les Détails (19–20 Oct 2026), P5.1.6 |
 | P5.2.1 | Campaign attribution and CAC ledger | P5 | NOT_STARTED | P2 | BUILD | P1.3.1, GATE 5 |
 | P5.2.2 | Creator codes, creator payouts, disclosure | P5 | NOT_STARTED | P2 | BUILD | P5.2.1, DR L16 |
 | P5.2.3 | Promotion codes with subsidy bearer | P5 | NOT_STARTED | P2 | BUILD | P3.1.2, GATE 5 |
@@ -2301,6 +2304,72 @@ green; `next build` succeeds with shared JS unchanged.
 relief (founder, 19 Oct); open the reveal from cards before the product page has been
 measured; add a machine-learning model or a 3D library.
 
+#### P5.1.5 Les Détails — the drop, the loupe, the ink, the blotter, the sillage
+**Status:** COMPLETE (20 Oct 2026) · **Priority:** P1 · **Type:** BUILD
+**Why:** the second of the four approved experiences, in the founder's order (19 Oct 2026):
+luxury shows in small things done the same way everywhere. The approved prototype is
+`design-reference/experiences/04-details.html`; the plan was approved on 19 Oct ("build steps
+2, 3 and 4 as planned").
+**Change control (doc 04 §9):** *user problem* — a shop's routine moments (adding to the bag,
+looking closely at a bottle, reading a card) feel like any shop's; *evidence* — founder
+direction, no buyer test (the same gap as DR-07 and P5.1.4); *success metric* — no new event:
+the product-view → bag rate (ANALYTICS_DEFINITIONS §2b) before and after release, read as a
+direction only, since polish rarely moves a rate measurably at pilot traffic; *operational
+owner* — none new (the glossary's content manager already names and draws the notes the
+blotter prints); *legal dependency* — none; *cost* — no runtime cost, no new dependency, the
+loupe's larger photograph loads only when the glass is first raised.
+**What it is:**
+- **La Goutte** — every add-to-bag leans a little toward a mouse; pressed, a drop in the
+  perfume's family colour flies to the masthead's bag (`features/cart/drop.ts`), and the bag's
+  count rises and spritzes when it LANDS. The cart changes at once; only the acknowledgement
+  waits. Not from inside the reveal (its dark room covers the masthead). The prototype's bag
+  jump is left out: it overshoots (law VI, `easing.$forbidden`).
+- **La Loupe** — a glass over the product photograph (`features/product/Loupe.tsx`): hover
+  with a mouse, long press with a finger (the glass stands above the finger; the page does
+  not scroll under it; the lift never opens the reveal). Up to ×2.4, never past the
+  photograph's own pixels (`loupe-fit.ts`, tested), its true power printed under it, no glass
+  below ×1.3. The larger copy comes through `loupeSource`, next to `ProductPhoto`.
+- **L'Encre** — every section title (`SectionHead` → `InkTitle`) is written in ink the first
+  time it scrolls into view: from the right in Arabic, the left in English (`ink-mask.ts`,
+  tested), in `ceremony` (1.6 s) rather than the prototype's 3 s. A title already on screen,
+  no JavaScript, reduced motion and print all show it plain.
+- **La Mouillette** — under a mouse or on keyboard focus, a product card draws a paper
+  blotter out of its photograph, its tip wet with the family's colour, and a small card with
+  the top notes (CSS only). Cards now carry `topNotes` with the glossary's English and
+  drawings (`catalogue.published`, `search`, `house`, `detail`).
+- **Le Sillage** — a mist in the perfume's colour trails the mouse over the home page's
+  opening perfume (`features/motion/Sillage.tsx`). On the home page and not the product page,
+  whose photograph is already the reveal and the loupe — one surface does one thing.
+- **Le Flacon** (the size picker) is DEFERRED: every perfume has one size in the catalogue,
+  and a picker would show prices that do not exist. It returns with size variants.
+- Shared: `features/motion/` (the motion tokens as functions, moved out of the reveal, and
+  `Vapour`, the soft-mote canvas); `LENS` and `withAlpha` in `packages/tokens/src/glass.ts`.
+**Acceptance criteria:** web, API and token suites green; the drop lands in the bag and the
+count changes when it lands; the loupe shows only its honest power and never opens the
+reveal from a long press; titles below the fold are written from the reading edge and
+nothing on screen at load is hidden; the blotter appears on hover and focus and never on a
+phone; reduced motion stands every one still; guard clean; `audit.mjs` clean in both themes;
+browser suite green; `next build` succeeds.
+**Do not do:** add a library for any of it; let a drop or a mist slow a response past `slow`;
+show the size picker before size variants exist.
+
+#### P5.1.6 La Durée — the day-on-the-skin dial on the product page
+**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Why:** the third approved experience (`design-reference/experiences/02-la-duree.html`).
+**What it will be:** the dial replaces the evolution chart on the product page, compact (no
+six-screen scroll): drag the needle or use the arrow keys, or press "spray" to watch the day
+pass; never plays by itself. Drawn from the declared longevity and projection bands with
+their source always beside it; no sentence says "lasts N hours". A new event, `dial_turn`.
+
+#### P5.1.7 La Carte olfactive — the scent map, and a family for every note
+**Status:** NOT_STARTED · **Priority:** P1 · **Type:** BUILD
+**Why:** the fourth approved experience (`design-reference/experiences/03-carte-olfactive.html`);
+the founder asked for it on 19 Oct although the register said "once the catalogue is larger".
+**What it will be:** a family for every note in the glossary (migration, `/ops/notes` picker,
+audited); a `/scent-map` page drawn from the catalogue, dark in both themes, reached from the
+masthead's Perfumes panel; a note with no family is left off, never guessed; a new event,
+`scent_map_view`.
+
 #### P5.2.1 Campaign attribution and CAC ledger
 **Status:** NOT_STARTED · **Priority:** P2 · **Type:** BUILD
 **Goal:** campaign registry (UTM ids, spend entries), `paid_campaign` touches already
@@ -3615,3 +3684,40 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   - `next build` succeeds: shared JS 103 kB, unchanged. The stage is in no first-load
     chunk of `/p/[slug]`.
   - Seeded locally from the mock photographs' derived files (DEBT #26).
+
+- 2026-10-20 · Claude Code session · P5.1.5 COMPLETE · Les Détails, the second of the four
+  approved experiences (the plan for steps 2–4 approved by the founder on 19 Oct). Built:
+  - La Goutte: the add-to-bag slab leans toward a mouse; a drop in the family's colour flies
+    to the bag (`features/cart/drop.ts`), which counts when it lands. No drop from inside the
+    reveal. The prototype's bag jump left out (an overshoot).
+  - La Loupe on the product photograph: hover, or a long press that never opens the reveal;
+    never past the photograph's own pixels (`loupe-fit.ts`, 5 tests), its true power printed.
+  - L'Encre on every section title, written from the reading edge (`ink-mask.ts`, 5 tests),
+    in `ceremony`; nothing on screen at load is hidden.
+  - La Mouillette on product cards (CSS only); cards now carry `topNotes` from the glossary
+    (`catalogue.published`, `search`, `house`, `detail`; 1 API test).
+  - Le Sillage over the home page's opening perfume (`features/motion/Sillage.tsx`, `Vapour`).
+  - Shared: `features/motion/` (moved out of the reveal), `LENS`/`withAlpha` in the tokens.
+  - Le Flacon, the size picker, deferred until size variants exist.
+
+  Found and fixed on the way:
+  - The reveal returned focus to its control while the page behind it was still `inert`,
+    so focus fell to the body (the browser suite's reveal journey failed on the unchanged
+    code too). Focus now returns after the room has gone.
+  - The loupe printed its power as "1.6 ×" (bidi) and pale over a light photograph in the
+    dark theme; it is a left-to-right figure in the glass's own dark now.
+  - The sillage in the family's `mist` vanished on pale photographs; it uses the family's
+    own colour.
+  - The bag's square showed empty for a frame on every page; it holds its old count only
+    while a drop is actually in the air.
+
+  Verified:
+  - Every package's typecheck and unit tests pass (turbo, 13/13): web 39 (loupe-fit and
+    ink-mask new), API 367 (cards carry their top notes), tokens 125, domain, database, i18n.
+  - Browser suite 136/136 from a fresh seed (the reveal journey included, after its fix).
+  - `audit.mjs`: no findings in the light theme at all six widths on every surface; in the
+    dark theme one finding (the care page's heading at 390) that did not reproduce on rerun.
+  - Guard clean. `next build` succeeds: shared JS 103 kB, unchanged; first load +2 to +5 kB
+    on the shop's pages (the product page 145 → 149 kB, the home page 143 → 148 kB).
+  - Seen in a headless browser: the drop in flight, the loupe at its true power, a title
+    mid-stroke, the blotter, the sillage, in both themes and at 375 px.

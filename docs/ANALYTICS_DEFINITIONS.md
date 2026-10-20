@@ -63,6 +63,8 @@ ratio of two different periods' counts.
 | Narrowed | `filter_apply` | `/search` with filters and no words |
 | Looked at a perfume | `product_view` | `/p/[slug]`, carrying the perfume |
 | Opened its reveal | `reveal_open` | the reveal control on `/p/[slug]`, carrying the perfume (since 19 Oct 2026, 0033) |
+| Turned its dial | `dial_turn` | the day-on-the-skin dial on `/p/[slug]`, on the first turn of a page view, carrying the perfume (since 20 Oct 2026, 0034) |
+| Opened the scent map | `scent_map_view` | `/scent-map` (since 20 Oct 2026, 0036) |
 | Put one in the bag | `cart_add` | the add-to-bag control |
 | Started checkout | `checkout_start` | `/checkout` |
 
@@ -75,6 +77,24 @@ the share who then put *that* perfume in the bag — against the same share for 
 looked at a perfume that HAS a reveal without opening it. Visitors, not events, on both
 sides; the same perfumes on both sides, so a comparison with perfumes that have no reveal
 cannot flatter it.
+
+**`dial_turn` is uptake too, measured the same way (La Durée — founder, 19–20 Oct 2026).**
+Every published perfume has a dial, so the comparison is simpler: of the visitors who turned
+a perfume's dial — dragged its hand, used its keys or pressed "spray" — the share who then
+put *that* perfume in the bag, against the same share for visitors who viewed the perfume
+and left the dial alone. Recorded once per page view, on the first turn, so a visitor who
+plays with it for a minute is one turn, not sixty.
+
+**`scent_map_view` is a door, not a stage (La Carte — founder, 19–20 Oct 2026).** It carries
+no perfume: the map is the whole catalogue. Its measure: of the visitors who opened the map,
+the share whose next `product_view` in the same visit came after it — read off the
+anonymous id's own sequence of events, since an event carries no referrer — against the
+share of all visitors who view a perfume at all. A map that sends nobody to a perfume is
+decoration, and this is the number that would say so.
+
+**Les Détails (P5.1.5) adds no event.** The drop, the loupe, the ink, the blotter and the
+sillage are measured, if at all, by the product-view → bag rate before and after their
+release — read as a direction only; polish rarely moves a rate measurably at pilot traffic.
 
 **Counted two ways, and the difference matters.** *Events* counts rows; *visitors* counts
 distinct anonymous ids. One person refreshing a perfume page twenty times is one visitor

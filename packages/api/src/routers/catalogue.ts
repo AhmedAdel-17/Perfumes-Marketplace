@@ -20,7 +20,7 @@
  */
 import { z } from 'zod';
 import { BAND_FILL } from '@diyar/i18n';
-import type { CatalogueProductRow, CataloguePhotoRow, NoteTier } from '@diyar/domain';
+import type { CatalogueProductRow, CataloguePhotoRow, GlossaryWord, NoteTier } from '@diyar/domain';
 import { EMPTY_QUERY, NOTE_TIERS, noteIndex, queryTerms, type NoteIcon } from '@diyar/domain';
 import { publicProcedure, router } from '../trpc';
 import { slugSchema } from '../validation';
@@ -78,6 +78,19 @@ export interface ProductCard {
   longevity: PerformanceReading | null;
   /** Whether it can be put in a bag today. A page choosing a perfume to feature needs it. */
   inStock: boolean;
+  /**
+   * The top notes — what a visitor smells first — for the blotter a card draws
+   * out of its photograph under the pointer (La Mouillette, 20 Oct 2026), each
+   * with its English name and drawing from the glossary.
+   */
+  topNotes: CardNote[];
+}
+
+/** One note as a card prints it: the house's word, its English, its drawing. */
+export interface CardNote {
+  note: string;
+  en: string | null;
+  icon: NoteIcon | null;
 }
 
 /**
@@ -178,6 +191,7 @@ const band = (value: string | null, source: string | null): PerformanceReading |
 const toCard = (
   row: CatalogueProductRow,
   photos: ReadonlyMap<string, StorefrontPhoto>,
+  glossary: ReadonlyMap<string, GlossaryWord>,
 ): ProductCard => ({
   id: row.id,
   slug: row.slug,
@@ -191,17 +205,29 @@ const toCard = (
   concentration: row.concentration ?? '',
   longevity: band(row.longevityBand, row.performanceSource),
   inStock: row.stock > 0,
+  topNotes: row.notesTop.map((note) => ({
+    note,
+    en: glossary.get(note)?.en ?? null,
+    icon: glossary.get(note)?.icon ?? null,
+  })),
 });
+
+/** Every top note of a list of perfumes, for one glossary read. */
+const topNotesOf = (rows: readonly CatalogueProductRow[]): string[] => [...new Set(rows.flatMap((row) => row.notesTop))];
 
 export const catalogueRouter = router({
   /** Every published product, for the home grid. */
   published: publicProcedure.query(async ({ ctx }): Promise<ProductCard[]> => {
-    const { rows, photos } = await ctx.uow.transaction(async (r) => {
+    const { rows, photos, glossary } = await ctx.uow.transaction(async (r) => {
       const found = await r.catalogue.publishedProducts();
-      return { rows: found, photos: await r.catalogue.primaryPhotos(found.map((p) => p.id)) };
+      return {
+        rows: found,
+        photos: await r.catalogue.primaryPhotos(found.map((p) => p.id)),
+        glossary: await r.catalogue.noteGlossary(topNotesOf(found)),
+      };
     });
     const map = photoMap(photos, ctx.media);
-    return rows.map((row) => toCard(row, map));
+    return rows.map((row) => toCard(row, map, glossary));
   }),
 
   detail: publicProcedure
@@ -224,7 +250,7 @@ export const catalogueRouter = router({
       const { row } = result;
       const map = photoMap(result.photos, ctx.media);
       return {
-        ...toCard(row, map),
+        ...toCard(row, map, result.glossary),
         brandName: row.brandName,
         brandNameEn: row.brandNameEn,
         noteEnglish: Object.fromEntries([...result.glossary].map(([ar, word]) => [ar, word.en])),
@@ -257,11 +283,16 @@ export const catalogueRouter = router({
         const house = await r.catalogue.houseBySlug(input.slug);
         if (!house) return null;
         const rows = await r.catalogue.publishedProductsForHouse(house.id);
-        return { house, rows, photos: await r.catalogue.primaryPhotos(rows.map((p) => p.id)) };
+        return {
+          house,
+          rows,
+          photos: await r.catalogue.primaryPhotos(rows.map((p) => p.id)),
+          glossary: await r.catalogue.noteGlossary(topNotesOf(rows)),
+        };
       });
       if (!result) return null;
 
-      const { house, rows } = result;
+      const { house, rows, glossary } = result;
       const map = photoMap(result.photos, ctx.media);
       return {
         id: house.id,
@@ -276,7 +307,7 @@ export const catalogueRouter = router({
         foundedYear: house.foundedYear,
         city: house.city,
         serviceGovernorates: [...house.serviceGovernorates],
-        products: rows.map((row) => toCard(row, map)),
+        products: rows.map((row) => toCard(row, map, glossary)),
       };
     }),
 
@@ -355,18 +386,19 @@ export const catalogueRouter = router({
         sort: input.sort,
       };
 
-      const { rows, houses, photos } = await ctx.uow.transaction(async (r) => {
+      const { rows, houses, photos, glossary } = await ctx.uow.transaction(async (r) => {
         const found = await r.catalogue.search(criteria);
         return {
           rows: found,
           houses: await r.catalogue.houseFilterOptions(),
           photos: await r.catalogue.primaryPhotos(found.map((p) => p.id)),
+          glossary: await r.catalogue.noteGlossary(topNotesOf(found)),
         };
       });
 
       const map = photoMap(photos, ctx.media);
       return {
-        products: rows.map((row) => toCard(row, map)),
+        products: rows.map((row) => toCard(row, map, glossary)),
         houses,
         total: rows.length,
       };
