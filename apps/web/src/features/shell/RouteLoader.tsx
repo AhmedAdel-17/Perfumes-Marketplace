@@ -41,6 +41,8 @@ export function RouteLoader({ label, caption }: { label: string; caption: string
   const [phase, setPhase] = useState<WaitPhase>('idle');
   const wait = useRef<RouteWait | null>(null);
   const first = useRef(true);
+  // The address of the page on screen, as the router last rendered it.
+  const shown = useRef('');
 
   useEffect(() => {
     const machine = new RouteWait(TIMINGS, {
@@ -50,7 +52,19 @@ export function RouteLoader({ label, caption }: { label: string; caption: string
     }, setPhase);
     wait.current = machine;
     const onClick = (event: MouseEvent) => { if (leadsElsewhere(event)) machine.start(); };
-    const onPop = () => machine.start();
+    /*
+     * Back and forward: wait only for a page that is not yet on screen. The
+     * router often restores the previous page from its cache before this
+     * listener hears the `popstate` — and a wait started for a page already
+     * shown has nothing left to end it, so the veil stood over the page,
+     * catching every press, until it gave up fifteen seconds later (found
+     * 20 Oct 2026, pressing Back after a perfume's page).
+     */
+    const onPop = () => {
+      // The query written as the router writes it, so the two compare equal.
+      const query = new URLSearchParams(window.location.search).toString();
+      if (window.location.pathname + (query ? `?${query}` : '') !== shown.current) machine.start();
+    };
     document.addEventListener('click', onClick, true);
     window.addEventListener('popstate', onPop);
     return () => {
@@ -62,6 +76,7 @@ export function RouteLoader({ label, caption }: { label: string; caption: string
 
   // The new page is the page: the wait is over.
   useEffect(() => {
+    shown.current = pathname + (query ? `?${query}` : '');
     if (first.current) { first.current = false; return; }
     wait.current?.finish();
   }, [pathname, query]);
