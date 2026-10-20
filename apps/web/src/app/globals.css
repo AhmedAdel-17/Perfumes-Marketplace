@@ -1160,7 +1160,7 @@
   }
   .map-action:hover { border-color: theme('colors.accent'); color: theme('colors.accent'); }
   .map-action-solid { background: theme('colors.ink'); color: theme('colors.ground'); border-color: theme('colors.ink'); }
-  .map-action-solid:hover { background: theme('colors.accentSurface'); border-color: theme('colors.accentSurface'); color: theme('colors.onAccent'); }
+  .map-action-solid:hover { background: theme('colors.accent-surface'); border-color: theme('colors.accent-surface'); color: theme('colors.on-accent'); }
   .map-list { border-top: 1px solid theme('colors.line'); }
   .map-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding-block: 10px; border-bottom: 1px solid theme('colors.line'); text-align: start; color: theme('colors.ink'); transition: color theme('transitionDuration.base') theme('transitionTimingFunction.out'); }
   .map-row:hover { color: theme('colors.accent'); }
