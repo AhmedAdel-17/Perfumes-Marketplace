@@ -372,7 +372,7 @@ async function auditPage(page, surface, width) {
 }
 
 /**
- * Open a page and wait for it to settle — retrying ONCE if the dev server
+ * Open a page and wait for it to arrive — retrying ONCE if the dev server
  * interrupted the navigation.
  *
  * WHY (P3.4.3, CI). `next dev` compiles a route on its first request, and on a
@@ -381,18 +381,60 @@ async function auditPage(page, surface, width) {
  * server's, not the page's: every surface that got past it passed. Warming
  * every route beforehand was tried and cost more memory than the runner has.
  *
+ * AND THE DEV SERVER RESTARTS ITSELF (20 Oct 2026). Past 80% of its heap,
+ * `next dev` exits after the request it is answering and comes back about ten
+ * seconds later; under `web-test`'s 4 GB heap that is every 10 to 30 minutes
+ * of auditing, about once a full run. Whatever page is still streaming is cut
+ * off by a connection reset with only part of its HTML in the tab.
+ *
+ * That was the intermittent "0 visible h1": care at 390, apply at 768 and
+ * 1024, support at 1280, a different page and width each run and never when
+ * rerun alone. The wait was `networkidle`, and Playwright counts a reset
+ * request as finished, so half a second after the cut the network was "idle"
+ * and every check read the half page. The h1 count was the only rule to
+ * notice, being the only one that needs something to BE there; tap targets,
+ * contrast and focus rings passed on what had arrived. Seen three times on
+ * 20 Oct, each at a restart in `.next/trace`: the page still `loading` long
+ * after `networkidle`, once with no <main> parsed — the finding exactly.
+ *
+ * So a page has arrived when its document has `load`ed whole. A cut-off page
+ * never fires `load`, and times out instead; a document request that failed
+ * anyway is refused here. `networkidle` after it still waits out whatever the
+ * page fetches once it runs. A reset or refused connection is the same
+ * restart, so the one retry first waits for the server to answer again.
+ *
  * Only the navigation is retried, and only once. Every check this audit makes
  * runs after it, on the page that loaded, and none of them is ever retried —
  * a second failure is reported exactly as before.
  */
+const INTERRUPTED = /ERR_ABORTED|ERR_CONNECTION_RESET|ERR_CONNECTION_REFUSED|ERR_EMPTY_RESPONSE|did not arrive whole|Timeout \d+ms exceeded/;
+
+async function arrive(page, url, timeout) {
+  const response = await page.goto(url, { waitUntil: 'load', timeout });
+  const failure = response?.request().failure();
+  if (failure) throw new Error(`${url} did not arrive whole: ${failure.errorText}`);
+  await page.waitForLoadState('networkidle', { timeout });
+}
+
+/** Until a restarted dev server answers again: it is back in about ten seconds. */
+async function serverAnswers() {
+  for (const deadline = Date.now() + 60_000; Date.now() < deadline;) {
+    try {
+      if ((await fetch(`${BASE}/icon.svg`)).ok) return;
+    } catch { /* still restarting */ }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
+
 async function visit(page, url) {
   try {
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await arrive(page, url, 30_000);
   } catch (error) {
     const message = String(error?.message ?? error);
-    if (!/ERR_ABORTED|Timeout \d+ms exceeded/.test(message)) throw error;
+    if (!INTERRUPTED.test(message)) throw error;
     console.log(`  (retrying ${url.replace(BASE, '')} once: ${message.split(String.fromCharCode(10))[0]})`);
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 90_000 });
+    await serverAnswers();
+    await arrive(page, url, 90_000);
   }
 }
 
