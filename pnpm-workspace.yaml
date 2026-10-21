@@ -58,5 +58,17 @@ overrides:
 # Only Next 16's React has the fix; no Next 15.x does (checked 15.5.28, 20 Oct
 # 2026). Remove these hunks on that upgrade. DEBT_REGISTER #27;
 # `apps/web/src/next-hydration-replay-patch.test.ts` fails if they go missing.
+# The same patch file carries a second, unrelated fix: server components going
+# stale in `next dev`. After an edit, `clearRequireCache` in
+# dist/server/dev/hot-reloader-turbopack.js decides per route whether its server
+# chunks changed, but 15.5.x writes the route's hash under the route key instead
+# of `route:path`, so only the process-wide hash per file is ever compared. The
+# FIRST route rebuilt after an edit — usually the one an open browser tab
+# refreshes — records the new hash and evicts its require cache; every other
+# compiled route sharing the chunk then sees "unchanged" and keeps the old modules
+# until the dev server restarts. The patch backports Next 16.0.0's fix verbatim
+# (the per-route `localKey`). Development only. Unfixed in 15.5.28; drop this
+# hunk on the move to Next >= 16.0.0. `apps/web/src/next-dev-hmr-patch.test.ts`
+# fails if it goes missing.
 patchedDependencies:
   next@15.5.25: patches/next@15.5.25.patch

@@ -163,3 +163,32 @@ index 85185b07d38d122ada8ed308523b181da102ccad..ce96122fd3a7ffe639aaffe5ed019e07
      default:
        unwindInterruptedWork(current, next),
          (next = workInProgress =
+diff --git a/dist/server/dev/hot-reloader-turbopack.js b/dist/server/dev/hot-reloader-turbopack.js
+index f508375df4039c2aa924d89fbddb255aea3d6e44..1d9ad5fb1df210f7d3412fcfdfc7ac05e6b2e723 100644
+--- a/dist/server/dev/hot-reloader-turbopack.js
++++ b/dist/server/dev/hot-reloader-turbopack.js
+@@ -239,6 +239,10 @@ async function createHotReloaderTurbopack(opts, serverFields, distDir, resetFetc
+     function clearRequireCache(key, writtenEndpoint, { force } = {}) {
+         if (force) {
+             for (const { path, contentHash } of writtenEndpoint.serverPaths){
++                // We ignore source maps
++                if (path.endsWith('.map')) continue;
++                const localKey = `${key}:${path}`;
++                serverPathState.set(localKey, contentHash);
+                 serverPathState.set(path, contentHash);
+             }
+         } else {
+@@ -252,11 +256,11 @@ async function createHotReloaderTurbopack(opts, serverFields, distDir, resetFetc
+                 const globalHash = serverPathState.get(path);
+                 if (localHash && localHash !== contentHash || globalHash && globalHash !== contentHash) {
+                     hasChange = true;
+-                    serverPathState.set(key, contentHash);
++                    serverPathState.set(localKey, contentHash);
+                     serverPathState.set(path, contentHash);
+                 } else {
+                     if (!localHash) {
+-                        serverPathState.set(key, contentHash);
++                        serverPathState.set(localKey, contentHash);
+                     }
+                     if (!globalHash) {
+                         serverPathState.set(path, contentHash);

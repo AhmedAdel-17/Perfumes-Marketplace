@@ -3927,3 +3927,34 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
     jsdom reproduction 0/20 on every patched build against 6–19/20 unpatched; every package's
     typecheck and tests (13/13); audit clean in both themes; browser suite 145/145 from a fresh
     seed; `next build` succeeds (shared JS 102 kB).
+
+- 2026-10-15 · Claude Code session · dev-server fix (no task ID; written on branch
+  `claude/adoring-rosalind-878433`, merged into main on 21 Oct 2026 after a re-check that the bug
+  is still in 15.5.25 and a re-verification with the later patch hunks) · edited server components
+  went stale in `next dev`. After a save to `SiteFooter.tsx` the log said "Compiled", and the
+  chunk on disk held the new code, but `/houses` kept serving the old classes until the dev
+  server restarted. Root cause, reproduced on a second server (port 3101, from a worktree):
+  Next 15.5.x's `clearRequireCache` (`dist/server/dev/hot-reloader-turbopack.js`) decides per
+  route whether that route's server chunks changed. It stores the route's hash under the
+  bare route key instead of `route:path`, so only the process-wide hash per file is ever
+  compared. The FIRST route rebuilt after an edit records the new hash and evicts its own
+  require cache. That is usually the page an open browser tab refreshes on HMR. Every other
+  compiled route sharing the chunk then reads as unchanged and keeps the old Turbopack
+  runtime and modules. Proof before the fix: edit, request `/houses` first, and it shows
+  the new class while `/` and `/search` keep the old one. With a browser tab on `/`, `/`
+  updates and `/houses` never does. `touch` cannot help: the content hash does not change.
+  Ruled out: the existing `buildFakeCallStack` patch (a different file and code path), file
+  watching (the recompile happened), and layout or data caching (the chunk on disk was
+  correct and the stale copy was in process memory). Next 16.0.0 fixed it upstream with the
+  per-route `localKey`. 15.5.28 has not. Fixed by backporting that change verbatim into
+  `patches/next@15.5.25.patch` via `pnpm patch` / `pnpm patch-commit`. No new dependency;
+  the lockfile changes only the patch hash. It is dev-only. The reasoning and removal
+  condition (drop this hunk on Next >= 16) are in `pnpm-workspace.yaml`. The guard is
+  `apps/web/src/next-dev-hmr-patch.test.ts`, and it rejects the unpatched file's shape.
+  Verified with a browser tab open on `/`: two successive edits and a revert each reached
+  `/houses`, `/` and `/search` in three request orders without a restart. `pnpm -r
+  typecheck` clean; `pnpm -r test` 1,662 pass. A checkout that already has `node_modules`
+  must run `pnpm install` and restart `next dev` to load the patched file. Separately: a
+  worktree under `.claude/worktrees/` makes Next pick the parent checkout's lockfile as the
+  Turbopack root (a warning at startup). That is harmless for this fix and is not changed
+  here.
