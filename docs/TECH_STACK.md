@@ -208,6 +208,17 @@ Recorded honestly so a later change is a decision, not a surprise.
 - **In-app account deletion is mandatory** (Apple guideline 5.1.1(v)).
 - **Marketplace app review** asks about UGC moderation and seller verification. Designed
   in, not bolted on.
+- **React 19.2 (Next 15) mis-hydrates when a late Flight row lands inside a host
+  element. Patched locally** (21 Oct 2026, DEBT_REGISTER #27). Flight sends some
+  elements as later lazy rows: an async server component's output, and anything past
+  3,200 serialized characters in a row. If hydration reaches one before it arrives, it
+  suspends. The replay of the host element that holds it then skips that element's own
+  node. Every element below claims the wrong node, and React re-renders the whole page
+  on the client. Under load, 12 of 160 loads failed (the masthead's Perfumes panel and
+  the footer). `patches/next@15.5.25.patch` backports upstream's fix (facebook/react#35494,
+  React 19.3, shipped by Next 16). Separately, an async server component handed to a
+  client component as a slot goes inside `<Suspense>` (`MastheadNav`), so the page
+  streams without waiting for it.
 
 ---
 

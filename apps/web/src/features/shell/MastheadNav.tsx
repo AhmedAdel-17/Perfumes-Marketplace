@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SHELL, stripLocale } from '@diyar/i18n';
@@ -102,7 +102,20 @@ export function MastheadNav({ className = '', panel }: { className?: string; pan
                 <span className="nav-line">{copy[label]}</span>
                 {hasPanel && <span aria-hidden="true" className="mast-chevron hidden lg:block" />}
               </Link>
-              {hasPanel && <div className="hidden lg:block">{panel}</div>}
+              {/* The panel is an async server component that awaits the houses,
+                  so its part of the stream usually arrives last. With this
+                  boundary the masthead, and the page under it, stream and hydrate
+                  without waiting for the panel. A late panel stays server HTML
+                  and hydrates when it arrives. Without the boundary, a slow
+                  stream had hydration suspend inside this div, the most frequent
+                  trigger of React 19.2's replay bug (the whole page re-rendered
+                  on the client; DEBT_REGISTER #27, patched). The fallback is
+                  nothing, because the panel is hidden until it opens. */}
+              {hasPanel && (
+                <div className="hidden lg:block">
+                  <Suspense fallback={null}>{panel}</Suspense>
+                </div>
+              )}
             </li>
           );
         })}

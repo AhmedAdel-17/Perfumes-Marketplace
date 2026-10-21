@@ -23,3 +23,143 @@ index f3aa821b3c47446b79a9ff8797ae1b84a30819f4..5ab0ad8b7dbafe0b8902a5c3f2fae4a9
          var frame = stack[i],
            frameKey =
              frame.join("-") +
+diff --git a/dist/compiled/react-dom/cjs/react-dom-client.development.js b/dist/compiled/react-dom/cjs/react-dom-client.development.js
+index 4376913076151ad78dcc4059ad4152fad25478da..f64d231da4c63c6ccbefc5f712c70a5c8552faff 100644
+--- a/dist/compiled/react-dom/cjs/react-dom-client.development.js
++++ b/dist/compiled/react-dom/cjs/react-dom-client.development.js
+@@ -4616,6 +4616,22 @@
+             hydrationParentFiber = hydrationParentFiber.return;
+         }
+     }
++    // Backport of facebook/react#35494 (React 19.3), DIYAR patches/next@15.5.25.patch:
++    // restore the hydration cursor to this fiber's own node before a suspended
++    // HostComponent is replayed, so beginWork claims the same node again
++    // instead of its first child. See docs/DEBT_REGISTER.md.
++    function popHydrationStateOnInterruptedWork(fiber) {
++      if (fiber !== hydrationParentFiber) return;
++      if (!isHydrating) {
++        popToNextHostParent(fiber);
++        isHydrating = !0;
++        return;
++      }
++      popToNextHostParent(fiber);
++      5 === fiber.tag &&
++        null != fiber.stateNode &&
++        (nextHydratableInstance = fiber.stateNode);
++    }
+     function popHydrationState(fiber) {
+       if (fiber !== hydrationParentFiber) return !1;
+       if (!isHydrating)
+@@ -15776,6 +15792,7 @@
+           break;
+         case 5:
+           resetHooksOnUnwind(unitOfWork);
++          popHydrationStateOnInterruptedWork(unitOfWork);
+         default:
+           unwindInterruptedWork(current, unitOfWork),
+             (unitOfWork = workInProgress =
+diff --git a/dist/compiled/react-dom/cjs/react-dom-client.production.js b/dist/compiled/react-dom/cjs/react-dom-client.production.js
+index 755076a5cf15273f024c18fdc6a8805f1e36860b..662f712ce20e1a9d16820ab178d18bb63437825d 100644
+--- a/dist/compiled/react-dom/cjs/react-dom-client.production.js
++++ b/dist/compiled/react-dom/cjs/react-dom-client.production.js
+@@ -2836,6 +2836,22 @@ function popToNextHostParent(fiber) {
+         hydrationParentFiber = hydrationParentFiber.return;
+     }
+ }
++// Backport of facebook/react#35494 (React 19.3), DIYAR patches/next@15.5.25.patch:
++// restore the hydration cursor to this fiber's own node before a suspended
++// HostComponent is replayed, so beginWork claims the same node again
++// instead of its first child. See docs/DEBT_REGISTER.md.
++function popHydrationStateOnInterruptedWork(fiber) {
++  if (fiber !== hydrationParentFiber) return;
++  if (!isHydrating) {
++    popToNextHostParent(fiber);
++    isHydrating = !0;
++    return;
++  }
++  popToNextHostParent(fiber);
++  5 === fiber.tag &&
++    null != fiber.stateNode &&
++    (nextHydratableInstance = fiber.stateNode);
++}
+ function popHydrationState(fiber) {
+   if (fiber !== hydrationParentFiber) return !1;
+   if (!isHydrating) return popToNextHostParent(fiber), (isHydrating = !0), !1;
+@@ -11210,6 +11226,7 @@ function replaySuspendedUnitOfWork(unitOfWork) {
+       break;
+     case 5:
+       resetHooksOnUnwind(next);
++      popHydrationStateOnInterruptedWork(next);
+     default:
+       unwindInterruptedWork(current, next),
+         (next = workInProgress =
+diff --git a/dist/compiled/react-dom/cjs/react-dom-profiling.development.js b/dist/compiled/react-dom/cjs/react-dom-profiling.development.js
+index 43d0363849598f796873fffaf33117d54b76de19..3c8a88fb30d007dfd6abd9c2f10ddf26c63abf0e 100644
+--- a/dist/compiled/react-dom/cjs/react-dom-profiling.development.js
++++ b/dist/compiled/react-dom/cjs/react-dom-profiling.development.js
+@@ -4624,6 +4624,22 @@
+             hydrationParentFiber = hydrationParentFiber.return;
+         }
+     }
++    // Backport of facebook/react#35494 (React 19.3), DIYAR patches/next@15.5.25.patch:
++    // restore the hydration cursor to this fiber's own node before a suspended
++    // HostComponent is replayed, so beginWork claims the same node again
++    // instead of its first child. See docs/DEBT_REGISTER.md.
++    function popHydrationStateOnInterruptedWork(fiber) {
++      if (fiber !== hydrationParentFiber) return;
++      if (!isHydrating) {
++        popToNextHostParent(fiber);
++        isHydrating = !0;
++        return;
++      }
++      popToNextHostParent(fiber);
++      5 === fiber.tag &&
++        null != fiber.stateNode &&
++        (nextHydratableInstance = fiber.stateNode);
++    }
+     function popHydrationState(fiber) {
+       if (fiber !== hydrationParentFiber) return !1;
+       if (!isHydrating)
+@@ -15784,6 +15800,7 @@
+           break;
+         case 5:
+           resetHooksOnUnwind(unitOfWork);
++          popHydrationStateOnInterruptedWork(unitOfWork);
+         default:
+           unwindInterruptedWork(current, unitOfWork),
+             (unitOfWork = workInProgress =
+diff --git a/dist/compiled/react-dom/cjs/react-dom-profiling.profiling.js b/dist/compiled/react-dom/cjs/react-dom-profiling.profiling.js
+index 85185b07d38d122ada8ed308523b181da102ccad..ce96122fd3a7ffe639aaffe5ed019e077dee1273 100644
+--- a/dist/compiled/react-dom/cjs/react-dom-profiling.profiling.js
++++ b/dist/compiled/react-dom/cjs/react-dom-profiling.profiling.js
+@@ -2930,6 +2930,22 @@ function popToNextHostParent(fiber) {
+         hydrationParentFiber = hydrationParentFiber.return;
+     }
+ }
++// Backport of facebook/react#35494 (React 19.3), DIYAR patches/next@15.5.25.patch:
++// restore the hydration cursor to this fiber's own node before a suspended
++// HostComponent is replayed, so beginWork claims the same node again
++// instead of its first child. See docs/DEBT_REGISTER.md.
++function popHydrationStateOnInterruptedWork(fiber) {
++  if (fiber !== hydrationParentFiber) return;
++  if (!isHydrating) {
++    popToNextHostParent(fiber);
++    isHydrating = !0;
++    return;
++  }
++  popToNextHostParent(fiber);
++  5 === fiber.tag &&
++    null != fiber.stateNode &&
++    (nextHydratableInstance = fiber.stateNode);
++}
+ function popHydrationState(fiber) {
+   if (fiber !== hydrationParentFiber) return !1;
+   if (!isHydrating) return popToNextHostParent(fiber), (isHydrating = !0), !1;
+@@ -11814,6 +11830,7 @@ function replaySuspendedUnitOfWork(unitOfWork) {
+       break;
+     case 5:
+       resetHooksOnUnwind(next);
++      popHydrationStateOnInterruptedWork(next);
+     default:
+       unwindInterruptedWork(current, next),
+         (next = workInProgress =

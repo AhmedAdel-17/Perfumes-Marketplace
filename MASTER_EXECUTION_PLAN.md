@@ -3903,3 +3903,27 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
     directions.
   - `audit.mjs` on every surface in both themes: no findings.
   - `next build` succeeds: shared JS 103 kB (unchanged); `/p/[slug]` 156 kB first load (+1 kB).
+
+- 2026-10-21 · Claude Code sessions · two fixes found while verifying P5.1.8, finished in the
+  main session on the founder's instruction (no task of their own: quality work on the
+  existing build):
+  - **The audit's intermittent "0 visible h1"** (care at 390, apply at 768 and 1024, support
+    at 1280, a different page each run, never when rerun alone). `next dev` restarts itself
+    past 80% of its heap, about once a full run, and resets whatever page is still streaming;
+    `audit.mjs` waited for `networkidle`, which Playwright reaches half a second after a reset,
+    so every check read a half page and only the h1 rule noticed. A page now counts as arrived
+    when its document has `load`ed whole; a cut-off page times out instead, and the one retry
+    first waits for the server to answer again. Verified: three full light+dark runs with no
+    findings (the retry took one restart), and again after the React patch below.
+  - **Hydration failures under a slow stream** — React threw the server HTML away and rendered
+    the whole page again on the client, on 12 of 160 loads under load (the masthead's Perfumes
+    panel, then the footer). React 19.2 (Next 15.5's canary) replays a host element that
+    suspended on a late Flight row without resetting its hydration cursor. The Perfumes panel
+    slot now sits in `<Suspense>` (`MastheadNav`; the masthead no longer waits for the houses);
+    that alone made it 2 of 200. React's own fix (facebook/react#35494, React 19.3, only in
+    Next 16) is backported into the four react-dom builds Next vendors, in
+    `patches/next@15.5.25.patch` — production code, DEBT_REGISTER #27, guarded by
+    `next-hydration-replay-patch.test.ts`. Verified: 0 of 200 loads under two audits' load; a
+    jsdom reproduction 0/20 on every patched build against 6–19/20 unpatched; every package's
+    typecheck and tests (13/13); audit clean in both themes; browser suite 145/145 from a fresh
+    seed; `next build` succeeds (shared JS 102 kB).

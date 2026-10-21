@@ -9,7 +9,7 @@ overrides:
   '@esbuild-kit/core-utils>esbuild': ^0.25.0
 
 patchedDependencies:
-  next@15.5.25: d4caeb84e59114bb78e7690c02f76f9196193b59266b681256138a555ad7d7de
+  next@15.5.25: 2ddddfdd5cc0b6864fb8fb1808f8c774463a1343cef6d806a0f8c04340e7c038
 
 importers:
 
@@ -62,7 +62,7 @@ importers:
         version: 0.45.2(@electric-sql/pglite@0.5.8)(gel@2.2.0)(postgres@3.4.9)
       next:
         specifier: ^15.1.3
-        version: 15.5.25(patch_hash=d4caeb84e59114bb78e7690c02f76f9196193b59266b681256138a555ad7d7de)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.25(patch_hash=2ddddfdd5cc0b6864fb8fb1808f8c774463a1343cef6d806a0f8c04340e7c038)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -2584,7 +2584,7 @@ snapshots:
 
   nanoid@3.3.18: {}
 
-  next@15.5.25(patch_hash=d4caeb84e59114bb78e7690c02f76f9196193b59266b681256138a555ad7d7de)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  next@15.5.25(patch_hash=2ddddfdd5cc0b6864fb8fb1808f8c774463a1343cef6d806a0f8c04340e7c038)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@next/env': 15.5.25
       '@swc/helpers': 0.5.15

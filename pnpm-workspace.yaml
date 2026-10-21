@@ -48,5 +48,15 @@ overrides:
 # a Next upgrade ships a guarded `buildFakeCallStack`: pnpm refuses an unused or
 # non-applying patch, so upgrading Next forces this to be re-checked.
 # `apps/web/src/next-dev-stack-patch.test.ts` fails if the guard goes missing.
+#
+# The same patch also backports React's hydration replay fix (facebook/react#35494,
+# React 19.3) into the four react-dom client builds Next vendors. This part
+# changes PRODUCTION code. When hydration suspends inside a host element on a
+# late Flight row, React 19.2 replays that element without resetting its
+# hydration cursor. Each element then claims the node one level too deep, and the
+# whole page is client-rendered again. The backport restores the cursor first.
+# Only Next 16's React has the fix; no Next 15.x does (checked 15.5.28, 20 Oct
+# 2026). Remove these hunks on that upgrade. DEBT_REGISTER #27;
+# `apps/web/src/next-hydration-replay-patch.test.ts` fails if they go missing.
 patchedDependencies:
   next@15.5.25: patches/next@15.5.25.patch
