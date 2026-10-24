@@ -533,15 +533,19 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
       state: schema.subOrders.state,
       dispatchSlaHours: schema.subOrders.dispatchSlaHours,
     })
-      .from(schema.subOrders).where(eq(schema.subOrders.id, id)).limit(1);
+      .from(schema.subOrders).where(eq(schema.subOrders.id, id)).limit(1).for('update');
     if (!current) throw new Error(`Unknown sub-order ${id}`);
 
-    // The adapter enforces the table too. A caller passing a hand-built record
-    // must not be able to write a state the machine forbids — the database
-    // trigger is a third line of defence, not the only one.
-    if (!SubOrderLifecycle.rule(current.state, to)) {
+    // Pessimistic row lock: a competing command must observe the winner's
+    // committed state before validating. A still-reachable target does not
+    // authorize replaying a command formed against an older state.
+    if (current.state !== record.from || record.to !== to
+        || record.actor !== actor || record.reason !== reason) {
       throw new InvalidTransition(current.state, to);
     }
+    SubOrderLifecycle.transition(current.state, {
+      to, actor, ...(reason === null ? {} : { reason }),
+    }, { now: () => record.at });
 
     await db.update(schema.subOrders)
       .set({
@@ -579,8 +583,15 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
   },
 
   async listForSettlement(sellerId) {
+    // Pessimistic lock / Unit of Work: concurrent runs for one seller wait
+    // until the winning statement commits before selecting unsettled orders.
+    await db.select({ id: schema.sellers.id }).from(schema.sellers)
+      .where(eq(schema.sellers.id, sellerId)).for('update');
     const subs = await db.select().from(schema.subOrders)
-      .where(eq(schema.subOrders.sellerId, sellerId));
+      .where(and(eq(schema.subOrders.sellerId, sellerId), sql`NOT EXISTS (
+        SELECT 1 FROM payout_lines settled
+        WHERE settled.sub_order_id = ${schema.subOrders.id}
+      )`));
     if (subs.length === 0) return [];
 
     /*

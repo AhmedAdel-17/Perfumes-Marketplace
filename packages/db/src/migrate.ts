@@ -17,6 +17,7 @@
  * only on the machine that had not run the earlier ones already.
  */
 import { readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 /**
@@ -41,7 +42,7 @@ export function migrationFiles(dir: string = MIGRATIONS_DIR): string[] {
     // A four-digit prefix, so lexicographic order is numeric order. Without it
     // `0010` and `2` sort in the wrong direction and the schema is built in an
     // order nobody chose.
-    if (!/^\d{4}_/.test(file)) {
+    if (!/^\d{4}_[a-z0-9_]+\.sql$/.test(file)) {
       throw new Error(
         `Migration "${file}" does not start with a four-digit number. `
         + 'Files are applied in filename order, so the prefix is what fixes it.',
@@ -68,90 +69,85 @@ export interface SqlQueryable extends SqlExecutor {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
-/*
- * The ledger, and the fact that the application cannot see it.
- *
- * It is INFRASTRUCTURE, not application data: it is written by whoever runs
- * migrations, connected as the owner, and no request ever touches it. So rather
- * than giving it a policy — which would imply some actor is meant to read it —
- * the application role is simply not granted anything on it.
- *
- * RLS is ENABLED but not FORCED, and that distinction matters here: `FORCE`
- * binds the table owner too, and the owner is exactly who has to write this row
- * while running a migration with no actor GUC set. Forcing it would make the
- * first migration fail on the statement that records the first migration.
- */
-const LEDGER = [
-  `CREATE TABLE IF NOT EXISTS schema_migrations (
-     filename text PRIMARY KEY,
-     applied_at timestamptz NOT NULL DEFAULT now()
-   )`,
-  'ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY',
-].join(';');
-
-/*
- * Taking the application's access away, AFTER the migrations have run.
- *
- * Migration 0002 ends with `GRANT ... ON ALL TABLES IN SCHEMA public TO
- * app_user`, which is the right thing for it to do and which sweeps this table
- * up with the rest. Revoking before that runs achieves nothing — the grant
- * follows and hands it straight back — so the revoke has to come last.
- */
-const SEAL_LEDGER = 'REVOKE ALL ON schema_migrations FROM PUBLIC, app_user';
+/** Canonical LF hashes survive Git's Windows checkout conversion. */
+export function migrationChecksum(source: string): string {
+  return createHash('sha256').update(source.replace(/\r\n/g, '\n')).digest('hex');
+}
 
 /**
- * Run every migration that has not run yet.
- *
- * A LEDGER, not a try/catch. The seeder runs against a database that persists
- * between runs, so re-applying `0000` raises "type already exists" — and the
- * version of this that swallowed that error would have swallowed a genuine
- * failure with the same shape, which is the whole problem with catching by
- * accident rather than recording by intent.
- *
- * A fresh database applies everything, so tests are unaffected: they each open
- * their own PGlite and the ledger starts empty.
- *
- * `--> statement-breakpoint` is Drizzle's marker for where it would split a
- * file into separate statements. PGlite's `exec` takes a whole script, so the
- * markers are stripped rather than honoured.
+ * Pattern — serialized transactional migration batch + content-addressed ledger.
+ * Supply a DEDICATED connection, not an unpinned multi-connection pool. The lock,
+ * DDL and markers share one transaction; a failed batch leaves none of them.
+ * Nontransactional operations (e.g. concurrent indexes) need a separate reviewed
+ * operational plan, not an automatic escape from this boundary.
+ * Legacy filename-only records cannot prove historical bytes. Adoption requires
+ * explicit operator opt-in after reviewing the historical baseline.
  */
 export async function applyMigrations(
   db: SqlExecutor | SqlQueryable,
-  options: { dir?: string; onApplied?: (file: string) => void } = {},
+  options: {
+    dir?: string;
+    onApplied?: (file: string) => void;
+    adoptLegacyChecksums?: boolean;
+  } = {},
 ): Promise<string[]> {
+  if (!('query' in db)) {
+    throw new Error('Migration runner requires query support on a dedicated connection; exec-only replay is unsafe.');
+  }
   const dir = options.dir ?? MIGRATIONS_DIR;
+  const sources = migrationFiles(dir).map((filename) => {
+    const source = readFileSync(join(dir, filename), 'utf8');
+    return { filename, source, checksum: migrationChecksum(source) };
+  });
   const applied: string[] = [];
-
-  await db.exec(LEDGER);
-
-  const done = new Set<string>();
-  if ('query' in db) {
-    const rows = await db.query<{ filename: string }>('SELECT filename FROM schema_migrations');
-    for (const row of rows.rows) done.add(row.filename);
-  }
-
-  for (const file of migrationFiles(dir)) {
-    if (done.has(file)) continue;
-
-    const sql = readFileSync(join(dir, file), 'utf8').replace(/--> statement-breakpoint/g, '');
-    try {
-      await db.exec(sql);
-      // Recorded through `exec` so this works for a plain SqlExecutor too. The
-      // filename is ours, from a directory listing, never user input.
-      await db.exec(`INSERT INTO schema_migrations (filename) VALUES ('${file}')`);
-    } catch (cause) {
-      // Name the file. A migration failure reported only by its SQL error is a
-      // hunt through nine files for the statement that produced it.
-      throw new Error(`Migration ${file} failed: ${(cause as Error).message}`, { cause });
+  let active = 'migration ledger';
+  await db.exec('BEGIN');
+  try {
+    await db.exec("SELECT pg_advisory_xact_lock(hashtextextended('diyar:migrations', 0))");
+    await db.exec(`CREATE TABLE IF NOT EXISTS public.schema_migrations (
+      filename text PRIMARY KEY,
+      applied_at timestamptz NOT NULL DEFAULT now(),
+      sha256 text
+    ); ALTER TABLE public.schema_migrations ADD COLUMN IF NOT EXISTS sha256 text;
+    ALTER TABLE public.schema_migrations ENABLE ROW LEVEL SECURITY`);
+    const { rows } = await db.query<{ filename: string; sha256: string | null }>(
+      'SELECT filename, sha256 FROM public.schema_migrations ORDER BY filename');
+    for (const [index, row] of rows.entries()) {
+      active = row.filename;
+      const expected = sources[index];
+      if (!expected || row.filename !== expected.filename) {
+        throw new Error('Applied migration history is missing, reordered or not present in this checkout.');
+      }
+      if (row.sha256 === null) {
+        if (!options.adoptLegacyChecksums) {
+          throw new Error('Legacy migration has no fingerprint. Review history/backup, then explicitly adopt legacy checksums; historical bytes cannot be verified.');
+        }
+        await db.exec(`UPDATE public.schema_migrations SET sha256='${expected.checksum}' WHERE filename='${row.filename}'`);
+      } else if (row.sha256 !== expected.checksum) {
+        throw new Error('Applied migration checksum differs from this checkout. Historical SQL must not be edited.');
+      }
     }
-    applied.push(file);
-    options.onApplied?.(file);
+    for (const migration of sources.slice(rows.length)) {
+      active = migration.filename;
+      await db.exec(migration.source.replace(/--> statement-breakpoint/g, ''));
+      await db.exec(`INSERT INTO public.schema_migrations(filename,sha256) VALUES ('${migration.filename}','${migration.checksum}')`);
+      applied.push(migration.filename);
+    }
+    await db.exec('ALTER TABLE public.schema_migrations ALTER COLUMN sha256 SET NOT NULL');
+    // No swallowed permission errors. Early historical fixtures may predate
+    // app_user; the real role's presence requires a successful seal.
+    await db.exec(`REVOKE ALL ON public.schema_migrations FROM PUBLIC;
+      DO $seal$ BEGIN
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='app_user') THEN
+          REVOKE ALL ON public.schema_migrations FROM app_user;
+        END IF;
+      END $seal$`);
+    await db.exec('COMMIT');
+  } catch (cause) {
+    await db.exec('ROLLBACK');
+    throw new Error(`Migration ${active} failed: ${(cause as Error).message}`, { cause });
   }
-
-  // Last, for the reason above. `catch` because a database that has never run
-  // 0002 has no `app_user` to revoke from, and a fresh test database is exactly
-  // that until the migrations finish.
-  await db.exec(SEAL_LEDGER).catch(() => undefined);
-
+  // A rolled-back batch must never be reported as successfully applied.
+  for (const file of applied) options.onApplied?.(file);
   return applied;
 }

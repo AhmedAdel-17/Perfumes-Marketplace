@@ -684,11 +684,15 @@ export class InMemoryUnitOfWork implements UnitOfWork {
         const row = s.subOrders.get(id);
         if (!row) throw new Error(`Unknown sub-order ${id}`);
 
-        // The adapter enforces the table too. A caller passing a hand-built
-        // record must not be able to write a state the machine forbids.
-        if (!SubOrderLifecycle.rule(row.state, to)) {
+        // Match the SQL adapter's expected-state contract. Reject a stale
+        // command even when the target is legal from the newer state.
+        if (row.state !== record.from || record.to !== to
+            || record.actor !== actor || record.reason !== reason) {
           throw new InvalidTransition(row.state, to);
         }
+        SubOrderLifecycle.transition(row.state, {
+          to, actor, ...(reason === null ? {} : { reason }),
+        }, { now: () => record.at });
 
         /*
          * The state it moved FROM, read before the row changes.
@@ -722,8 +726,11 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
 
       async listForSettlement(sellerId) {
+        const settled = new Set([...store().payouts.values()].flatMap((p) =>
+          p.statement.lines.filter((l) => l.outcome === 'earned' || l.outcome === 'reversed')
+            .map((l) => l.subOrderId)));
         return [...store().subOrders.values()]
-          .filter((s) => s.sellerId === sellerId)
+          .filter((s) => s.sellerId === sellerId && !settled.has(s.id))
           .map((r): SettlementSubOrder => ({
             id: r.id,
             reference: r.reference,

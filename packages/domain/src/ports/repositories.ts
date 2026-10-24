@@ -368,7 +368,10 @@ export interface SubOrderRepository {
    *
    * The state machine is applied by the caller (domain), the record is appended
    * here, and the database enforces the same table a third time. Implementations
-   * must write the new state and the transition row in ONE transaction, or an
+   * must lock the current row, reject a record whose expected `from` state
+   * differs, and validate actor/reason before writing. Concurrent losers must
+   * fail without adding history. Both state and history belong to ONE transaction.
+   * Implementations must write the new state and the transition row in ONE transaction, or an
    * order can end up in a state with no audit row explaining how it got there.
    */
   applyTransition(
@@ -379,7 +382,11 @@ export interface SubOrderRepository {
     record: TransitionRecord,
   ): Promise<void>;
 
-  /** Everything a settlement period needs, already shaped for the domain. */
+  /**
+   * Unallocated settlement facts, already shaped for the domain. SQL adapters
+   * serialize selection by seller until this Unit of Work commits its payout.
+   * Previously persisted payout lines are excluded; held rows remain eligible.
+   */
   listForSettlement(sellerId: string): Promise<readonly SettlementSubOrder[]>;
 
   /** COD: the courier has handed over the cash. The gate settlement waits on. */

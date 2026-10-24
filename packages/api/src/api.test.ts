@@ -1643,14 +1643,20 @@ describe('the money loop — order to payout, against a real Postgres', () => {
     expect(statement!.disputeDeadline).not.toBeNull();
   });
 
-  it('shows a house only its OWN payouts', async () => {
+  it('shows a house only its OWN payouts and skips already settled orders', async () => {
     const platform = caller(PLATFORM_ACTOR);
-    await platform.platform.runPayout({
+    const repeated = await platform.platform.runPayout({
       sellerId: ids['dar-al-ward']!,
       periodStart: new Date('2026-09-01T00:00:00Z').toISOString(),
       periodEnd: new Date('2026-09-30T00:00:00Z').toISOString(),
     });
 
+    expect(repeated.netPiastres).toBe(0);
+    // Held rows may still appear in the calculated statement, but none
+    // may be persisted as another allocation of an already settled order.
+    const savedRepeat = await caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward'])
+      .seller.statement({ payoutId: repeated.payoutId });
+    expect(savedRepeat!.lines).toHaveLength(0);
     const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']);
     const wardPayouts = await caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward'])
       .seller.payouts();
@@ -2047,5 +2053,26 @@ describe('every request has a name, and it is on everything the request leaves b
     })).rejects.toMatchObject({ code: 'BAD_REQUEST' });
 
     expect(OBSERVED.reported.length).toBe(before);
+  });
+});
+
+
+describe('DB-SAFE-01 — listing brand ownership at the API boundary', () => {
+  it('refuses a competitor’s live brand without creating a listing', async () => {
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']!);
+    const nour = caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']!);
+    const before = await ward.listings.mine();
+    await expect(ward.listings.create({
+      name: 'Forged', slug: 'forged-other-house-brand', sku: 'FORGED-BRAND',
+      brandId: (await nour.listings.myBrand())!.id,
+    })).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'العلامة التجارية غير متاحة' });
+    expect(await ward.listings.mine()).toHaveLength(before.length);
+  });
+  it('uses the same response for a nonexistent brand', async () => {
+    const ward = caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']!);
+    await expect(ward.listings.create({
+      name: 'Missing', slug: 'missing-brand-integrity', sku: 'MISSING-BRAND',
+      brandId: '00000000-0000-4000-8000-000000000000',
+    })).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'العلامة التجارية غير متاحة' });
   });
 });

@@ -8,7 +8,7 @@
  * seller-writable path to this table; moderation is a platform action and every
  * moderation action is logged.
  */
-import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { subOrders, orderLineItems } from './orders';
 import { customers } from './identity';
 import { products } from './catalogue';
@@ -50,4 +50,6 @@ export const reviews = pgTable('reviews', {
 }, (t) => [
   uniqueIndex('reviews_line_item_key').on(t.lineItemId),
   index('reviews_product_idx').on(t.productId),
+  foreignKey({ name: 'reviews_line_identity_fk', columns: [t.lineItemId, t.subOrderId, t.productId],
+    foreignColumns: [orderLineItems.id, orderLineItems.subOrderId, orderLineItems.productId] }),
 ]);

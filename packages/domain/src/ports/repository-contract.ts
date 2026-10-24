@@ -202,6 +202,29 @@ export const repositoryContract: readonly ContractCase[] = [
   },
 
   {
+    name: 'applyTransition() rejects a stale command even when its target is still reachable',
+    async run(setup) {
+      const w = await setup();
+      await w.uow.transaction((r) => r.orders.save(w.makeDraft('DY-STALE'), w.sellerIdBySlug));
+      const [sub] = await w.uow.transaction((r) =>
+        r.subOrders.listBySeller(w.sellerIdBySlug.get('dar-al-ward')!));
+      const notify = SubOrderLifecycle.transition('placed', { to: 'awaiting_seller', actor: 'system' }, CLOCK);
+      await w.uow.transaction((r) => r.subOrders.applyTransition(sub!.id, notify.to, notify.actor, null, notify));
+      // Both callers saw awaiting_seller. Confirmation wins; cancellation may
+      // still be legal from confirmed, but THIS command never observed it.
+      const cancel = SubOrderLifecycle.transition('awaiting_seller', {
+        to: 'cancelled', actor: 'customer', reason: 'customer_request',
+      }, CLOCK);
+      const confirm = SubOrderLifecycle.transition('awaiting_seller', { to: 'confirmed', actor: 'seller' }, CLOCK);
+      await w.uow.transaction((r) => r.subOrders.applyTransition(sub!.id, confirm.to, confirm.actor, null, confirm));
+      await rejects(() => w.uow.transaction((r) =>
+        r.subOrders.applyTransition(sub!.id, cancel.to, cancel.actor, cancel.reason, cancel)), 'a stale cancellation');
+      const after = await w.uow.transaction((r) => r.subOrders.findById(sub!.id));
+      equal(after!.state, 'confirmed', 'a stale command cannot rewrite the winning state');
+    },
+  },
+
+  {
     name: 'confirming starts the dispatch clock from the hours snapshotted at placement',
     async run(setup) {
       /*

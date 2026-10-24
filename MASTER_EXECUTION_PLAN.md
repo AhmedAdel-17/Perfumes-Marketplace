@@ -3958,3 +3958,16 @@ Format: `YYYY-MM-DD · author · task · old → new status · evidence / note`
   worktree under `.claude/worktrees/` makes Next pick the parent checkout's lockfile as the
   Turbopack root (a warning at startup). That is harmless for this fix and is not changed
   here.
+
+
+### Database pre-merge correction — 24 October 2026
+
+`codex/diyar-integrity-merge-ready` is a focused proposal from main `44bee7c`.
+P1.2.4's locked-transition portion is implemented; the overall task remains
+NOT_STARTED/incomplete because idempotent placement is not integrated.
+P3.1.1–P3.1.4 and P3.2.1 retain their gates: no alternative money ledger or
+reservation subsystem is included. The existing payout statement receives only
+a duplicate-allocation guard and serialized selection; DR-03 remains in force.
+Customer data requires a separate jointly approved consent/erasure design.
+Migration runner upgrades support explicit local checksum adoption, preserving
+existing rows. See `docs/DATA_IMPLEMENTATION_HANDOFF.md` and the dated debt note.

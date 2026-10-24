@@ -360,7 +360,7 @@ describe('settlement — the statement reconciles against what the database hold
         `INSERT INTO payout_lines (payout_id,sub_order_id,gross_piastres,commission_piastres,
            commission_source,commission_bps,shipping_piastres,net_piastres)
          VALUES ($1,$2,100000,5000,'organic_search',1500,0,999999)`,
-        [payout.rows[0]!.id, ids[NOUR + ':sub']]);
+        [payout.rows[0]!.id, line.subOrderId]);
     } catch (e) { refused = (e as Error).message; }
     expect(refused).toMatch(/payout_lines_net_reconciles/);
   });

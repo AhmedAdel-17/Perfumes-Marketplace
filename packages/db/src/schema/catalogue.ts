@@ -13,7 +13,7 @@
  *    required fields" is a constraint, not a convention.
  */
 import { sql } from 'drizzle-orm';
-import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { sellers } from './sellers';
 import {
   concentration, dayNight, genderPositioning, longevityBand, occasion,
@@ -28,7 +28,12 @@ export const brands = pgTable('brands', {
   slug: text('slug').notNull(),
   story: text('story'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [uniqueIndex('brands_slug_key').on(t.slug)]);
+}, (t) => [
+  uniqueIndex('brands_slug_key').on(t.slug),
+  // Composite reference target: a brand's identity cannot be separated from
+  // its owning tenant when a listing references it (DB-SAFE-01, 0038).
+  uniqueIndex('brands_id_seller_key').on(t.id, t.sellerId),
+]);
 
 export const products = pgTable('products', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -101,6 +106,11 @@ export const products = pgTable('products', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
+  foreignKey({
+    name: 'products_brand_seller_fk',
+    columns: [t.brandId, t.sellerId],
+    foreignColumns: [brands.id, brands.sellerId],
+  }).onDelete('restrict'),
   uniqueIndex('products_slug_key').on(t.slug),
   uniqueIndex('products_seller_sku_key').on(t.sellerId, t.sku),
   index('products_status_idx').on(t.status),

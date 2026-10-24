@@ -88,3 +88,25 @@ the `MASTER_EXECUTION_PLAN.md` task that pays it. Source: `docs/product/03-techn
 - A deliberate scope decision (that belongs in `OPEN_DECISIONS.md`)
 - A deferred feature (doc 04 §10)
 - A reversible choice recorded in `TECH_STACK.md` §9
+
+
+## Database review correction — 24 October 2026
+
+Owner: Codex (implementation), founders (policy approvals). Branch
+`codex/diyar-integrity-merge-ready`, based on main `44bee7c`.
+
+- #13: locked expected-state transitions implemented, with shared adapter
+  contract and PostgreSQL concurrency test. #12 remains open: checkout replay
+  storage alone does not make placement idempotent.
+- #6: narrow duplicate-settlement guard added: serialized per-seller selection,
+  exclusion of previously allocated sub-orders and unique payout-line index.
+  Full debt remains open: ADR-03 ledger, reversals, payout states and two-person
+  approval are not implemented. Production payout switch remains required.
+- #7, #8: refund reversal and stock reservation integration remain open; the
+  earlier unapproved financial and inventory tables are excluded from this merge.
+- Existing local migration ledgers have an explicit checksum-adoption flag;
+  checksum failures never trigger a wipe or silent repair.
+- Customer-profile collection and identified analytics require joint approval,
+  consent enforcement and erasure design before replacement implementation.
+
+See `DATA_IMPLEMENTATION_HANDOFF.md` for safe local upgrade and exclusions.

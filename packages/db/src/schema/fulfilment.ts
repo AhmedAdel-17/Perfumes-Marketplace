@@ -6,7 +6,7 @@
  * is nowhere to record who pays for a failed delivery — and failed delivery is
  * the largest single cost line in the model.
  */
-import { index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { subOrders, orderLineItems } from './orders';
 import { costBearer, reasonCode, returnStatus } from './enums';
 
@@ -55,4 +55,8 @@ export const returns = pgTable('returns', {
   decidedAt: timestamp('decided_at', { withTimezone: true }),
   requestedAt: timestamp('requested_at', { withTimezone: true }).defaultNow().notNull(),
   closedAt: timestamp('closed_at', { withTimezone: true }),
-}, (t) => [index('returns_sub_order_idx').on(t.subOrderId)]);
+}, (t) => [
+  index('returns_sub_order_idx').on(t.subOrderId),
+  foreignKey({ name: 'returns_line_sub_order_fk', columns: [t.lineItemId, t.subOrderId],
+    foreignColumns: [orderLineItems.id, orderLineItems.subOrderId] }),
+]);

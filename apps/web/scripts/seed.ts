@@ -242,7 +242,12 @@ async function main() {
 
   const pg = new PGlite(DATA_DIR);
 
-  await applyMigrations(pg, { onApplied: (file) => console.log('· applied', file) });
+  // Explicit adoption applies only to this local PGlite store. Network migrations
+  // remain strict. Existing rows and their original applied_at are preserved.
+  await applyMigrations(pg, {
+    adoptLegacyChecksums: process.argv.includes('--adopt-legacy-checksums'),
+    onApplied: (file) => console.log('· applied', file),
+  });
 
   await pg.exec(`SET app.actor_role='platform'; SET app.actor_id='${PLATFORM}';`);
 
