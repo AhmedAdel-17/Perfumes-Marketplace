@@ -6,6 +6,25 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "apps/web", "run", "dev"],
       "port": 3100
+    },
+    {
+      "name": "web-test",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/web", "run", "dev"],
+      "env": { "OTP_OUTBOX": "C:/Users/ahmed/AppData/Local/Temp/claude/diyar-otp.jsonl", "NODE_OPTIONS": "--max-old-space-size=4096", "OPS_DEV_SIGN_IN": "0" },
+      "port": 3100
+    },
+    {
+      "name": "experiences",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4200", "--bind", "127.0.0.1"],
+      "port": 4200
+    },
+    {
+      "name": "design-reference",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4100", "--bind", "127.0.0.1", "--directory", "design-reference"],
+      "port": 4100
     }
   ]
 }

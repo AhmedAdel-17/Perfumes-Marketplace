@@ -26,7 +26,17 @@ import {
  * on the next click rather than when a cookie happens to expire.
  */
 
-export type OpsResult = { ok: true } | { ok: false; message: string };
+/**
+ * Development only: OPS_DEV_SIGN_IN=1 under `next dev` skips the one-time code
+ * for a registered operator, so the console can be worked on without a phone
+ * in the room. Both conditions are required: `next build` and any production
+ * server run with NODE_ENV=production and never read the flag. Remove this
+ * when the founder decides how staff sign in (CLAUDE.md §18).
+ */
+const devSignInBypass = (): boolean =>
+  process.env.NODE_ENV === 'development' && process.env.OPS_DEV_SIGN_IN === '1';
+
+export type OpsResult = { ok: true; signedIn?: true } | { ok: false; message: string };
 
 const EGYPTIAN_MOBILE = /^(?:\+20|0)1[0125]\d{8}$/;
 
@@ -36,6 +46,14 @@ export async function requestOpsCode(phone: string): Promise<OpsResult> {
   const trimmed = phone.trim();
   if (!EGYPTIAN_MOBILE.test(trimmed)) {
     return { ok: false, message: 'رقم موبايل مصري غير صحيح' };
+  }
+
+  if (devSignInBypass()) {
+    const operator = await findOperator(trimmed);
+    if (operator) {
+      await issueOpsSession(operator.staffId);
+      return { ok: true, signedIn: true };
+    }
   }
 
   /*

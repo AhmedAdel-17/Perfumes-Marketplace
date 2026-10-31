@@ -42,6 +42,10 @@ export function OpsSignIn() {
     try {
       if (step === 'phone') {
         const result = await requestOpsCode(phone);
+        if (result.ok && result.signedIn) {
+          router.push('/ops/queue');
+          return;                                  // development bypass; stay busy
+        }
         if (result.ok) setStep('code');
         else setError(result.message);
         setBusy(false);
