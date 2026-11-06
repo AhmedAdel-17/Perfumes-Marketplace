@@ -63,7 +63,7 @@ export function SellerSignIn() {
         // Deliberately leaves `busy` set: the navigation is the next thing that
         // happens, and re-enabling the button during it invites a second
         // submit against a code that has already been spent.
-        router.push('/seller/orders');
+        router.push('/seller/overview');
         return;
       }
       setError(result.message);

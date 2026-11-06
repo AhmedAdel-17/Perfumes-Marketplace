@@ -2076,3 +2076,28 @@ describe('DB-SAFE-01 — listing brand ownership at the API boundary', () => {
     })).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'العلامة التجارية غير متاحة' });
   });
 });
+
+describe('seller workspace profile', () => {
+  it('returns only the current house public metadata', async () => {
+    const profile = await caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']).sellerWorkspace.profile();
+    expect(profile).toMatchObject({ slug: 'dar-al-ward' });
+    expect(Object.keys(profile ?? {}).sort()).toEqual(['name', 'slug', 'status']);
+    const other = await caller({ role: 'seller', id: NOUR_STAFF }, ids['maison-nour']).sellerWorkspace.profile();
+    expect(other).toMatchObject({ slug: 'maison-nour' });
+  });
+  it('refuses anonymous callers', async () => {
+    await expect(caller({ role: 'anon', id: null }).sellerWorkspace.profile()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+});
+
+describe('seller catalogue workspace reads', () => {
+  it('returns actual SKU and owned verified thumbnails without other-house media', async () => {
+    const own = await caller({ role: 'seller', id: WARD_STAFF }, ids['dar-al-ward']).listings.mine();
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.every(row => row.sku !== 'SKU-maison-nour')).toBe(true);
+    const product = own.find(row => row.id === ids['dar-al-ward:product']);
+    expect(product).toMatchObject({ sku: 'SKU-dar-al-ward', priceRecorded: true, stockRecorded: true });
+    expect(product?.primaryPhoto).toMatchObject({ url: MEDIA.publicUrl(ids['dar-al-ward:mediaKey']!), width: 1000, height: 1250 });
+    expect(JSON.stringify(own)).not.toContain(ids['maison-nour:mediaKey']);
+  });
+});

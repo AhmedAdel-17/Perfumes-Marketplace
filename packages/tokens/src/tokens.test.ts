@@ -1,3 +1,4 @@
+import raw from './tokens.json' with { type: 'json' };
 import { describe, expect, it } from 'vitest';
 import { color, colorLight, fontSize, motion, MIN_READING_SIZE, TOUCH_TARGET, radius, opacity, noteTier, noteTierLight } from './index';
 import { cssVariable, themeBaseStyles, themeColors, themes, type ThemeRoles } from './theme';
@@ -295,5 +296,17 @@ describe('note-tier colours are TEXT, and were never checked as text', () => {
         }
       }
     }
+  });
+});
+
+describe('seller workspace palette', () => {
+  it('keeps reading text and primary actions above 4.5:1', () => {
+    const palette = raw.sellerWorkspaceColor;
+    for (const ground of [palette.ground, palette.raised]) {
+      for (const ink of [palette.ink, palette.secondary, palette.accent]) expect(contrast(ink, ground)).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrast(palette.raised, palette.accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(palette.sideink, palette.sidebar)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(palette.sidebar, palette.selected)).toBeGreaterThanOrEqual(4.5);
   });
 });

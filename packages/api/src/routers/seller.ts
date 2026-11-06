@@ -53,6 +53,7 @@ export const sellerRouter = router({
         merchandisePiastres: s.merchandise.minor,
         shippingPiastres: s.shipping.minor,
         placedAt: s.placedAt.toISOString(),
+        deliveredAt: s.deliveredAt?.toISOString() ?? null,
         confirmDueAt: s.confirmDueAt?.toISOString() ?? null,
         dispatchDueAt: s.dispatchDueAt?.toISOString() ?? null,
         recipient: {

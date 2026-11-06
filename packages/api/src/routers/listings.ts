@@ -34,18 +34,39 @@ export const listingsRouter = router({
 
   mine: sellerProcedure.query(async ({ ctx }) => {
     const sellerId = houseOrThrow(ctx);
-    const rows = await ctx.uow.transaction((r) => r.listings.listForSeller(sellerId));
-
-    return rows.map((listing) => ({
-      id: listing.id,
-      name: listing.name ?? '',
-      slug: listing.slug ?? '',
-      state: listing.state,
-      pricePiastres: listing.pricePiastres ?? 0,
-      stock: listing.stock ?? 0,
-      moderationReason: listing.moderationReason,
-      canMoveTo: nextListingStates(listing.state, 'seller'),
-    }));
+    // Owned listing ids come first, under the request's seller RLS context.
+    // The existing photo port reads one product at a time: 1 + N queries in
+    // ONE transaction, with no platform/global media read or extra grants.
+    return ctx.uow.transaction(async (r) => {
+      const rows = await r.listings.listForSeller(sellerId);
+      return Promise.all(rows.map(async (listing) => {
+        const photos = await r.photos.listForProduct(listing.id);
+        const primary = photos.find((photo) => photo.isPrimary
+          && photo.ownershipConfirmed && photo.alt.trim().length > 0
+          && photo.contentType !== null);
+        return {
+          id: listing.id,
+          name: listing.name ?? '',
+          slug: listing.slug ?? '',
+          sku: listing.sku ?? '',
+          state: listing.state,
+          // Keep the established numeric contract; distinguish unrecorded
+          // draft values so the UI never labels missing stock as sold out.
+          pricePiastres: listing.pricePiastres ?? 0,
+          priceRecorded: listing.pricePiastres !== null && listing.pricePiastres !== undefined,
+          stock: listing.stock ?? 0,
+          stockRecorded: listing.stock !== null && listing.stock !== undefined,
+          primaryPhoto: primary ? {
+            url: ctx.media.publicUrl(primary.storageKey),
+            alt: primary.alt,
+            width: primary.width,
+            height: primary.height,
+          } : null,
+          moderationReason: listing.moderationReason,
+          canMoveTo: nextListingStates(listing.state, 'seller'),
+        };
+      }));
+    });
   }),
 
   /**

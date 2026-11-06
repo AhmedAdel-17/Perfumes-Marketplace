@@ -110,3 +110,21 @@ Owner: Codex (implementation), founders (policy approvals). Branch
   consent enforcement and erasure design before replacement implementation.
 
 See `DATA_IMPLEMENTATION_HANDOFF.md` for safe local upgrade and exclusions.
+
+## Seller workspace boundaries — 6 November 2026
+
+Owner: Codex (implementation), founders (policy/security approval).
+The core seller workspace is integrated on local `codex/diyar-seller-workspace`.
+
+- Customer leaderboard is not implemented: existing RLS deliberately prevents sellers
+  from reading parent orders/customer identity. Design a narrow authorised aggregate
+  and obtain joint approval; no broad grants or recipient-identity inference.
+- Reserved stock, movement history and reasoned stock adjustments remain open under
+  existing inventory debt. UI shows recorded stock only.
+- Delivery-value metrics exclude all recorded returns conservatively and do not claim
+  revenue/cash reconciliation; partial-return financial reporting remains ledger work.
+- Seller UI still follows existing Arabic-only route policy; bilingual portal work is open.
+- Catalogue thumbnail listing currently uses existing 1+N repository reads; measure and
+  paginate/batch when actual seller catalogue sizes require it.
+
+See `SELLER_WORKSPACE_REVIEW.md` for definitions, preview gating and review scope.

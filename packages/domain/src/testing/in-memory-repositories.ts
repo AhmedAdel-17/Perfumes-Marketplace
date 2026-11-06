@@ -661,6 +661,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             merchandise: Money.fromMinor(so.merchandiseMinor),
             shipping: Money.fromMinor(so.shippingMinor),
             placedAt: so.placedAt,
+            deliveredAt: so.deliveredAt ?? null,
             confirmDueAt: so.confirmDueAt,
             dispatchDueAt: so.dispatchDueAt,
             ...so.delivery,

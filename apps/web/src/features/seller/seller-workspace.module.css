@@ -1,0 +1,36 @@
+/* Scoped theme adapter and responsive application shell. Only the seller
+   portal takes the approved ivory/forest palette; dark retains its ink roles. */
+.workspace { min-height: 100dvh; background: theme('colors.ground'); color: theme('colors.ink'); }
+:global(html:not([data-theme='dark'])) .workspace {
+ --c-ground:var(--seller-ground); --c-raised:var(--seller-raised); --c-raised2:var(--seller-ground);
+ --c-ink:var(--seller-ink); --c-ink2:var(--seller-secondary); --c-ink3:var(--seller-secondary);
+ --c-line:var(--seller-line); --c-accent:var(--seller-accent); --c-accent-surface:var(--seller-accent); --c-on-accent:var(--seller-raised);
+}
+.sidebar { padding:theme('spacing.5'); background:rgb(var(--seller-sidebar)); color:rgb(var(--seller-sideink)); }
+.brand { display:flex; align-items:center; gap:theme('spacing.3'); padding-bottom:theme('spacing.5'); font-family:var(--f-display); font-size:theme('fontSize.h2'); }
+.house { border-bottom:1px solid currentColor; padding-bottom:theme('spacing.4'); margin-bottom:theme('spacing.4'); font-size:theme('fontSize.body'); }
+.nav { display:flex; gap:theme('spacing.2'); overflow-x:auto; }
+.nav a { display:flex; align-items:center; gap:theme('spacing.3'); min-height:theme('spacing.touch'); min-width:fit-content; padding:theme('spacing.3'); font-size:theme('fontSize.body'); border:1px solid transparent; }
+.nav a:hover { border-color:currentColor; }
+.nav a[aria-current='page'] { background:rgb(var(--seller-selected)); color:rgb(var(--seller-sidebar)); font-weight:600; }
+.sidebarFoot { display:flex; flex-wrap:wrap; gap:theme('spacing.3'); margin-top:theme('spacing.5'); }
+.sidebarFoot a { display:flex; min-height:theme('spacing.touch'); align-items:center; padding:theme('spacing.3'); border:1px solid currentColor; font-size:theme('fontSize.small'); }
+.main { min-width:0; }
+.topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:theme('spacing.3'); padding:theme('spacing.3') theme('spacing.5'); border-bottom:1px solid theme('colors.line'); background:theme('colors.raised'); font-size:theme('fontSize.small'); }
+.content { padding:theme('spacing.5'); max-width:theme('maxWidth.contentMax'); margin-inline:auto; }
+.pagehead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:theme('spacing.4'); margin-bottom:theme('spacing.4'); }
+.pagehead h1 { font-family:var(--f-display); font-size:theme('fontSize.h2Lg'); line-height:theme('lineHeight.heading'); }
+.workspace input, .workspace select, .workspace button { font-size:theme('fontSize.body'); }
+.workspace summary { list-style:none; }
+.workspace summary::-webkit-details-marker { display:none; }
+.workspace details[open] { scroll-margin-top:theme('spacing.5'); }
+@media (min-width:1024px) {
+ .workspace { display:grid; grid-template-columns:calc(theme('spacing.8') * 4 + theme('spacing.5')) minmax(0,1fr); }
+ .sidebar { position:sticky; top:0; height:100dvh; display:flex; flex-direction:column; }
+ .nav { flex-direction:column; overflow-x:visible; }
+ .sidebarFoot { margin-top:auto; padding-top:theme('spacing.6'); }
+ .content { padding:theme('spacing.6'); }
+}
+@media print { .sidebar,.topbar { display:none; } .workspace { display:block; } }
+
+.sidebar a:focus-visible { outline-color:rgb(var(--seller-sideink)); outline-width:2px; outline-offset:2px; outline-style:solid; }

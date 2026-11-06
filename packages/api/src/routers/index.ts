@@ -16,6 +16,7 @@ import { reliefsRouter } from './reliefs';
 import { returnsRouter } from './returns';
 import { reviewsRouter } from './reviews';
 import { sellerRouter } from './seller';
+import { sellerWorkspaceRouter } from './seller-workspace';
 import { siteRouter } from './site';
 import { supportRouter } from './support';
 
@@ -37,6 +38,7 @@ export const appRouter = router({
   returns: returnsRouter,
   reviews: reviewsRouter,
   seller: sellerRouter,
+  sellerWorkspace: sellerWorkspaceRouter,
   site: siteRouter,
   support: supportRouter,
 });

@@ -275,6 +275,8 @@ export interface QueueEntry {
   readonly merchandise: Money;
   readonly shipping: Money;
   readonly placedAt: Date;
+  /** Actual delivery timestamp, when recorded. Never inferred from placement. */
+  readonly deliveredAt?: Date | null;
   /** When the confirmation SLA expires. The countdown the house is racing. */
   readonly confirmDueAt: Date | null;
   /**

@@ -258,6 +258,25 @@ export const repositoryContract: readonly ContractCase[] = [
   },
 
   {
+    name: 'listQueueForSeller() exposes the actual delivery timestamp without inferring one',
+    async run(setup) {
+      const w = await setup();
+      await w.uow.transaction((r) => r.orders.save(w.makeDraft('DY-C0011'), w.sellerIdBySlug));
+      const sellerId = w.sellerIdBySlug.get('dar-al-ward')!;
+      const before = await w.uow.transaction((r) => r.subOrders.listQueueForSeller(sellerId));
+      const sub = before[0]!;
+      equal(sub.deliveredAt ?? null, null, 'unfulfilled order has no delivery time');
+      for (const [to, actor] of [['awaiting_seller', 'system'], ['confirmed', 'seller'], ['dispatched', 'seller'], ['delivered', 'platform']] as const) {
+        const current = await w.uow.transaction((r) => r.subOrders.findById(sub.id));
+        const record = SubOrderLifecycle.transition(current!.state, { to, actor }, CLOCK);
+        await w.uow.transaction((r) => r.subOrders.applyTransition(sub.id, to, actor, null, record));
+      }
+      const after = await w.uow.transaction((r) => r.subOrders.listQueueForSeller(sellerId));
+      equal(after.find(row => row.id === sub.id)?.deliveredAt?.toISOString() ?? null,
+        CLOCK.now().toISOString(), 'queue carries the recorded delivery event time');
+    },
+  },
+  {
     name: 'listForSettlement() returns rows the domain can settle directly',
     async run(setup) {
       const w = await setup();

@@ -493,6 +493,7 @@ const subOrderRepository = (db: Executor): SubOrderRepository => ({
       merchandise: Money.fromMinor(r.merchandisePiastres),
       shipping: Money.fromMinor(r.shippingPiastres),
       placedAt: r.createdAt,
+      deliveredAt: r.deliveredAt,
       confirmDueAt: r.confirmDueAt,
       dispatchDueAt: r.dispatchDueAt,
       recipientName: r.recipientName,

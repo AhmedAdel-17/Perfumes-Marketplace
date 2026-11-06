@@ -63,3 +63,4 @@ export * from './theme';
 export type ColorName = keyof typeof raw.color;
 export type SpaceStep = keyof typeof raw.space;
 export type MotionSpeed = keyof typeof motion;
+export * from './seller-workspace';

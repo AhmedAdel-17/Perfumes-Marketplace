@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CURRENCY_LABEL, formatPrice, GOVERNORATE_AR, REASON_CODE_AR, stateCopy, internal as num,
 } from '@diyar/i18n';
@@ -13,111 +13,132 @@ type Queue = NonNullable<Awaited<ReturnType<typeof fetchQueue>>>;
 type Entry = Queue[number];
 
 /**
- * The order queue.
- *
- * This is the most time-critical surface in the product: every row is a
- * countdown against a confirmation SLA, and a house that misses it costs a
- * customer and a chargeback of goodwill. So the design does one thing above
- * all — it makes the deadline the loudest element on the row, above the money.
- *
- * The list arrives sorted by deadline, not by arrival. Sorted by arrival, the
- * order about to breach hides behind five that are not.
+ * Master-detail work queue: summaries and filters support scanning; native
+ * a selected detail pane retains fulfilment actions without a wall of addresses.
+ * Counts describe the loaded queue, never revenue or inferred business states.
  */
 export function OrderQueue() {
   const [queue, setQueue] = useState<Queue | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const load = async () => setQueue(await fetchQueue());
-  useEffect(() => { void load(); }, []);
-
-  const act = async (id: string, run: () => Promise<{ ok: boolean; message?: string }>) => {
-    setBusyId(id);
-    setError(null);
-    const result = await run();
-    if (!result.ok) setError(result.message ?? 'تعذّر تنفيذ الإجراء.');
-    await load();
-    setBusyId(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const detailRef = useRef<HTMLElement>(null);
+  const acting = useRef(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const next = await fetchQueue();
+      setExpired(next === null);
+      setQueue(next);
+    } catch {
+      setLoadError('تعذّر تحميل الطلبات. تحقّق من الاتصال وحاول مرة أخرى.');
+    } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const openHash = () => {
+      const hash = window.location.hash;
+      const entry = queue?.find(item => hash === `#order-${item.id}`);
+      if (entry) { setSelectedId(entry.id); setQuery(''); setFilter('all'); }
+    };
+    openHash();
+    window.addEventListener('hashchange', openHash);
+    return () => window.removeEventListener('hashchange', openHash);
+  }, [queue]);
+  useEffect(() => {
+    if (selectedId) detailRef.current?.focus();
+  }, [selectedId]);
+  const openOrder = (id: string) => {
+    setSelectedId(id);
+    window.history.replaceState(null, '', `#order-${id}`);
+  };
+  const closeOrder = () => {
+    const previous = selectedId;
+    setSelectedId(null);
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    if (previous) document.getElementById(`open-order-${previous}`)?.focus();
   };
 
-  if (queue === null) {
-    return <p className="px-5 py-8 text-body text-ink3 lg:px-0">…جارٍ التحميل</p>;
-  }
+  const act = async (id: string, run: () => Promise<{ ok: boolean; message?: string }>) => {
+    if (acting.current) return;
+    acting.current = true;
+    setBusyId(id);
+    setError(null);
+    try {
+      const result = await run();
+      if (!result.ok) setError(result.message ?? 'تعذّر تنفيذ الإجراء.');
+      await load();
+    } catch {
+      setError('تعذّر التأكد من نتيجة الإجراء. حدّث الطلبات قبل المحاولة مرة أخرى.');
+    } finally { acting.current = false; setBusyId(null); }
+  };
 
-  // Three groups, in the order a house works through them: decide, then pack
-  // and ship, then everything that has left. A single list sorted by date makes
-  // the house re-read every row to find the two it can act on.
-  const toDecide = queue.filter((e) => e.state === 'placed' || e.state === 'awaiting_seller');
-  const toShip = queue.filter((e) => e.state === 'confirmed');
-  const rest = queue.filter((e) => !toDecide.includes(e) && !toShip.includes(e));
+  if (expired) return <p role="alert" className="border border-line bg-raised p-6 text-body">انتهت الجلسة. <a className="link-line" href="/seller">سجّل الدخول مرة أخرى</a></p>;
+  if (queue === null) return <div role="status" className="border border-line bg-raised p-6 text-body">{loadError ?? 'جارٍ تحميل الطلبات…'}{loadError && <button type="button" onClick={() => void load()} disabled={loading} className="mt-4 block min-h-touch border border-line px-4">إعادة المحاولة</button>}</div>;
 
-  return (
-    <div className="px-5 lg:px-0">
-      {error && (
-        <p role="alert" className="mb-6 border border-danger bg-raised p-4 text-body text-ink">
-          {error}
-        </p>
-      )}
+  const deciding = (e: Entry) => e.state === 'placed' || e.state === 'awaiting_seller';
+  const filters = [
+    { key: 'all', label: 'كل الطلبات', count: queue.length },
+    { key: 'decide', label: 'بانتظار التأكيد', count: queue.filter(deciding).length },
+    { key: 'ship', label: 'جاهزة للشحن', count: queue.filter(e => e.state === 'confirmed').length },
+    { key: 'dispatched', label: 'قيد التوصيل', count: queue.filter(e => e.state === 'dispatched').length },
+    { key: 'delivered', label: 'تم التوصيل', count: queue.filter(e => e.state === 'delivered').length },
+    ...Array.from(new Set(queue.map(e => e.state))).filter(state => !['placed', 'awaiting_seller', 'confirmed', 'dispatched', 'delivered'].includes(state)).map(state => ({ key: state, label: stateCopy(state).label, count: queue.filter(e => e.state === state).length })),
+  ];
+  const text = query.trim().toLocaleLowerCase('ar');
+  const visible = queue.filter(e => (filter === 'all' || (filter === 'decide' ? deciding(e) : filter === 'ship' ? e.state === 'confirmed' : e.state === filter)) && (!text || [e.reference, e.recipient.name, e.trackingNumber ?? '', ...e.items.map(item => item.name)].some(value => value.toLocaleLowerCase('ar').includes(text))));
+  const selected = queue.find(entry => entry.id === selectedId);
+  const date = (value: string) => new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' }).format(new Date(value));
 
-      <Section title="بانتظار الرد" entries={toDecide} busyId={busyId} act={act} stage="decide" />
-      <Section title="جاهزة للشحن" entries={toShip} busyId={busyId} act={act} stage="ship" />
-      {rest.length > 0 && (
-        <Section title="بقية الطلبات" entries={rest} busyId={busyId} act={act} stage="done" />
-      )}
-
-      {queue.length === 0 && (
-        <p className="border border-line bg-raised px-6 py-9 text-center text-body leading-relaxed text-ink2">
-          لا توجد طلبات بعد.
-        </p>
-      )}
+  return <div aria-busy={loading || busyId !== null}>
+    <nav aria-label="تصفية الطلبات حسب الحالة" className="mb-5 flex flex-wrap gap-2 border-b border-line pb-4">
+      {filters.map(item => <button key={item.key} type="button" aria-pressed={filter === item.key} onClick={() => setFilter(item.key)} className={`min-h-touch border px-4 py-2 text-small ${filter === item.key ? 'border-accent bg-raised text-accent' : 'border-line bg-ground text-ink2'}`}>{item.label}<span className="tnum ms-2">{num(item.count)}</span></button>)}
+    </nav>
+    <div className="mb-5 flex flex-wrap items-end gap-3 border border-line bg-raised p-4">
+      <label className="w-full min-w-0 flex-1 text-small text-ink2" htmlFor="seller-order-search">البحث في الطلبات<input id="seller-order-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="رقم الطلب، اسم العميل أو المنتج" className="mt-2 block min-h-touch w-full border border-line bg-ground px-3 text-body text-ink" /></label>
+      <label className="text-small text-ink2" htmlFor="seller-order-filter">حالة الطلب<select id="seller-order-filter" value={filter} onChange={e => setFilter(e.target.value)} className="mt-2 block min-h-touch border border-line bg-ground px-3 text-body text-ink">{filters.map(item => <option key={item.key} value={item.key}>{item.label} ({num(item.count)})</option>)}</select></label>
+      <button type="button" disabled={loading || busyId !== null} onClick={() => void load()} className="min-h-touch border border-line px-4 text-body disabled:opacity-disabled">{loading ? 'جارٍ التحديث…' : 'تحديث الطلبات'}</button>
     </div>
-  );
+    <p role="status" className="mb-4 text-small text-ink2">النتائج: <span className="tnum">{num(visible.length)}</span> · الأعداد تخص الطلبات المحمّلة.</p>
+    {(error || loadError) && <div role="alert" className="mb-6 border border-danger bg-raised p-4 text-body text-ink">{error ?? loadError}{loadError && <button type="button" disabled={loading} onClick={() => void load()} className="ms-3 min-h-touch underline">إعادة المحاولة</button>}</div>}
+    <div className={`grid items-start gap-5 ${selected ? 'xl:grid-cols-3' : ''}`}>
+      <div className={`min-w-0 border border-line bg-raised ${selected ? 'xl:col-span-2' : ''}`}>
+        <table className="w-full text-start text-small">
+          <caption className="border-b border-line px-4 py-3 text-start text-body text-ink">سجل الطلبات <span className="text-small text-ink2">· اختر طلبًا لمراجعة التفاصيل والإجراءات</span></caption>
+          <thead className="hidden border-b border-line bg-sunken text-ink2 lg:table-header-group"><tr>{['الطلب والعميل', 'التاريخ', 'العبوات', 'الإجمالي', 'الحالة', 'الإجراء'].map(label => <th key={label} scope="col" className="px-3 py-3 text-start font-medium">{label}</th>)}</tr></thead>
+          <tbody className="divide-y divide-line">{visible.map(entry => <tr key={entry.id} id={`order-${entry.id}`} className={`grid grid-cols-2 gap-3 p-4 lg:table-row lg:p-0 ${selectedId === entry.id ? 'bg-sunken' : ''}`}>
+            <td className="col-span-2 min-w-0 lg:px-3 lg:py-4"><span dir="ltr" className="latin block break-all text-small text-ink">{entry.reference}</span><span className="mt-1 block break-words text-small text-ink2">{entry.recipient.name}</span></td>
+            <td className="text-ink2 lg:px-3 lg:py-4"><span className="me-2 lg:hidden">التاريخ</span><span className="tnum">{date(entry.placedAt)}</span></td>
+            <td className="text-ink2 lg:px-3 lg:py-4"><span className="me-2 lg:hidden">العبوات</span><span className="tnum">{num(entry.items.reduce((total, item) => total + item.quantity, 0))}</span></td>
+            <td className="text-ink lg:px-3 lg:py-4"><span className="me-2 lg:hidden">الإجمالي</span><span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span> <span className="latin text-caption">{CURRENCY_LABEL}</span></td>
+            <td className="lg:px-3 lg:py-4"><span className={statusPill('quiet')}>{stateCopy(entry.state).label}</span></td>
+            <td className="col-span-2 lg:px-3 lg:py-4"><button id={`open-order-${entry.id}`} type="button" aria-expanded={selectedId === entry.id} aria-controls="seller-order-detail" onClick={() => openOrder(entry.id)} className="min-h-touch border border-line px-3 text-small text-accent">{deciding(entry) ? 'مراجعة وتأكيد' : entry.state === 'confirmed' ? 'تجهيز وشحن' : 'التفاصيل'}</button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      {selected && <aside id="seller-order-detail" ref={detailRef} tabIndex={-1} aria-labelledby="seller-order-detail-heading" className="min-w-0 border border-line bg-raised focus:outline-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4"><h2 id="seller-order-detail-heading" className="font-display text-h3">تفاصيل الطلب</h2><button type="button" onClick={closeOrder} className="min-h-touch border border-line px-3 text-small text-ink2">إغلاق التفاصيل</button></div>
+        <Row key={selected.id} entry={selected} busy={busyId === selected.id} locked={busyId !== null} act={act} stage={deciding(selected) ? 'decide' : selected.state === 'confirmed' ? 'ship' : 'done'} />
+      </aside>}
+    </div>
+    {visible.length === 0 && <div className="border border-line bg-raised px-6 py-9 text-center text-body text-ink2"><p>{queue.length === 0 ? 'ستظهر طلبات دارك هنا عند وصول أول طلب.' : 'لا توجد طلبات تطابق البحث أو الفلتر.'}</p>{queue.length > 0 && <button type="button" onClick={() => { setQuery(''); setFilter('all'); }} className="mt-3 min-h-touch border border-line px-4">مسح البحث والفلاتر</button>}</div>}
+  </div>;
 }
 
 type Stage = 'decide' | 'ship' | 'done';
 
-function Section({
-  title, entries, busyId, act, stage,
-}: {
-  title: string;
-  entries: readonly Entry[];
-  busyId: string | null;
-  act(id: string, run: () => Promise<{ ok: boolean; message?: string }>): Promise<void>;
-  stage: Stage;
-}) {
-  if (entries.length === 0) return null;
-  return (
-    <section className="mb-9">
-      {/* The group's head in the register: its name and how many are in it,
-          over a full-strength rule. */}
-      <h2 className="mb-4 flex items-baseline gap-3 border-b border-ink pb-2 font-display text-h3 lg:text-h2">
-        {title}
-        <span className="latin tnum text-body text-ink3">{num(entries.length)}</span>
-      </h2>
-      {/*
-        Two columns of cards from `lg`, not one card stretched to 1240px.
-
-        A queue is read top to bottom and acted on one item at a time, so the
-        card has an ideal MEASURE — wide enough for an address, narrow enough
-        that the countdown and the confirm button stay in one glance. Widening
-        the console without this simply moved the button 600px from the order
-        number it belongs to. Two columns keep the measure and halve the
-        scrolling, which is the actual thing an operator gains from a monitor.
-      */}
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-5">
-        {entries.map((entry) => (
-          <Row key={entry.id} entry={entry} busy={busyId === entry.id} act={act} stage={stage} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function Row({
-  entry, busy, act, stage,
+  entry, busy, locked, act, stage,
 }: {
   entry: Entry;
   busy: boolean;
+  locked: boolean;
   act(id: string, run: () => Promise<{ ok: boolean; message?: string }>): Promise<void>;
   stage: Stage;
 }) {
@@ -127,7 +148,7 @@ function Row({
   const r = entry.recipient;
 
   return (
-    <article className="mb-4 border border-ink bg-raised">
+    <section>
       {/*
         The card is read in the order the work happens: how long is left, what
         to put in the box, where it goes. The reference is the least urgent
@@ -241,7 +262,7 @@ function Row({
               autoComplete="off"
               className="latin h-control min-w-0 flex-1 border border-line bg-sunken px-4 text-bodyLg text-ink transition-colors duration-base ease-out focus:border-ink focus:outline-none"
             />
-            <PrimaryButton type="button" disabled={busy || tracking.trim().length < 4} onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))} fill="auto">
+            <PrimaryButton type="button" disabled={locked || tracking.trim().length < 4} onClick={() => act(entry.id, () => dispatchSubOrder(entry.id, tracking))} fill="auto">
       {busy ? '…' : 'تم الشحن'}
     </PrimaryButton>
           </div>
@@ -253,12 +274,12 @@ function Row({
 
       {stage === 'decide' && !declining && (
         <div className="mt-4 flex gap-3">
-          <PrimaryButton type="button" disabled={busy} onClick={() => act(entry.id, () => confirmSubOrder(entry.id))} fill="flex">
+          <PrimaryButton type="button" disabled={locked} onClick={() => act(entry.id, () => confirmSubOrder(entry.id))} fill="flex">
       {busy ? '…' : 'تأكيد'}
     </PrimaryButton>
           <button
             type="button"
-            disabled={busy}
+            disabled={locked}
             onClick={() => setDeclining(true)}
             className="flex h-control min-w-[120px] items-center justify-center border border-ink px-6 text-bodyLg text-ink transition-colors duration-base ease-out hover:border-danger hover:text-danger"
           >
@@ -267,9 +288,9 @@ function Row({
         </div>
       )}
 
-      {stage === 'decide' && declining && <DeclineReasons entry={entry} busy={busy} act={act} onCancel={() => setDeclining(false)} />}
+      {stage === 'decide' && declining && <DeclineReasons entry={entry} busy={locked} act={act} onCancel={() => setDeclining(false)} />}
       </div>
-    </article>
+    </section>
   );
 }
 
@@ -372,6 +393,7 @@ function Countdown({ confirmDueAt, dispatchDueAt, state }: {
   if (!dueAt) return null;
 
   const remaining = new Date(dueAt).getTime() - now;
+  if (!Number.isFinite(remaining)) return <span className="text-small text-ink2">موعد الإجراء غير متاح</span>;
   const overdue = remaining <= 0;
   const hours = Math.floor(Math.abs(remaining) / 3_600_000);
   const minutes = Math.floor((Math.abs(remaining) % 3_600_000) / 60_000);

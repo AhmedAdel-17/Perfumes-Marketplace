@@ -1,0 +1,7 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { SellerWorkspace } from '@/features/seller/SellerWorkspace';
+import { signOutSellerEverywhere } from '@/features/seller/actions';
+export const metadata:Metadata={title:'الحساب والمساعدة | ديار',robots:{index:false,follow:false}};
+export const dynamic='force-dynamic';
+export default function SellerSettingsPage(){return <SellerWorkspace current="settings" title="الحساب والمساعدة" description="إدارة الوصول إلى دارك والتواصل مع فريق المنصّة."><div className="grid gap-5 lg:grid-cols-2"><section className="border border-line bg-raised p-6"><h2 className="font-display text-h3">أمان الحساب</h2><p className="mt-3 text-body leading-relaxed text-ink2">إذا استخدمت جهازًا مشتركًا، يمكنك إنهاء جميع جلسات هذا الحساب. سيُطلب رمز دخول جديد على الأجهزة الأخرى.</p><form action={signOutSellerEverywhere}><button type="submit" className="mt-5 min-h-touch border border-danger px-5 text-body text-danger">تسجيل الخروج من جميع الأجهزة</button></form></section><section className="border border-line bg-raised p-6"><h2 className="font-display text-h3">تحتاج مساعدة؟</h2><p className="mt-3 text-body leading-relaxed text-ink2">لتحديث بيانات الدار أو صلاحيات فريقك، تواصل مع فريق المنصّة. أرفق رقم الطلب أو الكشف إذا كان طلبك متعلقًا به.</p><Link href="/support" className="mt-5 inline-flex min-h-touch items-center border border-line px-5 text-body">فتح صفحة الدعم</Link></section></div></SellerWorkspace>;}

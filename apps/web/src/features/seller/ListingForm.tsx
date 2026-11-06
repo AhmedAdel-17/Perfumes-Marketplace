@@ -21,19 +21,20 @@
  * matched words quoted. Being told after submission that a sentence was
  * refused teaches nothing about which sentence.
  */
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { statusPill } from '@/features/shell/status-pill';
 import {
   CONCENTRATIONS, DAY_NIGHT, GENDER_POSITIONINGS, LONGEVITY_BANDS, OCCASIONS,
   PERFORMANCE_SOURCES, PRODUCT_FORMS, PROJECTION_BANDS, RETURN_ELIGIBILITIES,
   SCENT_FAMILIES, SEASONS,
   type ClaimFinding, type ListingDraft, type ListingGap, type ListingState,
-  isListingEditableBySeller,
+  isListingEditableBySeller, nextListingStates,
 } from '@diyar/domain';
 import { CURRENCY_LABEL, LISTING_STATE_AR, westernDigits } from '@diyar/i18n';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
 import {
-  archiveListing, saveListing, submitListing, withdrawListing,
+  archiveListing, saveListing, submitListing, withdrawListing, type ListingResult,
 } from './listing-actions';
 
 /* ------------------------------------------------------------------ labels */
@@ -285,9 +286,9 @@ function Count({ id, label, value, onChange, hint }: {
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-9 border-t border-line pt-6">
-      <h2 className="mb-5 font-display text-h4 text-ink">{title}</h2>
-      {children}
+    <section className="mb-5 border border-line bg-ground p-5 lg:p-6">
+      <h2 className="mb-5 border-b border-line pb-4 font-display text-h4 text-ink">{title}</h2>
+      <div className="grid gap-x-6 md:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -314,6 +315,7 @@ export interface ListingFormInput extends ListingDraft {
 }
 
 export function ListingForm({ listing }: { listing: ListingFormInput }) {
+  const router = useRouter();
   const [draft, setDraft] = useState<Draft>({ ...listing });
   const [state, setState] = useState<ListingState>(listing.state);
   const [gaps, setGaps] = useState<readonly ListingGap[]>(listing.gaps);
@@ -321,6 +323,14 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   const [message, setMessage] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Photo changes refresh the server payload without remounting this editor.
+  // Refresh publish eligibility, but preserve the seller's unsaved field edits.
+  useEffect(() => {
+    setGaps(listing.gaps);
+    setClaims(listing.claims);
+    setState(listing.state);
+  }, [listing.gaps, listing.claims, listing.state]);
 
   const set = (field: string, value: unknown) => {
     setDraft((d) => ({ ...d, [field]: value }));
@@ -342,29 +352,40 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   };
 
   const save = () => startTransition(async () => {
-    const result = await saveListing(listing.id, payload());
-    setMessage(result.ok ? null : result.message ?? 'تعذّر الحفظ.');
-    setGaps(result.gaps ?? []);
-    setClaims(result.claims ?? []);
-    setSaved(result.ok);
+    setMessage(null);
+    try {
+      const result = await saveListing(listing.id, payload());
+      setMessage(result.ok ? null : result.message ?? 'تعذّر الحفظ.');
+      setGaps(result.gaps ?? []);
+      setClaims(result.claims ?? []);
+      setSaved(result.ok);
+    } catch {
+      setMessage('تعذّر الاتصال. بياناتك ما زالت هنا؛ تحقّق من اتصالك ثم حاول الحفظ مجددًا.');
+      setSaved(false);
+    }
   });
 
   const move = (to: ListingState) => startTransition(async () => {
-    // Save first: the server decides on what is STORED, and submitting unsaved
-    // work would judge the previous version while showing this one.
-    const write = await saveListing(listing.id, payload());
-    if (!write.ok) { setMessage(write.message ?? 'تعذّر الحفظ.'); return; }
-
-    const result = to === 'pending_moderation'
-      ? await submitListing(listing.id)
-      : to === 'draft'
-        ? await withdrawListing(listing.id)
-        : await archiveListing(listing.id);
-
-    setGaps(result.gaps ?? write.gaps ?? []);
-    setClaims(result.claims ?? write.claims ?? []);
-    setMessage(result.ok ? null : result.message ?? 'تعذّر التنفيذ.');
-    if (result.ok) { setState(to); setSaved(true); }
+    setMessage(null);
+    try {
+      // Save editable work before submitting. Locked pending/archived listings
+      // must transition directly: saving them is deliberately forbidden by the API.
+      const write: ListingResult = isListingEditableBySeller(state)
+        ? await saveListing(listing.id, payload()) : { ok: true };
+      if (!write.ok) { setMessage(write.message ?? 'تعذّر الحفظ.'); return; }
+      const result = to === 'pending_moderation'
+        ? await submitListing(listing.id)
+        : to === 'draft'
+          ? await withdrawListing(listing.id)
+          : await archiveListing(listing.id);
+      setGaps(result.gaps ?? write.gaps ?? gaps);
+      setClaims(result.claims ?? write.claims ?? claims);
+      setMessage(result.ok ? null : result.message ?? 'تعذّر التنفيذ.');
+      if (result.ok) { setState(to); setSaved(true); router.refresh(); }
+    } catch {
+      setMessage('تعذّر الاتصال. أعد تحميل حالة المنتج قبل تكرار تغيير الحالة.');
+      setSaved(false);
+    }
   });
 
   const refused = claims.some((c) => c.severity === 'refused');
@@ -372,9 +393,9 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
   const readOnly = !isListingEditableBySeller(state);
 
   return (
-    <div className="px-5 lg:px-0">
+    <div aria-busy={pending}>
       <div className="mb-7 flex flex-wrap items-center gap-3 border-b border-line pb-5">
-        <span className={statusPill('accent')}>
+        <span className={statusPill(state === 'suspended' ? 'danger' : state === 'published' ? 'accent' : 'quiet')}>
           {STATE_LABELS[state]}
         </span>
         {listing.slug && <span className="latin text-caption text-ink3">/p/{listing.slug}</span>}
@@ -390,6 +411,12 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
         )}
       </div>
 
+      {!readOnly && (
+        <p className="mb-6 text-small leading-relaxed text-ink2">
+          أكمل بيانات المنتج ثم احفظها قبل إرسالها للمراجعة. النشر والموافقة من اختصاص فريق المنصة.
+        </p>
+      )}
+
       {readOnly && (
         <p className="mb-7 border-s-2 border-accent ps-4 text-small leading-relaxed text-ink2">
           {state === 'pending_moderation'
@@ -399,7 +426,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       )}
 
       <fieldset disabled={readOnly || pending} className="disabled:opacity-disabled">
-        <Group title="التعريف">
+        <Group title="١ · هوية المنتج">
           <Row label={FIELD_LABELS.name!} htmlFor="f-name">
             <input
               id="f-name" value={String(draft.name ?? '')} maxLength={160}
@@ -430,7 +457,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
           </Row>
         </Group>
 
-        <Group title="البيع">
+        <Group title="٢ · السعر والمخزون والتجهيز">
           <Money id="f-price" label={FIELD_LABELS.pricePiastres!}
             piastres={draft.pricePiastres as number | null}
             onChange={(v) => set('pricePiastres', v)} />
@@ -440,7 +467,8 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             onChange={(v) => set('promoPricePiastres', v)} />
           <Count id="f-volume" label={`${FIELD_LABELS.volumeMl!} (مل)`}
             value={draft.volumeMl as number | null} onChange={(v) => set('volumeMl', v)} />
-          <Count id="f-stock" label={FIELD_LABELS.stock!}
+          <Count id="f-stock" label="المخزون المسجّل"
+            hint="الكمية المسجّلة للمنتج. لا يعرض هذا الحقل حجوزات المخزون أو سجل حركاته."
             value={draft.stock as number | null} onChange={(v) => set('stock', v)} />
           <Count id="f-hours" label={`${FIELD_LABELS.fulfilmentHours!} (ساعة)`}
             value={draft.fulfilmentHours as number | null}
@@ -448,7 +476,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             onChange={(v) => set('fulfilmentHours', v)} />
         </Group>
 
-        <Group title="العطر">
+        <Group title="٣ · تركيبة العطر والنفحات">
           <Choice id="f-conc" label={FIELD_LABELS.concentration!}
             value={draft.concentration as never} options={CONCENTRATIONS}
             labels={CONCENTRATION_LABELS} onChange={(v) => set('concentration', v)} />
@@ -469,7 +497,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             value={draft.notesBase as string[]} onChange={(v) => set('notesBase', v)} />
         </Group>
 
-        <Group title="الاستعمال">
+        <Group title="٤ · الاستعمال والأداء">
           <Toggles label={FIELD_LABELS.seasons!} values={draft.seasons as never}
             options={SEASONS} labels={SEASON_LABELS} onChange={(v) => set('seasons', v)} />
           <Toggles label={FIELD_LABELS.occasions!} values={draft.occasions as never}
@@ -489,7 +517,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             hint="من أين جاءت أرقام الثبات والانتشار — مطلوب، ولا يُنشر تقدير دون مصدر" />
         </Group>
 
-        <Group title="الالتزامات">
+        <Group title="٥ · المسؤولية وسياسة المنتج">
           <Row label={FIELD_LABELS.responsiblePartyName!} htmlFor="f-responsible"
             hint="الاسم الذي يتحمّل مسؤولية المنتج أمام العميل">
             <input
@@ -550,14 +578,14 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
       {/* ----------------------------------------------------------- actions */}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
+      <div className="flex flex-wrap items-center gap-3 border border-line bg-ground p-5">
         {!readOnly && (
           <PrimaryButton type="button" fill="auto" disabled={pending} onClick={save}>
-            {pending ? '…' : saved ? 'تم الحفظ' : 'حفظ'}
+            {pending ? 'جارٍ التنفيذ…' : saved ? 'تم الحفظ' : 'حفظ التعديلات'}
           </PrimaryButton>
         )}
 
-        {listing.canMoveTo
+        {nextListingStates(state, 'seller')
           .filter((to): to is keyof typeof MOVE_LABELS => to in MOVE_LABELS)
           .map((to) => (
             <button
@@ -567,7 +595,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
               onClick={() => move(to)}
               className="tappable flex min-h-touch items-center border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
             >
-              {MOVE_LABELS[to]}
+              {to === 'draft' && state === 'archived' ? 'إعادة إلى المسودة' : MOVE_LABELS[to]}
             </button>
           ))}
       </div>

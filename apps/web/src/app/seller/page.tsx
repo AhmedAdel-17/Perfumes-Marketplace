@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function SellerSignInPage() {
   // Already signed in — a sign-in form shown to someone who is signed in is a
   // dead end they have to guess their way out of.
-  if (await readSellerSession()) redirect('/seller/orders');
+  if (await readSellerSession()) redirect('/seller/overview');
 
   return (
     <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[560px] lg:px-8">

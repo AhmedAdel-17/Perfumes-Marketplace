@@ -1,3 +1,4 @@
+import { SellerWorkspace } from '@/features/seller/SellerWorkspace';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { isListingEditableBySeller } from '@diyar/domain';
@@ -40,20 +41,7 @@ export default async function SellerListingPage(
     DESIGN_DOCTRINE §4b.
   */
   return (
-    <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-contentMax lg:px-8">
-      <header className="mx-5 mb-6 border-b border-ink pb-3 pt-7 lg:mx-0 lg:mb-8 lg:pt-9">
-        <a
-          href="/seller/listings"
-          className="tappable mb-3 flex min-h-touch items-center text-body text-ink2 transition-colors duration-base ease-out hover:text-accent"
-        >
-          {/* Back points to the reading START — right, in Arabic. The glyph
-              does not mirror itself, so the arrow is chosen for the direction. */}
-          <span className="link-line">→ كل المنتجات</span>
-        </a>
-        <h1 className="font-display text-h2 leading-heading lg:text-h1">
-          {listing.name || 'منتج جديد'}
-        </h1>
-      </header>
+    <SellerWorkspace current="listings" title={listing.name || 'منتج جديد'} description="بيانات المنتج وصوره وقواعد النشر.">
       <PhotoManager
         productId={listing.id}
         photos={photos.map((photo) => ({ ...photo }))}
@@ -67,6 +55,6 @@ export default async function SellerListingPage(
           claims: [...listing.claims],
         }}
       />
-    </main>
+    </SellerWorkspace>
   );
 }
