@@ -1,6 +1,11 @@
+import { localePath } from '@diyar/i18n';
+import { sellerText } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 import type { Metadata } from 'next';
 import { SellerWorkspace } from '@/features/seller/SellerWorkspace';
 import { ReturnQueue } from '@/features/seller/ReturnQueue';
-export const metadata:Metadata={title:'الإرجاع | ديار',robots:{index:false,follow:false}};
+export async function generateMetadata():Promise<Metadata>{const locale=await getLocale();return {title:sellerText(locale,"Returns")+' | DIYAR',robots:{index:false,follow:false}};}
 export const dynamic='force-dynamic';
-export default function SellerReturnsPage(){return <SellerWorkspace current="returns" title="الإرجاع" description="راجع الأسباب، اتخذ القرار وتابع وصول المرتجعات. تسجيل رد الأموال من صلاحيات المنصّة."><ReturnQueue/></SellerWorkspace>;}
+export default async function SellerReturnsPage(){
+  const locale = await getLocale(); const t = (value: string) => sellerText(locale,value);
+return <SellerWorkspace current="returns" title={t("Returns")} description={t("Review reasons, make decisions and track returns. The platform records refunds.")}><ReturnQueue/></SellerWorkspace>;}

@@ -1,3 +1,5 @@
+import { getLocale } from '@/core/locale';
+import { localeHref } from '@/core/href';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { identity } from '@/core/identity';
@@ -20,5 +22,5 @@ export async function GET() {
   const principal = await identity.sellerByContactPhone('01001112222');
   if (!principal) notFound();
   await issueSellerSession(principal);
-  redirect('/seller/overview');
+  redirect(localeHref(await getLocale(),'/seller/overview'));
 }

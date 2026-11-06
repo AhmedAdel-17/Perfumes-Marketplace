@@ -19,3 +19,5 @@ export * from './media';
 export * from './locale';
 export * from './messages';
 export * from './copy';
+
+export * from './seller-workspace';

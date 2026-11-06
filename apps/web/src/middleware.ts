@@ -90,8 +90,7 @@ export function middleware(request: NextRequest) {
  * missed link costs one redirect rather than a page in the wrong language.
  * `?lang=` is the explicit switch: it sets the cookie and lands on the clean URL.
  *
- * The seller portal and ops console are not translated yet, so they stay Arabic
- * whatever the cookie says; `/en/seller` goes to `/seller`.
+ * The ops console remains Arabic. The seller workspace supports both languages.
  */
 type LanguageRoute =
   | { kind: 'redirect'; to: URL; remember?: Locale }
@@ -131,7 +130,7 @@ function routeLanguage(request: NextRequest): LanguageRoute {
   return { kind: 'serve', locale: 'en', path, rewrite };
 }
 
-const UNTRANSLATED = ['/seller', '/ops', '/api'];
+const UNTRANSLATED = ['/ops', '/api'];
 
 function rememberLocale(response: NextResponse, locale: Locale) {
   response.cookies.set(LOCALE_COOKIE, locale, {

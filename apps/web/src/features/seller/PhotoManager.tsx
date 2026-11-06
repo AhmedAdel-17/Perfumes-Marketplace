@@ -1,4 +1,6 @@
 'use client';
+import { useSellerCopy } from '@/features/seller/use-seller-copy';
+
 
 /**
  * A house's photographs for one listing — WORK_PLAN 5.7.4.
@@ -61,22 +63,22 @@ export function PhotoManager({ productId, photos, readOnly }: {
   /** An archived listing's photographs are shown, not edited. */
   readOnly: boolean;
 }) {
+  const { t } = useSellerCopy();
+
   const hasRoom = photos.length < MAX_PHOTOS;
 
   return (
     <section aria-labelledby="photos-heading" className="mb-9 px-5 lg:px-0">
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3 border-b border-ink pb-2">
-        <h2 id="photos-heading" className="font-display text-h3 lg:text-h2">الصور</h2>
+        <h2 id="photos-heading" className="font-display text-h3 lg:text-h2">{t("Photos")}</h2>
         <p className="text-small text-ink3">
-          <span className="tnum">{num(photos.length)}</span> من <span className="tnum">{num(MAX_PHOTOS)}</span>
-          {' · '}الأولى في الترتيب ليست بالضرورة الرئيسية
-        </p>
+          <span className="tnum">{num(photos.length)}</span> {t(" of ")}<span className="tnum">{num(MAX_PHOTOS)}</span>
+          {' · '}{t("The first photo is not necessarily the primary one. ")}</p>
       </div>
 
       {photos.length === 0 ? (
         <p className="mb-6 border-s-2 border-line ps-4 text-small leading-relaxed text-ink2">
-          لا توجد صور بعد. المنتج لا يُنشر بدون صورة رئيسية — أول صورة تضيفها تصبح الرئيسية.
-        </p>
+          {t(" No photos yet. A primary photo is required to publish; the first upload becomes the primary one. ")}</p>
       ) : (
         <ol className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {photos.map((photo, index) => (
@@ -96,8 +98,7 @@ export function PhotoManager({ productId, photos, readOnly }: {
         ? <AddPhoto productId={productId} />
         : (
           <p className="text-small text-ink2">
-            وصل المنتج إلى الحد الأقصى من الصور. احذف صورة قبل إضافة أخرى.
-          </p>
+            {t(" The photo limit has been reached. Remove a photo before adding another. ")}</p>
         ))}
     </section>
   );
@@ -110,6 +111,8 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
   index: number;
   readOnly: boolean;
 }) {
+  const { t, errorText } = useSellerCopy();
+
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +123,7 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
     setError(null);
     start(async () => {
       const result = await work();
-      if (!result.ok) setError(result.message ?? 'تعذّر تنفيذ الإجراء.');
+      if (!result.ok) setError(result.message ?? t("Could not complete the action."));
       else router.refresh();
     });
   };
@@ -152,13 +155,11 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
           />
         ) : (
           <div className="flex h-full items-center justify-center p-4 text-center text-small leading-relaxed text-ink3">
-            هذه الصورة لم تُرفع بالطريقة المعتمدة ولا يمكن عرضها. أضف صورة جديدة ثم احذف هذه.
-          </div>
+            {t(" This photo was not verified through the upload flow and cannot be displayed. Upload a replacement before removing it. ")}</div>
         )}
         {photo.isPrimary && (
           <span className="absolute start-2 top-2 border border-ink bg-ground px-2.5 py-0.5 text-small text-ink">
-            رئيسية
-          </span>
+            {t(" Primary ")}</span>
         )}
       </div>
 
@@ -167,7 +168,7 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
       ) : (
         <>
           <label className="mt-3 block">
-            <span className="mb-1 block text-small text-ink3">وصف الصورة</span>
+            <span className="mb-1 block text-small text-ink3">{t("Photo description")}</span>
             <input
               type="text"
               value={alt}
@@ -185,58 +186,53 @@ function PhotoCard({ productId, photo, order, index, readOnly }: {
               }))}
               className={`${quiet} self-start`}
             >
-              حفظ الوصف
-            </button>
+              {t(" Save description ")}</button>
           )}
 
           <div className="mt-1 flex flex-wrap items-center gap-x-3">
             {!photo.isPrimary && photo.url && (
               <button type="button" disabled={pending} className={quiet}
                 onClick={() => run(() => makePrimaryPhoto({ productId, photoId: photo.id }))}>
-                اجعلها رئيسية
-              </button>
+                {t(" Make primary ")}</button>
             )}
             {index > 0 && (
               <button type="button" disabled={pending} className={quiet}
-                aria-label={`تقديم الصورة ${num(index + 1)}`} onClick={() => move(-1)}>
-                تقديم
-              </button>
+                aria-label={`${t("Move photo earlier ")}${num(index + 1)}`} onClick={() => move(-1)}>
+                {t(" Move earlier ")}</button>
             )}
             {index < order.length - 1 && (
               <button type="button" disabled={pending} className={quiet}
-                aria-label={`تأخير الصورة ${num(index + 1)}`} onClick={() => move(1)}>
-                تأخير
-              </button>
+                aria-label={`${t("Move photo later ")}${num(index + 1)}`} onClick={() => move(1)}>
+                {t(" Move later ")}</button>
             )}
           </div>
 
           {confirmingRemoval ? (
-            <div className="mt-1 flex flex-wrap items-center gap-x-3" role="group" aria-label="تأكيد حذف الصورة">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3" role="group" aria-label={t("Confirm photo removal")}>
               <button type="button" disabled={pending}
                 className={`${quiet} text-danger hover:text-danger`}
                 onClick={() => run(() => removePhoto({ productId, photoId: photo.id }))}>
-                تأكيد الحذف
-              </button>
+                {t(" Confirm removal ")}</button>
               <button type="button" disabled={pending} className={quiet}
                 onClick={() => setConfirmingRemoval(false)}>
-                تراجع
-              </button>
+                {t(" Cancel ")}</button>
             </div>
           ) : (
             <button type="button" disabled={pending} className={`${quiet} self-start`}
               onClick={() => setConfirmingRemoval(true)}>
-              حذف
-            </button>
+              {t(" Remove ")}</button>
           )}
         </>
       )}
 
-      {error && <p role="alert" className="mt-2 text-small leading-relaxed text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-small leading-relaxed text-danger">{errorText(error)}</p>}
     </li>
   );
 }
 
 function AddPhoto({ productId }: { productId: string }) {
+  const { t, errorText } = useSellerCopy();
+
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [alt, setAlt] = useState('');
@@ -303,20 +299,18 @@ function AddPhoto({ productId }: { productId: string }) {
 
   return (
     <div className="max-w-proseMax border border-line bg-raised p-5">
-      <h3 className="mb-1 text-small text-ink">إضافة صورة</h3>
+      <h3 className="mb-1 text-small text-ink">{t("Add a photo")}</h3>
       <p className="mb-5 text-small leading-relaxed text-ink3">
-        JPG أو PNG أو WebP · حتى 10 ميجابايت · لا يقل الضلع الأقصر عن 800 بكسل
-      </p>
+        {t(" JPG, PNG or WebP · up to 10 MB · shortest edge at least 800 px ")}</p>
 
       <label className="mb-4 block">
         <span className="mb-1.5 block text-small text-ink2">
-          وصف الصورة — ماذا يظهر فيها؟
-        </span>
+          {t(" Photo description — what does it show? ")}</span>
         <input
           type="text"
           value={alt}
           maxLength={ALT_TEXT_MAX}
-          placeholder="مثال: الزجاجة على رخام أسود، من الأمام"
+          placeholder={t("Example: front view of the bottle on black marble")}
           onChange={(event) => setAlt(event.target.value)}
           className={`${control} h-control`}
         />
@@ -330,12 +324,11 @@ function AddPhoto({ productId }: { productId: string }) {
           className="mt-1 h-4 w-4 flex-none accent-accent"
         />
         <span className="text-small leading-relaxed text-ink2">
-          أؤكد أن الدار تملك هذه الصورة أو تملك حق استخدامها، وأنها لمنتج الدار نفسه.
-        </span>
+          {t(" I confirm the house owns this photo or has permission to use it, and that it shows the house’s own product. ")}</span>
       </label>
 
       <label className="mb-5 block">
-        <span className="mb-1.5 block text-small text-ink2">الملف</span>
+        <span className="mb-1.5 block text-small text-ink2">{t("File")}</span>
         <input
           ref={fileInput}
           type="file"
@@ -350,16 +343,16 @@ function AddPhoto({ productId }: { productId: string }) {
           {/* The flacon fills to the real fraction sent, and sprays at the top. */}
           <UploadProgress
             progress={progress}
-            label="تقدّم رفع الصورة"
-            note={progress < 1 ? 'جارٍ الرفع…' : 'تم الرفع — جارٍ التحقّق من الصورة…'}
+            label={t("Photo upload progress")}
+            note={progress < 1 ? t("Uploading…") : t("Uploaded — verifying photo…")}
           />
         </div>
       )}
 
-      {error && <p role="alert" className="mb-4 text-small leading-relaxed text-danger">{error}</p>}
+      {error && <p role="alert" className="mb-4 text-small leading-relaxed text-danger">{errorText(error)}</p>}
 
       <PrimaryButton type="button" fill="auto" disabled={!ready} onClick={submit}>
-        {pending ? <Pending label="جارٍ الرفع…" /> : 'رفع الصورة'}
+        {pending ? <Pending label={t("Uploading…")} /> : t("Upload photo")}
       </PrimaryButton>
     </div>
   );

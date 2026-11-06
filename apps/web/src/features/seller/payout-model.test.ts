@@ -15,6 +15,12 @@ describe('seller statement presentation facts', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true);
     expect(csv).toContain('"PAY-1","ORDER-1","organic_search","1500","10000","1500","2000","10500"');
   });
+  it('localizes headers while preserving the same financial and attribution facts', () => {
+    const lines = [{ subOrderReference:'ORDER-1', commissionSource:'organic_search', commissionBps:1500, grossPiastres:10000, commissionPiastres:1500, shippingPiastres:2000, netPiastres:10500 }];
+    const ar=statementCsv('PAY-1',lines,'ar'); const en=statementCsv('PAY-1',lines,'en');
+    expect(en).toContain('Statement reference');
+    expect(en.split('\r\n')[1]).toBe(ar.split('\r\n')[1]);
+  });
   it('escapes quoted data and neutralises spreadsheet formulas while leaving numeric negatives intact', () => {
     const csv = statementCsv('  =HYPERLINK("evil")', [{ subOrderReference: '@SUM(1)', commissionSource: '"quoted",source',
       commissionBps: 0, grossPiastres: 0, commissionPiastres: 0, shippingPiastres: 0, netPiastres: -100 }]);

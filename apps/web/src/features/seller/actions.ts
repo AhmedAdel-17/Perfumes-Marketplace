@@ -1,5 +1,7 @@
 'use server';
 
+import { localeHref } from '@/core/href';
+import { getLocale } from '@/core/locale';
 import { redirect } from 'next/navigation';
 import { type SellerSession, consume, rateLimitMessage } from '@diyar/api';
 import { api } from '@/core/api';
@@ -93,7 +95,7 @@ export async function verifySellerCode(phone: string, code: string): Promise<Ver
 
 export async function signOutSeller(): Promise<void> {
   await clearSellerSession();
-  redirect('/seller');
+  redirect(localeHref(await getLocale(),'/seller'));
 }
 
 /**
@@ -108,7 +110,7 @@ export async function signOutSeller(): Promise<void> {
 export async function signOutSellerEverywhere(): Promise<void> {
   const session = await readSellerSession();
   if (session) await clearAllSellerSessions(session.staffAuthUserId);
-  redirect('/seller');
+  redirect(localeHref(await getLocale(),'/seller'));
 }
 
 /**

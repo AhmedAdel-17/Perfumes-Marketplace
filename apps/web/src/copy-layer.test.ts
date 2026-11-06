@@ -20,14 +20,17 @@ import { describe, expect, it } from 'vitest';
 const SRC = join(import.meta.dirname);
 
 /**
- * Not translated YET — the seller portal and the ops console are steps 4 and 5
+ * The operations console remains untranslated. Legacy seller server errors are
+ * translated at the seller UI boundary. The portal itself is scanned. Steps 4 and 5
  * of P5.6.2, and middleware keeps them Arabic until then. Each entry is removed
  * when its step lands; the list only ever shrinks.
  */
 const NOT_YET_TRANSLATED = [
-  'app/seller/',
   'app/ops/',
-  'features/seller/',
+  'features/seller/actions.ts',
+  'features/seller/listing-actions.ts',
+  'features/seller/photo-actions.ts',
+  'features/seller/return-actions.ts',
   'features/ops/',
   'features/media/upload.ts',
 ];

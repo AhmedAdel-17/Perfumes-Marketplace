@@ -1,10 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { localeHref } from '@/core/href';
 import { useState } from 'react';
 import { Field } from '@/features/checkout/Field';
 import { requestSellerCode, verifySellerCode } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { useSellerOperationalCopy } from './operational-copy';
 
 /**
  * House sign-in.
@@ -18,6 +20,7 @@ import { PrimaryButton } from '@/features/shell/PrimaryButton';
  * a time. The code simply never arrives.
  */
 export function SellerSignIn() {
+  const { locale, t, errorText } = useSellerOperationalCopy();
   const router = useRouter();
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState('');
@@ -46,7 +49,7 @@ export function SellerSignIn() {
       if (result.ok) setStep('code');
       else setError(result.message);
     } catch {
-      setError('تعذّر الاتصال. حاول مرّة أخرى.');
+      setError(t("Connection failed. Please try again."));
     } finally {
       setBusy(false);
     }
@@ -63,12 +66,12 @@ export function SellerSignIn() {
         // Deliberately leaves `busy` set: the navigation is the next thing that
         // happens, and re-enabling the button during it invites a second
         // submit against a code that has already been spent.
-        router.push('/seller/overview');
+        router.push(localeHref(locale, '/seller/overview'));
         return;
       }
       setError(result.message);
     } catch {
-      setError('تعذّر الاتصال. حاول مرّة أخرى.');
+      setError(t("Connection failed. Please try again."));
     }
     setBusy(false);
   };
@@ -78,21 +81,20 @@ export function SellerSignIn() {
       {step === 'phone' ? (
         <>
           <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
-            سجّل الدخول برقم موبايل الدار المسجّل لدينا.
-          </p>
+             {t("Sign in using your house registered mobile number.")} </p>
           <Field
-            label="رقم الموبايل" value={phone} onChange={setPhone} required
+            label={t("Mobile number")} value={phone} onChange={setPhone} required
             type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
           />
         </>
       ) : (
         <>
           <p className="mb-7 max-w-proseMax text-small leading-relaxed text-ink2 lg:text-bodyLg">
-            أرسلنا رمزًا مكوّنًا من <span className="tnum">٦</span> أرقام إلى{' '}
+             {t("We sent a")} <span className="tnum"> {t("6")} </span>  {t("digit code to")} {' '}
             <span className="tnum latin">{phone}</span>.
           </p>
           <Field
-            label="رمز التحقّق" value={code} onChange={setCode} required
+            label={t("Verification code")} value={code} onChange={setCode} required
             inputMode="numeric" maxLength={6} autoComplete="one-time-code"
           />
           <button
@@ -100,19 +102,18 @@ export function SellerSignIn() {
             onClick={() => { setStep('phone'); setCode(''); setError(null); }}
             className="tappable mb-6 text-small text-ink2 underline transition-colors duration-base ease-out hover:text-accent"
           >
-            تغيير الرقم
-          </button>
+             {t("Change number")} </button>
         </>
       )}
 
       {error && (
         <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-small leading-relaxed text-ink">
-          {error}
+          {errorText(error)}
         </p>
       )}
 
       <PrimaryButton type="submit" disabled={busy} fill="full">
-      {busy ? '…' : step === 'phone' ? 'إرسال الرمز' : 'دخول'}
+      {busy ? '…' : step === 'phone' ? t("Send code") : t("Sign in")}
     </PrimaryButton>
 
       {/*
@@ -122,8 +123,7 @@ export function SellerSignIn() {
         production guard reads.
       */}
       <p className="mt-5 text-center text-small leading-relaxed text-ink3">
-        وضع التطوير: يُطبع الرمز في سجلّ الخادم بدل إرساله برسالة.
-      </p>
+         {t("Development mode: the code is printed in the server log instead of being sent by SMS.")} </p>
     </form>
   );
 }

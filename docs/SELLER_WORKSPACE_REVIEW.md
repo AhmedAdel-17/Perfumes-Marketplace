@@ -63,8 +63,8 @@ recipient phone/name or grant broad parent-order access. A separately approved
 narrow owner-only aggregate returning per-seller pseudonyms is the next design step;
 public shoutouts still require explicit permission. No loyalty/reward policy added.
 
-Seller pages remain Arabic as the existing middleware specifies. Full bilingual seller
-routing is not implemented. English mockup labels are not a claim otherwise. Staff
+Seller pages now support Arabic and English via the shared AR / EN switch and
+`/en/seller/...` routing. Product names and customer-entered content remain as recorded. Staff
 CRUD, promotions and public customer recognition are not part of this local version.
 
 ## Local preview
@@ -92,3 +92,18 @@ named Git stash. Do not apply them over this branch without deliberate integrati
   overflow, page errors or main-content A/AA axe violations. Period selection, chart
   keyboard interaction, order detail open/close, order/product search were exercised.
 - No claim of an external production deployment, legal approval or measured conversion lift.
+
+## Seller language completion — 6 November 2026
+
+The workspace and sign-in now offer AR / EN. Language changes reload the document
+to apply matching lang/dir and preserve the current route and query. Seller links,
+auth redirects and the gated local preview retain the selected language.
+All six workspace pages, product editor/options, known action errors, Cairo dates
+and CSV headers support English. Unrecognized Arabic server errors use a readable
+English recovery message; source product/customer content is not translated.
+Financial calculations, authorization, sessions and production preview gates are unchanged.
+
+Verification: 13 focused locale-routing, translation, copy-layer and CSV tests passed; strict web types passed;
+browser checks across six English pages at 360/768/1440, product editor labels,
+chart keyboard interaction, order search/detail, AR/EN round trip, English sign-in
+and main-content accessibility. No remote writes or deployment.

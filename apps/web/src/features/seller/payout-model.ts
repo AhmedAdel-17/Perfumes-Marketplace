@@ -1,3 +1,4 @@
+import { SELLER_STATEMENT_HEADERS, type Locale } from '@diyar/i18n';
 /**
  * Pattern — presentation model. Totals describe the loaded statements, not a
  * payable balance or a promise of settlement. CSV preserves server line facts.
@@ -28,9 +29,9 @@ function cell(value: string | number): string {
 }
 
 /** Integer piastres avoid locale-dependent decimal or rounding transformations. */
-export function statementCsv(reference: string, lines: readonly CsvStatementLine[]): string {
+export function statementCsv(reference: string, lines: readonly CsvStatementLine[], locale: Locale = 'ar'): string {
   const rows: (string | number)[][] = [
-    ['مرجع الكشف', 'مرجع الطلب', 'مصدر العمولة', 'العمولة بنقاط الأساس', 'المبيعات بالقرش', 'العمولة بالقرش', 'استرداد التوصيل بالقرش', 'الصافي بالقرش'],
+    [...SELLER_STATEMENT_HEADERS[locale]],
     ...lines.map((line) => [reference, line.subOrderReference, line.commissionSource, line.commissionBps,
       line.grossPiastres, line.commissionPiastres, line.shippingPiastres, line.netPiastres]),
   ];

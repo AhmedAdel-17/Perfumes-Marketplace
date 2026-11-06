@@ -1,4 +1,7 @@
 'use client';
+import { localePath } from '@diyar/i18n';
+import { useSellerCopy } from '@/features/seller/use-seller-copy';
+
 
 /**
  * A house writing a listing.
@@ -44,9 +47,9 @@ import {
 const STATE_LABELS: Record<ListingState, string> = LISTING_STATE_AR;
 
 const MOVE_LABELS = {
-  pending_moderation: 'إرسال للمراجعة',
-  draft: 'سحب من المراجعة',
-  archived: 'أرشفة',
+  pending_moderation: "Submit for review",
+  draft: "Withdraw from review",
+  archived: "Archive",
 } as const;
 
 /**
@@ -57,77 +60,77 @@ const MOVE_LABELS = {
  * on a seller's screen.
  */
 const CONCENTRATION_LABELS: Record<(typeof CONCENTRATIONS)[number], string> = {
-  parfum: 'بارفان',
-  eau_de_parfum: 'أو دو بارفان',
-  eau_de_toilette: 'أو دو تواليت',
-  eau_de_cologne: 'كولونيا',
-  oil: 'زيت',
-  attar: 'عطر مركّز',
-  body_mist: 'بخاخ للجسم',
+  parfum: "Parfum",
+  eau_de_parfum: "Eau de parfum",
+  eau_de_toilette: "Eau de toilette",
+  eau_de_cologne: "Eau de cologne",
+  oil: "Perfume oil",
+  attar: "Attar",
+  body_mist: "Body mist",
 };
 
 const FORM_LABELS: Record<(typeof PRODUCT_FORMS)[number], string> = {
-  spray: 'بخاخ', roll_on: 'رول أون', dab: 'دهان', solid: 'صلب',
+  spray: "Spray", roll_on: "Roll-on", dab: "Dab", solid: "Solid",
 };
 
 const GENDER_LABELS: Record<(typeof GENDER_POSITIONINGS)[number], string> = {
-  men: 'رجالي', women: 'نسائي', unisex: 'للجنسين',
+  men: "For men", women: "For women", unisex: "Unisex",
 };
 
 const FAMILY_LABELS: Record<(typeof SCENT_FAMILIES)[number], string> = {
-  oud: 'عود', amber: 'عنبر', woody: 'خشبي', floral: 'زهري',
-  fresh: 'منعش', gourmand: 'حلو', musk: 'مسك',
+  oud: "Oud", amber: "Amber", woody: "Woody", floral: "Floral",
+  fresh: "Fresh", gourmand: "Gourmand", musk: "Musk",
 };
 
 const SEASON_LABELS: Record<(typeof SEASONS)[number], string> = {
-  spring: 'الربيع', summer: 'الصيف', autumn: 'الخريف', winter: 'الشتاء',
+  spring: "Spring", summer: "Summer", autumn: "Autumn", winter: "Winter",
 };
 
 const DAY_NIGHT_LABELS: Record<(typeof DAY_NIGHT)[number], string> = {
-  day: 'نهارًا', night: 'ليلًا', both: 'الاثنين',
+  day: "Day", night: "Night", both: "Both",
 };
 
 const OCCASION_LABELS: Record<(typeof OCCASIONS)[number], string> = {
-  daily: 'يومي', work: 'العمل', evening: 'السهرة', occasion: 'المناسبات', gift: 'هدية',
+  daily: "Everyday", work: "Work", evening: "Evening", occasion: "Occasions", gift: "Gift",
 };
 
 const PROJECTION_LABELS: Record<(typeof PROJECTION_BANDS)[number], string> = {
-  intimate: 'قريب', moderate: 'متوسط', strong: 'قوي', enormous: 'واسع جدًا',
+  intimate: "INTIMATE", moderate: "Moderate", strong: "STRONG", enormous: "Enormous",
 };
 
 const LONGEVITY_LABELS: Record<(typeof LONGEVITY_BANDS)[number], string> = {
-  weak: 'قصير', moderate: 'متوسط', long: 'طويل', very_long: 'طويل جدًا',
+  weak: "Short", moderate: "Moderate", long: "LONG", very_long: "VERY LONG",
 };
 
 const SOURCE_LABELS: Record<(typeof PERFORMANCE_SOURCES)[number], string> = {
-  seller_provided: 'من الدار', platform_test: 'اختبار المنصّة', review_aggregate: 'من التقييمات',
+  seller_provided: "Seller provided", platform_test: "Platform test", review_aggregate: "Review aggregate",
 };
 
 const RETURN_LABELS: Record<(typeof RETURN_ELIGIBILITIES)[number], string> = {
-  sealed_only: 'مغلق فقط',
-  sealed_or_defect: 'مغلق أو به عيب',
-  defect_only: 'عند وجود عيب فقط',
-  not_returnable: 'غير قابل للإرجاع',
+  sealed_only: "Sealed only",
+  sealed_or_defect: "Sealed or defective",
+  defect_only: "Defective only",
+  not_returnable: "Not returnable",
 };
 
 const FIELD_LABELS: Record<string, string> = {
-  name: 'اسم العطر', nameEn: 'الاسم بالإنجليزية', slug: 'المسار', sku: 'رمز المنتج', brandId: 'الدار',
-  pricePiastres: 'السعر', promoPricePiastres: 'سعر العرض', volumeMl: 'الحجم',
-  stock: 'المخزون', fulfilmentHours: 'مدة التجهيز',
-  concentration: 'التركيز', form: 'الشكل', genderPositioning: 'التوجّه',
-  scentFamily: 'العائلة العطرية',
-  notesTop: 'نفحات القمة', notesHeart: 'نفحات القلب', notesBase: 'نفحات القاعدة',
-  seasons: 'الفصول', dayNight: 'الوقت', occasions: 'المناسبات',
-  projectionBand: 'الانتشار', longevityBand: 'الثبات', performanceSource: 'مصدر البيانات',
-  responsiblePartyName: 'الجهة المسؤولة', returnEligibility: 'سياسة الإرجاع',
-  defectRoute: 'مسار العيوب', primaryImage: 'الصورة الرئيسية',
+  name: "Perfume name", nameEn: "English name", slug: "URL", sku: "SKU", brandId: "House",
+  pricePiastres: "Price", promoPricePiastres: "Promotional price", volumeMl: "Volume",
+  stock: "Stock", fulfilmentHours: "Preparation time",
+  concentration: "Concentration", form: "Format", genderPositioning: "Gender positioning",
+  scentFamily: "Fragrance family",
+  notesTop: "Top notes", notesHeart: "Heart notes", notesBase: "Base notes",
+  seasons: "Seasons", dayNight: "Time of day", occasions: "Occasions",
+  projectionBand: "Projection", longevityBand: "Longevity", performanceSource: "Performance source",
+  responsiblePartyName: "Responsible party", returnEligibility: "Return eligibility",
+  defectRoute: "Defect process", primaryImage: "Primary photograph",
 };
 
 const CLAIM_LABELS: Record<ClaimFinding['code'], string> = {
-  similarity_percentage: 'ادّعاء تطابق بنسبة مئوية — ممنوع نهائيًا',
-  replica_claim: 'ادّعاء أن المنتج نسخة من عطر آخر — ممنوع نهائيًا',
-  authorisation_claim: 'ادّعاء وكالة أو ترخيص — يحتاج مستندات',
-  designer_reference: 'ذكر دار عطور أخرى — يحتاج مراجعة قانونية',
+  similarity_percentage: "Percentage similarity claim — prohibited",
+  replica_claim: "Replica claim — prohibited",
+  authorisation_claim: "Authorisation claim — evidence required",
+  designer_reference: "Designer reference — legal review required",
 };
 
 /* ------------------------------------------------------------------ atoms */
@@ -141,10 +144,12 @@ const control = [
 function Row({ label, htmlFor, hint, children }: {
   label: string; htmlFor: string; hint?: string; children: React.ReactNode;
 }) {
+  const { t } = useSellerCopy();
+
   return (
     <div className="mb-4">
       <label htmlFor={htmlFor} className="mb-1.5 block text-small text-ink3">
-        {label}
+        {t(label)}
       </label>
       {children}
       {hint && <p className="mt-1.5 text-small leading-relaxed text-ink3">{hint}</p>}
@@ -159,8 +164,10 @@ function Choice<T extends string>({
   options: readonly T[]; labels: Record<T, string>;
   onChange(v: T | null): void; hint?: string;
 }) {
+  const { t } = useSellerCopy();
+
   return (
-    <Row label={label} htmlFor={id} {...(hint ? { hint } : {})}>
+    <Row label={t(label)} htmlFor={id} {...(hint ? { hint } : {})}>
       <select
         id={id}
         value={value ?? ''}
@@ -169,7 +176,7 @@ function Choice<T extends string>({
       >
         <option value="">—</option>
         {options.map((option) => (
-          <option key={option} value={option}>{labels[option]}</option>
+          <option key={option} value={option}>{t(labels[option])}</option>
         ))}
       </select>
     </Row>
@@ -183,10 +190,12 @@ function Toggles<T extends string>({
   label: string; values: readonly T[] | null | undefined;
   options: readonly T[]; labels: Record<T, string>; onChange(v: T[]): void;
 }) {
+  const { t } = useSellerCopy();
+
   const chosen = new Set(values ?? []);
   return (
     <fieldset className="mb-4">
-      <legend className="mb-2 text-small text-ink3">{label}</legend>
+      <legend className="mb-2 text-small text-ink3">{t(label)}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = chosen.has(option);
@@ -209,7 +218,7 @@ function Toggles<T extends string>({
                   : 'border-line text-ink2 hover:border-ink2 hover:text-ink',
               ].join(' ')}
             >
-              {labels[option]}
+              {t(labels[option])}
             </button>
           );
         })}
@@ -223,8 +232,10 @@ function Notes({ id, label, value, onChange }: {
   id: string; label: string; value: readonly string[] | null | undefined;
   onChange(v: string[]): void;
 }) {
+  const { t } = useSellerCopy();
+
   return (
-    <Row label={label} htmlFor={id} hint="نفحة في كل سطر">
+    <Row label={t(label)} htmlFor={id} hint={t("One note per line")}>
       <textarea
         id={id}
         rows={3}
@@ -243,8 +254,10 @@ function Money({ id, label, piastres, onChange, hint }: {
   id: string; label: string; piastres: number | null | undefined;
   onChange(v: number | null): void; hint?: string;
 }) {
+  const { t } = useSellerCopy();
+
   return (
-    <Row label={label} htmlFor={id} {...(hint ? { hint } : {})}>
+    <Row label={t(label)} htmlFor={id} {...(hint ? { hint } : {})}>
       <div className="flex items-center gap-3">
         <input
           id={id}
@@ -258,7 +271,7 @@ function Money({ id, label, piastres, onChange, hint }: {
           }}
           className={`${control} tnum`}
         />
-        <span className="latin text-caption tracking-label text-ink3">{CURRENCY_LABEL}</span>
+        <span className="latin text-caption tracking-label text-ink3">{t(CURRENCY_LABEL)}</span>
       </div>
     </Row>
   );
@@ -268,8 +281,10 @@ function Count({ id, label, value, onChange, hint }: {
   id: string; label: string; value: number | null | undefined;
   onChange(v: number | null): void; hint?: string;
 }) {
+  const { t } = useSellerCopy();
+
   return (
-    <Row label={label} htmlFor={id} {...(hint ? { hint } : {})}>
+    <Row label={t(label)} htmlFor={id} {...(hint ? { hint } : {})}>
       <input
         id={id}
         inputMode="numeric"
@@ -285,6 +300,7 @@ function Count({ id, label, value, onChange, hint }: {
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
+
   return (
     <section className="mb-5 border border-line bg-ground p-5 lg:p-6">
       <h2 className="mb-5 border-b border-line pb-4 font-display text-h4 text-ink">{title}</h2>
@@ -315,6 +331,8 @@ export interface ListingFormInput extends ListingDraft {
 }
 
 export function ListingForm({ listing }: { listing: ListingFormInput }) {
+  const { locale, t, errorText } = useSellerCopy();
+
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>({ ...listing });
   const [state, setState] = useState<ListingState>(listing.state);
@@ -355,12 +373,12 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
     setMessage(null);
     try {
       const result = await saveListing(listing.id, payload());
-      setMessage(result.ok ? null : result.message ?? 'تعذّر الحفظ.');
+      setMessage(result.ok ? null : result.message ?? t("Could not save."));
       setGaps(result.gaps ?? []);
       setClaims(result.claims ?? []);
       setSaved(result.ok);
     } catch {
-      setMessage('تعذّر الاتصال. بياناتك ما زالت هنا؛ تحقّق من اتصالك ثم حاول الحفظ مجددًا.');
+      setMessage(t("Could not connect. Your edits are still here; check your connection and save again."));
       setSaved(false);
     }
   });
@@ -372,7 +390,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       // must transition directly: saving them is deliberately forbidden by the API.
       const write: ListingResult = isListingEditableBySeller(state)
         ? await saveListing(listing.id, payload()) : { ok: true };
-      if (!write.ok) { setMessage(write.message ?? 'تعذّر الحفظ.'); return; }
+      if (!write.ok) { setMessage(write.message ?? t("Could not save.")); return; }
       const result = to === 'pending_moderation'
         ? await submitListing(listing.id)
         : to === 'draft'
@@ -380,10 +398,10 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
           : await archiveListing(listing.id);
       setGaps(result.gaps ?? write.gaps ?? gaps);
       setClaims(result.claims ?? write.claims ?? claims);
-      setMessage(result.ok ? null : result.message ?? 'تعذّر التنفيذ.');
+      setMessage(result.ok ? null : result.message ?? t("Could not complete the action."));
       if (result.ok) { setState(to); setSaved(true); router.refresh(); }
     } catch {
-      setMessage('تعذّر الاتصال. أعد تحميل حالة المنتج قبل تكرار تغيير الحالة.');
+      setMessage(t("Could not verify the result. Reload the product status before repeating the action."));
       setSaved(false);
     }
   });
@@ -396,38 +414,36 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
     <div aria-busy={pending}>
       <div className="mb-7 flex flex-wrap items-center gap-3 border-b border-line pb-5">
         <span className={statusPill(state === 'suspended' ? 'danger' : state === 'published' ? 'accent' : 'quiet')}>
-          {STATE_LABELS[state]}
+          {t(STATE_LABELS[state])}
         </span>
         {listing.slug && <span className="latin text-caption text-ink3">/p/{listing.slug}</span>}
         {state === 'published' && (
           <a
-            href={`/p/${listing.slug}`}
+            href={localePath(locale,`/p/${listing.slug}`)}
             target="_blank"
             rel="noreferrer"
             className="tappable flex min-h-touch items-center text-small text-accent"
           >
-            عرض في المتجر ↗
-          </a>
+            {t(" View in shop ↗ ")}</a>
         )}
       </div>
 
       {!readOnly && (
         <p className="mb-6 text-small leading-relaxed text-ink2">
-          أكمل بيانات المنتج ثم احفظها قبل إرسالها للمراجعة. النشر والموافقة من اختصاص فريق المنصة.
-        </p>
+          {t(" Complete and save the product details before submitting for review. The platform team approves publication. ")}</p>
       )}
 
       {readOnly && (
         <p className="mb-7 border-s-2 border-accent ps-4 text-small leading-relaxed text-ink2">
           {state === 'pending_moderation'
-            ? 'المنتج قيد المراجعة. اسحبه من المراجعة إذا أردت تعديله.'
-            : 'المنتج مؤرشف. أعِده إلى المسودة للتعديل.'}
+            ? t("This product is under review. Withdraw it before making changes.")
+            : t("This product is archived. Restore it to draft before editing.")}
         </p>
       )}
 
       <fieldset disabled={readOnly || pending} className="disabled:opacity-disabled">
-        <Group title="١ · هوية المنتج">
-          <Row label={FIELD_LABELS.name!} htmlFor="f-name">
+        <Group title={t("1 · Product identity")}>
+          <Row label={t(FIELD_LABELS.name!)} htmlFor="f-name">
             <input
               id="f-name" value={String(draft.name ?? '')} maxLength={160}
               onChange={(e) => set('name', e.target.value)} className={control}
@@ -439,16 +455,16 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
             loses nothing by leaving it empty.
           */}
           <Row
-            label={`${FIELD_LABELS.nameEn!} (اختياري)`}
+            label={`${t(FIELD_LABELS.nameEn!)}${t(" (optional)")}`}
             htmlFor="f-name-en"
-            hint="كما تكتبه الدار على الزجاجة أو في حسابها — يظهر في النسخة الإنجليزية من الموقع"
+            hint={t("As written on the bottle or your house account. Shown on the English storefront.")}
           >
             <input
               id="f-name-en" value={String(draft.nameEn ?? '')} maxLength={160} dir="ltr" lang="en"
               onChange={(e) => set('nameEn', e.target.value)} className={control}
             />
           </Row>
-          <Row label={FIELD_LABELS.sku!} htmlFor="f-sku" hint="رمزك الداخلي، حروف لاتينية وأرقام">
+          <Row label={t(FIELD_LABELS.sku!)} htmlFor="f-sku" hint={t("Your internal code, using Latin letters and numbers.")}>
             <input
               id="f-sku" value={String(draft.sku ?? '')} maxLength={60} dir="ltr"
               onChange={(e) => set('sku', e.target.value)}
@@ -457,79 +473,79 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
           </Row>
         </Group>
 
-        <Group title="٢ · السعر والمخزون والتجهيز">
-          <Money id="f-price" label={FIELD_LABELS.pricePiastres!}
+        <Group title={t("2 · Price, stock and preparation")}>
+          <Money id="f-price" label={t(FIELD_LABELS.pricePiastres!)}
             piastres={draft.pricePiastres as number | null}
             onChange={(v) => set('pricePiastres', v)} />
-          <Money id="f-promo" label={FIELD_LABELS.promoPricePiastres!}
+          <Money id="f-promo" label={t(FIELD_LABELS.promoPricePiastres!)}
             piastres={draft.promoPricePiastres as number | null}
-            hint="اختياري، ولا بد أن يكون أقل من السعر"
+            hint={t("Optional; must be lower than the regular price.")}
             onChange={(v) => set('promoPricePiastres', v)} />
-          <Count id="f-volume" label={`${FIELD_LABELS.volumeMl!} (مل)`}
+          <Count id="f-volume" label={`${t(FIELD_LABELS.volumeMl!)}${t(" (ml)")}`}
             value={draft.volumeMl as number | null} onChange={(v) => set('volumeMl', v)} />
-          <Count id="f-stock" label="المخزون المسجّل"
-            hint="الكمية المسجّلة للمنتج. لا يعرض هذا الحقل حجوزات المخزون أو سجل حركاته."
+          <Count id="f-stock" label={t("Recorded stock")}
+            hint={t("The recorded product quantity. Reservations and movement history are not shown here.")}
             value={draft.stock as number | null} onChange={(v) => set('stock', v)} />
-          <Count id="f-hours" label={`${FIELD_LABELS.fulfilmentHours!} (ساعة)`}
+          <Count id="f-hours" label={`${t(FIELD_LABELS.fulfilmentHours!)}${t(" (hours)")}`}
             value={draft.fulfilmentHours as number | null}
-            hint="الوقت الذي تتعهّد بتجهيز الطلب خلاله"
+            hint={t("The time you commit to preparing an order.")}
             onChange={(v) => set('fulfilmentHours', v)} />
         </Group>
 
-        <Group title="٣ · تركيبة العطر والنفحات">
-          <Choice id="f-conc" label={FIELD_LABELS.concentration!}
+        <Group title={t("3 · Fragrance and notes")}>
+          <Choice id="f-conc" label={t(FIELD_LABELS.concentration!)}
             value={draft.concentration as never} options={CONCENTRATIONS}
             labels={CONCENTRATION_LABELS} onChange={(v) => set('concentration', v)} />
-          <Choice id="f-form" label={FIELD_LABELS.form!}
+          <Choice id="f-form" label={t(FIELD_LABELS.form!)}
             value={draft.form as never} options={PRODUCT_FORMS}
             labels={FORM_LABELS} onChange={(v) => set('form', v)} />
-          <Choice id="f-gender" label={FIELD_LABELS.genderPositioning!}
+          <Choice id="f-gender" label={t(FIELD_LABELS.genderPositioning!)}
             value={draft.genderPositioning as never} options={GENDER_POSITIONINGS}
             labels={GENDER_LABELS} onChange={(v) => set('genderPositioning', v)} />
-          <Choice id="f-family" label={FIELD_LABELS.scentFamily!}
+          <Choice id="f-family" label={t(FIELD_LABELS.scentFamily!)}
             value={draft.scentFamily as never} options={SCENT_FAMILIES}
             labels={FAMILY_LABELS} onChange={(v) => set('scentFamily', v)} />
-          <Notes id="f-top" label={FIELD_LABELS.notesTop!}
+          <Notes id="f-top" label={t(FIELD_LABELS.notesTop!)}
             value={draft.notesTop as string[]} onChange={(v) => set('notesTop', v)} />
-          <Notes id="f-heart" label={FIELD_LABELS.notesHeart!}
+          <Notes id="f-heart" label={t(FIELD_LABELS.notesHeart!)}
             value={draft.notesHeart as string[]} onChange={(v) => set('notesHeart', v)} />
-          <Notes id="f-base" label={FIELD_LABELS.notesBase!}
+          <Notes id="f-base" label={t(FIELD_LABELS.notesBase!)}
             value={draft.notesBase as string[]} onChange={(v) => set('notesBase', v)} />
         </Group>
 
-        <Group title="٤ · الاستعمال والأداء">
-          <Toggles label={FIELD_LABELS.seasons!} values={draft.seasons as never}
+        <Group title={t("4 · Wear and performance")}>
+          <Toggles label={t(FIELD_LABELS.seasons!)} values={draft.seasons as never}
             options={SEASONS} labels={SEASON_LABELS} onChange={(v) => set('seasons', v)} />
-          <Toggles label={FIELD_LABELS.occasions!} values={draft.occasions as never}
+          <Toggles label={t(FIELD_LABELS.occasions!)} values={draft.occasions as never}
             options={OCCASIONS} labels={OCCASION_LABELS} onChange={(v) => set('occasions', v)} />
-          <Choice id="f-daynight" label={FIELD_LABELS.dayNight!}
+          <Choice id="f-daynight" label={t(FIELD_LABELS.dayNight!)}
             value={draft.dayNight as never} options={DAY_NIGHT}
             labels={DAY_NIGHT_LABELS} onChange={(v) => set('dayNight', v)} />
-          <Choice id="f-projection" label={FIELD_LABELS.projectionBand!}
+          <Choice id="f-projection" label={t(FIELD_LABELS.projectionBand!)}
             value={draft.projectionBand as never} options={PROJECTION_BANDS}
             labels={PROJECTION_LABELS} onChange={(v) => set('projectionBand', v)} />
-          <Choice id="f-longevity" label={FIELD_LABELS.longevityBand!}
+          <Choice id="f-longevity" label={t(FIELD_LABELS.longevityBand!)}
             value={draft.longevityBand as never} options={LONGEVITY_BANDS}
             labels={LONGEVITY_LABELS} onChange={(v) => set('longevityBand', v)} />
-          <Choice id="f-source" label={FIELD_LABELS.performanceSource!}
+          <Choice id="f-source" label={t(FIELD_LABELS.performanceSource!)}
             value={draft.performanceSource as never} options={PERFORMANCE_SOURCES}
             labels={SOURCE_LABELS} onChange={(v) => set('performanceSource', v)}
-            hint="من أين جاءت أرقام الثبات والانتشار — مطلوب، ولا يُنشر تقدير دون مصدر" />
+            hint={t("Required source for longevity and projection claims. Estimates cannot be published without a source.")} />
         </Group>
 
-        <Group title="٥ · المسؤولية وسياسة المنتج">
-          <Row label={FIELD_LABELS.responsiblePartyName!} htmlFor="f-responsible"
-            hint="الاسم الذي يتحمّل مسؤولية المنتج أمام العميل">
+        <Group title={t("5 · Responsibility and product policy")}>
+          <Row label={t(FIELD_LABELS.responsiblePartyName!)} htmlFor="f-responsible"
+            hint={t("The party responsible for the product supplied to the customer.")}>
             <input
               id="f-responsible" value={String(draft.responsiblePartyName ?? '')} maxLength={200}
               onChange={(e) => set('responsiblePartyName', e.target.value)} className={control}
             />
           </Row>
-          <Choice id="f-return" label={FIELD_LABELS.returnEligibility!}
+          <Choice id="f-return" label={t(FIELD_LABELS.returnEligibility!)}
             value={draft.returnEligibility as never} options={RETURN_ELIGIBILITIES}
             labels={RETURN_LABELS} onChange={(v) => set('returnEligibility', v)} />
-          <Row label={FIELD_LABELS.defectRoute!} htmlFor="f-defect"
-            hint="ماذا يحدث إذا وصل المنتج به عيب">
+          <Row label={t(FIELD_LABELS.defectRoute!)} htmlFor="f-defect"
+            hint={t("What happens if the product arrives defective.")}>
             <textarea
               id="f-defect" rows={3} value={String(draft.defectRoute ?? '')} maxLength={500}
               onChange={(e) => set('defectRoute', e.target.value)}
@@ -548,7 +564,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
         >
           {claims.map((claim, i) => (
             <li key={i} className={`py-1.5 text-small leading-relaxed ${refused ? 'text-danger' : 'text-ink2'}`}>
-              {CLAIM_LABELS[claim.code]}
+              {t(CLAIM_LABELS[claim.code])}
               {/* The matched words, quoted. "A prohibited claim" tells a house
                   nothing about which sentence to change. */}
               <span className="text-ink3"> — «{claim.evidence}»</span>
@@ -560,28 +576,27 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       {gaps.length > 0 && (
         <div className="mb-6 border-s-2 border-line ps-4">
           <p className="mb-2 text-small text-ink3">
-            ناقص قبل الإرسال · <span className="tnum">{gaps.length}</span>
+            {t(" Missing before submission · ")}<span className="tnum">{gaps.length}</span>
           </p>
           <p className="text-small leading-relaxed text-ink2">
-            {gaps.map((gap) => FIELD_LABELS[gap.field] ?? gap.field).join(' · ')}
+            {gaps.map((gap) => t(FIELD_LABELS[gap.field] ?? gap.field)).join(' · ')}
           </p>
         </div>
       )}
 
       {!listing.primaryImage && (
         <p className="mb-6 border-s-2 border-line ps-4 text-small leading-relaxed text-ink2">
-          أضف صورة رئيسية من قسم «الصور» أعلاه. المنتج لا يُنشر بدونها.
-        </p>
+          {t(" Add a primary photograph in the Photos section above. Publication requires one. ")}</p>
       )}
 
-      {message && <p role="alert" className="mb-5 text-small text-danger">{message}</p>}
+      {message && <p role="alert" className="mb-5 text-small text-danger">{errorText(message)}</p>}
 
       {/* ----------------------------------------------------------- actions */}
 
       <div className="flex flex-wrap items-center gap-3 border border-line bg-ground p-5">
         {!readOnly && (
           <PrimaryButton type="button" fill="auto" disabled={pending} onClick={save}>
-            {pending ? 'جارٍ التنفيذ…' : saved ? 'تم الحفظ' : 'حفظ التعديلات'}
+            {pending ? t("Working…") : saved ? t("Saved") : t("Save changes")}
           </PrimaryButton>
         )}
 
@@ -595,7 +610,7 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
               onClick={() => move(to)}
               className="tappable flex min-h-touch items-center border border-line px-5 text-bodyLg text-ink2 transition-colors duration-base ease-out hover:border-accent hover:text-accent disabled:opacity-disabled"
             >
-              {to === 'draft' && state === 'archived' ? 'إعادة إلى المسودة' : MOVE_LABELS[to]}
+              {to === 'draft' && state === 'archived' ? t("Restore to draft") : t(MOVE_LABELS[to])}
             </button>
           ))}
       </div>

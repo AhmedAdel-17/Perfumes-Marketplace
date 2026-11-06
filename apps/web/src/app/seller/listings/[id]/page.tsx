@@ -1,3 +1,6 @@
+import { localeHref } from '@/core/href';
+import { sellerText } from '@diyar/i18n';
+import { getLocale } from '@/core/locale';
 import { SellerWorkspace } from '@/features/seller/SellerWorkspace';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -7,18 +10,17 @@ import { PhotoManager } from '@/features/seller/PhotoManager';
 import { activeSellerSession } from '@/features/seller/actions';
 import { api } from '@/core/api';
 
-export const metadata: Metadata = {
-  title: 'تحرير منتج | ديار',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata():Promise<Metadata>{const locale=await getLocale();return {title:sellerText(locale,"Edit product")+' | DIYAR',robots:{index:false,follow:false}};}
 
 export const dynamic = 'force-dynamic';
 
 export default async function SellerListingPage(
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const locale = await getLocale(); const t = (value: string) => sellerText(locale,value);
+
   const session = await activeSellerSession();
-  if (!session) redirect('/seller');
+  if (!session) redirect(localeHref(locale,'/seller'));
 
   const { id } = await params;
   const house = api({ role: 'seller', id: session.staffAuthUserId }, session.sellerId);
@@ -41,7 +43,7 @@ export default async function SellerListingPage(
     DESIGN_DOCTRINE §4b.
   */
   return (
-    <SellerWorkspace current="listings" title={listing.name || 'منتج جديد'} description="بيانات المنتج وصوره وقواعد النشر.">
+    <SellerWorkspace current="listings" title={listing.name || t("New product")} description={t("Product details, photographs and publication requirements.")}>
       <PhotoManager
         productId={listing.id}
         photos={photos.map((photo) => ({ ...photo }))}

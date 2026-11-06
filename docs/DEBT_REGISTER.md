@@ -123,7 +123,7 @@ The core seller workspace is integrated on local `codex/diyar-seller-workspace`.
   existing inventory debt. UI shows recorded stock only.
 - Delivery-value metrics exclude all recorded returns conservatively and do not claim
   revenue/cash reconciliation; partial-return financial reporting remains ledger work.
-- Seller UI still follows existing Arabic-only route policy; bilingual portal work is open.
+- Seller bilingual portal completed locally on 6 November 2026. Operations console remains Arabic.
 - Catalogue thumbnail listing currently uses existing 1+N repository reads; measure and
   paginate/batch when actual seller catalogue sizes require it.
 
