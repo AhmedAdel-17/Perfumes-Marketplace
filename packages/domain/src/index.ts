@@ -63,3 +63,6 @@ export * from './ports/return-contract';
 export * from './ports/support-repository';
 export * from './ports/application-repository';
 export * from './ports/aftercare-contract';
+
+export * from './ports/inventory-repository';
+export * from './ports/seller-customer-read-model';

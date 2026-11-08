@@ -9,12 +9,13 @@
  * Framework-free, like everything else in this package.
  */
 import { Money } from '../value-objects/money';
+import { INVENTORY_ADJUSTMENT_REASONS, type InventoryRepository, type InventoryStock, type InventoryMovement, type InventoryAdjustmentInput } from '../ports/inventory-repository';
 import type { ContentPage } from '../content/page';
 import type { ContentRepository, ContentRevision } from '../ports/content-repository';
 import type { Curation, SiteRepository } from '../ports/site-repository';
 import type { Announcement } from '../content/announcement';
-import type { ListingRecord, ListingRepository } from '../ports/listing-repository';
-import type { PhotoRepository, StoredPhoto } from '../ports/photo-repository';
+import { ListingStockConflict, type ListingRecord, type ListingRepository } from '../ports/listing-repository';
+import { PRIMARY_PHOTO_BATCH_LIMIT, type PhotoRepository, type StoredPhoto } from '../ports/photo-repository';
 import type { ContentImage, ContentImageRepository } from '../ports/content-image-repository';
 import type {
   AnalyticsRepository, BrowsingCount, RecordedBrowsingEvent,
@@ -217,6 +218,8 @@ interface Store {
    * particular order was answered — which the owner report must.
    */
   transitions: Array<TransitionRecord & { subOrderId: string }>;
+  inventoryMovements: InventoryMovement[];
+  inventoryRequests: Map<string, InventoryAdjustmentInput>;
   seq: number;
 }
 
@@ -224,7 +227,7 @@ const emptyStore = (): Store => ({
   sellers: new Map(), customers: new Map(), payouts: new Map(), reviews: new Map(),
   returns: new Map(), tickets: new Map(), applications: new Map(),
   products: new Map(), orders: new Map(),
-  subOrders: new Map(), transitions: [], seq: 0,
+  subOrders: new Map(), transitions: [], inventoryMovements: [], inventoryRequests: new Map(), seq: 0,
 });
 
 /** How many of the eight have passed. */
@@ -245,6 +248,8 @@ const cloneStore = (s: Store): Store => ({
   orders: new Map([...s.orders].map(([k, v]) => [k, { ...v, subOrderIds: [...v.subOrderIds] }])),
   subOrders: new Map([...s.subOrders].map(([k, v]) => [k, { ...v }])),
   transitions: [...s.transitions],
+  inventoryMovements: [...s.inventoryMovements],
+  inventoryRequests: new Map(s.inventoryRequests),
   seq: s.seq,
 });
 
@@ -352,10 +357,13 @@ export class InMemoryUnitOfWork implements UnitOfWork {
    */
   async transaction<T>(work: (repos: Repositories) => Promise<T>): Promise<T> {
     const snapshot = cloneStore(this.store);
+    const listingSnapshot = new Map(this.listingRows);
     try {
       return await work(this.repositories());
     } catch (error) {
       this.store = snapshot;
+      this.listingRows.clear();
+      for (const [id, row] of listingSnapshot) this.listingRows.set(id, row);
       throw error;
     }
   }
@@ -411,14 +419,67 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       },
     };
 
+    const reservedQuantity = (productId: string) => [...store().subOrders.values()]
+      .filter((sub) => sub.state === 'placed' || sub.state === 'awaiting_seller' || sub.state === 'confirmed')
+      .flatMap((sub) => sub.lines).filter((line) => line.productId === productId)
+      .reduce((sum, line) => sum + line.quantity, 0);
+    const stockSummary = (productId: string): InventoryStock | null => {
+      const product = store().products.get(productId);
+      if (!product) return null;
+      const reserved = reservedQuantity(productId);
+      return { productId, onHand: product.stock, reserved, available: product.stock - reserved };
+    };
+    const movement = (productId: string, kind: string, deltaOnHand: number, deltaReserved: number, reason: string, occurredAt: Date) => {
+      const state = store();
+      state.inventoryMovements.push({ id: `movement-${++state.seq}`, productId, kind, deltaOnHand, deltaReserved, reason, occurredAt });
+    };
+    const inventory: InventoryRepository = {
+      async summary(productId) { return stockSummary(productId); },
+      async movements(productId, limit) {
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new RangeError('Invalid movement limit');
+        return store().inventoryMovements.map((entry, sequence) => ({ entry, sequence }))
+          .filter(({ entry }) => entry.productId === productId)
+          .sort((a, b) => b.entry.occurredAt.getTime() - a.entry.occurredAt.getTime() || b.sequence - a.sequence)
+          .slice(0, limit).map(({ entry }) => entry);
+      },
+      async adjust(input) {
+        const state = store();
+        const product = state.products.get(input.productId);
+        if (!product) return { ok: false, reason: 'not_found' };
+        if (!Number.isSafeInteger(input.expectedOnHand) || input.expectedOnHand < 0
+          || !Number.isSafeInteger(input.delta) || input.delta === 0
+          || !INVENTORY_ADJUSTMENT_REASONS.includes(input.reason)
+          || !input.requestId.trim() || input.requestId.length > 100
+          || !Number.isFinite(input.occurredAt.getTime())
+          || ((input.reason === 'restock' || input.reason === 'return_inspected') && input.delta < 0)
+          || (input.reason === 'damage' && input.delta > 0)) return { ok: false, reason: 'invalid' };
+        const key = `${product.sellerId}:${input.requestId}`;
+        const previous = state.inventoryRequests.get(key);
+        if (previous) {
+          if (previous.productId !== input.productId || previous.expectedOnHand !== input.expectedOnHand
+            || previous.delta !== input.delta || previous.reason !== input.reason) return { ok: false, reason: 'conflict' };
+          return { ok: true, stock: stockSummary(input.productId)! };
+        }
+        if (product.stock !== input.expectedOnHand) return { ok: false, reason: 'conflict' };
+        const after = product.stock + input.delta;
+        if (!Number.isSafeInteger(after) || after < reservedQuantity(product.id)) return { ok: false, reason: 'insufficient_stock' };
+        if (after > 100_000) return { ok: false, reason: 'invalid' };
+        state.products.set(product.id, { ...product, stock: after });
+        state.inventoryRequests.set(key, { ...input });
+        movement(product.id, 'adjustment', input.delta, 0, input.reason, input.occurredAt);
+        return { ok: true, stock: stockSummary(product.id)! };
+      },
+    };
+
     const products: ProductRepository = {
       async findBySlug(slug) {
-        return [...store().products.values()].find((p) => p.slug === slug) ?? null;
+        const product = [...store().products.values()].find((p) => p.slug === slug);
+        return product ? { ...product, stock: stockSummary(product.id)!.available } : null;
       },
       async listPublishedBySeller(sellerId) {
         return [...store().products.values()].filter(
           (p) => p.sellerId === sellerId && p.status === 'published',
-        );
+        ).map((product) => ({ ...product, stock: stockSummary(product.id)!.available }));
       },
 
       async snapshotForCart(productIds) {
@@ -449,7 +510,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
               volumeMl: p.volumeMl,
               scentFamily: 'amber',
               unitPrice: p.price,
-              stock: p.stock,
+              stock: stockSummary(p.id)!.available,
               isPublished: p.status === 'published',
               isHouseLive: seller?.status === 'live',
               fulfilmentHours: 48,
@@ -469,6 +530,17 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const orders: OrderRepository = {
       async save(draft: DraftOrder, sellerIdBySlug) {
         const s = store();
+        // Validate the whole aggregate before writing any order or reservation.
+        const demanded = new Map<string, number>();
+        for (const sub of draft.subOrders) for (const line of sub.lineItems) {
+          const product = s.products.get(line.productId);
+          if (!product || product.sellerId !== sellerIdBySlug.get(sub.sellerId)) throw new Error(`Unknown product ${line.productId}`);
+          if (!Number.isSafeInteger(line.quantity) || line.quantity < 1) throw new Error('Invalid inventory quantity');
+          demanded.set(line.productId, (demanded.get(line.productId) ?? 0) + line.quantity);
+        }
+        for (const [productId, quantity] of demanded) {
+          if (quantity > stockSummary(productId)!.available) throw new Error('Insufficient stock');
+        }
         const orderId = `order-${++s.seq}`;
         const subOrderIds: string[] = [];
 
@@ -529,6 +601,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           });
         }
 
+        for (const [productId, quantity] of demanded) movement(productId, 'reservation', 0, quantity, 'order_placed', draft.placedAt);
         s.orders.set(orderId, {
           id: orderId,
           customerId: draft.customerId,
@@ -709,6 +782,18 @@ export class InMemoryUnitOfWork implements UnitOfWork {
          * delivery.
          */
         const from = row.state;
+        if (to === 'dispatched' || to === 'cancelled' || to === 'rejected') {
+          const quantities = new Map<string, number>();
+          for (const line of row.lines) quantities.set(line.productId, (quantities.get(line.productId) ?? 0) + line.quantity);
+          for (const [productId, quantity] of quantities) {
+            const product = s.products.get(productId)!;
+            if (to === 'dispatched') {
+              if (product.stock < reservedQuantity(productId)) throw new Error('Insufficient stock');
+              s.products.set(productId, { ...product, stock: product.stock - quantity });
+            }
+            movement(productId, to === 'dispatched' ? 'dispatch' : 'release', to === 'dispatched' ? -quantity : 0, -quantity, to, record.at);
+          }
+        }
         row.state = to;
         if (to === 'confirmed') {
           row.confirmedAt = record.at;
@@ -937,19 +1022,37 @@ export class InMemoryUnitOfWork implements UnitOfWork {
      * fake caught it.
      */
     const listings: ListingRepository = {
+      async pageForSeller(sellerId, { limit, cursor }) {
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new RangeError('Invalid listing page size');
+        const rows = [...listingRows.values()]
+          .filter((listing) => listing.sellerId === sellerId && (!cursor
+            || listing.updatedAt.getTime() < Date.parse(cursor.updatedAt)
+            || (listing.updatedAt.getTime() === Date.parse(cursor.updatedAt) && listing.id < cursor.id)))
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+            || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
+        const items = rows.slice(0, limit).map((listing) => ({ ...listing, stock: store().products.get(listing.id)?.stock ?? listing.stock ?? null }));
+        const last = items.at(-1);
+        return {
+          items,
+          nextCursor: rows.length > limit && last ? { updatedAt: last.updatedAt.toISOString(), id: last.id } : null,
+        };
+      },
+
       async listForSeller(sellerId) {
         return [...listingRows.values()]
           .filter((l) => l.sellerId === sellerId)
-          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .map((listing) => ({ ...listing, stock: store().products.get(listing.id)?.stock ?? listing.stock ?? null }));
       },
 
       async findForSeller(id, sellerId) {
         const row = listingRows.get(id);
-        return row && row.sellerId === sellerId ? row : null;
+        return row && row.sellerId === sellerId ? { ...row, stock: store().products.get(id)?.stock ?? row.stock ?? null } : null;
       },
 
       async findAnywhere(id) {
-        return listingRows.get(id) ?? null;
+        const row = listingRows.get(id);
+        return row ? { ...row, stock: store().products.get(id)?.stock ?? row.stock ?? null } : null;
       },
 
       async create(sellerId, input) {
@@ -970,18 +1073,31 @@ export class InMemoryUnitOfWork implements UnitOfWork {
           updatedAt: fixture.listingClock(),
         };
         listingRows.set(record.id, record);
+        store().products.set(record.id, { id: record.id, sellerId, name: input.name, slug: input.slug, sku: input.sku,
+          price: Money.fromMinor(0), volumeMl: 0, stock: 0, status: 'draft' });
         return record;
       },
 
-      async update(id, sellerId, input) {
+      async update(id, sellerId, input, expectedStock) {
         const row = listingRows.get(id);
         if (!row || row.sellerId !== sellerId) return;
         // `undefined` means "not sent", which is different from `null` meaning
         // "cleared" — the same distinction the adapter makes.
         const patch = Object.fromEntries(
-          Object.entries(input).filter(([, value]) => value !== undefined),
+          Object.entries(input).filter(([key, value]) => value !== undefined && !(key === 'stock' && value === null)),
         );
-        listingRows.set(id, { ...row, ...patch, updatedAt: fixture.listingClock() });
+        const at = fixture.listingClock();
+        const physical = store().products.get(id);
+        if (input.stock !== undefined && input.stock !== null && physical) {
+          if (physical.stock !== (expectedStock ?? input.stock)) throw new ListingStockConflict();
+          if (!Number.isSafeInteger(input.stock) || input.stock < reservedQuantity(id) || input.stock > 100_000) throw new Error('Insufficient stock');
+          const delta = input.stock - physical.stock;
+          if (delta !== 0) {
+            store().products.set(id, { ...physical, stock: input.stock });
+            movement(id, 'adjustment', delta, 0, 'listing_edit', at);
+          }
+        }
+        listingRows.set(id, { ...row, ...patch, updatedAt: at });
       },
 
       async move(id, to, input) {
@@ -1667,6 +1783,15 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     const toStoredPhoto = ({ seq: _seq, ...photo }: PhotoRow): StoredPhoto => ({ ...photo });
 
     const photos: PhotoRepository = {
+      async verifiedPrimariesForProducts(productIds) {
+        if (productIds.length > PRIMARY_PHOTO_BATCH_LIMIT) throw new RangeError('Primary photo batch exceeds its limit');
+        const selected = new Set(productIds);
+        return [...photoRows.values()]
+          .filter((photo) => selected.has(photo.productId) && photo.isPrimary
+            && photo.ownershipConfirmed && photo.alt.trim().length > 0 && photo.contentType !== null)
+          .map(toStoredPhoto);
+      },
+
       async listForProduct(productId) {
         return orderedPhotos(productId).map(toStoredPhoto);
       },
@@ -1849,7 +1974,8 @@ export class InMemoryUnitOfWork implements UnitOfWork {
     } as unknown as Repositories['reliefs'];
 
     return {
-      sellers, customers, products, orders, subOrders, payouts, content, listings, audit,
+      sellers, customers, products, orders, subOrders, payouts, content, listings, audit, inventory,
+      sellerCustomers: { leaderboard: async () => ({access: 'restricted' as const}), profile: async () => ({access: 'restricted' as const}) },
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
       analytics, catalogue, glossary, identity, reliefs,
     };

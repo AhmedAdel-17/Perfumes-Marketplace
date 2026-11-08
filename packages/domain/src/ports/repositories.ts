@@ -1,3 +1,5 @@
+import type { InventoryRepository } from './inventory-repository';
+import type { SellerCustomerReadModel } from './seller-customer-read-model';
 import type { SiteRepository } from './site-repository';
 import type { AuditTrail } from './audit-trail';
 import type { OwnerReportRepository } from './owner-report-repository';
@@ -456,6 +458,8 @@ export interface PayoutDetail extends PayoutSummary {
 
 /** All ports, handed to a use-case together. */
 export interface Repositories {
+  readonly inventory: InventoryRepository;
+  readonly sellerCustomers: SellerCustomerReadModel;
   readonly sellers: SellerRepository;
   readonly customers: CustomerRepository;
   readonly products: ProductRepository;

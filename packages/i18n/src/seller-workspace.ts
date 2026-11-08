@@ -1,6 +1,9 @@
+import { SELLER_CUSTOMER_COPY } from './seller-customers';
 import type { Locale } from './locale';
 /** Bilingual seller UI catalogue; customer and product content is never translated. */
 const ENGLISH: Readonly<Record<string,string>> = {
+  "تغيّر المخزون منذ تحميل المنتج. أعد تحميله وراجع الكمية قبل الحفظ.": "Stock changed since this product was loaded. Reload it and review the quantity before saving.",
+ ...SELLER_CUSTOMER_COPY,
   "· مساحة العمل": "· Workspace",
   "ج.م ·": "EGP ·",
   "أُعيد للتعديل:": "Changes requested:",
@@ -500,7 +503,7 @@ const ENGLISH: Readonly<Record<string,string>> = {
   "تم ردّ المبلغ": "Refunded",
   "انتهى": "Closed"
 };
-const ARABIC: Readonly<Record<string,string>> = {...Object.fromEntries(Object.entries(ENGLISH).map(([ar,en])=>[en,ar])), 'On hold': 'معلّق'};
+const ARABIC: Readonly<Record<string,string>> = {...Object.fromEntries(Object.entries(ENGLISH).map(([ar,en])=>[en,ar])), ...Object.fromEntries(Object.entries(SELLER_CUSTOMER_COPY).map(([ar,en])=>[en,ar])), 'On hold': 'معلّق'};
 export function sellerText(locale: Locale, value: string): string {
  const key=value.replace(/\s+/g,' ').trim();
  const result=locale==='en' ? ENGLISH[key] ?? key : ARABIC[key] ?? key;

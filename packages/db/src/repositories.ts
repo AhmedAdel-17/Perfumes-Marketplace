@@ -1,3 +1,5 @@
+import { inventoryRepository } from './inventory-repository';
+import { sellerCustomerReadModel } from './seller-customer-read-model';
 /**
  * Drizzle adapter for the domain's repository ports.
  *
@@ -67,7 +69,7 @@ const toProduct = (r: typeof schema.products.$inferSelect): ProductRecord => ({
   // float arithmetic on it, which is the whole reason the value object exists.
   price: Money.fromMinor(r.pricePiastres),
   volumeMl: r.volumeMl,
-  stock: r.stock,
+  stock: r.stock - r.reservedStock,
   status: r.status,
 });
 
@@ -196,7 +198,7 @@ const productRepository = (db: Executor): ProductRepository => ({
       volumeMl: r.p.volumeMl,
       scentFamily: r.p.scentFamily ?? 'amber',
       unitPrice: Money.fromMinor(r.p.promoPricePiastres ?? r.p.pricePiastres),
-      stock: r.p.stock,
+      stock: r.p.stock - r.p.reservedStock,
       // Reported honestly rather than assumed true. RLS already hides rows an
       // anonymous visitor may not see, but the platform role sees everything,
       // and a cart priced as platform must reach the same verdict as one priced
@@ -255,7 +257,7 @@ const orderRepository = (db: Executor): OrderRepository => ({
       for (const row of modes) deliveryModes.set(row.id, row.mode);
     }
 
-    for (const sub of draft.subOrders) {
+    for (const sub of [...draft.subOrders].sort((a,b)=>a.sellerId.localeCompare(b.sellerId))) {
       const sellerId = sellerIdBySlug.get(sub.sellerId);
       if (!sellerId) throw new Error(`No seller id for slug "${sub.sellerId}"`);
 
@@ -291,7 +293,7 @@ const orderRepository = (db: Executor): OrderRepository => ({
 
       subOrderIds.push(row!.id);
 
-      for (const li of sub.lineItems) {
+      for (const li of [...sub.lineItems].sort((a,b)=>a.productId.localeCompare(b.productId))) {
         await db.insert(schema.orderLineItems).values({
           subOrderId: row!.id,
           productId: li.productId,
@@ -693,6 +695,8 @@ const toPayoutSummary = (row: typeof schema.payouts.$inferSelect) => ({
 });
 
 export const repositoriesFor = (db: Executor): Repositories => ({
+  inventory: inventoryRepository(db),
+  sellerCustomers: sellerCustomerReadModel(db),
   sellers: sellerRepository(db),
   customers: customerRepository(db),
   products: productRepository(db),

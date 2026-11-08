@@ -37,7 +37,7 @@ const toRow = (
   pricePiastres: p.pricePiastres,
   promoPricePiastres: p.promoPricePiastres,
   volumeMl: p.volumeMl,
-  stock: p.stock,
+  stock: p.stock - p.reservedStock,
   scentFamily: p.scentFamily,
   concentration: p.concentration,
   notesTop: p.notesTop ?? [],
@@ -201,7 +201,7 @@ export const catalogueReadModel = (db: DiyarDatabase): CatalogueReadModel => ({
     if (criteria.families.length > 0) {
       conditions.push(inArray(schema.products.scentFamily, [...criteria.families] as never));
     }
-    if (criteria.inStockOnly) conditions.push(gt(schema.products.stock, 0));
+    if (criteria.inStockOnly) conditions.push(sql`${schema.products.stock} - ${schema.products.reservedStock} > 0`);
     if (criteria.minEgp !== null) conditions.push(sql`${payable} >= ${criteria.minEgp * 100}`);
     if (criteria.maxEgp !== null) conditions.push(sql`${payable} <= ${criteria.maxEgp * 100}`);
     if (criteria.houses.length > 0) {

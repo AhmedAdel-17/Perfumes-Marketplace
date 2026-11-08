@@ -12,6 +12,13 @@
  */
 import type { ListingState, ModerationReason } from '../catalogue/listing';
 import type { ListingDraft } from '../catalogue/completeness';
+import { DomainError } from '../errors/index';
+
+/** A stale absolute stock edit must never undo dispatch consumption. */
+export class ListingStockConflict extends DomainError {
+  readonly code = 'LISTING_STOCK_CONFLICT';
+  constructor() { super('Listing stock changed; reload before saving stock'); }
+}
 
 /** A listing as its own house sees it. */
 export interface ListingRecord extends ListingDraft {
@@ -38,7 +45,23 @@ export interface QueuedListing {
   readonly claimText: readonly string[];
 }
 
+export interface ListingPageCursor {
+  /** Exact UTC timestamp, including database microseconds where present. */
+  readonly updatedAt: string;
+  readonly id: string;
+}
+export interface ListingPage {
+  readonly items: ListingRecord[];
+  readonly nextCursor: ListingPageCursor | null;
+}
 export interface ListingRepository {
+  /** Opt-in bounded keyset read, ordered by updatedAt DESC then id DESC.
+   * Limit is an integer from 1 to 100; every row is scoped to sellerId. */
+  pageForSeller(sellerId: string, input: {
+    readonly limit: number;
+    readonly cursor?: ListingPageCursor;
+  }): Promise<ListingPage>;
+
   /** Everything this house has written, newest activity first. */
   listForSeller(sellerId: string): Promise<ListingRecord[]>;
 
@@ -55,8 +78,11 @@ export interface ListingRepository {
   create(sellerId: string, input: { name: string; slug: string; sku: string; brandId: string }):
     Promise<ListingRecord>;
 
-  /** Save a draft. Never touches state — that is `move`. */
-  update(id: string, sellerId: string, input: ListingDraft): Promise<void>;
+  /** Save a draft. Never touches state — that is `move`.
+   * Stock writes compare against the caller's loaded on-hand snapshot. Without
+   * a snapshot, only an unchanged stock value is accepted for legacy clients.
+   * A conflict aborts the entire update, including accompanying metadata. */
+  update(id: string, sellerId: string, input: ListingDraft, expectedStock?: number): Promise<void>;
 
   /**
    * Move it, recording who decided and why.

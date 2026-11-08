@@ -111,20 +111,17 @@ Owner: Codex (implementation), founders (policy approvals). Branch
 
 See `DATA_IMPLEMENTATION_HANDOFF.md` for safe local upgrade and exclusions.
 
-## Seller workspace boundaries — 6 November 2026
+## Seller workspace boundaries — updated 8 November 2026
 
-Owner: Codex (implementation), founders (policy/security approval).
-The core seller workspace is integrated on local `codex/diyar-seller-workspace`.
+Owner: Codex (implementation), founders (remaining financial policy/provider decisions).
+Local branch: codex/diyar-seller-workspace. Nothing pushed or deployed.
 
-- Customer leaderboard is not implemented: existing RLS deliberately prevents sellers
-  from reading parent orders/customer identity. Design a narrow authorised aggregate
-  and obtain joint approval; no broad grants or recipient-identity inference.
-- Reserved stock, movement history and reasoned stock adjustments remain open under
-  existing inventory debt. UI shows recorded stock only.
-- Delivery-value metrics exclude all recorded returns conservatively and do not claim
-  revenue/cash reconciliation; partial-return financial reporting remains ledger work.
-- Seller bilingual portal completed locally on 6 November 2026. Operations console remains Arabic.
-- Catalogue thumbnail listing currently uses existing 1+N repository reads; measure and
-  paginate/batch when actual seller catalogue sizes require it.
+- Resolved locally: owner-only named customer leaderboard and private own-brand purchase profiles, through two narrow checked capabilities; no direct customer/parent-order table grants. Public recognition still needs separate customer permission.
+- Resolved locally: product-level stock reservations, on-hand/reserved/available quantities, immutable movements and reasoned retry-safe adjustments. Checkout and public catalogue use availability; existing product table shows physical recorded stock. Multi-warehouse/variant allocation and automated expiry scheduling remain separate work.
+- Resolved locally: verified thumbnails use bounded batch reads; optional keyset catalogue pages preserve exact timestamp precision. Legacy full-list shape stays compatible, with batching rather than N photo calls.
+- Resolved locally: immutable refund facts, overlapping-claim prevention, replay protection and cumulative refund ceilings using the parent's original discounted total plus existing line/parcel ceilings. Historical amounts/paid statements stay unchanged.
+- Still open: quantity-level partial returns, component/discount/shipping allocations, provider refund execution/reconciliation and post-payout accounting adjustments. Recorded refunds are not evidence of payment execution. No commission or customer refund policy was invented.
+- Delivery metrics and customer frequency exclude every recorded return conservatively; they do not claim reconciled net revenue or customer profitability.
+- Seller workspace is bilingual. Operations console localization remains outside this change.
 
-See `SELLER_WORKSPACE_REVIEW.md` for definitions, preview gating and review scope.
+See SELLER_BACKEND_REFINEMENTS.md, REFUND_RECORDING.md and SELLER_CUSTOMER_INSIGHTS_SECURITY_REVIEW.md for exact scope, safety checks and local upgrade handoff.

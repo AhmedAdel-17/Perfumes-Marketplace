@@ -50,6 +50,24 @@ const primaries = (photos: readonly StoredPhoto[]) => photos.filter((p) => p.isP
 
 export const photoContract: readonly PhotoContractCase[] = [
   {
+    name: 'batch primary reads are bounded, verified, deduplicated and restricted to requested products',
+    async run(setup) {
+      const w = await setup();
+      const primary = await add(w, w.wardProductId);
+      await add(w, w.wardProductId);
+      await add(w, w.nourProductId, { ownershipConfirmed: false });
+      const batch = (ids: readonly string[]) => w.uow.transaction((r) => r.photos.verifiedPrimariesForProducts(ids));
+      equal((await batch([w.wardProductId, w.nourProductId])).map((p) => p.id), [primary.id], 'verified primaries only');
+      equal((await batch([w.wardProductId, w.wardProductId])).map((p) => p.id), [primary.id], 'deduplicated');
+      equal(await batch([]), [], 'empty batch is not a global query');
+      equal(await batch([w.nourProductId]), [], 'other products are not returned');
+      let refused = false;
+      try { await batch(Array.from({ length: 101 }, () => w.wardProductId)); } catch { refused = true; }
+      assert(refused, 'oversized batch must be refused');
+    },
+  },
+
+  {
     name: 'the first photograph a product receives is its primary; the next ones are not',
     async run(setup) {
       const w = await setup();

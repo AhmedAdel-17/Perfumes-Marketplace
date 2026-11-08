@@ -10,7 +10,8 @@
  * `product_media_one_primary` (0021) turns a second primary into an error, so
  * the writes below always clear the old primary BEFORE setting a new one.
  */
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { PRIMARY_PHOTO_BATCH_LIMIT } from '@diyar/domain';
 import type { ImageType, PhotoRepository, StoredPhoto } from '@diyar/domain';
 import * as schema from './schema/index';
 import type { DiyarDatabase } from './repositories';
@@ -37,6 +38,20 @@ const onProduct = (photoId: string, productId: string) => and(
 );
 
 export const photoRepository = (db: DiyarDatabase): PhotoRepository => ({
+  async verifiedPrimariesForProducts(productIds) {
+    if (productIds.length > PRIMARY_PHOTO_BATCH_LIMIT) throw new RangeError('Primary photo batch exceeds its limit');
+    if (productIds.length === 0) return [];
+    const rows = await db.select().from(schema.productMedia)
+      .where(and(
+        inArray(schema.productMedia.productId, [...new Set(productIds)]),
+        eq(schema.productMedia.isPrimary, true),
+        eq(schema.productMedia.ownershipConfirmed, true),
+        sql`btrim(${schema.productMedia.altText}) <> ''`,
+        isNotNull(schema.productMedia.contentType),
+      ));
+    return rows.map(toPhoto);
+  },
+
   async listForProduct(productId) {
     const rows = await db.select().from(schema.productMedia)
       .where(eq(schema.productMedia.productId, productId))

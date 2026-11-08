@@ -255,11 +255,22 @@ describe('returns — asked by the customer, decided by everybody else', () => {
     const [after] = await anon.returns.mine(order);
     expect(after!.state).toBe('refunded');
     expect(after!.refundPiastres).toBe(45_000);
+    await expect(ops.returns.resolve({
+      id: record!.id, to: 'refunded', refundPiastres: 45_000,
+    })).resolves.toEqual({ state: 'refunded' });
+    // Retrying the same financial action must not create a second adjustment
+    // or replace its amount, even when the second request supplies a new sum.
+    await expect(ops.returns.resolve({
+      id: record!.id, to: 'refunded', refundPiastres: 90_000,
+    })).rejects.toThrow();
+    const [unchanged] = await anon.returns.mine(order);
+    expect(unchanged!.refundPiastres).toBe(45_000);
 
-    const [entry] = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+
+    const entries = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
       .transaction((r) => r.audit.recent({ entityTable: 'returns', entityId: record!.id }));
-    expect(entry, 'a refund wrote no audit entry').toBeDefined();
-    expect(entry!.actorLabel).toBe('مشغّلة المنصّة');
+    expect(entries, 'a replay added a second financial audit entry').toHaveLength(1);
+    expect(entries[0]!.actorLabel).toBe('مشغّلة المنصّة');
   });
 
   it('refuses a refund with no amount', async () => {

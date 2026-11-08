@@ -1830,8 +1830,10 @@ describe('a house adds photographs to its own listing', () => {
 
   /** A complete draft, saved and submitted the way a house's is — never a direct UPDATE. */
   const submitForReview = async (productId: string) => {
+    const loaded = await ward().listings.get({ id: productId });
     await ward().listings.save({
       id: productId,
+      expectedStock: loaded.stock ?? 0,
       draft: {
         pricePiastres: 45000,
         volumeMl: 50,

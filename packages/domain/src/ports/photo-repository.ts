@@ -50,7 +50,15 @@ export interface NewPhoto {
   readonly height: number;
 }
 
+/** One bounded IN query; callers with larger legacy catalogues batch explicitly. */
+export const PRIMARY_PHOTO_BATCH_LIMIT = 100;
+
 export interface PhotoRepository {
+  /** Only verified, ownership-confirmed primary photos with nonblank alt text.
+   * IDs must already come from a caller-authorised listing read. Empty IDs return
+   * no rows, never all photos; more than the batch limit is refused. */
+  verifiedPrimariesForProducts(productIds: readonly string[]): Promise<StoredPhoto[]>;
+
   /** In display order: position, then when it was added. */
   listForProduct(productId: string): Promise<StoredPhoto[]>;
 

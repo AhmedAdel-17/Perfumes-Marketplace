@@ -14,7 +14,7 @@ export async function GET() {
     process.env.NODE_ENV !== 'development'
     || process.env.DIYAR_LOCAL_SELLER_PREVIEW !== 'true'
     || process.env.DATABASE_URL
-    || demoPath !== 'd:/diyar-local/tmp/diyar-mock-animation-preview/pg'
+    || !['d:/diyar-local/tmp/diyar-mock-animation-preview/pg','d:/diyar-local/tmp/diyar-backend-preview/pg'].includes(demoPath ?? '')
     || !['localhost:3100', '127.0.0.1:3100'].includes(request.get('host') ?? '')
     || request.get('sec-fetch-site') === 'cross-site'
   ) notFound();

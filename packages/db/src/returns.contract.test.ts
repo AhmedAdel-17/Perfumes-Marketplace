@@ -61,7 +61,7 @@ const harness = async (): Promise<ReturnContractWorld> => {
     const [product] = await db.insert(schema.products).values({
       sellerId: seller!.id, brandId: brand!.id,
       name: slug === WARD ? 'ورد الطائف' : 'ليل القاهرة',
-      slug: `${slug}-product`, sku, pricePiastres: price, volumeMl: ml,
+      slug: `${slug}-product`, sku, pricePiastres: price, volumeMl: ml, stock: 10,
       // The listing's own policy, which governs a change of mind and nothing
       // else. Different per house so a case cannot pass by coincidence.
       returnEligibility: slug === NOUR ? 'sealed_only' : 'defect_only',
@@ -139,12 +139,16 @@ const harness = async (): Promise<ReturnContractWorld> => {
     }
   }
 
+  // Timestamps can tie across inserted lines; derive the fixture owner from
+  // the actual first line rather than assuming a query-plan ordering.
+  const [firstLine] = await uow.transaction(r => r.returns.listReturnable({ reference: 'DY-FIRST001', phone: '01001110001' }));
+  const firstParcel = await uow.transaction(r => r.subOrders.findById(firstLine!.subOrderId));
   return {
     uow,
     first: { reference: 'DY-FIRST001', phone: '01001110001' },
     second: { reference: 'DY-SECOND02', phone: '01001110002' },
     undelivered: { reference: 'DY-INFLIGHT', phone: '01001110003' },
-    firstSellerId: sellerIdBySlug.get(NOUR)!,
+    firstSellerId: firstParcel!.sellerId,
     moderatorId: staff!.id,
   };
 };

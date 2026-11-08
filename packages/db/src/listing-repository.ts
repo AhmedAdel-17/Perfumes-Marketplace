@@ -6,7 +6,7 @@
  * apply — this file is not a way around either.
  */
 import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm';
-import { foldArabic } from '@diyar/domain';
+import { foldArabic, ListingStockConflict } from '@diyar/domain';
 import type {
   ListingDraft, ListingRecord, ListingRepository, ListingState,
   ModerationReason, QueuedListing,
@@ -99,6 +99,29 @@ const writableColumns = (input: ListingDraft) => ({
 }) as Partial<typeof schema.products.$inferInsert>;
 
 export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
+  // Keyset pagination avoids increasing OFFSET work and timestamp/UUID ties.
+  // Preserve microseconds in the cursor: serialising a Date would truncate them
+  // and skip rows that share the boundary's sub-millisecond timestamp.
+  async pageForSeller(sellerId, { limit, cursor }) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new RangeError('Invalid listing page size');
+    const rows = await db.select({
+      product: schema.products,
+      cursorTime: sql<string>`to_char(${schema.products.updatedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
+    }).from(schema.products)
+      .where(and(
+        eq(schema.products.sellerId, sellerId),
+        cursor ? sql`(${schema.products.updatedAt}, ${schema.products.id}) < (${cursor.updatedAt}::timestamptz, ${cursor.id}::uuid)` : undefined,
+      ))
+      .orderBy(desc(schema.products.updatedAt), desc(schema.products.id))
+      .limit(limit + 1);
+    const page = rows.slice(0, limit);
+    const last = page.at(-1);
+    return {
+      items: page.map((row) => toRecord(row.product)),
+      nextCursor: rows.length > limit && last ? { updatedAt: last.cursorTime, id: last.product.id } : null,
+    };
+  },
+
   async listForSeller(sellerId) {
     const rows = await db.select().from(schema.products)
       .where(eq(schema.products.sellerId, sellerId))
@@ -146,7 +169,7 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
     return toRecord(row!);
   },
 
-  async update(id, sellerId, input) {
+  async update(id, sellerId, input, expectedStock) {
     /*
      * The searchable text is recomputed on EVERY update, not only when the name
      * changes.
@@ -185,9 +208,15 @@ export const listingRepository = (db: DiyarDatabase): ListingRepository => ({
       ...(next?.notesTop ?? []), ...(next?.notesHeart ?? []), ...(next?.notesBase ?? []),
     ].join(' '));
 
-    await db.update(schema.products)
+    const writesStock = input.stock !== undefined && input.stock !== null;
+    // The comparison belongs in UPDATE itself: a preceding SELECT would race
+    // checkout/dispatch and could restore stock already consumed by an order.
+    const written = await db.update(schema.products)
       .set({ ...writableColumns(input), searchText })
-      .where(and(eq(schema.products.id, id), eq(schema.products.sellerId, sellerId)));
+      .where(and(eq(schema.products.id, id), eq(schema.products.sellerId, sellerId),
+        writesStock ? eq(schema.products.stock, expectedStock ?? input.stock!) : undefined))
+      .returning({ id: schema.products.id });
+    if (writesStock && written.length === 0) throw new ListingStockConflict();
   },
 
   async move(id, to, input) {

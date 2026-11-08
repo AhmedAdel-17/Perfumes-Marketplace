@@ -2,7 +2,7 @@
 
 Owner: Codex. Date: 6 November 2026.
 Branch: `codex/diyar-seller-workspace`, based on fetched main `5dd1891`.
-Local only: no push, remote branch, PR, deployment, migration or live-data change.
+Local only: no push, remote branch, PR, deployment, production/staging migration or live-data change.
 
 ## Implemented scope
 
@@ -30,9 +30,7 @@ to a fictitious customer, promotional or staff-management capability.
 
 All records come through existing seller sessions, API ports and RLS. The profile
 endpoint has no seller selector and exposes only current-context public house metadata.
-Catalogue photo reads stay inside one seller-scoped transaction (one listing read
-plus one existing photo-port read per listing). This query cost should be revisited
-if catalogue size requires pagination; no platform/global media reads were added.
+Catalogue photo reads stay inside the seller-scoped transaction and now use verified-primary batches of at most 100 product IDs. The compatible full-list endpoint costs 1 + ceil(N/100) reads; the opt-in keyset endpoint uses at most two reads per page. No platform/global media access was added.
 
 Existing `sub_orders.delivered_at` is now exposed through the queue port/SQL/memory
 adapter and API. It does not require a migration. Gross delivery value is merchandise
@@ -53,15 +51,9 @@ Focused model/copy/dependency/API/adapter checks, web strict types, production b
 and local Chrome responsive/interaction/accessibility checks are recorded in the
 completion response. Screenshots are generated locally and are not committed.
 
-The screenshot's Reserved column, movement history and reasoned stock adjustment
-require an inventory-reservation/movement implementation. Those controls are not
-invented here. Stock editing uses the established listing workflow.
+The inventory backend now supports reserved/available quantities, an immutable movement history and reasoned CAS/idempotent adjustments. The existing product listing still displays physical recorded stock; no warehouse or variant allocation UI is claimed.
 
-Customer rankings remain blocked by deliberate parent-order/customer RLS: seller
-suborders carry delivery recipients, not stable buyer identities. Do not group by
-recipient phone/name or grant broad parent-order access. A separately approved
-narrow owner-only aggregate returning per-seller pseudonyms is the next design step;
-public shoutouts still require explicit permission. No loyalty/reward policy added.
+Customer rankings are now implemented as an explicitly authorized private owner-only named leaderboard and own-brand purchase profile at /seller/customers. Existing customer/parent-order RLS remains unchanged; the capability functions independently check active ownership. Profiles expose customer-provided name and own completed-order references/dates, not contact details or other-brand history. Public shoutouts still require separate permission. No loyalty/reward policy was added.
 
 Seller pages now support Arabic and English via the shared AR / EN switch and
 `/en/seller/...` routing. Product names and customer-entered content remain as recorded. Staff
@@ -72,7 +64,7 @@ CRUD, promotions and public customer recognition are not part of this local vers
 `/seller/local-preview` is an explicitly requested temporary developer entry. It
 creates a real revocable session for a seeded brand only when ALL are true:
 NODE_ENV=development; DIYAR_LOCAL_SELLER_PREVIEW=true; DATABASE_URL absent;
-PGLITE_DIR equals the named isolated demo directory; host is loopback port3100;
+PGLITE_DIR equals one of the two explicitly named isolated demo directories (diyar-mock-animation-preview/pg or diyar-backend-preview/pg under D:/DIYAR-local/tmp); host is loopback port3100;
 request is not cross-site. Otherwise 404. Production sign-in is unchanged.
 Remove this developer adapter or leave its flag unset before sharing a deployed build.
 
@@ -107,3 +99,7 @@ Verification: 13 focused locale-routing, translation, copy-layer and CSV tests p
 browser checks across six English pages at 360/768/1440, product editor labels,
 chart keyboard interaction, order search/detail, AR/EN round trip, English sign-in
 and main-content accessibility. No remote writes or deployment.
+
+## Backend follow-up — 8 November 2026
+
+See SELLER_BACKEND_REFINEMENTS.md for inventory, catalogue, customer and refund safeguards and remaining financial policy/provider boundaries. A fresh diyar-backend-preview fixture was created for final UI checks; the original local preview and ZIP workspace were preserved. New migration sources were applied only to disposable tests and this new isolated synthetic demo, never production/staging.

@@ -113,13 +113,15 @@ export const returnRepository = (db: DiyarDatabase): ReturnRepository => {
           state: schema.subOrders.state,
           deliveredAt: schema.subOrders.deliveredAt,
           eligibility: schema.products.returnEligibility,
-          existingReturn: schema.returns.id,
+          existingReturn: sql<boolean>`EXISTS (
+            SELECT 1 FROM returns prior WHERE prior.sub_order_id = ${schema.subOrders.id}
+              AND (prior.line_item_id = ${schema.orderLineItems.id} OR prior.line_item_id IS NULL)
+          )`,
         })
         .from(schema.orderLineItems)
         .innerJoin(schema.subOrders, eq(schema.subOrders.id, schema.orderLineItems.subOrderId))
         .innerJoin(schema.orders, eq(schema.orders.id, schema.subOrders.orderId))
         .innerJoin(schema.products, eq(schema.products.id, schema.orderLineItems.productId))
-        .leftJoin(schema.returns, eq(schema.returns.lineItemId, schema.orderLineItems.id))
         .where(and(
           eq(schema.orders.reference, reference),
           eq(schema.orders.contactPhone, phone),
@@ -145,7 +147,7 @@ export const returnRepository = (db: DiyarDatabase): ReturnRepository => {
          */
         deliveredAt: r.state === 'delivered' ? r.deliveredAt : null,
         eligibility: (r.eligibility ?? null) as ReturnEligibility | null,
-        alreadyRequested: r.existingReturn !== null,
+        alreadyRequested: r.existingReturn,
       }));
     },
 
@@ -153,27 +155,41 @@ export const returnRepository = (db: DiyarDatabase): ReturnRepository => {
       const trimmed = note.trim();
 
       /*
-       * INSERT ... SELECT, with both factors as the predicate.
+       * Transaction-scoped advisory lock: two independent requests must not
+       * both observe the absence of a return. NOT EXISTS alone is not a
+       * concurrency guard under READ COMMITTED. Authorise the parcel through its line and both
+       * factors before locking it; an invalid caller cannot lock a stranger's
+       * purchase. A separate INSERT statement below obtains a fresh snapshot
+       * after any preceding requester commits.
        *
-       * The `NOT EXISTS` is the "one request per bottle" rule. There is no
-       * unique index on `returns.line_item_id` — a whole-parcel return leaves it
-       * null, and a unique index over a nullable column would still permit two
-       * of those — so the guard is here, inside the same statement, rather than
-       * as a read followed by a write that another request can interleave with.
+       * A row lock would require UPDATE access under RLS. Aftercare deliberately
+       * has SELECT-only access to order lines, so keep that boundary intact.
+       * The enclosing UnitOfWork transaction owns and releases this lock.
        */
+      await execute(db, sql`
+        SELECT pg_advisory_xact_lock(hashtextextended('return-scope:' || li.sub_order_id::text, 0))
+        FROM order_line_items li
+        JOIN sub_orders s ON s.id = li.sub_order_id
+        JOIN orders o ON o.id = s.order_id
+        WHERE li.id = ${lineItemId}
+          AND o.reference = ${reference}
+          AND o.contact_phone = ${phone}
+      `);
+
       const inserted = await execute<{ id: string }>(db, sql`
         INSERT INTO returns (sub_order_id, line_item_id, reason, customer_note,
                              cost_bearer, status, requested_at)
         SELECT li.sub_order_id, li.id, ${reason}::reason_code,
                ${trimmed.length === 0 ? null : trimmed},
-               ${costBearer}::cost_bearer, 'requested', ${now}
+               ${costBearer}::cost_bearer, 'requested', ${now.toISOString()}::timestamptz
         FROM order_line_items li
         JOIN sub_orders s ON s.id = li.sub_order_id
         JOIN orders o     ON o.id = s.order_id
         WHERE li.id = ${lineItemId}
           AND o.reference = ${reference}
           AND o.contact_phone = ${phone}
-          AND NOT EXISTS (SELECT 1 FROM returns r WHERE r.line_item_id = li.id)
+          AND NOT EXISTS (SELECT 1 FROM returns r WHERE r.sub_order_id = li.sub_order_id
+            AND (r.line_item_id = li.id OR r.line_item_id IS NULL))
         RETURNING id
       `);
 

@@ -55,12 +55,12 @@ export async function createListing(
 }
 
 export async function saveListing(
-  id: string, draft: Record<string, unknown>,
+  id: string, draft: Record<string, unknown>, expectedStock?: number,
 ): Promise<ListingResult> {
   const call = await caller();
   if (!call) return EXPIRED;
   try {
-    const result = await call.listings.save({ id, draft: draft as never });
+    const result = await call.listings.save({ id, draft: draft as never, ...(expectedStock === undefined ? {} : { expectedStock }) });
     revalidatePath(`/seller/listings/${id}`);
     return { ok: true, gaps: result.gaps, claims: result.claims };
   } catch (error) {

@@ -68,6 +68,15 @@ const limit = (name: Parameters<typeof consume>[0], key: string): void => {
 };
 
 
+/** A retry acknowledges a recorded fact; it cannot replace amount or allocation. */
+const isRecordedRefundReplay = (
+  record: ReturnRecord, to: ReturnState, amount: number | undefined,
+  costBearer: ReturnRecord['costBearer'] | undefined,
+): boolean => to === 'refunded'
+  && (record.state === 'refunded' || record.state === 'closed')
+  && record.refund !== null && record.refund.minor === amount
+  && (costBearer === undefined || costBearer === record.costBearer);
+
 export const returnsRouter = router({
   /**
    * What this order could ask to send back, already judged.
@@ -182,8 +191,8 @@ export const returnsRouter = router({
 
         /*
          * Null here means the row was taken between the read above and this
-         * write — a double-tap, or two tabs. The `NOT EXISTS` inside the insert
-         * is what makes that safe; this is only how it is reported.
+         * write — a double-tap, or two tabs. The scoped transaction lock and `NOT EXISTS` recheck
+         * inside the repository make that safe; this is only how it is reported.
          */
         if (!asked) {
           throw new TRPCError({
@@ -265,7 +274,8 @@ export const returnsRouter = router({
     }),
 
   /**
-   * The platform's decision, including the one that moves money.
+   * The platform's recorded decision, including the refund amount.
+   * This does not execute a gateway transfer or post a settlement adjustment.
    *
    * `refundPiastres` is accepted only alongside `refunded`, and the domain
    * refuses to reach `refunded` from anywhere but `received` — so a refund
@@ -300,6 +310,12 @@ export const returnsRouter = router({
         const found = await r.returns.findById(input.id);
         if (!found) throw new TRPCError({ code: 'NOT_FOUND', message: 'طلب الإرجاع غير موجود' });
 
+        if (isRecordedRefundReplay(found, input.to, input.refundPiastres, input.costBearer)) {
+          return { state: found.state };
+        }
+        if (input.to === 'refunded' && found.refund !== null) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'المبلغ المردود مسجّل بالفعل ولا يمكن تغييره' });
+        }
         ReturnLifecycle.assert(found.state, input.to as ReturnState, 'platform');
 
         const moved = await r.returns.move({
@@ -312,15 +328,20 @@ export const returnsRouter = router({
           now: ctx.clock.now(),
         });
         if (!moved) {
+          // A competing identical request may have committed while this one
+          // waited on the conditional UPDATE. Acknowledge its existing fact.
+          const current = await r.returns.findById(input.id);
+          if (current && isRecordedRefundReplay(current, input.to, input.refundPiastres, input.costBearer)) {
+            return { state: current.state };
+          }
           throw new TRPCError({ code: 'CONFLICT', message: 'تغيّرت حالة الطلب. حدّث الصفحة.' });
         }
 
         /*
-         * Money moving, and who moved it.
-         *
-         * A refund is an adjustment to what a house is owed, so it belongs in
-         * the audit trail beside payout approvals — doc 04 §8 names exactly
-         * this class of decision.
+         * Financial decisions remain attributable. The database captures the
+         * immutable refund fact in this same transaction; this audit entry says
+         * who recorded it. Provider execution and settlement postings are
+         * separate work, not evidence implied by the recorded status.
          */
         if (input.to === 'refunded' || input.costBearer !== undefined) {
           await r.audit.record({

@@ -54,6 +54,8 @@ export const products = pgTable('products', {
   promoPricePiastres: integer('promo_price_piastres'),
   volumeMl: integer('volume_ml').notNull(),
   stock: integer('stock').default(0).notNull(),
+  /** Trigger-maintained holds; seller edits cannot write this counter. */
+  reservedStock: integer('reserved_stock').default(0).notNull(),
   fulfilmentHours: integer('fulfilment_hours').default(48).notNull(),
 
   /* product */
@@ -111,6 +113,7 @@ export const products = pgTable('products', {
     columns: [t.brandId, t.sellerId],
     foreignColumns: [brands.id, brands.sellerId],
   }).onDelete('restrict'),
+  index('products_seller_updated_page_idx').on(t.sellerId,t.updatedAt.desc(),t.id.desc()),
   uniqueIndex('products_slug_key').on(t.slug),
   uniqueIndex('products_seller_sku_key').on(t.sellerId, t.sku),
   index('products_status_idx').on(t.status),

@@ -2,10 +2,12 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import {
   inspectClaims, isRefused, listingGaps, LISTING_STATES, MODERATION_REASONS,
-  moveListing, nextListingStates, type ListingDraft,
+  moveListing, nextListingStates, PRIMARY_PHOTO_BATCH_LIMIT, type ListingDraft,
+  type ListingRecord, type PhotoRepository, type StoredPhoto,
 } from '@diyar/domain';
 import { platformProcedure, router, sellerProcedure } from '../trpc';
 import { listingDraftSchema, newListingSchema } from '../listing-validation';
+import type { MediaStore } from '../providers/media';
 
 /**
  * Listings — a house writing them, and the platform deciding.
@@ -29,45 +31,64 @@ function houseOrThrow(ctx: { sellerId: string | null }): string {
   return ctx.sellerId;
 }
 
+/** Batch projection over already-owned listing IDs. Never accepts product IDs
+ * from the browser; every bounded photo read stays in the seller's Unit of Work. */
+async function catalogueRows(rows: readonly ListingRecord[], photos: PhotoRepository, media: MediaStore) {
+  const primaryByProduct = new Map<string, StoredPhoto>();
+  for (let offset = 0; offset < rows.length; offset += PRIMARY_PHOTO_BATCH_LIMIT) {
+    const batch = rows.slice(offset, offset + PRIMARY_PHOTO_BATCH_LIMIT).map((listing) => listing.id);
+    for (const photo of await photos.verifiedPrimariesForProducts(batch)) primaryByProduct.set(photo.productId, photo);
+  }
+  return rows.map((listing) => {
+    const primary = primaryByProduct.get(listing.id);
+    return {
+      id: listing.id,
+      name: listing.name ?? '',
+      slug: listing.slug ?? '',
+      sku: listing.sku ?? '',
+      state: listing.state,
+      // Preserve the legacy numeric contract while identifying unrecorded values.
+      pricePiastres: listing.pricePiastres ?? 0,
+      priceRecorded: listing.pricePiastres !== null && listing.pricePiastres !== undefined,
+      stock: listing.stock ?? 0,
+      stockRecorded: listing.stock !== null && listing.stock !== undefined,
+      primaryPhoto: primary ? {
+        url: media.publicUrl(primary.storageKey), alt: primary.alt,
+        width: primary.width, height: primary.height,
+      } : null,
+      moderationReason: listing.moderationReason,
+      canMoveTo: nextListingStates(listing.state, 'seller'),
+    };
+  });
+}
+
 export const listingsRouter = router({
   /* ------------------------------------------------------------- the house */
 
+  // Backwards compatible: existing clients still receive the complete array.
+  // Read cost is 1 + ceil(N / 100), rather than 1 + N per-listing photo queries.
   mine: sellerProcedure.query(async ({ ctx }) => {
     const sellerId = houseOrThrow(ctx);
-    // Owned listing ids come first, under the request's seller RLS context.
-    // The existing photo port reads one product at a time: 1 + N queries in
-    // ONE transaction, with no platform/global media read or extra grants.
-    return ctx.uow.transaction(async (r) => {
-      const rows = await r.listings.listForSeller(sellerId);
-      return Promise.all(rows.map(async (listing) => {
-        const photos = await r.photos.listForProduct(listing.id);
-        const primary = photos.find((photo) => photo.isPrimary
-          && photo.ownershipConfirmed && photo.alt.trim().length > 0
-          && photo.contentType !== null);
-        return {
-          id: listing.id,
-          name: listing.name ?? '',
-          slug: listing.slug ?? '',
-          sku: listing.sku ?? '',
-          state: listing.state,
-          // Keep the established numeric contract; distinguish unrecorded
-          // draft values so the UI never labels missing stock as sold out.
-          pricePiastres: listing.pricePiastres ?? 0,
-          priceRecorded: listing.pricePiastres !== null && listing.pricePiastres !== undefined,
-          stock: listing.stock ?? 0,
-          stockRecorded: listing.stock !== null && listing.stock !== undefined,
-          primaryPhoto: primary ? {
-            url: ctx.media.publicUrl(primary.storageKey),
-            alt: primary.alt,
-            width: primary.width,
-            height: primary.height,
-          } : null,
-          moderationReason: listing.moderationReason,
-          canMoveTo: nextListingStates(listing.state, 'seller'),
-        };
-      }));
-    });
+    return ctx.uow.transaction(async (r) => catalogueRows(
+      await r.listings.listForSeller(sellerId), r.photos, ctx.media,
+    ));
   }),
+
+  /** Opt-in page contract for larger catalogues; no silent truncation of mine. */
+  minePage: sellerProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(PRIMARY_PHOTO_BATCH_LIMIT).default(50),
+      cursor: z.object({ updatedAt: z.string().datetime({ offset: true }), id: z.string().uuid() }).strict().optional(),
+    }).strict().optional())
+    .query(async ({ ctx, input }) => {
+      const sellerId = houseOrThrow(ctx);
+      return ctx.uow.transaction(async (r) => {
+        const page = await r.listings.pageForSeller(sellerId, {
+          limit: input?.limit ?? 50, ...(input?.cursor ? { cursor: input.cursor } : {}),
+        });
+        return { items: await catalogueRows(page.items, r.photos, ctx.media), nextCursor: page.nextCursor };
+      });
+    }),
 
   /**
    * The house's own brand, needed to create a listing.
@@ -142,7 +163,7 @@ export const listingsRouter = router({
     }),
 
   save: sellerProcedure
-    .input(z.object({ id: z.string().uuid(), draft: listingDraftSchema }))
+    .input(z.object({ id: z.string().uuid(), draft: listingDraftSchema, expectedStock: z.number().int().min(0).max(100000).optional() }))
     .mutation(async ({ ctx, input }) => {
       const sellerId = houseOrThrow(ctx);
 
@@ -150,7 +171,14 @@ export const listingsRouter = router({
         const listing = await r.listings.findForSeller(input.id, sellerId);
         if (!listing) throw new TRPCError({ code: 'NOT_FOUND', message: 'المنتج غير موجود' });
 
-        await r.listings.update(input.id, sellerId, input.draft as ListingDraft);
+        try {
+          await r.listings.update(input.id, sellerId, input.draft as ListingDraft, input.expectedStock);
+        } catch (error) {
+          if (error && typeof error === 'object' && 'code' in error && error.code === 'LISTING_STOCK_CONFLICT') {
+            throw new TRPCError({ code: 'CONFLICT', message: 'تغيّر المخزون منذ تحميل المنتج. أعد تحميله وراجع الكمية قبل الحفظ.' });
+          }
+          throw error;
+        }
 
         const merged = { ...listing, ...input.draft } as ListingDraft;
         const primaryImage = await r.listings.hasPrimaryImage(input.id);

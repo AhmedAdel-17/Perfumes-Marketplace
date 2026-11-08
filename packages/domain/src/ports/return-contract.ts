@@ -221,6 +221,7 @@ export const returnContract: readonly ReturnContractCase[] = [
     async run(setup) {
       const { uow, first, moderatorId } = await setup();
       const [line] = await uow.transaction((r) => r.returns.listReturnable(first));
+      const refundMinor = line!.unitPrice.minor * line!.quantity;
       const asked = await uow.transaction((r) => r.returns.request({
         ...first, lineItemId: line!.lineItemId,
         reason: 'defective', note: 'عيب', costBearer: 'seller', now: NOW,
@@ -236,14 +237,22 @@ export const returnContract: readonly ReturnContractCase[] = [
 
       equal(await uow.transaction((r) => r.returns.move({
         id: asked!.id, expectedFrom: 'received', to: 'refunded',
-        decidedBy: moderatorId, refundPiastres: 45_000, costBearer: 'seller', now: NOW,
+        decidedBy: moderatorId, refundPiastres: refundMinor, costBearer: 'seller', now: NOW,
       })), true, 'refunding a received return');
 
       const row = await uow.transaction((r) => r.returns.findById(asked!.id));
       equal(row!.state, 'refunded', 'the state');
       // Money crosses the boundary as Money. A bare number would let a caller
       // do float arithmetic on a refund.
-      equal(row!.refund?.minor, 45_000, 'the refund');
+      equal(row!.refund?.minor, refundMinor, 'the refund');
+
+      equal(await uow.transaction((r) => r.returns.move({
+        id: asked!.id, expectedFrom: 'received', to: 'refunded',
+        decidedBy: moderatorId, refundPiastres: refundMinor + 1, now: NOW,
+      })), false, 'replayed refund cannot replace the recorded amount');
+      const unchanged = await uow.transaction((r) => r.returns.findById(asked!.id));
+      equal(unchanged!.refund?.minor, refundMinor, 'first recorded refund survives a stale retry');
+
     },
   },
 

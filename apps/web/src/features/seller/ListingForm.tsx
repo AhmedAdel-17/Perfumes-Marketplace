@@ -24,7 +24,7 @@ import { useSellerCopy } from '@/features/seller/use-seller-copy';
  * matched words quoted. Being told after submission that a sentence was
  * refused teaches nothing about which sentence.
  */
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { statusPill } from '@/features/shell/status-pill';
 import {
@@ -335,6 +335,10 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
 
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>({ ...listing });
+  // Keep the version paired with this draft, not a newer background/photo
+  // refresh. Advancing it without replacing the draft would allow stale stock
+  // to overwrite dispatch consumption.
+  const expectedStock = useRef(typeof listing.stock === 'number' ? listing.stock : undefined);
   const [state, setState] = useState<ListingState>(listing.state);
   const [gaps, setGaps] = useState<readonly ListingGap[]>(listing.gaps);
   const [claims, setClaims] = useState<readonly ClaimFinding[]>(listing.claims);
@@ -369,14 +373,20 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
     );
   };
 
+  const rememberSavedStock = (refresh = true) => {
+    if (typeof draft.stock === 'number') expectedStock.current = draft.stock;
+    if (refresh) router.refresh();
+  };
+
   const save = () => startTransition(async () => {
     setMessage(null);
     try {
-      const result = await saveListing(listing.id, payload());
+      const result = await saveListing(listing.id, payload(), expectedStock.current);
       setMessage(result.ok ? null : result.message ?? t("Could not save."));
       setGaps(result.gaps ?? []);
       setClaims(result.claims ?? []);
       setSaved(result.ok);
+      if (result.ok) rememberSavedStock();
     } catch {
       setMessage(t("Could not connect. Your edits are still here; check your connection and save again."));
       setSaved(false);
@@ -389,8 +399,9 @@ export function ListingForm({ listing }: { listing: ListingFormInput }) {
       // Save editable work before submitting. Locked pending/archived listings
       // must transition directly: saving them is deliberately forbidden by the API.
       const write: ListingResult = isListingEditableBySeller(state)
-        ? await saveListing(listing.id, payload()) : { ok: true };
+        ? await saveListing(listing.id, payload(), expectedStock.current) : { ok: true };
       if (!write.ok) { setMessage(write.message ?? t("Could not save.")); return; }
+      if (isListingEditableBySeller(state)) rememberSavedStock(false);
       const result = to === 'pending_moderation'
         ? await submitListing(listing.id)
         : to === 'draft'

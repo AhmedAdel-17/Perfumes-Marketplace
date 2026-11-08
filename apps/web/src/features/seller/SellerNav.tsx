@@ -11,6 +11,7 @@ const destinations = [
  { key:'listings', href:'/seller/listings', label:"Products & stock", icon:Icon.Vial },
  { key:'returns', href:'/seller/returns', label:"Returns", icon:Icon.Return },
  { key:'payouts', href:'/seller/payouts', label:"Payouts & statements", icon:Icon.Card },
+ { key:'customers', href:'/seller/customers', label:'Customers', icon:Icon.User },
  { key:'settings', href:'/seller/settings', label:"Account & help", icon:Icon.User },
 ] as const;
 export type SellerSection = typeof destinations[number]['key'];
