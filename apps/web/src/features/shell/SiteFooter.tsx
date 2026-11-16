@@ -106,7 +106,22 @@ export async function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line pt-3">
+        {/*
+          The name, once, at the width of the page (identity v3): drawn as an
+          outline in the hairline's own colour, so it closes the page like an
+          embossing on the lid of a box rather than a headline. A drawing, not
+          text — the footer already says DIYAR in words, beside the mark above.
+        */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1000 206"
+          className="footer-mark mt-9 block w-full lg:mt-[72px]"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <text x="500" y="176" textAnchor="middle" textLength="972" lengthAdjust="spacing">DIYAR</text>
+        </svg>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line pt-3">
           <span className="text-small text-ink3">{copy.copyright}</span>
           {pages.length > 0 && (
             <nav aria-label={copy.footerInformation}>

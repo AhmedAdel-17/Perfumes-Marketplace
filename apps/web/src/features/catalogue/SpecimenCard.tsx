@@ -3,7 +3,6 @@ import type { ProductCard } from '@/core/catalogue';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { writeKit } from '@/features/product/reveal/kit';
-import { BandReading } from './BandReading';
 import { NoteIconMark } from './NoteChip';
 import { glassPalette, scentFamily } from '@diyar/tokens';
 import {
@@ -19,23 +18,22 @@ export interface CardRating {
 }
 
 /**
- * One perfume as a SPECIMEN (identity v2 — `.item` in 04-laboratoire.html):
- * a paper card with its photograph, its name, the three facts a comparison
- * turns on, and its price.
+ * One perfume on the shelf (identity v3, 16 Nov 2026 — replacing the ruled
+ * specimen card of identity v2).
  *
- * The idea the identity is built on is that the catalogue schema IS the look:
- * family, strength and longevity are printed as a label's rows, in the same
- * order on every card, so a grid of them can be read across like a register.
- * Longevity always carries its source — see BandReading.
+ * THE PHOTOGRAPH IS THE CARD. The v2 card printed three ruled rows under a
+ * square photograph, so a grid of perfumes read as a grid of forms; the
+ * founder's verdict was that it did not make anyone want a perfume. The
+ * photograph is now a tall 4:5 plate with nothing around it, and under it the
+ * card says only what a shelf-edge says: the house, the name, one line of what
+ * kind of perfume it is, and the price. Longevity is NOT here: a band is never
+ * printed without its source (`BandReading`), and a card has no room to say
+ * both well — so both are on the perfume's own page, side by side.
  *
- * The rows step aside below `sm`. Two columns at 360px leave a card about 160px
- * wide, where three label rows become three lines of wrapped fragments; the
- * name and the price are what a phone grid is for, and the product page has
- * the rest.
- *
- * Hover darkens the frame and eases the photograph in by 4% over the slow
- * duration. Nothing lifts and nothing gains a shadow: depth is value, never
- * shadow (DESIGN_DOCTRINE).
+ * Under the pointer: the photograph eases in by 4% over `ceremony`, a
+ * passe-partout line draws inside the frame, and the blotter comes up with the
+ * top notes (`Blotter`). Nothing lifts and nothing gains a shadow — depth is
+ * value, never shadow (DESIGN_DOCTRINE).
  */
 export function SpecimenCard({
   product, locale, rating, sizes = '(min-width: 1024px) 25vw, 50vw',
@@ -47,68 +45,61 @@ export function SpecimenCard({
 }) {
   const name = pick(locale, product.name, product.nameEn);
   const copy = HOME[locale];
-  const strength = [labelOf(CONCENTRATION, locale, product.concentration), `${num(product.volumeMl)} ${PRODUCT[locale].ml}`]
-    .filter(Boolean)
-    .join(' · ');
+  const kind = [
+    labelOf(SCENT_FAMILY, locale, product.family),
+    labelOf(CONCENTRATION, locale, product.concentration),
+    `${num(product.volumeMl)} ${PRODUCT[locale].ml}`,
+  ].filter(Boolean).join(' · ');
   const href = localeHref(locale, `/p/${product.slug}`);
   // Le Dévoilement as the way in: the first press in a visit lifts this photograph into the reveal (RevealDirector).
   const kit = writeKit(product, href, name);
 
   return (
-    <Link
-      href={href}
-      data-reveal-card={kit}
-      className="group flex h-full flex-col border border-line bg-raised transition-colors duration-base ease-out hover:border-ink"
-    >
-      <div data-reveal-frame={kit ? '' : undefined} className="relative aspect-square overflow-hidden border-b border-line bg-plate">
+    <Link href={href} data-reveal-card={kit} className="perfume-card group flex h-full flex-col">
+      <div data-reveal-frame={kit ? '' : undefined} className="card-plate relative aspect-[4/5] overflow-hidden bg-plate">
         {product.photo ? (
           <ProductPhoto
             photo={product.photo}
             sizes={sizes}
-            className="transition-transform duration-slow ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
+            className="transition-transform duration-ceremony ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
           />
         ) : (
           <Flacon
             family={product.family}
             house={product.brandLatin}
             uid={`card-${product.id}`}
-            className="absolute inset-0 h-full w-full px-[22%] py-[8%]"
+            className="absolute inset-0 h-full w-full px-[24%] py-[12%]"
           />
         )}
         {product.topNotes.length > 0 && <Blotter product={product} locale={locale} />}
+        {!product.inStock && (
+          <span className="absolute bottom-3 start-3 z-[2] border border-line bg-raised px-2.5 py-1 text-small text-ink2">
+            {PRODUCT[locale].outOfStock}
+          </span>
+        )}
       </div>
       {product.topNotes.length > 0 && (
         <span className="sr-only">{copy.firstImpressionSaid(firstNotes(product, locale).map((n) => n.text).join(copy.listSeparator))}</span>
       )}
 
-      <div className="px-4 pb-3 pt-4">
-        <span className="latin block text-micro tracking-label text-ink3 lg:text-caption">{product.brandLatin}</span>
-        <span {...langAttrs(locale, name.lang)} className="mt-0.5 block font-display text-h4 leading-heading transition-colors duration-base ease-out group-hover:text-accent lg:text-h3">
+      <div className="flex flex-1 flex-col pt-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="latin text-micro tracking-label text-ink3 lg:text-caption">{product.brandLatin}</span>
+          {rating && rating.count > 0 && rating.overall !== null && (
+            <span className="shrink-0 text-small text-ink2">
+              <span className="tnum">{rating.overall.toFixed(1)}</span>{' '}
+              <span className="tnum">{copy.reviewsCount(num(rating.count))}</span>
+            </span>
+          )}
+        </div>
+        <span {...langAttrs(locale, name.lang)} className="mt-1 block font-display text-h4 leading-heading transition-colors duration-base ease-out group-hover:text-accent lg:text-h3">
           {name.text}
         </span>
-      </div>
-
-      <dl className="hidden border-t border-line text-small sm:block">
-        <Row label={copy.family}>{labelOf(SCENT_FAMILY, locale, product.family)}</Row>
-        {strength && <Row label={copy.strength}>{strength}</Row>}
-        {product.longevity && (
-          <Row label={PRODUCT[locale].longevity}>
-            <BandReading kind="longevity" reading={product.longevity} locale={locale} meter={false} />
-          </Row>
-        )}
-      </dl>
-
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-        <span className="text-bodyLg">
+        <span className="mt-1 block text-small text-ink2">{kind}</span>
+        <span className="card-price mt-auto block pt-3 text-bodyLg">
           <span className="tnum">{formatPrice(product.pricePiastres)}</span>
           <span className="latin ms-1.5 text-micro tracking-label text-ink2">{CURRENCY_LABEL}</span>
         </span>
-        {rating && rating.count > 0 && rating.overall !== null && (
-          <span className="text-small text-ink2">
-            <span className="tnum">{rating.overall.toFixed(1)}</span>{' '}
-            <span className="tnum">{copy.reviewsCount(num(rating.count))}</span>
-          </span>
-        )}
       </div>
     </Link>
   );
@@ -162,14 +153,5 @@ function Blotter({ product, locale }: { product: ProductCard; locale: Locale }) 
         ))}
       </span>
     </span>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[84px_1fr] items-baseline gap-3 border-b border-line px-4 py-1.5 last:border-b-0">
-      <dt className="text-ink3">{label}</dt>
-      <dd>{children}</dd>
-    </div>
   );
 }

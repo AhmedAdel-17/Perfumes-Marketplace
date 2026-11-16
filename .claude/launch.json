@@ -15,6 +15,20 @@
       "port": 3100
     },
     {
+      "name": "web-design",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/web", "run", "dev"],
+      "env": { "PGLITE_DIR": "./.data/pg-design", "MEDIA_DIR": "./.data/media-design", "NODE_OPTIONS": "--max-old-space-size=4096", "OPS_DEV_SIGN_IN": "1" },
+      "port": 3100
+    },
+    {
+      "name": "web-e2e",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/web", "run", "dev"],
+      "env": { "PGLITE_DIR": "./.data/pg-e2e", "MEDIA_DIR": "./.data/media-e2e", "OTP_OUTBOX": "C:/Users/ahmed/AppData/Local/Temp/claude/diyar-e2e-otp.jsonl", "NODE_OPTIONS": "--max-old-space-size=4096", "OPS_DEV_SIGN_IN": "0" },
+      "port": 3100
+    },
+    {
       "name": "experiences",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "4200", "--bind", "127.0.0.1"],

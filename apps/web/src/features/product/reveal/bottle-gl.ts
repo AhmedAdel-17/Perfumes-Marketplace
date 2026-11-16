@@ -46,9 +46,32 @@ uniform float uMirror;
 uniform float uOpacity;
 uniform float uRelight;
 varying vec2 vUv;
+// The cut-out's edge, smoothed (16 Nov 2026). A traced outline is a polygon,
+// and drawn 1:1 its staircase is the first thing the eye finds against a dark
+// room: the alpha is averaged over a small disc and re-sharpened, so the
+// silhouette reads as a lit edge of glass instead of a pair of scissors.
+float edgeAlpha(vec2 uv) {
+  vec2 r = uTexel * 1.6;
+  float a = texture2D(uCut, uv).a * 0.28;
+  a += texture2D(uCut, uv + vec2(r.x, 0.0)).a * 0.09;
+  a += texture2D(uCut, uv - vec2(r.x, 0.0)).a * 0.09;
+  a += texture2D(uCut, uv + vec2(0.0, r.y)).a * 0.09;
+  a += texture2D(uCut, uv - vec2(0.0, r.y)).a * 0.09;
+  a += texture2D(uCut, uv + r).a * 0.09;
+  a += texture2D(uCut, uv - r).a * 0.09;
+  a += texture2D(uCut, uv + vec2(r.x, -r.y)).a * 0.09;
+  a += texture2D(uCut, uv + vec2(-r.x, r.y)).a * 0.09;
+  return smoothstep(0.18, 0.82, a);
+}
 void main() {
   vec4 c = texture2D(uCut, vUv);
-  if (c.a < 0.01) discard;
+  float edge = edgeAlpha(vUv);
+  if (edge < 0.01) discard;
+  // How near the silhouette this pixel is: 0 deep inside, 1 at the edge.
+  vec2 w = uTexel * 7.0;
+  float inner = (texture2D(uCut, vUv + vec2(w.x, 0.0)).a + texture2D(uCut, vUv - vec2(w.x, 0.0)).a
+    + texture2D(uCut, vUv + vec2(0.0, w.y)).a + texture2D(uCut, vUv - vec2(0.0, w.y)).a) * 0.25;
+  float near = clamp(1.0 - inner, 0.0, 1.0);
   // A wide stencil: an 8-bit relief map steps, and a narrow one draws the steps.
   vec2 o = uTexel * 2.5;
   float hl = texture2D(uHeight, vUv - vec2(o.x, 0.0)).r;
@@ -58,16 +81,29 @@ void main() {
   vec3 n = normalize(vec3((hl - hr) * 3.6, (hd - hu) * 3.6, 1.0));
   vec3 l = normalize(uLight);
   vec3 h = normalize(l + vec3(0.0, 0.0, 1.0));
-  float diffuse = 0.84 + 0.16 * max(dot(n, l), 0.0);
-  float spec = pow(max(dot(n, h), 0.0), 64.0) * 0.9;
-  float rim = pow(1.0 - n.z, 1.7) * 0.32;
+  // A spot from above and to the side (16 Nov 2026): the face turned away
+  // from the light falls off properly, and the foot sits a step darker than
+  // the shoulder, as an object does under one lamp. It was 0.84–1.0 across the
+  // whole bottle, which is no light at all — the "flat sticker" look.
+  float facing = max(dot(n, l), 0.0);
+  float diffuse = 0.7 + 0.42 * facing;
+  float fall = mix(1.04, 0.86, smoothstep(0.15, 1.0, vUv.y));
+  float spec = pow(max(dot(n, h), 0.0), 72.0) * 1.05;
+  // Glass is brightest where the eye looks through it at a glancing angle:
+  // a thin rim of light on the edge facing the lamp.
+  float side = clamp(dot(normalize(vec2(vUv.x - 0.5, 0.5 - vUv.y) + 1e-4), normalize(l.xy + 1e-4)), 0.0, 1.0);
+  float rim = pow(1.0 - n.z, 1.6) * 0.3 + near * near * (0.22 + 0.5 * side);
   float band = vUv.x * 0.8 + vUv.y * 0.5 - uSweep;
-  float sheen = smoothstep(0.12, 0.0, abs(band)) * 0.2;
+  float sheen = smoothstep(0.1, 0.0, abs(band)) * 0.24;
   // Warm light, as a tungsten spot: never a screen's blue-white.
-  vec3 lit = c.rgb * diffuse + (spec + rim + sheen) * vec3(1.0, 0.97, 0.92);
+  vec3 base = c.rgb * diffuse * fall;
+  // A touch more body in the colours, the way a lit glass of liquid glows.
+  base = mix(vec3(dot(base, vec3(0.299, 0.587, 0.114))), base, 1.12);
+  vec3 lit = base + (spec + rim + sheen) * vec3(1.0, 0.95, 0.88);
   vec3 colour = mix(c.rgb, lit, uRelight);
-  float a = c.a * uOpacity;
-  if (uMirror > 0.5) { a *= 0.13 * smoothstep(0.55, 1.0, vUv.y); }
+  float a = edge * uOpacity;
+  // The reflection: only the foot, fading fast — a polished floor, not a mirror.
+  if (uMirror > 0.5) { a *= 0.17 * smoothstep(0.7, 1.0, vUv.y); }
   gl_FragColor = vec4(colour * a, a);
 }`;
 

@@ -23,7 +23,7 @@ function Bar({ value }: { value: number | null }) {
 
   return (
     <span
-      className="relative block h-[2px] w-full overflow-hidden bg-line"
+      className="relative block h-[3px] w-full overflow-hidden bg-line"
       aria-hidden="true"
     >
       <span
@@ -64,18 +64,18 @@ export function DimensionBars({ summary, locale }: { summary: ReviewSummary; loc
    * squeeze it into an auto-width column and draw a two-character-wide bar.
    */
   return (
-    <dl className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+    <dl className="mt-7 grid gap-x-8 gap-y-4 sm:grid-cols-2">
       {REVIEW_DIMENSIONS.map((dimension: ReviewDimension) => {
         const value = summary.byDimension[dimension];
         return (
           <div key={dimension} className="grid grid-cols-[1fr_auto] items-baseline gap-x-3">
-            <dt className="col-start-1 row-start-1 text-caption text-ink2">
+            <dt className="col-start-1 row-start-1 text-small text-ink2 lg:text-body">
               {REVIEW_DIMENSION[locale][dimension]}
             </dt>
-            <dd className="col-start-2 row-start-1 tnum text-caption text-ink">
+            <dd className="col-start-2 row-start-1 tnum text-small text-ink lg:text-body">
               {value === null ? '—' : formatRating(value)}
             </dd>
-            <dd className="col-span-2 row-start-2 -mt-1">
+            <dd className="col-span-2 row-start-2 mt-1">
               <Bar value={value} />
             </dd>
           </div>
@@ -97,7 +97,7 @@ export function OverallScore({ summary, locale }: { summary: ReviewSummary; loca
 
   return (
     <div className="flex items-baseline gap-2">
-      <span dir="ltr" className="tnum font-display text-h1 leading-none text-ink lg:text-h1Lg">
+      <span dir="ltr" className="tnum font-display text-h1Lg leading-none text-ink lg:text-displayLg">
         {formatRating(summary.overall)}
       </span>
       <span className="text-small text-ink3">

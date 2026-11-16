@@ -877,7 +877,7 @@
   .reveal-veil {
     position: absolute;
     inset: 0;
-    background: radial-gradient(120% 90% at 40% 45%, rgb(var(--c-raised)) 0%, rgb(var(--c-ground)) 55%, rgb(var(--c-sunken)) 100%);
+    background: radial-gradient(90% 80% at 40% 46%, rgb(var(--c-raised)) 0%, rgb(var(--c-ground)) 48%, rgb(var(--c-sunken)) 100%);
     opacity: 0;
     transition: opacity theme('transitionDuration.base') theme('transitionTimingFunction.inOut');
   }
@@ -900,9 +900,29 @@
     top: 0;
     z-index: 0;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(var(--c-ink) / 0.07), rgb(var(--c-ink) / 0.02) 60%, transparent);
+    background: radial-gradient(closest-side, rgb(var(--c-ink) / 0.13), rgb(var(--c-ink) / 0.04) 58%, transparent);
     opacity: 0;
     transition: opacity theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  /*
+    THE LAMP (16 Nov 2026). One beam from above the room onto the floor the
+    bottle stands on, widening as it falls and strongest where it lands — the
+    single light the doctrine's dark room was always described as having, and
+    never drew. It follows the bottle because it hangs from the plinth.
+  */
+  .reveal-plinth::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    width: 64%;
+    height: var(--beam, 600px);
+    transform: translateX(-50%);
+    clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+    background: linear-gradient(to bottom, transparent, rgb(var(--c-ink) / 0.025) 35%, rgb(var(--c-ink) / 0.07) 86%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 30%, black 70%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 30%, black 70%, transparent);
+    pointer-events: none;
   }
   .reveal[data-room='dark'] .reveal-plinth { opacity: 1; }
   .reveal-flier { position: fixed; z-index: 6; object-fit: cover; pointer-events: none; will-change: left, top, width, height, opacity; }
@@ -1246,5 +1266,209 @@
     content: '';
     position: absolute;
     inset: -8px;
+  }
+}
+
+/*
+  IDENTITY v3 — "VITRINE" (16 Nov 2026; DESIGN_DOCTRINE §12).
+
+  Identity v2 decided the palette, the faces and the finish, and none of that
+  changes here. What v2 never had was a ROOM: every page was an evenly lit
+  field of putty carrying ruled tables, which is honest and reads as a form.
+  v3 adds three things and only three — light crossing the wall, the mark's
+  doorway as the frame a perfume is seen through (features/shell/Arch.tsx),
+  and photographs at the size desire needs.
+
+  Every colour below is a role with an alpha, or a family colour handed in by a
+  component from the tokens. Nothing here names a value.
+*/
+@layer base {
+  /*
+    LIGHT, per theme. On paper it is daylight: the lightest surface, thinned.
+    In Noir it is the one lamp: the accent, barely there. Two strengths, so a
+    beam has a core and an edge instead of a hard band.
+
+    `--on-photo` is the role that reads as LIGHT in each theme — the white of
+    the paper, the bone of the ink — for a line drawn over a photograph, which
+    is the same photograph whichever way the page is lit.
+  */
+  :root,
+  [data-theme='light'] {
+    --shaft: rgb(var(--c-raised3) / 0.6);
+    --shaft-soft: rgb(var(--c-raised3) / 0.24);
+    --on-photo: var(--c-raised3);
+  }
+  [data-theme='dark'] {
+    --shaft: rgb(var(--c-accent) / 0.085);
+    --shaft-soft: rgb(var(--c-accent) / 0.032);
+    --on-photo: var(--c-ink);
+  }
+}
+
+@keyframes daylight-drift {
+  from { opacity: 0.82; transform: translateX(-1.5%); }
+  to { opacity: 1; transform: translateX(1.5%); }
+}
+/* A drop slides down its thread, and is gone before the end. */
+@keyframes thread-drop {
+  0% { transform: translateY(0); opacity: 0; }
+  18% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { transform: translateY(54px); opacity: 0; }
+}
+
+@layer components {
+  /*
+    THE ROOM'S LIGHT. Two beams through a window that is out of frame, falling
+    across the wall behind the doorway and fading before the fold. Drawn for
+    Arabic, where the doorway stands at the left, and mirrored for English by
+    the reading direction — so the light always comes from the photograph's
+    side, never across the words. It breathes very slowly, as light does when
+    a cloud passes; reduced motion holds it still (the global rule above).
+  */
+  .daylight {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transform: scaleX(calc(var(--forward) * -1));
+    -webkit-mask-image: linear-gradient(to bottom, black 48%, transparent 96%);
+    mask-image: linear-gradient(to bottom, black 48%, transparent 96%);
+  }
+  /* For a page whose photograph stands at the reading START (a perfume's own page). */
+  .daylight-start {
+    transform: scaleX(var(--forward));
+  }
+  .daylight::before {
+    content: '';
+    position: absolute;
+    inset: -12% -6%;
+    background:
+      linear-gradient(
+        68deg,
+        transparent 9%,
+        var(--shaft-soft) 15%,
+        var(--shaft) 23%,
+        var(--shaft-soft) 31%,
+        transparent 35%,
+        transparent 39%,
+        var(--shaft-soft) 43%,
+        var(--shaft) 48%,
+        var(--shaft-soft) 55%,
+        transparent 63%
+      ),
+      radial-gradient(48% 70% at 24% 6%, var(--shaft-soft), transparent 72%);
+    animation: daylight-drift calc(theme('transitionDuration.mist') * 5) theme('transitionTimingFunction.inOut') infinite alternate;
+  }
+
+  /* More below: a hairline at the foot of the opening, and a drop that runs down it. */
+  .scroll-thread {
+    position: absolute;
+    inset-inline-start: 50%;
+    bottom: 0;
+    width: 1px;
+    height: 56px;
+    background: theme('colors.line');
+  }
+  .scroll-thread::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    inset-inline-start: -2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: theme('colors.accent');
+    animation: thread-drop calc(theme('transitionDuration.mist') * 1.1) theme('transitionTimingFunction.inOut') infinite;
+  }
+
+  /*
+    THE PASSE-PARTOUT. Under the pointer a hairline settles inside the
+    photograph's edge, the way a mount sits inside a frame: it starts a little
+    large and comes to rest, never the other way (nothing grows toward you).
+  */
+  .card-plate::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    z-index: 1;
+    border: 1px solid rgb(var(--on-photo) / 0.78);
+    opacity: 0;
+    transform: scale(1.035);
+    pointer-events: none;
+    transition:
+      opacity theme('transitionDuration.base') theme('transitionTimingFunction.out'),
+      transform theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .group:hover .card-plate::after,
+  .group:focus-visible .card-plate::after {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    LES ACCORDS. The liquid is the family's colour seen through glass: deep at
+    the foot, lit toward its surface, with the meniscus as one line of light
+    and the vial's highlight as a band beside it. Under the pointer it rises a
+    little and settles — stirred, not filled.
+  */
+  .accord-liquid {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: var(--accord-level);
+    background: linear-gradient(to top, var(--accord-edge), var(--accord-core) 94%);
+    transform-origin: bottom;
+    transition: transform theme('transitionDuration.ceremony') theme('transitionTimingFunction.out');
+  }
+  .accord-liquid::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: var(--accord-light);
+  }
+  .accord-liquid::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 0;
+    inset-inline-start: 12%;
+    width: 8%;
+    background: linear-gradient(to bottom, var(--accord-light), transparent 72%);
+    opacity: 0.55;
+  }
+  .accord-vial:hover .accord-liquid,
+  .accord-vial:focus-visible .accord-liquid {
+    transform: scaleY(1.07);
+  }
+
+  /* The footer's closing wordmark: an outline, in the hairline's colour. */
+  .footer-mark text {
+    font-family: var(--f-wordmark);
+    font-weight: var(--wordmark-weight);
+    font-size: 232px;
+    direction: ltr;
+    fill: none;
+    stroke: theme('colors.line');
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* The houses' index: under the pointer the name steps forward and the arrow draws out. */
+  .house-name,
+  .house-arrow {
+    transition:
+      color theme('transitionDuration.base') theme('transitionTimingFunction.out'),
+      translate theme('transitionDuration.slow') theme('transitionTimingFunction.out');
+  }
+  .house-line:hover .house-name,
+  .house-line:focus-visible .house-name {
+    translate: calc(12px * var(--forward)) 0;
+  }
+  .house-line:hover .house-arrow,
+  .house-line:focus-visible .house-arrow {
+    translate: calc(8px * var(--forward)) 0;
   }
 }

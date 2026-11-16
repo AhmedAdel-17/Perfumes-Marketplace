@@ -14,6 +14,7 @@ import { BandReading } from '@/features/catalogue/BandReading';
 import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
 import { ProductReviews } from '@/features/reviews/ProductReviews';
 import { SectionHead } from '@/features/shell/SectionHead';
+import { Monogram } from '@/features/shell/Monogram';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
@@ -21,7 +22,7 @@ import { Track } from '@/features/analytics/Track';
 import { arrivalWindow } from '@diyar/api';
 import { isLongevityBand, isProjectionBand } from '@diyar/domain';
 import {
-  BAND_AR, BAND_EN, CONCENTRATION, data as num, editorialIn, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn,
+  BAND_AR, BAND_EN, CONCENTRATION, data as num, editorialIn, HOME, HOUSES, labelOf, langAttrs, languageOf, NOUN, nounIn,
   PERFORMANCE_SOURCE, pick, PRODUCT,
   SCENT_FAMILY, SHELL, type Locale,
 } from '@diyar/i18n';
@@ -139,151 +140,180 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <Track key={product.id} event="product_view" productId={product.id} />
 
       {/*
-        Visual identity v2. The layout is design-reference/product.html's (the
-        bottle, then the name, the price, the notes, the evolution, the
-        performance); the finish is 04-laboratoire's, which wins where the two
-        disagree (CLAUDE.md §12): the perfume printed as a specimen sheet, every
-        figure ruled into a row, every band with its source.
+        Identity v3 (16 Nov 2026), over v2's palette and faces. The perfume's
+        photograph is the page: a tall plate with nothing ruled around it, the
+        room's light behind it, and beside it the name at headline size, the
+        price, the bag, and what a first-time buyer checks before pressing it.
+        The label's rows — every band with its source — follow underneath,
+        unchanged in content. (v2 printed all of it as one ruled specimen sheet
+        beside a boxed photograph, and the page read as a form.)
       */}
       <main className="pb-[92px] lg:pb-0">
-        <div className="mx-auto max-w-contentMax px-5 pt-5 lg:px-8 lg:pt-8">
-          <div className="grid gap-7 lg:grid-cols-12 lg:gap-8">
-            {/* ------------------------------------------------------ media
-                In RTL the first grid child lands on the RIGHT, which is where
-                the eye starts — so the bottle leads and the copy follows it,
-                the same order a phone reads top to bottom. */}
-            <div className="lg:col-span-7">
-              <div className="border border-ink bg-raised lg:sticky lg:top-[100px]">
-                <div className="latin flex justify-between border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
-                  <span>{copy.specimen.toUpperCase()}</span>
-                  <span>{product.brandLatin}</span>
-                </div>
-                <div className="relative aspect-[4/5] overflow-hidden bg-plate lg:aspect-auto lg:h-[620px]">
-                  {product.photo ? (
-                    // `priority`: the largest paint on the page.
-                    <ProductPhoto photo={product.photo} priority sizes="(min-width: 1024px) 58vw, 100vw" />
-                  ) : (
-                    <Reveal className="absolute inset-0 flex items-center justify-center">
-                      <Flacon
-                        family={product.family}
-                        house={product.brandLatin}
-                        uid={`hero-${product.id}`}
-                        className="h-[84%] w-auto"
+        <div className="relative overflow-clip">
+          <div aria-hidden="true" className="daylight daylight-start" />
+          <div className="relative mx-auto max-w-contentMax px-5 pt-5 lg:px-8 lg:pt-10">
+            <div className="grid gap-7 lg:grid-cols-12 lg:gap-[56px]">
+              {/* ---------------------------------------------------- media
+                  In RTL the first grid child lands on the RIGHT, which is where
+                  the eye starts — so the bottle leads and the copy follows it,
+                  the same order a phone reads top to bottom. */}
+              <div className="lg:col-span-7">
+                <figure className="lg:sticky lg:top-[100px]">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-plate lg:aspect-auto lg:h-[min(760px,calc(100svh-168px))]">
+                    {product.photo ? (
+                      // `priority`: the largest paint on the page.
+                      <ProductPhoto photo={product.photo} priority sizes="(min-width: 1024px) 58vw, 100vw" />
+                    ) : (
+                      <Reveal className="absolute inset-0 flex items-center justify-center">
+                        <Flacon
+                          family={product.family}
+                          house={product.brandLatin}
+                          uid={`hero-${product.id}`}
+                          className="h-[84%] w-auto"
+                        />
+                      </Reveal>
+                    )}
+                    {/* Le Dévoilement: the bottle lifted out of this photograph — only
+                        when the content team has made its relief (0032). */}
+                    {product.photo && product.relief && (
+                      <RevealTrigger
+                        relief={product.relief}
+                        photo={{ width: product.photo.width, height: product.photo.height }}
+                        product={{
+                          id: product.id,
+                          name,
+                          house,
+                          brandLatin: product.brandLatin,
+                          family: product.family,
+                          pricePiastres: product.pricePiastres,
+                          inStock: product.inStock,
+                          notes: { top: product.notesTop, heart: product.notesHeart, base: product.notesBase },
+                          english: product.noteEnglish,
+                          icons: product.noteIcons,
+                        }}
+                        locale={locale}
                       />
-                    </Reveal>
-                  )}
-                  {/* Le Dévoilement: the bottle lifted out of this photograph — only
-                      when the content team has made its relief (0032). */}
-                  {product.photo && product.relief && (
-                    <RevealTrigger
-                      relief={product.relief}
-                      photo={{ width: product.photo.width, height: product.photo.height }}
-                      product={{
-                        id: product.id,
-                        name,
-                        house,
-                        brandLatin: product.brandLatin,
-                        family: product.family,
-                        pricePiastres: product.pricePiastres,
-                        inStock: product.inStock,
-                        notes: { top: product.notesTop, heart: product.notesHeart, base: product.notesBase },
-                        english: product.noteEnglish,
-                        icons: product.noteIcons,
-                      }}
-                      locale={locale}
-                    />
-                  )}
-                  {/* La Loupe: a glass over the same photograph — hover, or a long press. */}
-                  {product.photo && loupe && (
-                    <Loupe
-                      src={loupe.src}
-                      width={loupe.width}
-                      naturalWidth={product.photo.width}
-                      naturalHeight={product.photo.height}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ---------------------------------------------------- details */}
-            <div className="lg:col-span-5">
-              <div className="latin mb-2 text-caption tracking-label text-accent">{product.brandLatin}</div>
-              <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1 leading-heading lg:text-h1Lg">
-                {name.text}
-              </h1>
-              <p className="mt-2 text-body text-ink2 lg:mt-3 lg:text-bodyLg">
-                <Link
-                  href={localeHref(locale, `/house/${product.houseSlug}`)}
-                  className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
-                >
-                  <span {...langAttrs(locale, house.lang)} className="link-line">{house.text}</span>
-                </Link>
-                {houseFacts.map((fact) => (
-                  <span key={fact.text}>
-                    {' · '}
-                    <span {...langAttrs(locale, fact.lang)}>{fact.text}</span>
-                  </span>
-                ))}
-              </p>
-
-              <div className="mt-6 lg:mt-7">
-                <BuyBlock
-                  productId={product.id}
-                  pricePiastres={product.pricePiastres}
-                  inStock={product.inStock}
-                  family={product.family}
-                  variant="inline"
-                  locale={locale}
-                />
+                    )}
+                    {/* La Loupe: a glass over the same photograph — hover, or a long press. */}
+                    {product.photo && loupe && (
+                      <Loupe
+                        src={loupe.src}
+                        width={loupe.width}
+                        naturalWidth={product.photo.width}
+                        naturalHeight={product.photo.height}
+                      />
+                    )}
+                  </div>
+                  <figcaption className="latin mt-3 flex justify-between text-micro tracking-label text-ink3">
+                    <span>{product.brandLatin}</span>
+                    <span>{copy.specimen.toUpperCase()}</span>
+                  </figcaption>
+                </figure>
               </div>
 
-              {/* The label: the same rows, in the same order, as every specimen. */}
-              <dl className="mt-6 border-t border-ink text-body lg:mt-0 lg:border-t-0 lg:text-bodyLg">
-                <Row label={copy.family}>{labelOf(SCENT_FAMILY, locale, product.family)}</Row>
-                {product.concentration && (
-                  <Row label={copy.concentration}>{labelOf(CONCENTRATION, locale, product.concentration)}</Row>
-                )}
-                <Row label={copy.size}><span className="tnum">{num(product.volumeMl)}</span> {copy.ml}</Row>
-                {product.longevity && (
-                  <Row label={copy.longevity}>
-                    <BandReading kind="longevity" reading={product.longevity} locale={locale} />
-                  </Row>
-                )}
-                {product.projection && (
-                  <Row label={copy.projection}>
-                    <BandReading kind="projection" reading={product.projection} locale={locale} />
-                  </Row>
-                )}
-                <Row label={copy.delivery}>{copy.arrives(num(arrival.min), num(arrival.max), days)}</Row>
-              </dl>
-
-              {/* Brand independence (doc 01 §6): the seller stays visible
-                  everywhere. Never flatten houses into anonymous SKUs. */}
-              <section aria-labelledby="the-house" className="mt-7 border border-line bg-raised p-5">
-                <div className="latin mb-2 text-micro tracking-label text-accent">{copy.theHouse.toUpperCase()}</div>
-                <h2 id="the-house" className="sr-only">{house.text}</h2>
-                <Link
-                  href={localeHref(locale, `/house/${product.houseSlug}`)}
-                  className="tappable group inline-flex min-h-touch items-baseline gap-3"
-                >
-                  <span
-                    {...langAttrs(locale, house.lang)}
-                    className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3"
+              {/* -------------------------------------------------- details */}
+              <div className="lg:col-span-5 lg:pt-8">
+                <span className="fade-in latin flex items-center gap-3 text-caption tracking-label text-accent">
+                  {product.brandLatin}
+                  <span aria-hidden="true" className="draw-in h-px w-12 bg-current [--rise-delay:120ms]" />
+                </span>
+                <h1 {...langAttrs(locale, name.lang)} className="rise mt-3 font-display text-h1 leading-[1.2] [--rise-delay:80ms] lg:text-h1Lg xl:text-displayLg [html[lang=en]_&]:leading-[1.05]">
+                  {name.text}
+                </h1>
+                <p className="mt-2 text-body text-ink2 lg:mt-3 lg:text-bodyLg">
+                  <Link
+                    href={localeHref(locale, `/house/${product.houseSlug}`)}
+                    className="tappable inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent"
                   >
-                    {house.text}
-                  </span>
-                  <span className="text-small text-ink2 transition-colors duration-base ease-out group-hover:text-accent">
-                    {copy.allItsPerfumes}
-                  </span>
-                </Link>
-                <p className="mt-2 text-small leading-relaxed text-ink2 lg:text-body">
-                  {copy.shipsItself(num(arrival.min), num(arrival.max), days)}
+                    <span {...langAttrs(locale, house.lang)} className="link-line">{house.text}</span>
+                  </Link>
+                  {houseFacts.map((fact) => (
+                    <span key={fact.text}>
+                      {' · '}
+                      <span {...langAttrs(locale, fact.lang)}>{fact.text}</span>
+                    </span>
+                  ))}
                 </p>
-              </section>
+                {/* What reaches you first, in one line, before any table. */}
+                {product.notesTop.length > 0 && (
+                  <p className="mt-4 max-w-[44ch] font-display text-h4 leading-relaxed text-ink2 lg:mt-5">
+                    {HOME[locale].firstImpressionSaid(
+                      product.notesTop.map((n) => (locale === 'en' ? product.noteEnglish[n] ?? n : n)).join(HOME[locale].listSeparator),
+                    )}
+                  </p>
+                )}
+
+                <div className="mt-6 lg:mt-8">
+                  <BuyBlock
+                    productId={product.id}
+                    pricePiastres={product.pricePiastres}
+                    inStock={product.inStock}
+                    family={product.family}
+                    variant="inline"
+                    locale={locale}
+                  />
+                </div>
+
+                {/* Before the press: how it is paid for, when it comes, and how it goes back. */}
+                <ul className="mt-5 grid gap-2.5 text-small text-ink2 lg:text-body">
+                  <Assurance>{copy.assureCod}</Assurance>
+                  <Assurance>{copy.shipsItself(num(arrival.min), num(arrival.max), days)}</Assurance>
+                  <Assurance>
+                    <Link href={localeHref(locale, '/returns')} className="tappable -my-3 inline-flex min-h-touch items-center text-ink transition-colors duration-base ease-out hover:text-accent">
+                      <span className="link-line">{copy.assureReturns}</span>
+                    </Link>
+                  </Assurance>
+                </ul>
+
+                {/* The label: the same rows, in the same order, on every perfume. */}
+                <dl className="mt-8 border-t border-ink text-body lg:mt-9 lg:text-bodyLg">
+                  <Row label={copy.family}>{labelOf(SCENT_FAMILY, locale, product.family)}</Row>
+                  {product.concentration && (
+                    <Row label={copy.concentration}>{labelOf(CONCENTRATION, locale, product.concentration)}</Row>
+                  )}
+                  <Row label={copy.size}><span className="tnum">{num(product.volumeMl)}</span> {copy.ml}</Row>
+                  {product.longevity && (
+                    <Row label={copy.longevity}>
+                      <BandReading kind="longevity" reading={product.longevity} locale={locale} />
+                    </Row>
+                  )}
+                  {product.projection && (
+                    <Row label={copy.projection}>
+                      <BandReading kind="projection" reading={product.projection} locale={locale} />
+                    </Row>
+                  )}
+                  <Row label={copy.delivery}>{copy.arrives(num(arrival.min), num(arrival.max), days)}</Row>
+                </dl>
+
+                {/* Brand independence (doc 01 §6): the seller stays visible
+                    everywhere. Never flatten houses into anonymous SKUs. */}
+                <section aria-labelledby="the-house" className="mt-8 flex items-center gap-5 border border-line bg-raised p-5">
+                  <Monogram size={44} className="shrink-0 text-accent" />
+                  <div className="min-w-0">
+                    <div className="latin text-micro tracking-label text-ink3">{copy.theHouse.toUpperCase()}</div>
+                    <h2 id="the-house" className="sr-only">{house.text}</h2>
+                    <Link
+                      href={localeHref(locale, `/house/${product.houseSlug}`)}
+                      className="tappable group inline-flex min-h-touch flex-wrap items-baseline gap-x-3"
+                    >
+                      <span
+                        {...langAttrs(locale, house.lang)}
+                        className="font-display text-h4 transition-colors duration-base ease-out group-hover:text-accent lg:text-h3"
+                      >
+                        {house.text}
+                      </span>
+                      <span className="text-small text-ink2 transition-colors duration-base ease-out group-hover:text-accent">
+                        {copy.allItsPerfumes}
+                      </span>
+                    </Link>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
+        </div>
 
+        <div className="mx-auto max-w-contentMax px-5 lg:px-8">
           {/* ------------------------------------------------------ 01 notes */}
           <section aria-labelledby="notes" className="mt-9 lg:mt-[104px]">
             <SectionHead id="notes" index={copy.notesIndex} title={copy.notesTitle} />
@@ -371,6 +401,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         }}
       />
     </>
+  );
+}
+
+/** One line of reassurance, marked with the accent's hairline rather than a tick. */
+function Assurance({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-baseline gap-3">
+      <span aria-hidden="true" className="h-px w-4 shrink-0 -translate-y-1 bg-accent" />
+      <span>{children}</span>
+    </li>
   );
 }
 

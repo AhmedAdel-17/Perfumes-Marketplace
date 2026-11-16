@@ -586,3 +586,33 @@ character is literally its constellation. The approved prototype is
   of sight, and for a visitor who asked for less motion.
 - **One door, then measured.** The masthead's Perfumes panel leads to it; `scent_map_view`
   (ANALYTICS_DEFINITIONS §2b) says whether it sends anyone on to a perfume.
+
+---
+
+## 12. Identity v3 — "Vitrine" (founder, 16 Nov 2026)
+
+v2 decided the palette, the faces and the finish, and none of that changes. What v2 never had
+was a ROOM: every page was an evenly lit field carrying ruled tables, which is honest and reads
+as a form. v3 adds three things and only three. The decision is `DECISION_REGISTER.md`,
+16 Nov 2026.
+
+- **Light crosses the wall.** Behind a photograph a page opens on (the home opening, a perfume,
+  a house), two beams from a window out of frame fade before the fold: the lightest surface,
+  thinned, on paper; the accent at under a tenth of its strength in Noir (`.daylight`, the
+  `--shaft` roles in `globals.css`). It mirrors with the reading direction so it always comes
+  from the photograph's side, never across the words. It breathes over minutes; reduced motion
+  holds it still.
+- **The doorway.** The mark is a دار reduced to its pointed Fatimid arch (`Monogram.tsx`). At
+  full height that arch is the frame an opening photograph is seen through (`Arch.tsx`, the
+  mark's own geometry: rise 0.72 of the span, control 0.32). Law V is not relaxed: a radius
+  softens a corner, an arch is architecture. **It is used for one opening photograph per page
+  and nothing else** — never a card, a button, a field or a thumbnail. Two arches on a screen
+  is a pattern; one is a door.
+- **The photograph is the card.** A perfume on a shelf is a 4:5 photograph with nothing ruled
+  around it, then the house's Latin name, the perfume's name, one line of kind, and the price.
+  A performance band is never printed without its source (`BandReading`), and a card has no room
+  for both, so neither is on a card. Under the pointer a passe-partout hairline settles inside
+  the photograph (it arrives from slightly larger — nothing grows toward the viewer).
+
+What did NOT change: one accent per theme, sharp edges everywhere else, no shadows, weighted
+motion, tokens only, Arabic first. The instant-death list (§3) stands in full.

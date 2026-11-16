@@ -26,8 +26,11 @@ import { Pending } from '@/features/shell/FlaconLoader';
  * reference, a wrong phone and a malformed phone with one sentence, because
  * distinguishing them tells whoever is typing which half they got right.
  */
-export function OrderLookup() {
-  const [reference, setReference] = useState('');
+export function OrderLookup({ initialReference = '' }: {
+  /** From the confirmation's link (`/order?ref=…`), so only the phone is asked for. */
+  initialReference?: string;
+}) {
+  const [reference, setReference] = useState(initialReference);
   const [phone, setPhone] = useState('');
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);

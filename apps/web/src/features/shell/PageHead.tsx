@@ -31,7 +31,7 @@ export function PageHead({
         {kicker.toUpperCase()}
         <span aria-hidden="true" className="draw-in h-px w-12 bg-current [--rise-delay:120ms]" />
       </span>
-      <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-h1Lg">{title}</h1>
+      <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-displayLg lg:leading-[1.2]">{title}</h1>
       {children}
     </header>
   );

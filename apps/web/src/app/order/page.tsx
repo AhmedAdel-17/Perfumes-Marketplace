@@ -28,15 +28,22 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export const dynamic = 'force-dynamic';
 
-export default async function OrderPage() {
+/** An order reference as the checkout's link carries it. Anything else is dropped, never echoed. */
+const REFERENCE = /^[A-Za-z0-9-]{3,20}$/;
+
+export default async function OrderPage(
+  { searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> },
+) {
   const locale = await getLocale();
+  const ref = (await searchParams).ref;
+  const initialReference = typeof ref === 'string' && REFERENCE.test(ref) ? ref.toUpperCase() : '';
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-phoneMax pb-9 lg:max-w-[720px] lg:px-8 lg:pb-[104px]">
         {/* Identity v2: the register's page head, ruled at full strength. */}
         <PageHead kicker={ORDERS[locale].kicker} title={ORDERS[locale].title} className="mx-5 mb-6 lg:mx-0 lg:mb-8" />
-        <OrderLookup />
+        <OrderLookup initialReference={initialReference} />
       </main>
       <SiteFooter />
     </>

@@ -1,5 +1,6 @@
 import { CURRENCY_LABEL, formatPrice, PRODUCT, type Locale } from '@diyar/i18n';
 import { AddToBag } from '@/features/cart/AddToBag';
+import { InBag } from '@/features/cart/InBag';
 import { primarySurface } from '@/features/shell/primary-surface';
 
 /**
@@ -32,11 +33,14 @@ export function BuyBlock({
     <div>
       {/* Regular weight, like every figure on a specimen label: the price is a
           fact printed in the register, not a banner. */}
-      <div className={variant === 'bar' ? 'text-h4' : 'text-h3 lg:text-h2Lg'}>
+      <div className={variant === 'bar' ? 'text-h4' : 'text-h3 lg:text-h1Lg lg:leading-none'}>
         <span className="tnum">{formatPrice(pricePiastres)}</span>
         <span className="latin ms-2 text-caption tracking-label text-ink2">{CURRENCY_LABEL}</span>
       </div>
-      <div className="mt-1 text-small text-ink3">
+      {/* The mark is a shape as well as a colour: filled when it can be bought,
+          an outline when it cannot (never colour alone — CLAUDE.md §14). */}
+      <div className={`flex items-center gap-2 text-small text-ink3 ${variant === 'bar' ? 'mt-1' : 'mt-3'}`}>
+        <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 ${inStock ? 'bg-accent' : 'border border-ink3'}`} />
         {inStock ? copy.inStock : copy.outOfStock}
       </div>
     </div>
@@ -64,9 +68,10 @@ export function BuyBlock({
   }
 
   return (
-    <div className="hidden border-y border-ink py-6 lg:block">
+    <div className="hidden border-t border-ink pt-6 lg:block">
       {price}
-      <div className="mt-5">{button}</div>
+      <div className="mt-6">{button}</div>
+      <InBag productId={productId} locale={locale} />
     </div>
   );
 }

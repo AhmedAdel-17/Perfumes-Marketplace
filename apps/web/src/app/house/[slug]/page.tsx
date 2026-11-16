@@ -32,6 +32,10 @@ import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
 import { SpecimenCard, type CardRating } from '@/features/catalogue/SpecimenCard';
 import { SectionHead } from '@/features/shell/SectionHead';
+import { Arch } from '@/features/shell/Arch';
+import { Monogram } from '@/features/shell/Monogram';
+import { Flacon } from '@/features/product/Flacon';
+import { ProductPhoto } from '@/features/product/ProductPhoto';
 import { api } from '@/core/api';
 import { Track } from '@/features/analytics/Track';
 import { findHouseBySlug } from '@/core/catalogue';
@@ -92,17 +96,29 @@ export default async function HousePage(
           Keyed by slug — see the note on the product page. */}
       <Track key={house.slug} event="storefront_view" sellerId={house.id} />
 
-      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
-        {/* ------------------------------------------------ the name and label */}
-        <div className="grid gap-8 border-b border-ink pb-8 pt-8 lg:grid-cols-12 lg:gap-8 lg:pb-12 lg:pt-12">
-          <div className="lg:col-span-7">
+      <main className="relative pb-9 lg:pb-[104px]">
+        {/* The room's light, across the top of the page only. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[720px] overflow-clip">
+          <div className="daylight" />
+        </div>
+        <div className="relative mx-auto max-w-contentMax px-5 lg:px-8">
+        {/*
+          ---------------------------------------------- the name and the door
+
+          Identity v3: a house is met at its door. Its newest perfume stands in
+          the doorway — the mark's arch at full height — beside the name, the
+          house's own words, and its label set out as one line of facts.
+          (v2 answered the name with a ruled box of the same facts.)
+        */}
+        <div className="grid items-center gap-8 border-b border-ink pb-8 pt-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-[72px] lg:pb-[72px] lg:pt-[56px]">
+          <div className="min-w-0">
             <Reveal>
               <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
                 {[copy.perfumeHouse, house.foundedYear ? copy.established(String(house.foundedYear)) : null]
                   .filter(Boolean).join(' · ').toUpperCase()}
                 <span aria-hidden="true" className="h-px w-12 bg-current" />
               </span>
-              <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1 leading-heading lg:text-displayLg">
+              <h1 {...langAttrs(locale, name.lang)} className="font-display text-h1Lg leading-[1.2] lg:text-displayLg xl:text-displayXl [html[lang=en]_&]:leading-[1.02]">
                 {name.text}
               </h1>
             </Reveal>
@@ -113,47 +129,65 @@ export default async function HousePage(
                 </p>
               </Reveal>
             )}
+
+            {/*
+              The house's label.
+
+              "Delivers to" is here rather than in a section at the foot of the
+              page: it is stated BEFORE the perfumes, because every house ships
+              its own parcels, coverage genuinely differs between them, and a
+              customer discovering at the address step that their governorate is
+              not served has spent the whole purchase for nothing.
+            */}
+            <Reveal delay={160}>
+              <section aria-labelledby="house-label" className="mt-8 border-t border-line pt-5 lg:mt-[56px]">
+                <h2 id="house-label" className="sr-only">{copy.houseLabel}</h2>
+                <dl className="grid gap-x-5 sm:grid-cols-[auto_auto_auto_1fr]">
+                  {house.city && (
+                    <Fact label={copy.columns.city}>
+                      <span {...langAttrs(locale, languageOf(house.city))}>{house.city}</span>
+                    </Fact>
+                  )}
+                  {house.foundedYear && (
+                    // Editorial numerals: a founding year is prose by kind.
+                    <Fact label={copy.founded}>{editorialIn(locale)(house.foundedYear, false)}</Fact>
+                  )}
+                  <Fact label={copy.columns.perfumes}><span className="tnum">{num(house.products.length)}</span></Fact>
+                  {house.serviceGovernorates.length > 0 && (
+                    <Fact label={copy.deliversTo}>
+                      {house.serviceGovernorates
+                        /* The column is a Postgres enum and the read model types it
+                           as `string[]`, so the cast is where the two meet. `?? code`
+                           covers a governorate added to the database ahead of the
+                           copy layer — showing the code is ugly and showing nothing
+                           is a lie about where the house delivers. */
+                        .map((code) => GOVERNORATE[locale][code as Governorate] ?? code)
+                        .join(' · ')}
+                    </Fact>
+                  )}
+                </dl>
+              </section>
+            </Reveal>
           </div>
 
-          {/*
-            The house's label.
-
-            "Delivers to" is here rather than in a section at the foot of the
-            page: it is stated BEFORE the perfumes, because every house ships
-            its own parcels, coverage genuinely differs between them, and a
-            customer discovering at the address step that their governorate is
-            not served has spent the whole purchase for nothing.
-          */}
-          <Reveal delay={160} className="lg:col-span-5">
-            <section aria-labelledby="house-label" className="border border-ink bg-raised">
-              <h2 id="house-label" className="latin border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
-                {copy.houseLabel.toUpperCase()}
-              </h2>
-              <dl className="text-body lg:text-bodyLg">
-                {house.city && (
-                  <Row label={copy.columns.city}>
-                    <span {...langAttrs(locale, languageOf(house.city))}>{house.city}</span>
-                  </Row>
-                )}
-                {house.foundedYear && (
-                  // Editorial numerals: a founding year is prose by kind.
-                  <Row label={copy.founded}>{editorialIn(locale)(house.foundedYear, false)}</Row>
-                )}
-                <Row label={copy.columns.perfumes}><span className="tnum">{num(house.products.length)}</span></Row>
-                {house.serviceGovernorates.length > 0 && (
-                  <Row label={copy.deliversTo}>
-                    {house.serviceGovernorates
-                      /* The column is a Postgres enum and the read model types it
-                         as `string[]`, so the cast is where the two meet. `?? code`
-                         covers a governorate added to the database ahead of the
-                         copy layer — showing the code is ugly and showing nothing
-                         is a lie about where the house delivers. */
-                      .map((code) => GOVERNORATE[locale][code as Governorate] ?? code)
-                      .join(' · ')}
-                  </Row>
-                )}
-              </dl>
-            </section>
+          {/* The door. Decorative: the perfumes below carry the same photograph with its words. */}
+          <Reveal delay={200} className="mx-auto w-full max-w-[300px] lg:max-w-none">
+            <Arch ratio={4 / 3} frameClassName="bg-plate">
+              {house.products[0]?.photo ? (
+                <ProductPhoto photo={{ ...house.products[0].photo, alt: '' }} sizes="(min-width: 1024px) 340px, 300px" priority />
+              ) : house.products[0] ? (
+                <Flacon
+                  family={house.products[0].family}
+                  house={house.latin}
+                  uid="house-door"
+                  className="absolute inset-0 h-full w-full px-[30%] pb-[8%] pt-[30%]"
+                />
+              ) : (
+                <span className="absolute inset-0 grid place-items-center pt-[24%]">
+                  <Monogram size={96} className="text-ink3" />
+                </span>
+              )}
+            </Arch>
           </Reveal>
         </div>
 
@@ -171,10 +205,15 @@ export default async function HousePage(
               blocks follow. A house writes its story in a textarea and a
               single newline there is a soft wrap, not a break.
             */}
-            <div className="max-w-proseMax">
+            <div className="max-w-[760px]">
               {story.text.split(/\n\s*\n/).map((paragraph, index) => (
                 // eslint-disable-next-line react/no-array-index-key
-                <p key={index} {...langAttrs(locale, story.lang)} className="mt-4 text-bodyLg leading-relaxed text-ink2 first:mt-0">
+                <p
+                  key={index}
+                  {...langAttrs(locale, story.lang)}
+                  // The opening paragraph is set as a house speaks: larger, in the heading face.
+                  className="mt-5 text-bodyLg leading-relaxed text-ink2 first:mt-0 first:font-display first:text-h4 first:text-ink lg:text-h4 lg:first:text-h3Lg lg:first:leading-relaxed"
+                >
                   {paragraph.trim()}
                 </p>
               ))}
@@ -195,7 +234,7 @@ export default async function HousePage(
              */
             <p className="text-bodyLg text-ink2">{copy.noPerfumes}</p>
           ) : (
-            <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+            <ul className={`grid grid-cols-2 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-[56px] ${house.products.length <= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
               {house.products.map((product, index) => (
                 <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
                   <SpecimenCard product={product} locale={locale} rating={ratings[product.id]} />
@@ -204,6 +243,7 @@ export default async function HousePage(
             </ul>
           )}
         </section>
+        </div>
       </main>
 
       <SiteFooter />
@@ -211,11 +251,11 @@ export default async function HousePage(
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[96px_1fr] items-baseline gap-3 border-b border-line px-4 py-3 last:border-b-0 lg:grid-cols-[120px_1fr]">
-      <dt className="text-ink3">{label}</dt>
-      <dd>{children}</dd>
+    <div className="border-b border-line py-3 sm:border-b-0 sm:border-s sm:py-0 sm:ps-5 sm:first:border-s-0 sm:first:ps-0">
+      <dt className="text-small text-ink3">{label}</dt>
+      <dd className="mt-1 text-bodyLg text-ink">{children}</dd>
     </div>
   );
 }
