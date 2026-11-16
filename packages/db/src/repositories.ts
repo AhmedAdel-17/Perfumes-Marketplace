@@ -17,7 +17,7 @@ import {
   type Actor, type OrderSource, type ReasonCode, type SettlementSubOrder,
   type SubOrderState, type TransitionRecord,
   type CustomerRepository, type PayoutRepository,
-  type DraftOrder, type OrderRepository, type PersistedOrder, type ProductRecord,
+  type DraftOrder, type OrderRepository, type PersistedOrder, type PlacementReply, type ProductRecord,
   type ProductRepository, type Repositories, type SellerRecord, type SellerRepository,
   type SubOrderRecord, type SubOrderRepository, type UnitOfWork,
 } from '@diyar/domain';
@@ -317,6 +317,17 @@ const orderRepository = (db: Executor): OrderRepository => ({
       total: draft.total,
       subOrderIds,
     };
+  },
+
+  async findPlacement(idempotencyKey) {
+    const [row] = await db.select({ reply: schema.orderPlacements.reply })
+      .from(schema.orderPlacements)
+      .where(eq(schema.orderPlacements.idempotencyKey, idempotencyKey)).limit(1);
+    return row ? (row.reply as PlacementReply) : null;
+  },
+
+  async recordPlacement(idempotencyKey, orderId, reply) {
+    await db.insert(schema.orderPlacements).values({ idempotencyKey, orderId, reply });
   },
 
   async findByReference(reference) {

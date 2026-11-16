@@ -54,6 +54,14 @@ export const platformRouter = router({
     }));
   }),
 
+  /**
+   * The parcel reached the customer.
+   *
+   * AUDITED, in the same transaction (16 Nov 2026). Delivery starts the house's
+   * reserve clock and opens verified reviews, so it is a decision about money
+   * and about trust; the transition row records only that "the platform" moved
+   * it, and the audit entry records WHICH operator.
+   */
   markDelivered: platformProcedure
     .input(z.object({ subOrderId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -65,6 +73,15 @@ export const platformRouter = router({
           sub.state, { to: 'delivered', actor: 'platform' }, ctx.clock,
         );
         await r.subOrders.applyTransition(sub.id, 'delivered', 'platform', null, record);
+        await r.audit.record({
+          action: 'delivery_confirmation',
+          actorId: ctx.platformStaffId,
+          actorLabel: ctx.platformLabel ?? 'platform',
+          entityTable: 'sub_orders',
+          entityId: sub.id,
+          before: JSON.stringify({ state: sub.state }),
+          after: JSON.stringify({ state: 'delivered' }),
+        });
         return { ok: true as const, state: 'delivered' as const };
       });
     }),
@@ -84,6 +101,21 @@ export const platformRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       await ctx.uow.transaction(async (r) => {
+        /*
+         * Cash is recorded only against a parcel that was delivered (16 Nov
+         * 2026). The update used to run whatever the sub-order's state, and
+         * silently matched nothing when there was no shipment — so a mistyped
+         * row "succeeded", wrote an audit entry for money that was never
+         * recorded, and the operator saw a tick.
+         */
+        const sub = await r.subOrders.findById(input.subOrderId);
+        if (!sub) throw new TRPCError({ code: 'NOT_FOUND', message: 'الشحنة غير موجودة' });
+        if (sub.state !== 'delivered') {
+          throw new TRPCError({ code: 'CONFLICT', message: 'لا يُسجَّل التحصيل قبل تأكيد تسليم الشحنة' });
+        }
+        const shipment = await r.subOrders.findShipment(input.subOrderId);
+        if (!shipment) throw new TRPCError({ code: 'CONFLICT', message: 'لا توجد بوليصة شحن لهذه الشحنة' });
+
         await r.subOrders.recordRemittance({
           subOrderId: input.subOrderId,
           collectedPiastres: input.collectedPiastres,

@@ -193,6 +193,18 @@ export interface ProductRepository {
   snapshotForCart(productIds: readonly string[]): Promise<readonly CatalogueSnapshot[]>;
 }
 
+/**
+ * What a checkout was told when its order was placed (migration 0043): replayed,
+ * word for word, to a retry carrying the same key.
+ */
+export interface PlacementReply {
+  readonly reference: string;
+  readonly totalPiastres: number;
+  readonly houseCount: number;
+  readonly etaDaysMin: number;
+  readonly etaDaysMax: number;
+}
+
 export interface OrderRepository {
   /**
    * Persist a draft order with its sub-orders and line items ATOMICALLY.
@@ -203,6 +215,16 @@ export interface OrderRepository {
    */
   save(draft: DraftOrder, sellerIdBySlug: ReadonlyMap<string, string>): Promise<PersistedOrder>;
   findByReference(reference: string): Promise<PersistedOrder | null>;
+
+  /** The reply a checkout key was already given, if it has placed an order. */
+  findPlacement(idempotencyKey: string): Promise<PlacementReply | null>;
+
+  /**
+   * Record the key beside the order it created, in the placement transaction.
+   * A second record for the same key must FAIL — that refusal is what rolls a
+   * racing duplicate back — never overwrite.
+   */
+  recordPlacement(idempotencyKey: string, orderId: string, reply: PlacementReply): Promise<void>;
 
   /**
    * Order tracking, for a customer with no account.
