@@ -251,3 +251,24 @@ Format: `YYYY-MM-DD · ID · deciders · outcome · rationale · what it unlocks
   it is drafted, states the permission in its media clause, so a house knows what is made from
   what it uploads. The rule that a relief is made only from the house's own photograph and
   never invents packaging (DESIGN_DOCTRINE §8) stands unchanged.
+- 2026-11-16 · Identity v3, "Vitrine" · Ahmed (founder) · the founder judged identity v2 not yet
+  at the level he wants ("the best perfume website ever designed … no AI slop") and asked for a
+  redesign of the customer site in both themes and both languages, with authority to redesign
+  whole screens; after reviewing the rendered result he approved carrying it through ("Yes,
+  carry it on", 16 Nov). What changed and what did not: v2's palette, faces, tokens and both
+  themes are UNCHANGED — v3 is composition, scale and atmosphere. (1) Light: a window's light
+  crosses the wall behind a photograph a page opens on (daylight on paper, one amber lamp in
+  Noir), mirrored with the reading direction. (2) The doorway: the mark's own pointed arch is
+  the frame a perfume is seen through on the home opening and a house's page — the one curve in
+  the product, used only for an opening photograph, never for a card, button or field
+  (DESIGN_DOCTRINE §12). (3) The perfume card is its photograph (4:5, no ruled rows); family,
+  strength and longevity-with-source stay on the perfume's page. (4) Home: counted figures under
+  the lede, three promises restating published policy, the families as filled vials, the notes
+  as three tiers, the houses as a headline index. (5) Product page: tall photograph, headline
+  name and price, three reassurance lines and an "in your bag" line under the button. (6) The
+  reveal: a larger bottle, smoothed cut-out edges, a real key light and a lamp beam, and notes
+  that thin as they pass over the glass. (7) Checkout: focus on the first invalid field, the
+  terms and returns policy linked from the agreement line, and a confirmation that survives a
+  refresh (sessionStorage, reference and totals only) with a copy button and a tracking link
+  that carries the reference. Nothing here changes economics, customer policy or data
+  collection.

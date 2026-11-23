@@ -13,6 +13,7 @@ import { useCart } from '@/features/cart/CartStore';
 import { Field, SelectField } from './Field';
 import { placeOrder, type PlaceOrderResult } from './actions';
 import { PrimaryButton } from '@/features/shell/PrimaryButton';
+import { primarySurface } from '@/features/shell/primary-surface';
 import { Pending, SectionLoading } from '@/features/shell/FlaconLoader';
 
 /**
@@ -40,6 +41,80 @@ type Errors = Partial<Record<'contactName' | 'contactPhone' | 'city' | 'area' | 
  */
 const PHONE = /^(?:\+20|0)1[0125]\d{8}$/;
 
+/**
+ * The confirmation outlives a refresh (identity v3, 16 Nov 2026).
+ *
+ * It used to live only in component state, and the bag is emptied the moment
+ * the order is confirmed — so a refresh, a phone locking, or Back-then-Forward
+ * showed "your bag is empty" and the order number was gone. With no SMS yet,
+ * that number is the customer's ONLY way back to their order.
+ *
+ * Kept in sessionStorage — this tab, this visit — and only what the screen
+ * shows: the reference, the total and the window. Never the name, the phone or
+ * the address. It expires after an hour so a later visit opens a fresh form.
+ */
+/**
+ * The key that makes a retried press one order, not two (migration 0043).
+ *
+ * Fixed for ONE checkout of ONE bag: kept in sessionStorage with the bag it was
+ * made for, so a refresh after a lost reply sends the same key, while a
+ * changed bag gets a new one — a different basket is a different order, and
+ * must never be answered with the old one. Forgotten once the order is placed.
+ */
+const CHECKOUT_KEY = 'diyar-checkout-key';
+
+function bagSignature(entries: readonly { productId: string; quantity: number }[]): string {
+  return entries.map((e) => `${e.productId}:${e.quantity}`).sort().join(',');
+}
+
+function checkoutKey(entries: readonly { productId: string; quantity: number }[]): string {
+  const bag = bagSignature(entries);
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CHECKOUT_KEY) ?? 'null') as { key?: string; bag?: string } | null;
+    if (saved?.key && saved.bag === bag) return saved.key;
+    const key = crypto.randomUUID();
+    sessionStorage.setItem(CHECKOUT_KEY, JSON.stringify({ key, bag }));
+    return key;
+  } catch {
+    // Private mode: still one key for this press and any retry within it.
+    return crypto.randomUUID();
+  }
+}
+
+function forgetCheckoutKey(): void {
+  try { sessionStorage.removeItem(CHECKOUT_KEY); } catch { /* nothing to forget */ }
+}
+
+const LAST_ORDER_KEY = 'diyar-last-order';
+const LAST_ORDER_TTL_MS = 60 * 60 * 1000;
+type Placed = Extract<PlaceOrderResult, { ok: true }>;
+
+function rememberOrder(placed: Placed): void {
+  try {
+    sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ ...placed, at: Date.now() }));
+  } catch { /* private mode: the screen still shows it now */ }
+}
+
+function recallOrder(): Placed | null {
+  try {
+    const raw = sessionStorage.getItem(LAST_ORDER_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Placed & { at?: number };
+    if (typeof saved.at !== 'number' || Date.now() - saved.at > LAST_ORDER_TTL_MS) return null;
+    if (typeof saved.reference !== 'string' || typeof saved.totalPiastres !== 'number') return null;
+    return {
+      ok: true,
+      reference: saved.reference,
+      totalPiastres: saved.totalPiastres,
+      houseCount: saved.houseCount,
+      etaDaysMin: saved.etaDaysMin,
+      etaDaysMax: saved.etaDaysMax,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function CheckoutForm() {
   const { entries, hydrated, clear } = useCart();
   const [cart, setCart] = useState<PricedCartResult | null>(null);
@@ -61,6 +136,7 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<PlaceOrderResult | null>(null);
+  const form = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -78,7 +154,19 @@ export function CheckoutForm() {
     if (!street.trim()) next.street = copy.errorRequired;
     if (!building.trim()) next.building = copy.errorRequired;
     setErrors(next);
-    return Object.keys(next).length === 0;
+    const valid = Object.keys(next).length === 0;
+    /*
+     * To the first field that needs attention. Focus used to stay on the
+     * button, at the foot of the summary, while the errors sat a screen above
+     * it — on a phone the press appeared to do nothing at all. After the
+     * render, so the field is already marked invalid when it is reached.
+     */
+    if (!valid) {
+      requestAnimationFrame(() => {
+        form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      });
+    }
+    return valid;
   };
 
   const onSubmit = async (event: React.FormEvent) => {
@@ -100,15 +188,26 @@ export function CheckoutForm() {
         ...(landmark.trim() ? { landmark: landmark.trim() } : {}),
       },
       entries,
+      idempotencyKey: checkoutKey(entries),
     });
     setResult(placed);
     // The bag is emptied only on a CONFIRMED order. Clearing it optimistically
     // and then failing would lose the basket and the sale together.
-    if (placed.ok) clear();
+    if (placed.ok) {
+      rememberOrder(placed);
+      forgetCheckoutKey();
+      clear();
+    }
     setSubmitting(false);
   };
 
   if (result?.ok) return <Confirmation result={result} locale={locale} />;
+
+  // Back on this page with an empty bag right after ordering: the order, not "empty".
+  if (hydrated && entries.length === 0) {
+    const recalled = recallOrder();
+    if (recalled) return <Confirmation result={recalled} locale={locale} />;
+  }
 
   if (!hydrated || cart === null) {
     return (
@@ -155,6 +254,7 @@ export function CheckoutForm() {
       expressed the only way a phone can.
     */
     <form
+      ref={form}
       onSubmit={onSubmit}
       noValidate
       className="px-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px] lg:px-0"
@@ -243,8 +343,20 @@ export function CheckoutForm() {
           {submitting ? <Pending label={copy.placing} /> : copy.place}
         </PrimaryButton>
 
-        <p className="mt-3 text-center text-small leading-relaxed text-ink3">
-          {copy.agreement}
+        {Object.keys(errors).length > 0 && (
+          <p role="status" className="mt-3 text-center text-small text-danger">{copy.fixErrors}</p>
+        )}
+        {/* The two documents are full-height targets inside the sentence (44pt). */}
+        <p className="mt-2 text-center text-small leading-relaxed text-ink3">
+          {copy.agreementLead}{' '}
+          <Link href={localeHref(locale, '/terms')} target="_blank" className="inline-flex min-h-touch items-center text-ink2 underline decoration-line underline-offset-4 transition-colors duration-base ease-out hover:text-accent">
+            {copy.agreementTerms}
+          </Link>
+          {' '}{copy.agreementAnd}{locale === 'ar' ? '' : ' '}
+          <Link href={localeHref(locale, '/returns')} target="_blank" className="inline-flex min-h-touch items-center text-ink2 underline decoration-line underline-offset-4 transition-colors duration-base ease-out hover:text-accent">
+            {copy.agreementReturns}
+          </Link>
+          .
         </p>
         </div>
       </div>
@@ -265,11 +377,11 @@ function Heading({ title }: { title: string }) {
   // Identity v2: the register's page head, ruled at full strength.
   return (
     <header className="mb-6 border-b border-ink pb-4 pt-8 lg:col-span-12 lg:mb-8 lg:pt-12">
-      <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
+      <span className="fade-in latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
         {kicker.toUpperCase()}
-        <span aria-hidden="true" className="h-px w-12 bg-current" />
+        <span aria-hidden="true" className="draw-in h-px w-12 bg-current [--rise-delay:120ms]" />
       </span>
-      <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{title}</h1>
+      <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-displayLg lg:leading-[1.2]">{title}</h1>
     </header>
   );
 }
@@ -358,6 +470,13 @@ function Confirmation(
 ) {
   const copy = CHECKOUT[locale];
   const heading = useRef<HTMLHeadingElement>(null);
+  const [copied, setCopied] = useState(false);
+  const copyReference = () => {
+    void navigator.clipboard?.writeText(result.reference).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    }).catch(() => undefined);
+  };
 
   /*
    * The page is replaced under a viewport still scrolled to where "place order"
@@ -377,8 +496,11 @@ function Confirmation(
     // reading and stretching it to 1240px would be the opposite mistake to the
     // one §4b describes, made on the same page.
     <div className="max-w-proseMax px-5 py-9 lg:px-0 lg:py-[72px]">
-      <div className="latin mb-4 text-micro tracking-label text-accent">ORDER CONFIRMED</div>
-      <h1 ref={heading} tabIndex={-1} className="font-display text-h1 leading-heading focus:outline-none lg:text-h1Lg">{copy.confirmedTitle}</h1>
+      <div className="fade-in latin mb-4 flex items-center gap-3 text-micro tracking-label text-accent">
+        ORDER CONFIRMED
+        <span aria-hidden="true" className="draw-in h-px w-12 bg-current [--rise-delay:120ms]" />
+      </div>
+      <h1 ref={heading} tabIndex={-1} className="rise font-display text-h1 leading-heading [--rise-delay:80ms] focus:outline-none lg:text-displayLg lg:leading-[1.2]">{copy.confirmedTitle}</h1>
 
       <p className="mt-5 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">
         {result.houseCount > 1
@@ -394,8 +516,18 @@ function Confirmation(
       <div className="mt-7 border border-ink bg-raised p-5">
         {/* No tracking: Arabic on the Arabic site (CLAUDE.md §15). */}
         <div className="text-body text-ink2">{copy.reference}</div>
-        <div className="latin mt-2 select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
-          {result.reference}
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <div className="latin select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
+            {result.reference}
+          </div>
+          <button
+            type="button"
+            onClick={copyReference}
+            aria-live="polite"
+            className="tappable inline-flex min-h-touch items-center text-body text-ink transition-colors duration-base ease-out hover:text-accent"
+          >
+            <span className="link-line">{copied ? copy.copiedReference : copy.copyReference}</span>
+          </button>
         </div>
         <p className="mt-3 text-small leading-relaxed text-ink3">
           {copy.referenceHint}
@@ -420,13 +552,14 @@ function Confirmation(
         </div>
       </dl>
 
-      <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
-        <Link
-          href={localeHref(locale, '/order')}
-          className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
+      <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+        {/* The reference travels with the link, so tracking asks only for the phone. */}
+        <a
+          href={`${localeHref(locale, '/order')}?ref=${encodeURIComponent(result.reference)}`}
+          className={`${primarySurface} px-7`}
         >
-          <span className="link-line">{copy.track}</span>
-        </Link>
+          {copy.track}
+        </a>
         <Link
           href={localeHref(locale, '/')}
           className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink2 transition-colors duration-base ease-out hover:text-accent"

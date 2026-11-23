@@ -81,6 +81,12 @@ export const PRODUCT = defineMessages(
     revealOnwardTouch: 'المس الشاشة للمتابعة',
     revealOnwardLabel: 'تابع إلى صفحة العطر',
     close: 'إغلاق',
+    // Under the buy button (identity v3): what a first-time buyer checks before
+    // pressing it. Each is a fact stated elsewhere on the site, never a new one.
+    assureCod: 'الدفع نقدًا عند الاستلام',
+    assureReturns: 'سياسة الإرجاع',
+    viewBag: 'افتح الحقيبة',
+    inYourBag: (count: string) => `في حقيبتك · ${count}`,
   },
   {
     notFound: 'Not found',
@@ -156,5 +162,9 @@ export const PRODUCT = defineMessages(
     revealOnwardTouch: 'Tap anywhere to continue',
     revealOnwardLabel: 'Continue to the perfume’s page',
     close: 'Close',
+    assureCod: 'Pay in cash on delivery',
+    assureReturns: 'Returns policy',
+    viewBag: 'Open the bag',
+    inYourBag: (count: string) => `In your bag · ${count}`,
   },
 );

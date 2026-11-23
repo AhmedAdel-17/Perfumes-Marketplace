@@ -49,13 +49,13 @@ export async function ProductReviews({
             received the bottle, so an empty section means few buyers rather
             than unhappy ones.
           */}
-          <p className="mt-2 text-caption leading-relaxed text-ink3">
+          <p className="mt-2 text-small leading-relaxed text-ink3">
             {copy.onlyAfterDelivery}
           </p>
         </div>
       ) : (
         <>
-          <div className="mt-5 lg:grid lg:grid-cols-12 lg:gap-8">
+          <div className="mt-5 lg:grid lg:grid-cols-12 lg:gap-[72px]">
             <div className="lg:col-span-5">
               <OverallScore summary={summary} locale={locale} />
               {/* No tracking: this line is Arabic on the Arabic site, and
@@ -70,12 +70,12 @@ export async function ProductReviews({
 
             <ol className="mt-8 lg:col-span-7 lg:mt-0">
               {reviews.map((review) => (
-                <li key={review.id} className="border-t border-line py-5 first:border-t-0 first:pt-0">
+                <li key={review.id} className="border-t border-line py-6 first:border-t-0 first:pt-0 lg:py-7">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span {...langAttrs(locale, languageOf(review.authorName))} className="text-small text-ink">{review.authorName}</span>
+                    <span {...langAttrs(locale, languageOf(review.authorName))} className="font-display text-h4 leading-heading text-ink">{review.authorName}</span>
                     <span
                       dir="ltr"
-                      className="tnum text-caption text-accent"
+                      className="tnum text-bodyLg text-accent"
                     >
                       {formatRating(
                         (review.ratings.scent + review.ratings.longevity
@@ -107,7 +107,7 @@ export async function ProductReviews({
                     // A review stays in the language it was written in, marked as such.
                     <p
                       {...langAttrs(locale, languageOf(review.body))}
-                      className="mt-3 max-w-proseMax text-small leading-relaxed text-ink2"
+                      className="mt-3 max-w-proseMax text-body leading-relaxed text-ink lg:text-bodyLg"
                     >
                       {review.body}
                     </p>
@@ -119,7 +119,7 @@ export async function ProductReviews({
         </>
       )}
 
-      <p className="mt-7 text-caption leading-relaxed text-ink3">
+      <p className="mt-7 text-small leading-relaxed text-ink3">
         {copy.boughtIt}{' '}
         <a
           href={localeHref(locale, '/order')}

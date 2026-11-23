@@ -46,9 +46,9 @@ export const TIERS: readonly Tier[] = ['top', 'heart', 'base'];
 
 /** Each tier's orbit: where on the bottle (0 its top), how wide against it, how fast and which way. */
 const RING: Record<Tier, { v: number; r: number; speed: number }> = {
-  top: { v: -0.16, r: 1.42, speed: 0.1 },
-  heart: { v: 0.42, r: 1.16, speed: -0.075 },
-  base: { v: 0.86, r: 0.98, speed: 0.06 },
+  top: { v: -0.12, r: 1.5, speed: 0.08 },
+  heart: { v: 0.4, r: 1.3, speed: -0.06 },
+  base: { v: 0.84, r: 1.12, speed: 0.05 },
 };
 
 /** How long a note takes to rise from the nozzle to its ring, in seconds. */
@@ -218,10 +218,13 @@ export class RevealController {
 
   private standingPose(): Pose {
     const f = this.free();
-    // On a phone the bottle must also fit across the screen: a wide flacon is limited by width.
+    // The bottle is the event, so it stands at the size of a person's attention:
+    // three-fifths of the room's height (it was under half, and read as a
+    // thumbnail in a dark room). On a phone it must also fit across the screen:
+    // a wide flacon is limited by width.
     const heightPx = this.wide.matches
-      ? window.innerHeight * 0.48
-      : Math.min(f.height * 0.56, (f.width * 0.5) / Math.max(this.glass.shape, 0.2));
+      ? Math.min(window.innerHeight * 0.6, (f.width * 0.46) / Math.max(this.glass.shape, 0.2))
+      : Math.min(f.height * 0.6, (f.width * 0.52) / Math.max(this.glass.shape, 0.2));
     return this.glass.poseStanding(f.cx, f.cy, heightPx);
   }
 
@@ -534,12 +537,14 @@ export class RevealController {
     Object.assign(this.parts.plinth.style, {
       transform: `translate(${px(cx)}, ${px(foot.y + 6)}) translate(-50%, -50%)`,
       width: px(width * 2.4), height: px(width * 0.5),
+      // The lamp's beam reaches from above the room to the floor the bottle stands on.
+      ['--beam' as string]: px(Math.max(foot.y + 6, 0) + 40),
     });
     if (this.parts.hint) this.parts.hint.style.transform = `translateX(${px(cx)}) translateX(-50%)`;
     if (!still) this.mist.step(dt, t, this.nozzle, this.phase === 'open');
 
     // The notes: out of the nozzle on a rising arc, to their ring; then the slow orbit.
-    const gap = this.wide.matches ? 90 : 34;
+    const gap = this.wide.matches ? 120 : 34;
     // Kept on the screen, and clear of the close button above, on a phone as on a desktop.
     const margin = 8, ceiling = 76;
     for (const c of this.chips) {
@@ -560,12 +565,23 @@ export class RevealController {
       // In front of the glass or behind it — the canvas sits between the two.
       el.style.zIndex = depth > -0.05 ? '3' : '1';
       const k = 0.8 + 0.2 * (depth + 1) / 2;
-      el.style.opacity = (birth * (1 - c.recall) * (0.5 + 0.5 * (depth + 1) / 2)).toFixed(3);
+      /*
+       * Clear of the glass (16 Nov 2026). A note crossing in front of the
+       * bottle covered the very thing the room is for, and a dozen of them
+       * read as a tag cloud stuck to the glass. A note over the bottle now
+       * thins to a breath and comes back as it leaves its silhouette — it is
+       * still passing in front, it simply does not stand there.
+       */
+      const span = width / 2 + c.half.w * 0.6;
+      const over = Math.abs(x - cx) < span && y > top.y - c.half.h && y < foot.y + c.half.h;
+      const clear = over ? clamp((Math.abs(x - cx) - span * 0.55) / (span * 0.45), 0.14, 1) : 1;
+      el.style.opacity = (birth * (1 - c.recall) * (0.5 + 0.5 * (depth + 1) / 2) * clear).toFixed(3);
       el.style.transform = `translate(${px(x)}, ${px(y)}) translate(-50%, -50%) scale(${(k * (0.6 + 0.4 * birth)).toFixed(3)})`;
     }
     for (const tier of TIERS) {
       const guide = this.parts.guides[tier];
-      if (guide) guide.style.top = px(top.y + height * RING[tier].v - 8);
+      // Never under the close button, which owns the corner the top guide would reach.
+      if (guide) guide.style.top = px(Math.max(top.y + height * RING[tier].v - 8, ceiling + 16));
     }
   }
 }

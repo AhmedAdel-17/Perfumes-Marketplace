@@ -18,7 +18,7 @@ import { getLocale } from '@/core/locale';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { Reveal } from '@/features/shell/Reveal';
-import { HouseTable } from '@/features/catalogue/HouseTable';
+import { HouseIndex } from '@/features/catalogue/HouseIndex';
 import { listHouses } from '@/core/catalogue';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -47,7 +47,7 @@ export default async function HousesPage() {
               {copy.kicker.toUpperCase()}
               <span aria-hidden="true" className="h-px w-12 bg-current" />
             </span>
-            <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
+            <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-displayLg lg:leading-[1.2]">{copy.title}</h1>
           </div>
           <div className="lg:col-span-5">
             <p className="max-w-proseMax text-bodyLg leading-relaxed text-ink2">{copy.intro}</p>
@@ -60,8 +60,8 @@ export default async function HousesPage() {
         {houses.length === 0 ? (
           <p className="py-8 text-bodyLg text-ink2">{copy.none}</p>
         ) : (
-          <Reveal className="mt-6 lg:mt-8">
-            <HouseTable houses={houses} locale={locale} />
+          <Reveal className="mt-7 lg:mt-8">
+            <HouseIndex houses={houses} locale={locale} />
           </Reveal>
         )}
       </main>

@@ -301,6 +301,10 @@ paths, layout. *Since 14 October 2026 (FD-1) the visual identity is `design-refe
 theme's colours are the 'Graphite & ambre' palette in `packages/tokens` (FD-1 amended), not
 `02-noir-absolu.html`; where an older reference disagrees on colour, type or finish, the
 redesign and the tokens win.*
+*Since 16 Nov 2026 (identity v3, "Vitrine") the composition of the customer site goes further
+than the redesign references — window light, the mark's arch as the opening frame, the
+photograph as the card. Palette, faces and finish are unchanged; the rules are
+`docs/DESIGN_DOCTRINE.md` §12 and the decision is in `DECISION_REGISTER.md`.*
 Do not redesign or "improve". If something looks wrong, say so and ask.
 
 **Experiences (founder, 18–19 Oct 2026):** `design-reference/experiences/` holds four

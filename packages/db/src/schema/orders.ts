@@ -14,7 +14,7 @@
  *  - `orderLineItems.commissionBps` is a SNAPSHOT. Never compute historical
  *    commission from a seller's current rate.
  */
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { customers } from './identity';
 import { sellers } from './sellers';
 import { products } from './catalogue';
@@ -192,3 +192,16 @@ export const orderLineItems = pgTable('order_line_items', {
   uniqueIndex('order_line_items_id_sub_order_key').on(t.id, t.subOrderId),
   uniqueIndex('order_line_items_review_identity_key').on(t.id, t.subOrderId, t.productId),
 ]);
+
+
+/**
+ * One order per checkout, by the key its browser sent (migration 0043): the
+ * order it created and the reply the customer was shown, so a retried press
+ * is answered from here instead of writing a second order.
+ */
+export const orderPlacements = pgTable('order_placements', {
+  idempotencyKey: uuid('idempotency_key').primaryKey(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  reply: jsonb('reply').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});

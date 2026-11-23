@@ -36,6 +36,8 @@ export const AUDIT_ACTIONS = [
   'policy_change',
   'staff_permission_change',
   'privacy_request',
+  // Migration 0042: delivery starts the reserve clock and opens reviews.
+  'delivery_confirmation',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

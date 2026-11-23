@@ -87,10 +87,10 @@ export default async function SearchPage(
       )}
 
       {/*
-        Visual identity v2: the catalogue as the register's full listing. A
-        ruled head that states the count, the filters in a ruled column at the
-        start edge, and the perfumes on the same specimen cards as the home page,
-        so a perfume looks the same wherever it is listed.
+        The catalogue's full listing: a ruled head that states the count, the
+        filters in a column at the start edge, and the perfumes on the same
+        cards as the home page (identity v3), so a perfume looks the same
+        wherever it is listed.
       */}
       <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
         <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-ink pb-4 pt-8 lg:pt-12">
@@ -99,7 +99,7 @@ export default async function SearchPage(
               {copy.kicker.toUpperCase()}
               <span aria-hidden="true" className="h-px w-12 bg-current" />
             </span>
-            <h1 className="font-display text-h1 leading-heading lg:text-h1Lg">{copy.title}</h1>
+            <h1 className="rise font-display text-h1 leading-heading [--rise-delay:80ms] lg:text-displayLg lg:leading-[1.2]">{copy.title}</h1>
           </div>
           <SearchBox text={query.text} />
         </header>
@@ -149,7 +149,7 @@ export default async function SearchPage(
                 )}
               </div>
             ) : (
-              <ul className="results-dim grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+              <ul className="results-dim grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-[56px]">
                 {products.map((product, index) => (
                   <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
                     <SpecimenCard

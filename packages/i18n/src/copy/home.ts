@@ -30,6 +30,33 @@ export const HOME = defineMessages(
     arrives: (min: string, max: string) => `يصل خلال ${min}–${max} أيام`,
 
 
+    // The three figures under the lede. Labels Latin in both languages.
+    figureHouses: 'Houses',
+    figurePerfumes: 'Perfumes',
+    figurePayment: 'Payment',
+    payOnDelivery: 'عند الاستلام',
+
+    // What the shop promises (identity v3). Each restates something a published
+    // page already says — never a new promise.
+    promisesLabel: 'ما نلتزم به',
+    promises: [
+      {
+        title: 'كل معلومة بمصدرها',
+        body: 'ثبات العطر وانتشاره مذكوران ومعهما المصدر: الدار نفسها، أو اختبارنا، أو تقييمات من اشتروه.',
+      },
+      {
+        title: 'حقيبة واحدة من أكثر من دار',
+        body: 'اختر من أي دار في طلب واحد. كل دار تجهّز طلبها وتشحنه، ومصروف كل شحنة ظاهر قبل التأكيد.',
+      },
+      {
+        title: 'الدفع عند الاستلام',
+        body: 'لا بطاقة ولا دفع مقدّم. تدفع نقدًا للمندوب حين تصلك الشحنة.',
+      },
+    ],
+
+    accordsIndex: '03',
+    accordsTitle: 'اختر بالعائلة',
+
     recentIndex: '02',
     recentTitle: 'وصل حديثًا',
     selectedTitle: 'اختياراتنا',
@@ -41,11 +68,11 @@ export const HOME = defineMessages(
     firstImpression: 'FIRST IMPRESSION',
     firstImpressionSaid: (notes: string) => `أول ما تشمّه: ${notes}`,
 
-    notesIndex: '03',
+    notesIndex: '04',
     notesTitle: 'ابحث بالنفحة، لا بالماركة',
     searchFor: (note: string) => `ابحث عن العطور التي فيها ${note}`,
 
-    housesIndex: '04',
+    housesIndex: '05',
     housesTitle: 'الدور',
     allHouses: 'كل الدور',
 
@@ -66,6 +93,30 @@ export const HOME = defineMessages(
     arrives: (min: string, max: string) => `Arrives in ${min}–${max} days`,
 
 
+    figureHouses: 'Houses',
+    figurePerfumes: 'Perfumes',
+    figurePayment: 'Payment',
+    payOnDelivery: 'On delivery',
+
+    promisesLabel: 'What we stand by',
+    promises: [
+      {
+        title: 'Every claim, with its source',
+        body: 'A perfume’s longevity and projection are printed with where they came from: the house, our own test, or the people who bought it.',
+      },
+      {
+        title: 'One bag, several houses',
+        body: 'Choose from any house in one order. Each house prepares and ships its own, and every delivery fee is shown before you confirm.',
+      },
+      {
+        title: 'Cash on delivery',
+        body: 'No card and nothing paid up front. You pay the courier in cash when the parcel arrives.',
+      },
+    ],
+
+    accordsIndex: '03',
+    accordsTitle: 'Choose by family',
+
     recentIndex: '02',
     recentTitle: 'New arrivals',
     selectedTitle: 'Our selection',
@@ -80,11 +131,11 @@ export const HOME = defineMessages(
     firstImpression: 'FIRST IMPRESSION',
     firstImpressionSaid: (notes: string) => `First impression: ${notes}`,
 
-    notesIndex: '03',
+    notesIndex: '04',
     notesTitle: 'Search by the note, not the brand',
     searchFor: (note: string) => `Find perfumes with ${note}`,
 
-    housesIndex: '04',
+    housesIndex: '05',
     housesTitle: 'The houses',
     allHouses: 'All houses',
 

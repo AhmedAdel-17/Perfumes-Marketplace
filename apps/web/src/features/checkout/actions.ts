@@ -47,6 +47,8 @@ export interface PlaceOrderInput {
     readonly landmark?: string;
   };
   readonly entries: readonly CartEntry[];
+  /** Fixed for one checkout; see `checkoutKey` in CheckoutForm. */
+  readonly idempotencyKey: string;
 }
 
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
@@ -57,6 +59,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       address: input.address as never,
       lines: input.entries.map((e) => ({ productId: e.productId, quantity: e.quantity })),
       paymentMethod: 'cod',
+      idempotencyKey: input.idempotencyKey,
     });
     return { ok: true, ...placed };
   } catch (error) {

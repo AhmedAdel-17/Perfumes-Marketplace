@@ -45,6 +45,12 @@ export const SHELL = defineMessages(
     footerNote: 'سوق للعطور المصرية المستقلّة. كل دار تُجهّز طلبها وتشحنه بنفسها، والأسعار بالجنيه المصري شاملة الضريبة.',
     notFoundTitle: 'الصفحة غير موجودة',
     notFoundBody: 'ربما تغيّر الرابط، أو لم تعد الصفحة معروضة.',
+    // When a page fails to render (16 Nov 2026). Says what happened, that
+    // nothing was lost, and the two ways on — never a stack trace.
+    errorTitle: 'تعذّر عرض هذه الصفحة',
+    errorBody: 'حدث خطأ من جهتنا. حقيبتك وطلباتك محفوظة كما هي.',
+    errorRetry: 'حاول مرّة أخرى',
+    errorHome: 'العودة إلى الصفحة الرئيسية',
     browsePerfumes: 'تصفّح العطور',
     imagePlaceholder: 'صورة',
     // The editorial pages' kicker. Latin in both languages.
@@ -92,6 +98,10 @@ export const SHELL = defineMessages(
     footerNote: 'A marketplace for independent Egyptian perfume. Every house prepares and ships its own orders; prices are in Egyptian pounds and include tax.',
     notFoundTitle: 'Page not found',
     notFoundBody: 'The link may have changed, or the page is no longer shown.',
+    errorTitle: 'This page could not be shown',
+    errorBody: 'Something went wrong on our side. Your bag and your orders are safe.',
+    errorRetry: 'Try again',
+    errorHome: 'Back to the home page',
     browsePerfumes: 'Browse perfumes',
     imagePlaceholder: 'Image',
     pageKicker: 'Information',

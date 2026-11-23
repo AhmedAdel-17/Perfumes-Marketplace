@@ -131,7 +131,7 @@ export const adjustmentType = pgEnum('adjustment_type', [
 export const auditAction = pgEnum('audit_action', [
   'seller_status_change', 'verification_decision', 'listing_moderation', 'review_moderation',
   'commission_rate_change', 'payout_approval', 'payout_adjustment', 'policy_change',
-  'staff_permission_change', 'privacy_request',
+  'staff_permission_change', 'privacy_request', 'delivery_confirmation',
 ]);
 
 export const consentPurpose = pgEnum('consent_purpose', [

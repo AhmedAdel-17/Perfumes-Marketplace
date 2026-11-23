@@ -47,7 +47,7 @@ import type { SettlementSubOrder } from '../services/settlement';
 import type { PayoutStatement } from '../services/settlement';
 import type {
   CustomerRecord, CustomerRepository, PayoutRepository,
-  OrderRepository, PersistedOrder, ProductRecord, ProductRepository, Repositories,
+  OrderRepository, PersistedOrder, PlacementReply, ProductRecord, ProductRepository, Repositories,
   SellerRecord, SellerRepository, SubOrderRecord, SubOrderRepository, UnitOfWork,
 } from '../ports/repositories';
 
@@ -217,6 +217,8 @@ interface Store {
    * particular order was answered — which the owner report must.
    */
   transitions: Array<TransitionRecord & { subOrderId: string }>;
+  /** Checkout keys and the reply each was given (migration 0043). */
+  placements: Map<string, { orderId: string; reply: PlacementReply }>;
   seq: number;
 }
 
@@ -224,7 +226,7 @@ const emptyStore = (): Store => ({
   sellers: new Map(), customers: new Map(), payouts: new Map(), reviews: new Map(),
   returns: new Map(), tickets: new Map(), applications: new Map(),
   products: new Map(), orders: new Map(),
-  subOrders: new Map(), transitions: [], seq: 0,
+  subOrders: new Map(), transitions: [], placements: new Map(), seq: 0,
 });
 
 /** How many of the eight have passed. */
@@ -245,6 +247,7 @@ const cloneStore = (s: Store): Store => ({
   orders: new Map([...s.orders].map(([k, v]) => [k, { ...v, subOrderIds: [...v.subOrderIds] }])),
   subOrders: new Map([...s.subOrders].map(([k, v]) => [k, { ...v }])),
   transitions: [...s.transitions],
+  placements: new Map(s.placements),
   seq: s.seq,
 });
 
@@ -589,6 +592,18 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             };
           }),
         };
+      },
+
+      async findPlacement(idempotencyKey) {
+        return store().placements.get(idempotencyKey)?.reply ?? null;
+      },
+
+      async recordPlacement(idempotencyKey, orderId, reply) {
+        // The primary key the database enforces.
+        if (store().placements.has(idempotencyKey)) {
+          throw new Error(`duplicate key value violates unique constraint "order_placements_pkey"`);
+        }
+        store().placements.set(idempotencyKey, { orderId, reply });
       },
 
       async findByReference(reference) {

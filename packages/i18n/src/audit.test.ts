@@ -97,7 +97,7 @@ describe('the audit vocabulary', () => {
   it('has a word for every action the database enum allows', () => {
     // Mirrors `AUDIT_ACTIONS` in the domain; the api package checks the two
     // lists against each other, since this package cannot import the domain.
-    expect(Object.keys(AUDIT_ACTION_AR)).toHaveLength(10);
+    expect(Object.keys(AUDIT_ACTION_AR)).toHaveLength(11);
     for (const words of Object.values(AUDIT_ACTION_AR)) expect(words).toMatch(/[؀-ۿ]/);
   });
 
