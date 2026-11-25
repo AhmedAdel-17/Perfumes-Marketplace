@@ -63,6 +63,7 @@ const contextFor = (
   platform: { staffId: string; role: string; label?: string } | null = null,
 ): ApiContext => ({
     actor,
+    customerCheckoutRequired: false,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,
@@ -378,6 +379,67 @@ describe('orders.place — the total is decided here, not by the client', () => 
     await expect(caller(ANON).orders.place(order({
       paymentMethod: 'card',
     }) as never)).rejects.toThrow();
+  });
+
+  /*
+   * DEBT #12 — one order per checkout (migration 0043). Counted in the
+   * DATABASE, by the customer's phone, because that is where a duplicate
+   * would actually exist: two confirmation screens each show one reference
+   * whether or not there were two orders (QA_REPORT, defect 10).
+   */
+  const ordersFor = async (phone: string) =>
+    (await pg.query<{ n: number }>(`SELECT count(*)::int n FROM orders WHERE contact_phone = $1`, [phone])).rows[0]!.n;
+
+  it('rejects a replay key reused with different order details', async () => {
+    const key=crypto.randomUUID();const phone='01022223338';
+    await caller(ANON).orders.place(order({contactPhone:phone,idempotencyKey:key}));
+    await expect(caller(ANON).orders.place(order({contactPhone:phone,contactName:'Different recipient',idempotencyKey:key}))).rejects.toThrow();
+    expect(await ordersFor(phone)).toBe(1);
+  });
+  it('requires a completed verified customer for the web checkout policy',async()=>{
+    const {customerCheckoutRequired:_legacyFlag,...defaultContext}=contextFor(ANON);
+    const anonymous=appRouter.createCaller(defaultContext);
+    await expect(anonymous.orders.place(order())).rejects.toMatchObject({code:'UNAUTHORIZED'});
+    const principal=await new DrizzleUnitOfWork(db,{role:'identity',id:null}).transaction(r=>r.identity.claimCustomer('+201009991234'));
+    const account=appRouter.createCaller({...contextFor({role:'customer',id:principal.authUserId}),customerCheckoutRequired:true});
+    await expect(account.orders.place(order({contactPhone:principal.phone}))).rejects.toMatchObject({code:'PRECONDITION_FAILED'});
+    await account.customerAccount.saveProfile({fullName:'Customer account',email:null,dateOfBirth:'1998-01-01',gender:'male',families:[],notes:[],occasions:[],seasons:[],concentrations:[],bottleSizes:[],budgetMinPiastres:null,budgetMaxPiastres:null,personalizationConsent:false,marketingConsent:false});
+    await expect(account.orders.place(order({contactPhone:'01088889999'}))).rejects.toMatchObject({code:'FORBIDDEN'});
+    const placed=await account.orders.place(order({contactPhone:principal.phone,idempotencyKey:crypto.randomUUID()}));
+    expect(await account.customerAccount.orders()).toEqual([expect.objectContaining({reference:placed.reference})]);
+    expect((await account.customerAccount.profile())?.fullName).toBe('Customer account');
+    expect(await anonymous.customerAccount.profile().catch(e=>e.code)).toBe('UNAUTHORIZED');
+    await expect(account.customerAccount.saveProfile({fullName:'Invalid',email:null,dateOfBirth:'2026-02-30',gender:'male',families:[],notes:[],occasions:[],seasons:[],concentrations:[],bottleSizes:[],budgetMinPiastres:null,budgetMaxPiastres:null,personalizationConsent:false,marketingConsent:false})).rejects.toMatchObject({code:'BAD_REQUEST'});
+  });
+  it('makes ONE order when the same checkout is pressed twice', async () => {
+    const phone = '01022223333';
+    const key = crypto.randomUUID();
+    const first = await caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: key }));
+    const again = await caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: key }));
+
+    expect(again).toEqual(first);
+    expect(await ordersFor(phone)).toBe(1);
+  });
+
+  it('makes ONE order when two presses race each other', async () => {
+    const phone = '01033334444';
+    const key = crypto.randomUUID();
+    const [a, b] = await Promise.all([
+      caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: key })),
+      caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: key })),
+    ]);
+
+    expect(a.reference).toBe(b.reference);
+    expect(await ordersFor(phone)).toBe(1);
+  });
+
+  it('still makes a new order for a new checkout — the key is per checkout, not per customer', async () => {
+    // The refusal above derived from its success case: the same call with a
+    // different key must NOT be collapsed into the first.
+    const phone = '01044445555';
+    await caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: crypto.randomUUID() }));
+    await caller(ANON).orders.place(order({ contactPhone: phone, idempotencyKey: crypto.randomUUID() }));
+    expect(await ordersFor(phone)).toBe(2);
   });
 });
 
@@ -1588,6 +1650,37 @@ describe('the money loop — order to payout, against a real Postgres', () => {
     // And the platform path does work, so this is a refusal rather than a gap.
     const delivered = await caller(PLATFORM_ACTOR).platform.markDelivered({ subOrderId: row.id });
     expect(delivered).toEqual({ ok: true, state: 'delivered' });
+  });
+
+  it('records WHO confirmed a delivery, in the audit trail (gate 6)', async () => {
+    const { row } = await shipOne();
+    const platform = caller(PLATFORM_ACTOR);
+    await platform.platform.markDelivered({ subOrderId: row.id });
+
+    const trail = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ entityTable: 'sub_orders', entityId: row.id }));
+    const entry = trail.find((e) => e.action === 'delivery_confirmation');
+    expect(entry, 'confirming a delivery wrote no audit entry').toBeDefined();
+    expect(JSON.parse(entry!.before!).state).toBe('dispatched');
+    expect(JSON.parse(entry!.after!).state).toBe('delivered');
+  });
+
+  it('refuses cash recorded against a parcel that was never delivered', async () => {
+    // Derived from the success case below: the same call, one step earlier.
+    const { row } = await shipOne();
+    const platform = caller(PLATFORM_ACTOR);
+    await expect(platform.platform.recordRemittance({ subOrderId: row.id, collectedPiastres: 43_500 }))
+      .rejects.toThrow();
+
+    // Nothing was recorded, and nothing was audited for it.
+    const trail = await new DrizzleUnitOfWork(db, PLATFORM_ACTOR)
+      .transaction((r) => r.audit.recent({ entityTable: 'sub_orders', entityId: row.id }));
+    expect(trail.some((e) => e.action === 'payout_adjustment')).toBe(false);
+
+    // And once it is delivered, the same call goes through.
+    await platform.platform.markDelivered({ subOrderId: row.id });
+    await expect(platform.platform.recordRemittance({ subOrderId: row.id, collectedPiastres: 43_500 }))
+      .resolves.toEqual({ ok: true });
   });
 
   it('holds the money until the courier has actually remitted', async () => {

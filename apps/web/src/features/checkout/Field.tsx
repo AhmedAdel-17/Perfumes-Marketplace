@@ -27,6 +27,7 @@ export function Field({
   inputMode,
   autoComplete,
   maxLength,
+  readOnly=false,
 }: {
   label: string;
   value: string;
@@ -38,6 +39,7 @@ export function Field({
   inputMode?: 'text' | 'tel' | 'numeric';
   autoComplete?: string;
   maxLength?: number;
+  readOnly?: boolean;
 }) {
   const id = useId();
   const errorId = `${id}-error`;
@@ -74,6 +76,7 @@ export function Field({
         inputMode={inputMode}
         autoComplete={autoComplete}
         maxLength={maxLength}
+        readOnly={readOnly}
         value={value}
         onChange={(event) => onChange(
           // A `tel` or `numeric` field holds DIGITS AS DATA, so whatever

@@ -66,3 +66,5 @@ export * from './ports/aftercare-contract';
 
 export * from './ports/inventory-repository';
 export * from './ports/seller-customer-read-model';
+
+export * from './ports/customer-account';

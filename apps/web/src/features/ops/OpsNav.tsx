@@ -1,3 +1,6 @@
+import Link from 'next/link';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
+import styles from '@/features/art-direction/ArtExperience.module.css';
 import { ThemeToggle } from '@/features/shell/ThemeToggle';
 import { signOutOps } from './actions';
 
@@ -39,6 +42,7 @@ const DESTINATIONS = [
 export type OpsSection = (typeof DESTINATIONS)[number]['key'];
 
 export function OpsNav({ current }: { current: OpsSection }) {
+  if (isArtDirectionPreview()) return <aside className={styles.opsSidebar}><div className={styles.opsBrand}><Link href="/ops/queue" lang="en">DIYAR</Link><span className="text-small">التشغيل</span></div><nav aria-label="أقسام التشغيل" className={styles.opsLinks}>{DESTINATIONS.map(d => <Link key={d.key} href={d.href} aria-current={current === d.key ? 'page' : undefined}>{d.label}</Link>)}</nav><div className={styles.opsFoot}><ThemeToggle/><Link href="/">عرض الموقع</Link><form action={signOutOps}><button type="submit" className="tappable min-h-touch">خروج</button></form></div></aside>;
   return (
     <div className="flex flex-wrap items-center gap-x-5">
       {/*

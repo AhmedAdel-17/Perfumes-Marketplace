@@ -5,6 +5,8 @@ import { PageHead } from '@/features/shell/PageHead';
 import { SupportForm, TicketLookup } from '@/features/support/SupportForm';
 import { CONTACT, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
+import {customerSession} from '@/features/customer/session';
+import {api} from '@/core/api';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -20,7 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic';
 
-export default async function SupportPage() {
+export default async function SupportPage({searchParams}:{searchParams:Promise<{subject?:string;order?:string;category?:string}>}) {
+  const q=await searchParams,subject=q.subject?.slice(0,160)??'',session=await customerSession();
+  const account=session?await api({role:'customer',id:session.authUserId}).customerAccount.profile():null;
   const copy = CONTACT[await getLocale()];
   return (
     <>
@@ -30,7 +34,7 @@ export default async function SupportPage() {
           <p className="mt-4 max-w-proseMax text-body leading-relaxed text-ink2 lg:text-bodyLg">{copy.intro}</p>
         </PageHead>
 
-        <SupportForm />
+        <SupportForm initialSubject={subject} initialName={account?.fullName??''} initialPhone={account?.phone??''} initialOrderReference={q.order?.slice(0,40)??''} initialCategory={q.category==='privacy'?'privacy':'order_status'} />
 
         <section className="mt-[72px] border-t border-ink pt-8">
           <h2 className="px-5 pb-5 font-display text-h3 lg:px-0 lg:text-h2Lg">

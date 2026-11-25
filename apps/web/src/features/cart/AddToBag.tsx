@@ -55,7 +55,7 @@ export function AddToBag({
   drop?: boolean;
   className?: string;
 }) {
-  const { add, hydrated } = useCart();
+  const { add, hydrated, openBag } = useCart();
   const [confirmed, setConfirmed] = useState(false);
   // Whether the label has ever changed: only then does a new label fade in, so
   // the button does not flash its own words as the page loads.
@@ -108,6 +108,7 @@ export function AddToBag({
     // Not awaited, and it cannot throw: the bag is updated whatever analytics
     // does, and the confirmation below must not wait on a database write.
     void recordBrowsing('cart_add', { productId });
+    openBag();
     setConfirmed(true);
     setPressed(true);
     if (drop && button.current) flyDrop(button.current, family);

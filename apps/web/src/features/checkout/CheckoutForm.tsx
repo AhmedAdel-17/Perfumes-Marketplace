@@ -7,6 +7,8 @@ import {
   NOUN, nounIn, data as num, pick, type Locale,
 } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
+import type {CustomerAccount,SavedCustomerAddress} from '@diyar/domain';
+import {CUSTOMER_ACCOUNT} from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
 import { priceCart, type PricedCartResult } from '@/features/cart/actions';
 import { useCart } from '@/features/cart/CartStore';
@@ -23,7 +25,9 @@ import { Pending, SectionLoading } from '@/features/shell/FlaconLoader';
  * phone and address, and splitting six inputs across four screens adds three
  * chances to abandon on a phone with a slow connection.
  *
- * NO ACCOUNT REQUIRED. Cash on delivery needs no card and no verified session,
+ * Customer checkout now requires a verified phone session and a completed profile.
+ * Historical guest orders are preserved. The original design rationale follows:
+ * Cash on delivery needs no card and no verified session,
  * so demanding a login here would cost orders to protect nothing. The phone
  * number is the identity: a returning guest is recognised as the same customer
  * without ever having created an account, and when OTP arrives it upgrades
@@ -40,27 +44,71 @@ type Errors = Partial<Record<'contactName' | 'contactPhone' | 'city' | 'area' | 
  */
 const PHONE = /^(?:\+20|0)1[0125]\d{8}$/;
 
-export function CheckoutForm() {
+const CHECKOUT_KEY = 'diyar-checkout-key';
+
+function checkoutKey(signature:string):string {
+  try {const saved=JSON.parse(sessionStorage.getItem(CHECKOUT_KEY)??'null') as {key?:string;signature?:string}|null;if(saved?.signature===signature&&typeof saved.key==='string'&&/^[0-9a-f-]{36}$/i.test(saved.key))return saved.key;const key=crypto.randomUUID();sessionStorage.setItem(CHECKOUT_KEY,JSON.stringify({key,signature}));return key;} catch {return crypto.randomUUID();}
+}
+
+function forgetCheckoutKey(): void {
+  try { sessionStorage.removeItem(CHECKOUT_KEY); } catch { /* nothing to forget */ }
+}
+
+const LAST_ORDER_KEY = 'diyar-last-order';
+const LAST_ORDER_TTL_MS = 60 * 60 * 1000;
+type Placed = Extract<PlaceOrderResult, { ok: true }>;
+
+function rememberOrder(placed: Placed,customerId='legacy'): void {
+  try {
+    sessionStorage.setItem(LAST_ORDER_KEY+':'+customerId, JSON.stringify({ ...placed, at: Date.now() }));
+  } catch { /* private mode: the screen still shows it now */ }
+}
+
+function recallOrder(customerId='legacy'): Placed | null {
+  try {
+    const raw = sessionStorage.getItem(LAST_ORDER_KEY+':'+customerId);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Placed & { at?: number };
+    if (typeof saved.at !== 'number' || Date.now() - saved.at > LAST_ORDER_TTL_MS) return null;
+    if (typeof saved.reference !== 'string' || typeof saved.totalPiastres !== 'number') return null;
+    return {
+      ok: true,
+      reference: saved.reference,
+      totalPiastres: saved.totalPiastres,
+      houseCount: saved.houseCount,
+      etaDaysMin: saved.etaDaysMin,
+      etaDaysMax: saved.etaDaysMax,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function CheckoutForm({customer,savedAddresses=[]}:{customer?:CustomerAccount;savedAddresses?:SavedCustomerAddress[]}={}) {
+  const defaultAddress=savedAddresses.find(a=>a.isDefault)??savedAddresses[0];
   const { entries, hydrated, clear } = useCart();
   const [cart, setCart] = useState<PricedCartResult | null>(null);
   const locale = useLocale();
   const copy = CHECKOUT[locale];
   const governorates = governorateOptions(locale);
 
-  const [contactName, setContactName] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [governorate, setGovernorate] = useState<string>(governorates[0]!.value);
-  const [city, setCity] = useState('');
-  const [area, setArea] = useState('');
-  const [street, setStreet] = useState('');
-  const [building, setBuilding] = useState('');
-  const [floor, setFloor] = useState('');
-  const [apartment, setApartment] = useState('');
-  const [landmark, setLandmark] = useState('');
+  const [contactName, setContactName] = useState(customer?.fullName??'');
+  const [contactPhone, setContactPhone] = useState(customer?.phone??'');
+  const [governorate, setGovernorate] = useState<string>(defaultAddress?.governorate??governorates[0]!.value);
+  const [city, setCity] = useState(defaultAddress?.city??'');
+  const [area, setArea] = useState(defaultAddress?.area??'');
+  const [street, setStreet] = useState(defaultAddress?.street??'');
+  const [building, setBuilding] = useState(defaultAddress?.building??'');
+  const [floor, setFloor] = useState(defaultAddress?.floor??'');
+  const [apartment, setApartment] = useState(defaultAddress?.apartment??'');
+  const [landmark, setLandmark] = useState(defaultAddress?.landmark??'');
 
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<PlaceOrderResult | null>(null);
+  const form=useRef<HTMLFormElement>(null);
+  const submittingRef=useRef(false);
+  const retryKey=useRef<{signature:string;key:string}|null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -78,15 +126,24 @@ export function CheckoutForm() {
     if (!street.trim()) next.street = copy.errorRequired;
     if (!building.trim()) next.building = copy.errorRequired;
     setErrors(next);
-    return Object.keys(next).length === 0;
+    const valid=Object.keys(next).length===0;
+    if(!valid)requestAnimationFrame(()=>form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+    return valid;
   };
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (submitting || !validate()) return;
+    if (submittingRef.current || !validate()) return;
+    submittingRef.current=true;
 
     setSubmitting(true);
+    const signature=JSON.stringify({entries:[...entries].sort((a,b)=>a.productId.localeCompare(b.productId)),contactName,contactPhone,governorate,city,area,street,building,floor,apartment,landmark});
+    try {
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(signature));
+    const signatureHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+    if(retryKey.current?.signature!==signature)retryKey.current={signature,key:checkoutKey(signatureHash)};
     const placed = await placeOrder({
+      idempotencyKey:retryKey.current.key,
       contactName: contactName.trim(),
       contactPhone: contactPhone.trim(),
       address: {
@@ -104,11 +161,14 @@ export function CheckoutForm() {
     setResult(placed);
     // The bag is emptied only on a CONFIRMED order. Clearing it optimistically
     // and then failing would lose the basket and the sale together.
-    if (placed.ok) clear();
-    setSubmitting(false);
+    if (placed.ok) {rememberOrder(placed,customer?.customerId);forgetCheckoutKey();retryKey.current=null;clear();}
+    } catch {setResult({ok:false,reason:'failed',message:copy.failed});}
+    finally {submittingRef.current=false;setSubmitting(false);}
   };
 
   if (result?.ok) return <Confirmation result={result} locale={locale} />;
+
+  if(hydrated&&entries.length===0){const recalled=recallOrder(customer?.customerId);if(recalled)return <Confirmation result={recalled} locale={locale}/>;}
 
   if (!hydrated || cart === null) {
     return (
@@ -155,6 +215,7 @@ export function CheckoutForm() {
       expressed the only way a phone can.
     */
     <form
+      ref={form}
       onSubmit={onSubmit}
       noValidate
       className="px-5 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px] lg:px-0"
@@ -178,8 +239,9 @@ export function CheckoutForm() {
           label={copy.fullName} value={contactName} onChange={setContactName}
           error={errors.contactName} required autoComplete="name" maxLength={80}
         />
+        {savedAddresses.length>0&&<label className="mb-5 block text-body text-ink2">{CUSTOMER_ACCOUNT[locale].addresses}<select className="mt-2 min-h-touch w-full border border-line bg-ground px-3 text-ink" defaultValue={defaultAddress?.id??''} onChange={e=>{const a=savedAddresses.find(a=>a.id===e.target.value);if(a){setGovernorate(a.governorate);setCity(a.city);setArea(a.area);setStreet(a.street);setBuilding(a.building);setFloor(a.floor??'');setApartment(a.apartment??'');setLandmark(a.landmark??'');}}}>{savedAddresses.map(a=><option key={a.id} value={a.id}>{a.label??a.city} · {a.area}</option>)}</select></label>}
         <Field
-          label={copy.phone} value={contactPhone} onChange={setContactPhone}
+          label={copy.phone} value={contactPhone} onChange={setContactPhone} readOnly={!!customer}
           error={errors.contactPhone} required type="tel" inputMode="tel"
           autoComplete="tel" maxLength={14}
           hint={copy.phoneHint}
@@ -243,9 +305,8 @@ export function CheckoutForm() {
           {submitting ? <Pending label={copy.placing} /> : copy.place}
         </PrimaryButton>
 
-        <p className="mt-3 text-center text-small leading-relaxed text-ink3">
-          {copy.agreement}
-        </p>
+        {Object.keys(errors).length>0&&<p role="status" className="mt-3 text-center text-small text-danger">{copy.fixErrors}</p>}
+        <p className="mt-3 text-center text-small leading-relaxed text-ink3">{copy.agreementLead} <Link href={localeHref(locale,'/terms')} target="_blank" rel="noopener" className="inline-flex min-h-touch items-center underline">{copy.agreementTerms}</Link> {copy.agreementAnd} <Link href={localeHref(locale,'/returns')} target="_blank" rel="noopener" className="inline-flex min-h-touch items-center underline">{copy.agreementReturns}</Link>.</p>
         </div>
       </div>
     </form>
@@ -358,6 +419,8 @@ function Confirmation(
 ) {
   const copy = CHECKOUT[locale];
   const heading = useRef<HTMLHeadingElement>(null);
+  const [copied,setCopied]=useState(false);
+  const copyReference=()=>{void navigator.clipboard?.writeText(result.reference).then(()=>setCopied(true)).catch(()=>setCopied(false));};
 
   /*
    * The page is replaced under a viewport still scrolled to where "place order"
@@ -397,6 +460,7 @@ function Confirmation(
         <div className="latin mt-2 select-all text-h2 tracking-[3px] text-accent lg:text-h1Lg">
           {result.reference}
         </div>
+        <button type="button" onClick={copyReference} aria-live="polite" className="mt-2 min-h-touch text-body underline">{copied?copy.copiedReference:copy.copyReference}</button>
         <p className="mt-3 text-small leading-relaxed text-ink3">
           {copy.referenceHint}
         </p>
@@ -422,7 +486,7 @@ function Confirmation(
 
       <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
         <Link
-          href={localeHref(locale, '/order')}
+          href={`${localeHref(locale, '/order')}?ref=${encodeURIComponent(result.reference)}`}
           className="tappable inline-flex min-h-touch items-center text-bodyLg text-ink transition-colors duration-base ease-out hover:text-accent"
         >
           <span className="link-line">{copy.track}</span>

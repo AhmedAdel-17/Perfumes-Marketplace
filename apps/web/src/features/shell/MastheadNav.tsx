@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SHELL, stripLocale } from '@diyar/i18n';
+import { ART_DIRECTION, SHELL, stripLocale } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { useLocale } from './LocaleProvider';
 
@@ -46,9 +46,10 @@ const LINKS = [
 /** Hover intent and grace, in ms: enough to ignore a pass across, short enough to feel immediate. */
 const INTENT = 120;
 
-export function MastheadNav({ className = '', panel }: { className?: string; panel?: React.ReactNode }) {
+export function MastheadNav({ className = '', panel, editorial=false }: { className?: string; panel?: React.ReactNode; editorial?:boolean }) {
   const locale = useLocale();
   const copy = SHELL[locale];
+  const links = editorial ? [...LINKS.slice(0,2), {href:'/scent-map' as const,label:'discover' as const,matches:(path:string)=>path==='/scent-map'}, ...LINKS.slice(2)] : LINKS;
   const pathname = stripLocale(usePathname() ?? '/');
   const [open, setOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
@@ -74,8 +75,8 @@ export function MastheadNav({ className = '', panel }: { className?: string; pan
 
   return (
     <nav aria-label={copy.mainNav} className={className}>
-      <ul className="flex items-center gap-6 lg:h-full lg:gap-2">
-        {LINKS.map(({ href, label, matches }) => {
+      <ul className={`flex items-center lg:h-full lg:gap-2 ${editorial ? 'gap-3' : 'gap-6'}`}>
+        {links.map(({ href, label, matches }) => {
           const current = matches(pathname);
           const hasPanel = Boolean(panel) && href === '/search';
           return (
@@ -99,7 +100,7 @@ export function MastheadNav({ className = '', panel }: { className?: string; pan
               >
                 {/* `nav-line` (globals.css): the accent line under the page you
                     are on, drawn in under the pointer. */}
-                <span className="nav-line">{copy[label]}</span>
+                <span className="nav-line">{label === 'discover' ? ART_DIRECTION[locale].discover : copy[label]}</span>
                 {hasPanel && <span aria-hidden="true" className="mast-chevron hidden lg:block" />}
               </Link>
               {/* The panel is an async server component that awaits the houses,

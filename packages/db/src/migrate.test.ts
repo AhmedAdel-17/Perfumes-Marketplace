@@ -87,7 +87,7 @@ it('upgrades a populated main-era legacy store without changing customer data or
   // Reproduce the filename-only ledger used by existing main local stores.
   await db.exec('ALTER TABLE schema_migrations ALTER COLUMN sha256 DROP NOT NULL; UPDATE schema_migrations SET sha256=NULL');
   await expect(applyMigrations(db)).rejects.toThrow('Legacy migration');
-  expect(await applyMigrations(db, { adoptLegacyChecksums: true })).toHaveLength(4);
+  expect(await applyMigrations(db, { adoptLegacyChecksums: true })).toHaveLength(migrationFiles().filter(name=>name >= '0038').length);
   expect((await db.query('SELECT * FROM customers')).rows).toEqual(before);
   expect((await db.query("SELECT filename,applied_at FROM schema_migrations WHERE filename < '0038' ORDER BY filename")).rows).toEqual(stamps);
   expect(await applyMigrations(db)).toEqual([]);

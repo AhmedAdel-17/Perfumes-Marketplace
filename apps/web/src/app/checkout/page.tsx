@@ -1,4 +1,10 @@
 import type { Metadata } from 'next';
+import {redirect} from 'next/navigation';
+import {customerSession} from '@/features/customer/session';
+import {api} from '@/core/api';
+import {localeHref} from '@/core/href';
+import { ArtServicePage } from '@/features/art-direction/ArtServicePage';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { CheckoutForm } from '@/features/checkout/CheckoutForm';
@@ -29,7 +35,13 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export const dynamic = 'force-dynamic';
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const locale=await getLocale(),session=await customerSession();
+  if(!session)redirect(localeHref(locale,'/sign-in?next=checkout'));
+  const call=api({role:'customer',id:session.authUserId}),customer=await call.customerAccount.profile();
+  if(!customer?.profileComplete)redirect(localeHref(locale,'/account?next=checkout'));
+  const addresses=await call.customerAccount.addresses();
+  if (isArtDirectionPreview()) return <ArtServicePage locale={await getLocale()} kind="checkout"><Track event="checkout_start" /><CheckoutForm customer={customer} savedAddresses={addresses} /></ArtServicePage>;
   return (
     <>
       <SiteHeader />
@@ -48,7 +60,7 @@ export default function CheckoutPage() {
       */}
       <Track event="checkout_start" />
       <main className="mx-auto max-w-phoneMax lg:max-w-contentMax lg:px-8">
-        <CheckoutForm />
+        <CheckoutForm customer={customer} savedAddresses={addresses} />
       </main>
       <SiteFooter />
     </>

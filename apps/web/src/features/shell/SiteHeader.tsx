@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { BagLink } from '@/features/cart/BagLink';
 import { Monogram } from './Monogram';
 import { AnnouncementBar } from './AnnouncementBar';
@@ -7,9 +8,12 @@ import { MastheadNav } from './MastheadNav';
 import { LanguageSwitch } from './LanguageSwitch';
 import { MastheadSentinel } from './MastheadSentinel';
 import { PerfumesPanel } from './PerfumesPanel';
-import { SHELL } from '@diyar/i18n';
+import { ART_DIRECTION, SHELL, SEARCH } from '@diyar/i18n';
 import { localeHref } from '@/core/href';
 import { getLocale } from '@/core/locale';
+import {customerSession} from '@/features/customer/session';
+import {CUSTOMER_ACCOUNT} from '@diyar/i18n';
+import {Icon} from '@diyar/ui';
 
 /**
  * The masthead, shared by every public route (visual identity v2 — the
@@ -46,6 +50,7 @@ import { getLocale } from '@/core/locale';
 export async function SiteHeader() {
   const locale = await getLocale();
   const copy = SHELL[locale];
+  const customer=await customerSession();
   return (
     <>
       <AnnouncementBar />
@@ -94,11 +99,14 @@ export async function SiteHeader() {
           </Link>
 
           <MastheadNav
+            editorial={isArtDirectionPreview()}
             className="order-last w-full border-t border-line lg:order-none lg:h-full lg:w-auto lg:self-stretch lg:border-0"
             panel={<PerfumesPanel locale={locale} />}
           />
 
           <div className="ms-auto flex items-center gap-3 lg:justify-self-end">
+            {isArtDirectionPreview()&&<form role="search" action={localeHref(locale,'/search')} className="hidden items-center gap-2 rounded-control border border-line bg-raised px-3 xl:flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input name="q" type="search" maxLength={120} aria-label={SEARCH[locale].fieldLabel} placeholder={ART_DIRECTION[locale].searchPlaceholder} className="h-touch w-32 min-w-0 bg-transparent text-small outline-none focus-visible:outline focus-visible:outline-accent"/><button type="submit" className="sr-only focus:not-sr-only">{SEARCH[locale].submit}</button></form>}
+            <Link className="tappable inline-flex min-h-touch min-w-touch items-center justify-center text-ink" href={localeHref(locale,customer?'/account':'/sign-in')} aria-label={customer?CUSTOMER_ACCOUNT[locale].title:CUSTOMER_ACCOUNT[locale].signIn}><Icon.User className="h-5 w-5" aria-hidden="true"/></Link>
             <LanguageSwitch />
             {/*
               From `sm` only; the footer carries it below that. At 360px the row
@@ -109,7 +117,7 @@ export async function SiteHeader() {
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
-            <BagLink />
+            <BagLink showEmpty={isArtDirectionPreview()} />
           </div>
         </div>
       </header>

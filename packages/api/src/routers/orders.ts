@@ -10,6 +10,7 @@ import {
   PlaceOrder,
   SubOrderLifecycle,
   type CartLine,
+  type PlacementReply,
   type SellerTerms,
   type ShippingQuote,
 } from '@diyar/domain';
@@ -83,151 +84,199 @@ export const ordersRouter = router({
         // Only what the configured gateway can actually process is offered, so
         // this cannot be widened by editing the request.
         paymentMethod: z.literal('cod'),
+        /*
+         * One order per checkout (migration 0043, DEBT #12). Fixed by the
+         * browser for one checkout and sent with every attempt; a retry with
+         * the same key is answered with the first attempt's reply. Optional so
+         * an older page still in a visitor's tab keeps working — without a
+         * key it behaves exactly as before.
+         */
+        idempotencyKey: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if(ctx.customerCheckoutRequired!==false){
+        if(ctx.actor.role!=='customer'||!ctx.actor.id)throw new TRPCError({code:'UNAUTHORIZED',message:'سجّل الدخول قبل إتمام الطلب.'});
+        const account=await ctx.uow.transaction(r=>r.account.profile());
+        if(!account?.profileComplete)throw new TRPCError({code:'PRECONDITION_FAILED',message:'أكمل بيانات حسابك قبل إتمام الطلب.'});
+        if(account.phone!==input.contactPhone.trim().replace(/^0/,'+20'))throw new TRPCError({code:'FORBIDDEN',message:'استخدم رقم الموبايل الموثّق لحسابك.'});
+      }
+      const key = input.idempotencyKey;
+      const canonical=JSON.stringify({...input,idempotencyKey:undefined,lines:[...input.lines].sort((a,b)=>a.productId.localeCompare(b.productId))});
+      const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical));
+      const requestHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+      const replay = async () => (key
+        ? ctx.checkoutUow.transaction((r) => r.orders.findPlacement(key, requestHash))
+        : null);
+
+      // A retry of a checkout that already placed its order: the same answer,
+      // and no second order. Before the limiter, so a customer pressing again
+      // on a slow connection is not counted twice for one purchase.
+      const earlier = await replay();
+      if (earlier) {
+        ctx.log.info('orders.place.replayed', { order_ref: earlier.reference });
+        return earlier;
+      }
+
       // Before the address is even parsed. A limiter that runs after the work
       // is a limiter that still does the work.
       limit('order', input.contactPhone);
 
       const address = Address.create(input.address);
 
-      const placed = await ctx.checkoutUow.transaction(async (repos) => {
-        // 1. Price from the catalogue. Never from the request.
-        const snapshot = await repos.products.snapshotForCart(
-          input.lines.map((l) => l.productId),
-        );
-        const cart = new CartPricer(flatRateShipping).price(input.lines, snapshot);
+      let placed: PlacementReply;
+      try {
+        placed = await ctx.checkoutUow.transaction(async (repos) => {
+          // 1. Price from the catalogue. Never from the request.
+          const snapshot = await repos.products.snapshotForCart(
+            input.lines.map((l) => l.productId),
+          );
+          const cart = new CartPricer(flatRateShipping).price(input.lines, snapshot);
 
-        if (cart.isEmpty) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'لم يعد أي من المنتجات متاحًا',
-          });
-        }
-
-        // A line that changed between the cart page and this click must not be
-        // silently ordered at a different price or quantity. The customer goes
-        // back to a bag that now tells them what moved.
-        if (cart.adjustments.length > 0) {
-          throw new TRPCError({
-            code: 'CONFLICT',
-            message: 'تغيّرت بعض المنتجات في حقيبتك. راجعها قبل إتمام الطلب.',
-          });
-        }
-
-        // 2. The phone is the identity, whether or not an account exists.
-        const customer = await repos.customers.findOrCreateByPhone({
-          phone: input.contactPhone,
-          fullName: input.contactName,
-        });
-        const priorPurchaseSellerIds = await repos.customers.listPriorPurchaseSellerIds(
-          customer.id,
-        );
-
-        // 3. Each house's own SLA clocks, read from the house, not assumed.
-        const terms: SellerTerms[] = [];
-        for (const house of cart.houses) {
-          const seller = await repos.sellers.findById(house.sellerId);
-          if (!seller) {
-            throw new TRPCError({ code: 'CONFLICT', message: 'إحدى الدور لم تعد متاحة' });
+          if (cart.isEmpty) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'لم يعد أي من المنتجات متاحًا',
+            });
           }
-          terms.push({
-            sellerId: house.sellerId,
-            confirmationSlaHours: seller.confirmationSlaHours,
-            dispatchSlaHours: seller.dispatchSlaHours,
+
+          // A line that changed between the cart page and this click must not be
+          // silently ordered at a different price or quantity. The customer goes
+          // back to a bag that now tells them what moved.
+          if (cart.adjustments.length > 0) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: 'تغيّرت بعض المنتجات في حقيبتك. راجعها قبل إتمام الطلب.',
+            });
+          }
+
+          // 2. The phone is the identity, whether or not an account exists.
+          const customer = await repos.customers.findOrCreateByPhone({
+            phone: input.contactPhone,
+            fullName: input.contactName,
           });
-        }
+          const priorPurchaseSellerIds = await repos.customers.listPriorPurchaseSellerIds(
+            customer.id,
+          );
 
-        const lines: CartLine[] = cart.houses.flatMap((house) =>
-          house.lines.map((line) => ({
-            productId: line.productId,
+          // 3. Each house's own SLA clocks, read from the house, not assumed.
+          const terms: SellerTerms[] = [];
+          for (const house of cart.houses) {
+            const seller = await repos.sellers.findById(house.sellerId);
+            if (!seller) {
+              throw new TRPCError({ code: 'CONFLICT', message: 'إحدى الدور لم تعد متاحة' });
+            }
+            terms.push({
+              sellerId: house.sellerId,
+              confirmationSlaHours: seller.confirmationSlaHours,
+              dispatchSlaHours: seller.dispatchSlaHours,
+            });
+          }
+
+          const lines: CartLine[] = cart.houses.flatMap((house) =>
+            house.lines.map((line) => ({
+              productId: line.productId,
+              sellerId: house.sellerId,
+              // Snapshotted, so a later catalogue edit cannot rewrite this order.
+              productName: line.name,
+              brandName: line.brandName,
+              sku: line.sku,
+              volumeMl: line.volumeMl,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+            })),
+          );
+
+          const shipping: ShippingQuote[] = cart.houses.map((house) => ({
             sellerId: house.sellerId,
-            // Snapshotted, so a later catalogue edit cannot rewrite this order.
-            productName: line.name,
-            brandName: line.brandName,
-            sku: line.sku,
-            volumeMl: line.volumeMl,
-            quantity: line.quantity,
-            unitPrice: line.unitPrice,
-          })),
-        );
+            amount: house.shipping,
+            etaDaysMin: house.etaDaysMin,
+            etaDaysMax: house.etaDaysMax,
+          }));
 
-        const shipping: ShippingQuote[] = cart.houses.map((house) => ({
-          sellerId: house.sellerId,
-          amount: house.shipping,
-          etaDaysMin: house.etaDaysMin,
-          etaDaysMax: house.etaDaysMax,
-        }));
+          // 4. Build. Attribution is resolved per sub-order inside PlaceOrder.
+          //
+          // `touches` is empty because touch capture is not built yet, which sends
+          // every sub-order to `unknown` — the LOW 5% rate. That is the fair
+          // default, and it is also why this is called out here rather than left
+          // to be discovered: a broken touch pipeline UNDERCHARGES silently
+          // instead of failing loudly.
+          const draft = new PlaceOrder(ctx.clock).build({
+            reference: generateOrderReference((n) => crypto.getRandomValues(new Uint8Array(n))),
+            customerId: customer.id,
+            contactPhone: input.contactPhone,
+            contactName: input.contactName,
+            address,
+            lines,
+            shipping,
+            terms,
+            paymentMethod: input.paymentMethod,
+            touches: [],
+            priorPurchaseSellerIds,
+            orderedAt: ctx.clock.now(),
+          });
 
-        // 4. Build. Attribution is resolved per sub-order inside PlaceOrder.
-        //
-        // `touches` is empty because touch capture is not built yet, which sends
-        // every sub-order to `unknown` — the LOW 5% rate. That is the fair
-        // default, and it is also why this is called out here rather than left
-        // to be discovered: a broken touch pipeline UNDERCHARGES silently
-        // instead of failing loudly.
-        const draft = new PlaceOrder(ctx.clock).build({
-          reference: generateOrderReference((n) => crypto.getRandomValues(new Uint8Array(n))),
-          customerId: customer.id,
-          contactPhone: input.contactPhone,
-          contactName: input.contactName,
-          address,
-          lines,
-          shipping,
-          terms,
-          paymentMethod: input.paymentMethod,
-          touches: [],
-          priorPurchaseSellerIds,
-          orderedAt: ctx.clock.now(),
+          // 5. Authorise. For COD nothing is captured — the money exists when the
+          // courier remits, and settlement already refuses to pay a house before
+          // that happens.
+          const authorisation = await cashOnDelivery.authorise({
+            reference: draft.reference,
+            amountPiastres: draft.total.minor,
+            method: input.paymentMethod,
+          });
+          if (!authorisation.authorised) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'تعذّر تأكيد طريقة الدفع' });
+          }
+
+          // 6. Persist. `sellerIdBySlug` is the repository's name for "how do I
+          // turn the draft's seller key into a row id" — the cart already carries
+          // real ids, so the mapping is the identity.
+          const identity = new Map(cart.houses.map((h) => [h.sellerId, h.sellerId]));
+          const saved = await repos.orders.save(draft, identity);
+
+          // 7. Hand each sub-order to its house.
+          //
+          // `placed` means the marketplace holds the order; `awaiting_seller`
+          // means the HOUSE HAS BEEN TOLD and its confirmation SLA is running.
+          // Without this step an order arrives in the seller queue in a state the
+          // machine will not let the house confirm from — the house sees the
+          // order and cannot accept it, which is exactly what shipped.
+          //
+          // Inside the same transaction, so an order that could not be handed
+          // over does not exist. When notifications are built they dispatch from
+          // precisely here: the transition IS the moment the house was told.
+          for (const subOrderId of saved.subOrderIds) {
+            const record = SubOrderLifecycle.transition(
+              'placed', { to: 'awaiting_seller', actor: 'system' }, ctx.clock,
+            );
+            await repos.subOrders.applyTransition(
+              subOrderId, 'awaiting_seller', 'system', null, record,
+            );
+          }
+
+          const reply = {
+            reference: saved.reference,
+            totalPiastres: saved.total.minor,
+            houseCount: draft.subOrders.length,
+            etaDaysMin: Math.min(...shipping.map((s) => s.etaDaysMin)),
+            etaDaysMax: Math.max(...shipping.map((s) => s.etaDaysMax)),
+          };
+          // In the same transaction as the order: the key and the order exist
+          // together or not at all.
+          if (key) await repos.orders.recordPlacement(key, saved.id, reply, requestHash);
+          return reply;
         });
-
-        // 5. Authorise. For COD nothing is captured — the money exists when the
-        // courier remits, and settlement already refuses to pay a house before
-        // that happens.
-        const authorisation = await cashOnDelivery.authorise({
-          reference: draft.reference,
-          amountPiastres: draft.total.minor,
-          method: input.paymentMethod,
-        });
-        if (!authorisation.authorised) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'تعذّر تأكيد طريقة الدفع' });
-        }
-
-        // 6. Persist. `sellerIdBySlug` is the repository's name for "how do I
-        // turn the draft's seller key into a row id" — the cart already carries
-        // real ids, so the mapping is the identity.
-        const identity = new Map(cart.houses.map((h) => [h.sellerId, h.sellerId]));
-        const saved = await repos.orders.save(draft, identity);
-
-        // 7. Hand each sub-order to its house.
-        //
-        // `placed` means the marketplace holds the order; `awaiting_seller`
-        // means the HOUSE HAS BEEN TOLD and its confirmation SLA is running.
-        // Without this step an order arrives in the seller queue in a state the
-        // machine will not let the house confirm from — the house sees the
-        // order and cannot accept it, which is exactly what shipped.
-        //
-        // Inside the same transaction, so an order that could not be handed
-        // over does not exist. When notifications are built they dispatch from
-        // precisely here: the transition IS the moment the house was told.
-        for (const subOrderId of saved.subOrderIds) {
-          const record = SubOrderLifecycle.transition(
-            'placed', { to: 'awaiting_seller', actor: 'system' }, ctx.clock,
-          );
-          await repos.subOrders.applyTransition(
-            subOrderId, 'awaiting_seller', 'system', null, record,
-          );
-        }
-
-        return {
-          reference: saved.reference,
-          totalPiastres: saved.total.minor,
-          houseCount: draft.subOrders.length,
-          etaDaysMin: Math.min(...shipping.map((s) => s.etaDaysMin)),
-          etaDaysMax: Math.max(...shipping.map((s) => s.etaDaysMax)),
-        };
-      });
+      } catch (error) {
+        /*
+         * Two presses that raced: both missed the replay above, and the second
+         * to commit met the first's key and rolled back WHOLE — its order with
+         * it. It is answered from the winner's row. Any other failure, or a
+         * key with no row behind it, is the failure it was.
+         */
+        const winner = await replay().catch(() => null);
+        if (winner) return winner;
+        throw error;
+      }
 
       /*
        * AFTER the transaction, never inside it (P1.4.3). A line written inside

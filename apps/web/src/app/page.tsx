@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { ArtHome } from '@/features/art-direction/ArtDirection';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { findHouseBySlug, findProductBySlug, listHouses, listPublishedProducts } from '@/core/catalogue';
 import { api } from '@/core/api';
 import { SpecimenCard } from '@/features/catalogue/SpecimenCard';
@@ -66,12 +68,17 @@ export default async function Home() {
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
   const selected = featured.length > 0;
-  const register = (selected ? featured : products.filter((p) => p.id !== hero?.id)).slice(0, REGISTER_SIZE);
+  const registerSource = selected ? featured : isArtDirectionPreview() ? products : products.filter((p) => p.id !== hero?.id);
+  const register = registerSource.slice(0, isArtDirectionPreview() ? 3 : REGISTER_SIZE);
   const ratings = register.length > 0
     ? await api().reviews.summaries({ productIds: register.map((p) => p.id) })
     : {};
 
   const hasNotes = notes.top.length > 0 || notes.heart.length > 0 || notes.base.length > 0;
+
+  if (isArtDirectionPreview()) {
+    return <ArtHome locale={locale} products={register} houses={houses} notes={notes} ratings={ratings} selected={selected} />;
+  }
 
   return (
     <>

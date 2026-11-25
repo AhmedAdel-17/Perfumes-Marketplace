@@ -98,6 +98,7 @@ export function apiContext(
 
   return {
     actor,
+    customerCheckoutRequired: true,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,

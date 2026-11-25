@@ -1,3 +1,4 @@
+import { PerformanceMeter } from '@/features/product/PerformanceMeter';
 import { BAND_AR, BAND_EN, labelOf, PERFORMANCE_SOURCE, type Locale } from '@diyar/i18n';
 import type { PerformanceReading } from '@/core/catalogue';
 
@@ -22,7 +23,7 @@ const SCALES = {
 } as const;
 
 export function BandReading({
-  reading, locale, kind, meter = true,
+  reading, locale, kind, meter = true, animated = false,
 }: {
   reading: PerformanceReading;
   locale: Locale;
@@ -30,6 +31,7 @@ export function BandReading({
   kind: keyof typeof SCALES;
   /** The meter, where there is room for it. The words and the source are always shown. */
   meter?: boolean;
+  animated?: boolean;
 }) {
   const scale: readonly string[] = SCALES[kind];
   const band = reading.band as keyof typeof BAND_AR;
@@ -41,13 +43,13 @@ export function BandReading({
       ) : (
         <span className="latin text-caption tracking-label">{BAND_EN[band] ?? reading.band.toUpperCase()}</span>
       )}
-      {meter && level > 0 && (
+      {meter && level > 0 && (animated ? <PerformanceMeter steps={scale.length} level={level} locale={locale}/> : (
         <span className="mt-1.5 flex gap-[3px]" aria-hidden="true">
           {scale.map((step, i) => (
             <i key={step} className={`h-[5px] flex-1 ${i < level ? 'bg-ink' : 'bg-line'}`} />
           ))}
         </span>
-      )}
+      ))}
       <span className="mt-1 block text-small text-accent">
         {labelOf(PERFORMANCE_SOURCE, locale, reading.source)}
       </span>

@@ -2,6 +2,7 @@
 
 import type { SupportCategory } from '@diyar/domain';
 import { api } from '@/core/api';
+import { classifyApiError } from '@diyar/api';
 import { CONTACT } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { apiMessage } from '@/core/api-message';
@@ -43,14 +44,14 @@ export async function openTicket(input: {
   }
 }
 
+/** A service outage must never masquerade as an unknown reference. */
 export async function findTicket(reference: string, phone: string) {
   try {
-    return await api().support.byReference({ reference, phone });
-  } catch {
-    // A malformed phone is refused before the query runs, and that is the same
-    // answer as "no such ticket" to the person typing.
-    return null;
+    return { ok: true as const, data: await api().support.byReference({ reference, phone }) };
+  } catch (error) {
+    if (classifyApiError(error).kind === 'invalid') return { ok: true as const, data: null };
+    return { ok: false as const };
   }
 }
 
-export type TicketResult = Awaited<ReturnType<typeof findTicket>>;
+export type TicketResult = Awaited<ReturnType<ReturnType<typeof api>['support']['byReference']>>;

@@ -1,6 +1,7 @@
 'use server';
 
 import { api } from '@/core/api';
+import { classifyApiError } from '@diyar/api';
 
 /**
  * Look up an order for a customer with no account.
@@ -10,15 +11,14 @@ import { api } from '@/core/api';
  * and an unknown reference return the same `null`, so this cannot be used to
  * discover which references exist.
  */
+/** A service outage must never masquerade as an unknown reference. */
 export async function lookupOrder(reference: string, phone: string) {
   try {
-    return await api().orders.byReference({ reference, phone });
-  } catch {
-    // Zod rejects a malformed phone before the query runs. To the person at the
-    // keyboard that is the same answer as "no such order" — and saying anything
-    // more specific would confirm which half they got right.
-    return null;
+    return { ok: true as const, data: await api().orders.byReference({ reference, phone }) };
+  } catch (error) {
+    if (classifyApiError(error).kind === 'invalid') return { ok: true as const, data: null };
+    return { ok: false as const };
   }
 }
 
-export type OrderLookupResult = Awaited<ReturnType<typeof lookupOrder>>;
+export type OrderLookupResult = Awaited<ReturnType<ReturnType<typeof api>['orders']['byReference']>>;

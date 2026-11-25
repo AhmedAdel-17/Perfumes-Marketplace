@@ -1,5 +1,7 @@
 'use client';
 
+import {AnimatePresence} from 'framer-motion';
+import {OrderDrawer} from './OrderDrawer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CURRENCY_LABEL, formatPrice, GOVERNORATE, localePath, REASON_CODE_AR, stateCopy, internal as num,
@@ -29,7 +31,6 @@ export function OrderQueue() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const detailRef = useRef<HTMLElement>(null);
   const acting = useRef(false);
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,10 +54,8 @@ export function OrderQueue() {
     window.addEventListener('hashchange', openHash);
     return () => window.removeEventListener('hashchange', openHash);
   }, [queue]);
-  useEffect(() => {
-    if (selectedId) detailRef.current?.focus();
-  }, [selectedId]);
   const openOrder = (id: string) => {
+    setError(null);
     setSelectedId(id);
     window.history.replaceState(null, '', `#order-${id}`);
   };
@@ -109,25 +108,26 @@ export function OrderQueue() {
     </div>
     <p role="status" className="mb-4 text-small text-ink2"> {t("Results:")} <span className="tnum">{num(visible.length)}</span>  {t("· Counts cover the loaded orders.")} </p>
     {(error || loadError) && <div role="alert" className="mb-6 border border-danger bg-raised p-4 text-body text-ink">{errorText(error ?? loadError ?? '')}{loadError && <button type="button" disabled={loading} onClick={() => void load()} className="ms-3 min-h-touch underline"> {t("Try again")} </button>}</div>}
-    <div className={`grid items-start gap-5 ${selected ? 'xl:grid-cols-3' : ''}`}>
-      <div className={`min-w-0 border border-line bg-raised ${selected ? 'xl:col-span-2' : ''}`}>
+    <div className="grid items-start gap-5">
+      <div className="min-w-0 border border-line bg-raised">
         <table className="w-full text-start text-small">
           <caption className="border-b border-line px-4 py-3 text-start text-body text-ink"> {t("Order register")} <span className="text-small text-ink2"> {t("· Select an order for details and actions")} </span></caption>
           <thead className="hidden border-b border-line bg-sunken text-ink2 lg:table-header-group"><tr>{[t("Order and customer"), t("Date"), t("Bottles"), t("Total"), t("Status"), t("Action")].map(label => <th key={label} scope="col" className="px-3 py-3 text-start font-medium">{label}</th>)}</tr></thead>
-          <tbody className="divide-y divide-line">{visible.map(entry => <tr key={entry.id} id={`order-${entry.id}`} className={`grid grid-cols-2 gap-3 p-4 lg:table-row lg:p-0 ${selectedId === entry.id ? 'bg-sunken' : ''}`}>
+          <tbody className="divide-y divide-line">{visible.map(entry => <tr key={entry.id} id={`order-${entry.id}`} onClick={event=>{if(!(event.target as HTMLElement).closest('button,a,input,select'))openOrder(entry.id)}} className={`grid grid-cols-2 gap-3 p-4 lg:table-row lg:p-0 cursor-pointer hover:bg-sunken ${selectedId === entry.id ? 'bg-sunken' : ''}`}>
             <td className="col-span-2 min-w-0 lg:px-3 lg:py-4"><span dir="ltr" className="latin block break-all text-small text-ink">{entry.reference}</span><span className="mt-1 block break-words text-small text-ink2">{entry.recipient.name}</span></td>
             <td className="text-ink2 lg:px-3 lg:py-4"><span className="me-2 lg:hidden"> {t("Date")} </span><span className="tnum">{date(entry.placedAt)}</span></td>
             <td className="text-ink2 lg:px-3 lg:py-4"><span className="me-2 lg:hidden"> {t("Bottles")} </span><span className="tnum">{num(entry.items.reduce((total, item) => total + item.quantity, 0))}</span></td>
             <td className="text-ink lg:px-3 lg:py-4"><span className="me-2 lg:hidden"> {t("Total")} </span><span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span> <span className="latin text-caption">{t(CURRENCY_LABEL)}</span></td>
-            <td className="lg:px-3 lg:py-4"><span className={statusPill('quiet')}>{stateCopy(entry.state, locale).label}</span></td>
-            <td className="col-span-2 lg:px-3 lg:py-4"><button id={`open-order-${entry.id}`} type="button" aria-expanded={selectedId === entry.id} aria-controls="seller-order-detail" onClick={() => openOrder(entry.id)} className="min-h-touch border border-line px-3 text-small text-accent">{deciding(entry) ? t("Review and confirm") : entry.state === 'confirmed' ? t("Prepare and dispatch") : t("Details")}</button></td>
+            <td className="lg:px-3 lg:py-4"><span data-order-state={entry.state} className={statusPill('quiet')}>{stateCopy(entry.state, locale).label}</span></td>
+            <td className="col-span-2 lg:px-3 lg:py-4"><button id={`open-order-${entry.id}`} type="button" aria-expanded={selectedId === entry.id} aria-haspopup="dialog" aria-controls="seller-order-detail" onClick={() => openOrder(entry.id)} className="min-h-touch border border-line px-3 text-small text-accent">{deciding(entry) ? t("Review and confirm") : entry.state === 'confirmed' ? t("Prepare and dispatch") : t("Details")}</button></td>
           </tr>)}</tbody>
         </table>
       </div>
-      {selected && <aside id="seller-order-detail" ref={detailRef} tabIndex={-1} aria-labelledby="seller-order-detail-heading" className="min-w-0 border border-line bg-raised focus:outline-none">
+      <AnimatePresence>{selected && <OrderDrawer key={selected.id} locale={locale} close={closeOrder} label={t("Order details")}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4"><h2 id="seller-order-detail-heading" className="font-display text-h3"> {t("Order details")} </h2><button type="button" onClick={closeOrder} className="min-h-touch border border-line px-3 text-small text-ink2"> {t("Close details")} </button></div>
+        {(error || loadError) && <div role="alert" className="m-4 border border-danger p-4 text-body">{errorText(error ?? loadError ?? '')}{loadError && <button type="button" disabled={loading} onClick={()=>void load()} className="ms-3 min-h-touch underline">{t("Try again")}</button>}</div>}
         <Row key={selected.id} entry={selected} busy={busyId === selected.id} locked={busyId !== null} act={act} stage={deciding(selected) ? 'decide' : selected.state === 'confirmed' ? 'ship' : 'done'} />
-      </aside>}
+      </OrderDrawer>}</AnimatePresence>
     </div>
     {visible.length === 0 && <div className="border border-line bg-raised px-6 py-9 text-center text-body text-ink2"><p>{queue.length === 0 ? t("Your house orders will appear here when the first order arrives.") : t("No orders match your search or filter.")}</p>{queue.length > 0 && <button type="button" onClick={() => { setQuery(''); setFilter('all'); }} className="mt-3 min-h-touch border border-line px-4"> {t("Clear search and filters")} </button>}</div>}
   </div>;
@@ -181,7 +181,7 @@ function Row({
                 <span className="tnum">{num(item.volumeMl)}</span>  {t("ml")} </span>
             </span>
             <span className="flex items-baseline gap-2">
-              {item.quantity > 1 && (
+              {item.quantity >= 1 && (
                 /*
                   The number that tells a house HOW MANY to pack, so the most
                   legible thing on the row: ink, in a ruled square. It was once
@@ -234,10 +234,11 @@ function Row({
         </address>
       </div>
 
+      <dl className="mt-4 border-t border-line pt-3 space-y-2"><div className="flex justify-between gap-4"><dt className="text-ink2">{t("Subtotal")}</dt><dd className="tnum">{formatPrice(entry.merchandisePiastres)} {CURRENCY_LABEL}</dd></div><div className="flex justify-between gap-4"><dt className="text-ink2">{t("Shipping")}</dt><dd className="tnum">{formatPrice(entry.shippingPiastres)} {CURRENCY_LABEL}</dd></div></dl>
       <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
         {/* The state is Arabic: no tracking (CLAUDE.md §15). */}
         <span className={statusPill('quiet')}>{copy.label}</span>
-        <span className="text-bodyLg">
+        <span className="text-bodyLg"><span className="me-2 text-small text-ink2">{t("Total")}</span>
           <span className="tnum">{formatPrice(entry.merchandisePiastres + entry.shippingPiastres)}</span>
           <span className="latin ms-1.5 text-micro tracking-label text-ink2">{t(CURRENCY_LABEL)}</span>
         </span>

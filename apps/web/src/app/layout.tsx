@@ -1,3 +1,5 @@
+import { ART_WORKSPACE_STYLE, tokens } from '@diyar/tokens';
+import type { CSSProperties } from 'react';
 import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import {
@@ -7,12 +9,17 @@ import { directionOf, localePath, SHELL } from '@diyar/i18n';
 import { getLocale, getPath } from '@/core/locale';
 import { LocaleProvider } from '@/features/shell/LocaleProvider';
 import { CartProvider } from '@/features/cart/CartStore';
+import { BagDrawer } from '@/features/cart/BagDrawer';
 import { RevealDirector } from '@/features/product/reveal/RevealDirector';
 import { Grain } from '@/features/shell/Grain';
 import { RouteLoader } from '@/features/shell/RouteLoader';
 import { DEFAULT_THEME_COLOR, ThemeScript } from '@/features/shell/ThemeScript';
 import { headers } from 'next/headers';
 import './globals.css';
+import 'lenis/dist/lenis.css';
+import { StorefrontSmoothScroll } from '@/features/art-direction/StorefrontMotion';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
+import artStyles from '@/features/art-direction/ArtExperience.module.css';
 
 /**
  * The faces — ONE set for both themes (FD-1, amended 16 Oct 2026: Laboratoire
@@ -66,7 +73,7 @@ const plexMono = IBM_Plex_Mono({
 });
 // English site headings.
 const newsreader = Newsreader({
-  subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'],
+  subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], style: ['normal', 'italic'],
   variable: '--font-newsreader', display: 'swap', preload: false,
 });
 const FONT_VARIABLES = [naskh, plex, plexMono, newsreader]
@@ -111,6 +118,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // also what keeps every page dynamic, which a nonce requires.
   const nonce = (await headers()).get('x-nonce') ?? undefined;
   const locale = await getLocale();
+  const path = (await getPath()).split('?')[0] ?? '/';
+  const artClass = !isArtDirectionPreview() ? '' : path.startsWith('/ops') ? artStyles.operations : path.startsWith('/seller') ? '' : artStyles.customer;
   return (
     <html
       lang={locale}
@@ -125,12 +134,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       */
       suppressHydrationWarning
     >
-      <body className="bg-ground text-ink font-sans text-body leading-normal">
+      <body style={isArtDirectionPreview() && path.startsWith('/ops') ? ART_WORKSPACE_STYLE as CSSProperties : artClass === artStyles.customer ? {'--storefront-light-canvas':tokens.artStorefrontColor.canvas,'--storefront-light-stone':tokens.artStorefrontColor.stone} as CSSProperties : undefined} className={`bg-ground text-ink font-sans text-body leading-normal ${artClass}`}>
         {/* First thing in the document: applies the remembered theme before the
             page is painted. See ThemeScript for why this cannot be an effect. */}
         <ThemeScript nonce={nonce} />
         <LocaleProvider locale={locale}>
           <CartProvider>
+            <BagDrawer />
+            {artClass === artStyles.customer && <StorefrontSmoothScroll />}
             {/* The reveal as the way into a perfume's page, from any card: it
                 lives here because the layout is what outlives the change of page. */}
             <RevealDirector locale={locale}>{children}</RevealDirector>

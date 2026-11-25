@@ -2,6 +2,7 @@
 
 import { classifyApiError } from '@diyar/api';
 import { api } from '@/core/api';
+import {customerSession} from '@/features/customer/session';
 import type { CartEntry } from '@/features/cart/CartStore';
 import { CHECKOUT } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
@@ -34,6 +35,7 @@ export type PlaceOrderResult =
   | { readonly ok: false; readonly reason: 'cart_changed' | 'invalid' | 'failed'; readonly message: string };
 
 export interface PlaceOrderInput {
+  readonly idempotencyKey: string;
   readonly contactName: string;
   readonly contactPhone: string;
   readonly address: {
@@ -51,9 +53,12 @@ export interface PlaceOrderInput {
 
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   try {
-    const placed = await api().orders.place({
+    const session=await customerSession();
+    if(!session)return {ok:false,reason:'invalid',message:(await getLocale())==='ar'?'انتهت الجلسة. سجّل الدخول قبل إتمام الطلب.':'Your session expired. Sign in before checkout.'};
+    const placed = await api({role:'customer',id:session.authUserId}).orders.place({
+      idempotencyKey: input.idempotencyKey,
       contactName: input.contactName,
-      contactPhone: input.contactPhone,
+      contactPhone: session.phone,
       address: input.address as never,
       lines: input.entries.map((e) => ({ productId: e.productId, quantity: e.quantity })),
       paymentMethod: 'cod',

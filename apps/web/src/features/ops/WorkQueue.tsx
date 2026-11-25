@@ -50,6 +50,9 @@ export function OpsWorkQueue() {
 
   return (
     <div className="px-5 lg:px-0">
+      <div className="mb-7 grid gap-4 sm:grid-cols-3" aria-label="ملخص العمل الحالي">
+        {[{label:'بانتظار تأكيد التسليم',count:awaitingDelivery.length},{label:'بانتظار تحصيل النقد',count:awaitingCash.length},{label:'الإجراءات المطلوبة',count:awaitingDelivery.length+awaitingCash.length}].map(item => <section key={item.label} className="border border-line bg-raised p-5"><h2 className="text-body text-ink2">{item.label}</h2><p className="tnum mt-3 font-display text-h1 text-ink">{num(item.count)}</p></section>)}
+      </div>
       {error && (
         <p role="alert" className="mb-6 border border-danger bg-raised p-4 text-small text-ink">
           {error}

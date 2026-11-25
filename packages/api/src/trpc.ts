@@ -33,6 +33,8 @@ export interface Observability {
 }
 
 export interface ApiContext {
+  /** Secure by default; false is an explicit legacy-fixture/manual checkout opt-out. */
+  readonly customerCheckoutRequired?: boolean;
   readonly actor: ActorContext;
   /**
    * The house this staff member belongs to, resolved ONCE when the session is

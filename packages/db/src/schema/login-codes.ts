@@ -32,7 +32,7 @@ export const loginCodes = pgTable('login_codes', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   index('login_codes_expires_idx').on(t.expiresAt),
-  check('login_codes_audience_known', sql`${t.audience} IN ('seller', 'platform')`),
+  check('login_codes_audience_known', sql`${t.audience} IN ('seller', 'platform', 'customer')`),
   check('login_codes_digest_shape', sql`${t.codeDigest} ~ '^[0-9a-f]{64}$'`),
   check('login_codes_attempts_sane', sql`${t.attempts} >= 0`),
 ]);

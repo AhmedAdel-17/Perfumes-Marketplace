@@ -4,6 +4,10 @@ import type { Locale } from './locale';
 const ENGLISH: Readonly<Record<string,string>> = {
   "تغيّر المخزون منذ تحميل المنتج. أعد تحميله وراجع الكمية قبل الحفظ.": "Stock changed since this product was loaded. Reload it and review the quantity before saving.",
  ...SELLER_CUSTOMER_COPY,
+  "الفترة المحددة": "Selected period",
+  "قيم الرسم بالجنيه المصري. مرّر المؤشر أو استخدم الأسهم لتفاصيل كل يوم.": "Chart values in EGP. Hover or use arrow keys for daily details.",
+  "المجموع الفرعي": "Subtotal",
+  "الشحن": "Shipping",
   "· مساحة العمل": "· Workspace",
   "ج.م ·": "EGP ·",
   "أُعيد للتعديل:": "Changes requested:",

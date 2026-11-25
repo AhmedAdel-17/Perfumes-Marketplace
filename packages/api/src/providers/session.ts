@@ -79,7 +79,7 @@ export function generateOtpCode(random: (max: number) => number): string {
  * to the other — it is not that the two flows happen to use different tables,
  * it is that the same table refuses the swap.
  */
-export type CodeAudience = 'seller' | 'platform';
+export type CodeAudience = 'seller' | 'platform' | 'customer';
 
 export type CodeVerdict = 'ok' | 'wrong' | 'expired' | 'too_many_attempts';
 

@@ -37,6 +37,7 @@ export const AUDIT_ACTION_AR = {
   policy_change: 'نشر صفحة أو سياسة',
   staff_permission_change: 'تغيير صلاحيات',
   privacy_request: 'طلب خصوصية',
+  delivery_confirmation: 'تأكيد تسليم شحنة',
 } as const;
 
 /** What the decision was about. */

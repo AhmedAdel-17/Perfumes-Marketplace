@@ -1,3 +1,5 @@
+import { ArtProductCard } from '@/features/art-direction/ArtProductCard';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 /**
  * Search and browse.
  *
@@ -35,6 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const dynamic = 'force-dynamic';
+
+const CatalogueCard = (props: React.ComponentProps<typeof SpecimenCard>) => isArtDirectionPreview() ? <ArtProductCard product={props.product} locale={props.locale} rating={props.rating} /> : <SpecimenCard {...props} />;
 
 export default async function SearchPage(
   { searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> },
@@ -92,7 +96,7 @@ export default async function SearchPage(
         start edge, and the perfumes on the same specimen cards as the home page,
         so a perfume looks the same wherever it is listed.
       */}
-      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
+      <main data-art-catalogue={isArtDirectionPreview() ? 'true' : undefined} className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
         <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-ink pb-4 pt-8 lg:pt-12">
           <div>
             <span className="latin mb-3 flex items-center gap-3 text-micro tracking-label text-accent lg:text-caption">
@@ -152,7 +156,7 @@ export default async function SearchPage(
               <ul className="results-dim grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
                 {products.map((product, index) => (
                   <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
-                    <SpecimenCard
+                    <CatalogueCard
                       product={product}
                       locale={locale}
                       rating={ratings[product.id]}

@@ -34,6 +34,9 @@ interface CartApi {
   /** True until localStorage has been read, so the count never flashes wrong. */
   readonly hydrated: boolean;
   readonly itemCount: number;
+  readonly bagOpen: boolean;
+  openBag(): void;
+  closeBag(): void;
   add(entry: CartEntry): void;
   setQuantity(productId: string, quantity: number): void;
   remove(productId: string): void;
@@ -79,6 +82,9 @@ function parse(raw: string | null): CartEntry[] {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<readonly CartEntry[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [bagOpen, setBagOpen] = useState(false);
+  const openBag = useCallback(() => setBagOpen(true), []);
+  const closeBag = useCallback(() => setBagOpen(false), []);
 
   // Read AFTER mount, never during render. The server has no localStorage, so
   // reading it in the initial state makes the first client render disagree with
@@ -151,8 +157,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     entries,
     hydrated,
     itemCount: entries.reduce((n, e) => n + e.quantity, 0),
-    add, setQuantity, remove, clear,
-  }), [entries, hydrated, add, setQuantity, remove, clear]);
+    add, setQuantity, remove, clear, bagOpen, openBag, closeBag,
+  }), [entries, hydrated, add, setQuantity, remove, clear, bagOpen, openBag, closeBag]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

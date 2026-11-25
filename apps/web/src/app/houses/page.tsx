@@ -13,6 +13,8 @@
  * lets the eye run down a column and compare.
  */
 import type { Metadata } from 'next';
+import { ArtHouseGrid } from '@/features/art-direction/ArtHouseGrid';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { countedIn, editorialIn, HOUSES, NOUN, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { SiteHeader } from '@/features/shell/SiteHeader';
@@ -61,7 +63,7 @@ export default async function HousesPage() {
           <p className="py-8 text-bodyLg text-ink2">{copy.none}</p>
         ) : (
           <Reveal className="mt-6 lg:mt-8">
-            <HouseTable houses={houses} locale={locale} />
+            {isArtDirectionPreview() ? <ArtHouseGrid houses={houses} locale={locale} /> : <HouseTable houses={houses} locale={locale} />}
           </Reveal>
         )}
       </main>

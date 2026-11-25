@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { ArtServicePage } from '@/features/art-direction/ArtServicePage';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { SiteHeader } from '@/features/shell/SiteHeader';
 import { SiteFooter } from '@/features/shell/SiteFooter';
 import { PageHead } from '@/features/shell/PageHead';
@@ -40,6 +42,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function CartPage() {
   const locale = await getLocale();
+  if (isArtDirectionPreview()) return <ArtServicePage locale={locale} kind="bag"><CartView /></ArtServicePage>;
   return (
     <>
       <SiteHeader />

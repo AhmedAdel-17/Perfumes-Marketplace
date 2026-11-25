@@ -1,10 +1,11 @@
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { localeHref } from '@/core/href';
 import { sellerText } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { SELLER_WORKSPACE_STYLE } from '@diyar/tokens';
+import { ART_WORKSPACE_STYLE, SELLER_WORKSPACE_STYLE } from '@diyar/tokens';
 import { api } from '@/core/api';
 import { Monogram } from '@/features/shell/Monogram';
 import { LanguageSwitch } from '@/features/shell/LanguageSwitch';
@@ -21,7 +22,7 @@ export async function SellerWorkspace({current,title,description,actions,childre
  const session=await activeSellerSession();
  if(!session) redirect(localeHref(locale,'/seller'));
  const house=await api({role:'seller',id:session.staffAuthUserId},session.sellerId).sellerWorkspace.profile();
- return <div className={styles.workspace} style={SELLER_WORKSPACE_STYLE as CSSProperties}>
+ return <div data-art-direction={isArtDirectionPreview() ? 'true' : undefined} className={styles.workspace} style={(isArtDirectionPreview() ? ART_WORKSPACE_STYLE : SELLER_WORKSPACE_STYLE) as CSSProperties}>
   <aside className={styles.sidebar}>
    <Link href={localeHref(locale,"/seller/overview")} className={styles.brand} aria-label={t("DIYAR — Seller workspace")}><Monogram size={30}/><span lang="en">DIYAR</span></Link>
    <p className={styles.house}>{house?.name ?? t("Seller workspace")}</p>

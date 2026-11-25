@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { ArtServicePage } from '@/features/art-direction/ArtServicePage';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { ORDERS, SHELL } from '@diyar/i18n';
 import { getLocale } from '@/core/locale';
 import { SiteHeader } from '@/features/shell/SiteHeader';
@@ -28,8 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export const dynamic = 'force-dynamic';
 
-export default async function OrderPage() {
+export default async function OrderPage({searchParams}:{searchParams:Promise<{ref?:string}>}) {
+  const initialReference=(await searchParams).ref?.slice(0,40)??'';
   const locale = await getLocale();
+  if (isArtDirectionPreview()) return <ArtServicePage locale={locale} kind="order"><OrderLookup initialReference={initialReference}/></ArtServicePage>;
   return (
     <>
       <SiteHeader />

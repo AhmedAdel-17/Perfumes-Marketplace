@@ -1,3 +1,4 @@
+import type { CustomerPrincipal, ActiveCustomerSession } from './customer-account';
 /**
  * Who is signing in, and are they still allowed to be.
  *
@@ -41,7 +42,7 @@ export interface OperatorPrincipal {
 }
 
 /** Which console a session opens. A house's session never opens `/ops`. */
-export type SessionAudience = 'seller' | 'platform';
+export type SessionAudience = 'seller' | 'platform' | 'customer';
 
 /**
  * What it takes to open a session (task P3.4.2).
@@ -84,6 +85,9 @@ export interface ActiveOperatorSession {
 }
 
 export interface IdentityRepository {
+  /** Server-only: called only after consuming a customer-audience OTP. */
+  claimCustomer(phone:string):Promise<CustomerPrincipal>;
+  activeCustomerSession(sessionId:string):Promise<ActiveCustomerSession|null>;
   /**
    * The house whose contact number this is, if any staff member is still active.
    *

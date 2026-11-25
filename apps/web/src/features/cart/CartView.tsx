@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState, useTransition } from 'react';
 import { Flacon } from '@/features/product/Flacon';
 import { ProductPhoto } from '@/features/product/ProductPhoto';
@@ -40,7 +41,8 @@ import { SectionLoading } from '@/features/shell/FlaconLoader';
  * and the summary sits in a panel that STAYS IN VIEW, so the number the visitor
  * is deciding about is never off screen while they change what produced it.
  */
-export function CartView() {
+export function CartView({drawer=false}:{drawer?:boolean}={}) {
+  const reduced = useReducedMotion();
   const { entries, hydrated, setQuantity, remove } = useCart();
   const [cart, setCart] = useState<PricedCartResult | null>(null);
   const [failed, setFailed] = useState(false);
@@ -53,10 +55,9 @@ export function CartView() {
     if (!hydrated) return;
     let current = true;
     setFailed(false);
-    startTransition(() => {
-      priceCart(entries)
-        .then((result) => { if (current) setCart(result); })
-        .catch(() => { if (current) setFailed(true); });
+    startTransition(async () => {
+      try { const result=await priceCart(entries); if(current) setCart(result); }
+      catch { if(current) setFailed(true); }
     });
     return () => { current = false; };
   }, [entries, hydrated]);
@@ -80,6 +81,7 @@ export function CartView() {
   if (priced.isEmpty) {
     return (
       <div className="mx-5 border border-line bg-raised px-6 py-9 text-center lg:mx-0 lg:py-[88px]">
+        {drawer && <svg aria-hidden="true" viewBox="0 0 32 32" width="40" height="40" className="mx-auto mb-5" fill="none" stroke="currentColor"><path d="M6 10h20l2 19H4l2-19Z"/><path d="M11 11V8a5 5 0 0 1 10 0v3"/></svg>}
         <p className="font-display text-h3 lg:text-h2Lg">{copy.empty}</p>
         <p className="mt-3 text-body leading-relaxed text-ink2">
           {/* An empty state that only says "empty" is a dead end; it must offer
@@ -99,7 +101,7 @@ export function CartView() {
   }
 
   return (
-    <div className={pending ? 'opacity-60 transition-opacity duration-quick' : 'transition-opacity duration-quick'}>
+    <div data-bag-view={drawer ? '' : undefined} aria-busy={pending} className={pending ? 'opacity-60 transition-opacity duration-quick' : 'transition-opacity duration-quick'}>
       {/* Adjustments come FIRST and are never silent. Something changed since
           the customer put it in the bag, and finding out at the payment step is
           how trust is lost. */}
@@ -123,8 +125,8 @@ export function CartView() {
         </ul>
       )}
 
-      <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px]">
-      <div className="lg:col-span-7">
+      <div data-cart-layout className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-[68px]">
+      <div data-cart-houses className="lg:col-span-7">
       {priced.houses.map((house) => (
         /*
           Each house a ruled panel, like a specimen label: its Latin name and
@@ -151,8 +153,9 @@ export function CartView() {
           </div>
 
           <ul className="px-4">
+            <AnimatePresence initial={false}>
             {house.lines.map((line) => (
-              <li key={line.productId} className="flex gap-4 border-b border-line py-4 last:border-0">
+              <motion.li layout={drawer && !reduced ? "position" : false} initial={false} exit={drawer && !reduced ? {opacity:0} : {}} transition={{duration:0.3,ease:[0.16,1,0.3,1]}} key={line.productId} className="flex gap-4 border-b border-line py-4 last:border-0">
                 {/*
                   The picture is decorative — the product name sits beside it as
                   its own link — but it is still a LINK, and a link whose only
@@ -192,8 +195,10 @@ export function CartView() {
                     <span className="tnum">{num(line.volumeMl)}</span> {copy.ml}
                   </div>
 
+                  {drawer && <button type="button" className="tappable text-small text-ink2 underline underline-offset-4" aria-label={copy.remove(pick(locale,line.name,line.nameEn).text)} onClick={()=>remove(line.productId)}>{copy.removeItem}</button>}
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <Stepper
+                      separateRemove={drawer}
                       quantity={line.quantity}
                       max={line.maxQuantity}
                       onChange={(q) => setQuantity(line.productId, q)}
@@ -207,8 +212,9 @@ export function CartView() {
                     </div>
                   </div>
                 </div>
-              </li>
+              </motion.li>
             ))}
+            </AnimatePresence>
           </ul>
 
           <div className="flex justify-between border-t border-line px-4 py-3 text-body text-ink2">
@@ -231,8 +237,8 @@ export function CartView() {
         flush to zero tucks the panel's own top rule under the header, which
         reads as a rendering fault rather than as a layout.
       */}
-      <section aria-labelledby="bag-summary" className="mx-5 mt-2 border border-ink bg-raised lg:sticky lg:top-[110px] lg:col-span-5 lg:mx-0 lg:mt-0">
-        <h2 id="bag-summary" className="latin border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
+      <section data-cart-summary aria-labelledby={drawer ? "drawer-bag-summary" : "bag-summary"} className="mx-5 mt-2 border border-ink bg-raised lg:sticky lg:top-[110px] lg:col-span-5 lg:mx-0 lg:mt-0">
+        <h2 id={drawer ? "drawer-bag-summary" : "bag-summary"} className="latin border-b border-ink px-4 py-2 text-micro tracking-label text-ink2">
           {copy.summary.toUpperCase()}
         </h2>
         <div className="px-4 pb-5 pt-3 lg:px-6 lg:pb-6">
@@ -260,10 +266,13 @@ export function CartView() {
             element — middle-click and "open in new tab" have to work. */}
         <Link
           href={localeHref(locale, '/checkout')}
+          aria-disabled={pending}
+          onClick={event=>{if(pending)event.preventDefault();}}
           className={`${primarySurface} mt-6 w-full`}
         >
           {copy.checkout}
         </Link>
+        {drawer && <Link href={localeHref(locale, '/cart')} className="mt-4 block text-center text-small underline underline-offset-4">{copy.fullBag}</Link>}
         <p className="mt-3 text-center text-small text-ink3">{copy.cashOnDelivery}</p>
         </div>
       </section>
@@ -294,9 +303,10 @@ function Row({ label, piastres }: { label: string; piastres: number }) {
  * separate delete control competing for the same corner.
  */
 function Stepper({
-  quantity, max, onChange, onRemove, label, copy,
+  quantity, max, onChange, onRemove, label, copy, separateRemove=false,
 }: {
   quantity: number;
+  separateRemove?: boolean;
   max: number;
   onChange(quantity: number): void;
   onRemove(): void;
@@ -311,10 +321,11 @@ function Stepper({
       <button
         type="button"
         className={base}
-        aria-label={quantity === 1 ? copy.remove(label) : copy.decrease(label)}
+        disabled={separateRemove && quantity === 1}
+        aria-label={quantity === 1 && !separateRemove ? copy.remove(label) : copy.decrease(label)}
         onClick={() => (quantity === 1 ? onRemove() : onChange(quantity - 1))}
       >
-        {quantity === 1 ? '×' : '−'}
+        {quantity === 1 && !separateRemove ? '×' : '−'}
       </button>
       <span className="tnum min-w-[18px] text-center text-bodyLg" aria-live="polite">
         {num(quantity)}

@@ -35,8 +35,8 @@ import { useLocale } from '@/features/shell/LocaleProvider';
 /** The bag's mist: a small fan of droplets, away from the count. */
 const SPRITZ: ReadonlyArray<readonly [number, number]> = [[10, -8], [14, -2], [12, 5], [18, -5], [17, 3], [8, -1], [21, 0]];
 
-export function BagLink() {
-  const { itemCount, hydrated } = useCart();
+export function BagLink({showEmpty=false}:{showEmpty?:boolean}={}) {
+  const { itemCount, hydrated, openBag, bagOpen } = useCart();
   const locale = useLocale();
   const copy = SHELL[locale];
   // What the square last showed for good; null until this masthead has read the cart.
@@ -63,11 +63,14 @@ export function BagLink() {
 
   if (!hydrated) return null;
   // `-ms-3` gives back the row's gap, so the mark takes no room at all.
-  if (itemCount === 0) return <span {...{ [BAG_TARGET]: '' }} aria-hidden="true" className="-ms-3 block h-0 w-0" />;
+  if (itemCount === 0 && !showEmpty) return <span {...{ [BAG_TARGET]: '' }} aria-hidden="true" className="-ms-3 block h-0 w-0" />;
 
   return (
     <Link
       href={localeHref(locale, '/cart')}
+      aria-haspopup="dialog"
+      aria-expanded={bagOpen}
+      onClick={event => { if(event.button===0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey){event.preventDefault();openBag();} }}
       // The label plus its badge is a 22px line box; `tappable` alone adds 16
       // and still lands under the floor. min-h-touch is the honest fix — the
       // TARGET is 44, while the visible label stays small.
@@ -84,7 +87,7 @@ export function BagLink() {
             while the spritz still leaves the square. Keyed by the number, so
             each change arrives; nothing at all while the first drop flies. */}
         <span className="block overflow-hidden">
-          {shown > 0 && <span key={shown} className={spritz > 0 ? 'bag-count block' : 'block'}>{num(shown)}</span>}
+          {(shown > 0 || showEmpty) && <span key={shown} className={spritz > 0 ? 'bag-count block' : 'block'}>{num(shown)}</span>}
         </span>
         {spritz > 0 && (
           // Keyed by the count of spritzes, so each addition plays it afresh.

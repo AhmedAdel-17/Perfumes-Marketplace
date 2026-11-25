@@ -139,7 +139,7 @@ function firstNotes(product: ProductCard, locale: Locale) {
  * cut-out on a floor, so the strip rises at the reading start of the frame and
  * the card sits across from it, leaving the bottle in the middle uncovered.
  */
-function Blotter({ product, locale }: { product: ProductCard; locale: Locale }) {
+export function Blotter({ product, locale }: { product: ProductCard; locale: Locale }) {
   const glass = glassPalette(product.family);
   const own = (scentFamily as Record<string, string>)[product.family] ?? glass.core;
   return (

@@ -1,0 +1,4 @@
+'use client';
+import Link from 'next/link';import {COMMERCE_RECOVERY,CUSTOMER_ACCOUNT} from '@diyar/i18n';import {useLocale} from '@/features/shell/LocaleProvider';import {PrimaryButton} from '@/features/shell/PrimaryButton';import {localeHref} from '@/core/href';
+/** Recovery boundary: never expose database exceptions or pretend data is empty. */
+export function CommerceError({reset}:{reset:()=>void}){const locale=useLocale(),c=COMMERCE_RECOVERY[locale];return <main className="mx-auto max-w-proseMax px-5 py-9"><h1 className="font-display text-h3">{c.unavailable}</h1><div className="mt-6 flex flex-wrap items-center gap-5"><PrimaryButton onClick={reset} fill="auto">{c.retry}</PrimaryButton><Link className="inline-flex min-h-touch items-center text-body text-accent underline" href={localeHref(locale,'/support')}>{CUSTOMER_ACCOUNT[locale].support}</Link></div></main>;}

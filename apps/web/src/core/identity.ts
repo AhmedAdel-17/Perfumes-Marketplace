@@ -34,6 +34,8 @@ import { unitOfWork } from './db';
 const asIdentity = () => unitOfWork({ role: 'identity', id: null });
 
 export const identity = {
+  claimCustomer:(phone:string)=>asIdentity().transaction(r=>r.identity.claimCustomer(phone)),
+  activeCustomerSession:(sessionId:string)=>asIdentity().transaction(r=>r.identity.activeCustomerSession(sessionId)),
   sellerByContactPhone: (phone: string): Promise<SellerPrincipal | null> =>
     asIdentity().transaction((r) => r.identity.sellerByContactPhone(phone)),
 

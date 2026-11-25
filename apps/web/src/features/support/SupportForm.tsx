@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { COMMERCE_RECOVERY } from '@diyar/i18n';
 import { MESSAGE_MAX, SUBJECT_MAX, SUPPORT_CATEGORIES, type SupportCategory } from '@diyar/domain';
 import { CONTACT, SUPPORT_CATEGORY, TICKET_STATUS } from '@diyar/i18n';
 import { useLocale } from '@/features/shell/LocaleProvider';
@@ -26,32 +27,30 @@ import { Pending } from '@/features/shell/FlaconLoader';
  * the only thing the customer has to keep, and the next thing they will do is
  * screenshot it.
  */
-export function SupportForm() {
-  const [category, setCategory] = useState<SupportCategory>('order_status');
-  const [subject, setSubject] = useState('');
+export function SupportForm({initialSubject='',initialName='',initialPhone='',initialOrderReference='',initialCategory='order_status'}:{initialSubject?:string;initialName?:string;initialPhone?:string;initialOrderReference?:string;initialCategory?:SupportCategory}={}) {
+  const [category, setCategory] = useState<SupportCategory>(initialCategory);
+  const [subject, setSubject] = useState(initialSubject);
   const [message, setMessage] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [orderReference, setOrderReference] = useState('');
+  const [name, setName] = useState(initialName);
+  const [phone, setPhone] = useState(initialPhone);
+  const [orderReference, setOrderReference] = useState(initialOrderReference);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
   const locale = useLocale();
   const copy = CONTACT[locale];
+  const recovery=COMMERCE_RECOVERY[locale];
+  const inFlight=useRef(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (sending) return;
-
-    setSending(true);
-    setError(null);
-    const result = await openTicket({
-      category, subject, message, contactName: name, contactPhone: phone, orderReference,
-    });
-    setSending(false);
-
-    if (result.ok) setSent(result.reference);
-    else setError(result.message);
+    if(inFlight.current)return;
+    inFlight.current=true;setSending(true);setError(null);
+    try {
+      const result=await openTicket({category,subject,message,contactName:name,contactPhone:phone,orderReference});
+      if(result.ok)setSent(result.reference);else setError(result.message);
+    } catch {setError(recovery.unavailable);}
+    finally {inFlight.current=false;setSending(false);}
   };
 
   if (sent) {
@@ -166,14 +165,19 @@ export function TicketLookup() {
   const [ticket, setTicket] = useState<TicketResult>(null);
   const locale = useLocale();
   const copy = CONTACT[locale];
+  const recovery=COMMERCE_RECOVERY[locale];
+  const inFlight=useRef(false);
+  const [unavailable,setUnavailable]=useState(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (searching) return;
-    setSearching(true);
-    setTicket(await findTicket(reference, phone));
-    setSearched(true);
-    setSearching(false);
+    if(inFlight.current)return;
+    inFlight.current=true;setSearching(true);setSearched(false);setUnavailable(false);setTicket(null);
+    try {
+      const result=await findTicket(reference,phone);
+      if(result.ok){setTicket(result.data);setSearched(true);}else setUnavailable(true);
+    } catch {setUnavailable(true);}
+    finally {inFlight.current=false;setSearching(false);}
   };
 
   return (
@@ -194,6 +198,7 @@ export function TicketLookup() {
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
       />
 
+      {unavailable&&<p role="alert" className="mb-5 border border-danger p-4 text-body">{recovery.unavailable}</p>}
       {searched && !ticket && (
         // The same message for a wrong phone and an unknown reference. Telling
         // them apart says which half somebody got right.

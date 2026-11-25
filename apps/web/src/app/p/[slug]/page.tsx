@@ -1,4 +1,9 @@
+import { BottleInspection } from '@/features/product/BottleInspection';
+import { NotesOverTime } from '@/features/product/NotesOverTime';
+import { ArtProductCard } from '@/features/art-direction/ArtProductCard';
 import Link from 'next/link';
+import { ArtProductOpening } from '@/features/art-direction/ArtDirection';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { findHouseBySlug, findProductBySlug, listPublishedProducts } from '@/core/catalogue';
@@ -61,6 +66,8 @@ export async function generateMetadata(
     },
   };
 }
+
+const CollectionCard = (props: React.ComponentProps<typeof SpecimenCard>) => isArtDirectionPreview() ? <ArtProductCard product={props.product} locale={props.locale} rating={props.rating} /> : <SpecimenCard {...props} />;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -145,7 +152,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         disagree (CLAUDE.md §12): the perfume printed as a specimen sheet, every
         figure ruled into a row, every band with its source.
       */}
-      <main className="pb-[92px] lg:pb-0">
+      <main data-art-product={isArtDirectionPreview() ? 'true' : undefined} className="pb-[92px] lg:pb-0">
+        {isArtDirectionPreview() && <ArtProductOpening locale={locale} />}
         <div className="mx-auto max-w-contentMax px-5 pt-5 lg:px-8 lg:pt-8">
           <div className="grid gap-7 lg:grid-cols-12 lg:gap-8">
             {/* ------------------------------------------------------ media
@@ -193,6 +201,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                       locale={locale}
                     />
                   )}
+                  <BottleInspection family={product.family} name={name.text} house={product.brandLatin} locale={locale} notes={[...new Set([...product.notesTop,...product.notesHeart,...product.notesBase])].map(note=>pick(locale,note,product.noteEnglish[note]))}/>
                   {/* La Loupe: a glass over the same photograph — hover, or a long press. */}
                   {product.photo && loupe && (
                     <Loupe
@@ -247,16 +256,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <Row label={copy.size}><span className="tnum">{num(product.volumeMl)}</span> {copy.ml}</Row>
                 {product.longevity && (
                   <Row label={copy.longevity}>
-                    <BandReading kind="longevity" reading={product.longevity} locale={locale} />
+                    <BandReading animated kind="longevity" reading={product.longevity} locale={locale} />
                   </Row>
                 )}
                 {product.projection && (
                   <Row label={copy.projection}>
-                    <BandReading kind="projection" reading={product.projection} locale={locale} />
+                    <BandReading animated kind="projection" reading={product.projection} locale={locale} />
                   </Row>
                 )}
                 <Row label={copy.delivery}>{copy.arrives(num(arrival.min), num(arrival.max), days)}</Row>
               </dl>
+
+              <NotesOverTime top={product.notesTop} heart={product.notesHeart} base={product.notesBase} english={product.noteEnglish} locale={locale}/>
 
               {/* Brand independence (doc 01 §6): the seller stays visible
                   everywhere. Never flatten houses into anonymous SKUs. */}
@@ -330,7 +341,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ul className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0">
                 {others.map((p) => (
                   <li key={p.id} className="w-[200px] flex-none lg:w-auto">
-                    <SpecimenCard product={p} locale={locale} rating={ratings[p.id]} sizes="(min-width: 1024px) 25vw, 200px" />
+                    <CollectionCard product={p} locale={locale} rating={ratings[p.id]} sizes="(min-width: 1024px) 25vw, 200px" />
                   </li>
                 ))}
               </ul>

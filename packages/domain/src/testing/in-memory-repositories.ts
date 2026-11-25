@@ -48,7 +48,7 @@ import type { SettlementSubOrder } from '../services/settlement';
 import type { PayoutStatement } from '../services/settlement';
 import type {
   CustomerRecord, CustomerRepository, PayoutRepository,
-  OrderRepository, PersistedOrder, ProductRecord, ProductRepository, Repositories,
+  OrderRepository, PersistedOrder, PlacementReply, ProductRecord, ProductRepository, Repositories,
   SellerRecord, SellerRepository, SubOrderRecord, SubOrderRepository, UnitOfWork,
 } from '../ports/repositories';
 
@@ -220,6 +220,7 @@ interface Store {
   transitions: Array<TransitionRecord & { subOrderId: string }>;
   inventoryMovements: InventoryMovement[];
   inventoryRequests: Map<string, InventoryAdjustmentInput>;
+  placements: Map<string, {orderId:string;reply:PlacementReply;requestHash:string}>;
   seq: number;
 }
 
@@ -227,7 +228,7 @@ const emptyStore = (): Store => ({
   sellers: new Map(), customers: new Map(), payouts: new Map(), reviews: new Map(),
   returns: new Map(), tickets: new Map(), applications: new Map(),
   products: new Map(), orders: new Map(),
-  subOrders: new Map(), transitions: [], inventoryMovements: [], inventoryRequests: new Map(), seq: 0,
+  subOrders: new Map(), transitions: [], placements:new Map(), inventoryMovements: [], inventoryRequests: new Map(), seq: 0,
 });
 
 /** How many of the eight have passed. */
@@ -248,6 +249,7 @@ const cloneStore = (s: Store): Store => ({
   orders: new Map([...s.orders].map(([k, v]) => [k, { ...v, subOrderIds: [...v.subOrderIds] }])),
   subOrders: new Map([...s.subOrders].map(([k, v]) => [k, { ...v }])),
   transitions: [...s.transitions],
+  placements:new Map(s.placements),
   inventoryMovements: [...s.inventoryMovements],
   inventoryRequests: new Map(s.inventoryRequests),
   seq: s.seq,
@@ -662,6 +664,20 @@ export class InMemoryUnitOfWork implements UnitOfWork {
             };
           }),
         };
+      },
+
+      async findPlacement(idempotencyKey, requestHash) {
+        const saved=store().placements.get(idempotencyKey);
+        if(saved && saved.requestHash!==requestHash)throw new Error('Checkout key belongs to a different request');
+        return saved?.reply ?? null;
+      },
+
+      async recordPlacement(idempotencyKey, orderId, reply, requestHash) {
+        // The primary key the database enforces.
+        if (store().placements.has(idempotencyKey)) {
+          throw new Error(`duplicate key value violates unique constraint "order_placements_pkey"`);
+        }
+        store().placements.set(idempotencyKey, { orderId, reply, requestHash });
       },
 
       async findByReference(reference) {
@@ -1978,6 +1994,7 @@ export class InMemoryUnitOfWork implements UnitOfWork {
       sellerCustomers: { leaderboard: async () => ({access: 'restricted' as const}), profile: async () => ({access: 'restricted' as const}) },
       site, reviews, returns, support, applications, ownerReport, photos, contentImages,
       analytics, catalogue, glossary, identity, reliefs,
+      account:{profile:refuse('CustomerAccountRepository','customer-account.test.ts'),saveProfile:refuse('CustomerAccountRepository','customer-account.test.ts'),addresses:refuse('CustomerAccountRepository','customer-account.test.ts'),addAddress:refuse('CustomerAccountRepository','customer-account.test.ts'),removeAddress:refuse('CustomerAccountRepository','customer-account.test.ts'),orders:refuse('CustomerAccountRepository','customer-account.test.ts')},
     };
   }
 }

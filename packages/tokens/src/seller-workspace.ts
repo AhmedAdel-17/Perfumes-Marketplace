@@ -6,3 +6,6 @@ const channels = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2
 export const SELLER_WORKSPACE_STYLE: Record<string, string> = Object.fromEntries(
   Object.entries(raw.sellerWorkspaceColor).map(([name, color]) => [`--seller-${name}`, channels(color)]),
 );
+
+/** Opt-in desktop art-direction palette; the established workspace stays unchanged. */
+export const ART_WORKSPACE_STYLE: Record<string,string> = Object.fromEntries(Object.entries(raw.artWorkspaceColor).map(([name,color])=>['--seller-'+name,channels(color)]));

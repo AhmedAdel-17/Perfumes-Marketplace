@@ -17,7 +17,7 @@
  * and Postgres never applies row-level security to a superuser, so they were
  * governed by nothing at all.
  */
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import type {
   ActiveOperatorSession, ActiveSellerSession, IdentityRepository,
   OperatorPrincipal, SellerPrincipal,
@@ -26,6 +26,25 @@ import * as schema from './schema/index';
 import type { DiyarDatabase } from './repositories';
 
 export const identityRepository = (db: DiyarDatabase): IdentityRepository => ({
+  async claimCustomer(phone){
+    // Legacy local and E.164 spellings resolve to one identity. Ambiguous historical
+    // duplicates are refused for manual review, never merged across financial facts.
+    const aliases=[phone,phone.replace(/^\+20/,'0')];
+    const rows=await db.select().from(schema.customers).where(inArray(schema.customers.phone,aliases)).for('update');
+    if(rows.length>1)throw new Error('This phone needs account review. Contact support.');
+    let row;
+    if(rows[0]){
+      [row]=await db.update(schema.customers).set({phone,authUserId:rows[0].authUserId??sql`gen_random_uuid()`,claimedAt:rows[0].claimedAt??sql`now()`,updatedAt:sql`now()`}).where(eq(schema.customers.id,rows[0].id)).returning();
+    }else{
+      [row]=await db.insert(schema.customers).values({phone,authUserId:sql`gen_random_uuid()`,claimedAt:sql`now()`}).onConflictDoUpdate({target:schema.customers.phone,set:{authUserId:sql`coalesce(customers.auth_user_id,gen_random_uuid())`,claimedAt:sql`coalesce(customers.claimed_at,now())`}}).returning();
+    }
+    if(!row?.authUserId)throw new Error('Customer identity unavailable');
+    return {customerId:row.id,authUserId:row.authUserId,phone:row.phone};
+  },
+  async activeCustomerSession(sessionId){
+    const [row]=await db.select({sessionId:schema.sessions.id,customerId:schema.customers.id,authUserId:schema.customers.authUserId,phone:schema.customers.phone}).from(schema.sessions).innerJoin(schema.customers,eq(schema.customers.authUserId,schema.sessions.principalId)).where(and(eq(schema.sessions.id,sessionId),eq(schema.sessions.audience,'customer'),isNull(schema.sessions.revokedAt),gt(schema.sessions.expiresAt,sql`now()`))).limit(1);
+    return row?.authUserId?{...row,authUserId:row.authUserId}:null;
+  },
   async sellerByContactPhone(phone): Promise<SellerPrincipal | null> {
     /*
      * The join is `seller_staff` → `seller_contacts`, not through `sellers`.

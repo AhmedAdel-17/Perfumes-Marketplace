@@ -182,7 +182,7 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Paths the site already owns. A page here would shadow a real route. */
 const RESERVED_SLUGS = new Set([
-  'cart', 'checkout', 'order', 'orders', 'p', 'seller', 'ops', 'api', 'search',
+  'sign-in', 'cart', 'checkout', 'order', 'orders', 'p', 'seller', 'ops', 'api', 'search',
   'account', 'admin', 'assets', 'static',
   // The house storefronts. A page published at /house would shadow the whole
   // section, and the failure would look like the shop breaking rather than

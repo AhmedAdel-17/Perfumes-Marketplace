@@ -15,3 +15,5 @@ export * from './reliefs';
 
 export * from './inventory';
 export * from './refund-records';
+
+export * from './customer-profiles';

@@ -1,3 +1,4 @@
+import {customerAccountRepository} from './customer-account-repository';
 import { inventoryRepository } from './inventory-repository';
 import { sellerCustomerReadModel } from './seller-customer-read-model';
 /**
@@ -19,7 +20,7 @@ import {
   type Actor, type OrderSource, type ReasonCode, type SettlementSubOrder,
   type SubOrderState, type TransitionRecord,
   type CustomerRepository, type PayoutRepository,
-  type DraftOrder, type OrderRepository, type PersistedOrder, type ProductRecord,
+  type DraftOrder, type OrderRepository, type PersistedOrder, type PlacementReply, type ProductRecord,
   type ProductRepository, type Repositories, type SellerRecord, type SellerRepository,
   type SubOrderRecord, type SubOrderRepository, type UnitOfWork,
 } from '@diyar/domain';
@@ -108,13 +109,14 @@ const customerRepository = (db: Executor): CustomerRepository => ({
     // ON CONFLICT rather than SELECT-then-INSERT: two tabs checking out at once
     // would both see "no such customer" and both insert, and one would lose to
     // the unique index. The name is refreshed because the most recent checkout
-    // is the best thing we know about how to address them.
+    // is the best thing we know about a guest. A claimed profile is edited only
+    // through the account form; a gift recipient must not rename the account.
     const [row] = await db
       .insert(schema.customers)
       .values({ phone, fullName })
       .onConflictDoUpdate({
         target: schema.customers.phone,
-        set: { fullName, updatedAt: new Date() },
+        set: { fullName:sql`CASE WHEN customers.claimed_at IS NULL THEN ${fullName} ELSE customers.full_name END`, updatedAt: new Date() },
       })
       .returning({
         id: schema.customers.id,
@@ -319,6 +321,18 @@ const orderRepository = (db: Executor): OrderRepository => ({
       total: draft.total,
       subOrderIds,
     };
+  },
+
+  async findPlacement(idempotencyKey, requestHash) {
+    const [row] = await db.select({ reply: schema.orderPlacements.reply, requestHash:schema.orderPlacements.requestHash })
+      .from(schema.orderPlacements)
+      .where(eq(schema.orderPlacements.idempotencyKey, idempotencyKey)).limit(1);
+    if(row && row.requestHash!==requestHash)throw new Error('Checkout key belongs to a different request');
+    return row ? (row.reply as PlacementReply) : null;
+  },
+
+  async recordPlacement(idempotencyKey, orderId, reply, requestHash) {
+    await db.insert(schema.orderPlacements).values({ idempotencyKey, orderId, reply, requestHash });
   },
 
   async findByReference(reference) {
@@ -695,6 +709,7 @@ const toPayoutSummary = (row: typeof schema.payouts.$inferSelect) => ({
 });
 
 export const repositoriesFor = (db: Executor): Repositories => ({
+  account: customerAccountRepository(db),
   inventory: inventoryRepository(db),
   sellerCustomers: sellerCustomerReadModel(db),
   sellers: sellerRepository(db),

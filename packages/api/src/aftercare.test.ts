@@ -35,6 +35,7 @@ const caller = (
 ) => {
   const ctx: ApiContext = {
     actor,
+    customerCheckoutRequired: false,
     sellerId,
     platformStaffId: platform?.staffId ?? null,
     platformRole: platform?.role ?? null,

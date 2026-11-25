@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import Link from 'next/link';
+import {localeHref} from '@/core/href';
+import { COMMERCE_RECOVERY } from '@diyar/i18n';
 import {
   CURRENCY_LABEL, CUSTOMER_JOURNEY, formatPrice, journeyIndex, langAttrs, languageOf, ORDERS,
   pick, stateCopy, data as num,
@@ -26,21 +29,27 @@ import { Pending } from '@/features/shell/FlaconLoader';
  * reference, a wrong phone and a malformed phone with one sentence, because
  * distinguishing them tells whoever is typing which half they got right.
  */
-export function OrderLookup() {
-  const [reference, setReference] = useState('');
-  const [phone, setPhone] = useState('');
+export function OrderLookup({initialReference='',initialPhone='',initialOrder=null}:{initialReference?:string;initialPhone?:string;initialOrder?:OrderLookupResult}={}) {
+  const [reference, setReference] = useState(initialReference);
+  const [phone, setPhone] = useState(initialPhone);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [order, setOrder] = useState<OrderLookupResult>(null);
-  const copy = ORDERS[useLocale()];
+  const [order, setOrder] = useState<OrderLookupResult>(initialOrder);
+  const locale=useLocale();
+  const copy = ORDERS[locale];
+  const recovery=COMMERCE_RECOVERY[locale];
+  const inFlight=useRef(false);
+  const [unavailable,setUnavailable]=useState(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (searching) return;
-    setSearching(true);
-    setOrder(await lookupOrder(reference, phone));
-    setSearched(true);
-    setSearching(false);
+    if (inFlight.current) return;
+    inFlight.current=true; setSearching(true); setUnavailable(false); setSearched(false);
+    try {
+      const result=await lookupOrder(reference,phone);
+      if(result.ok){setOrder(result.data);setSearched(true);}else setUnavailable(true);
+    } catch { setUnavailable(true); }
+    finally {inFlight.current=false;setSearching(false);}
   };
 
   if (order) {
@@ -71,6 +80,7 @@ export function OrderLookup() {
         type="tel" inputMode="tel" autoComplete="tel" maxLength={14}
       />
 
+      {unavailable&&<p role="alert" className="mb-5 border border-danger p-4 text-body">{recovery.unavailable}</p>}
       {searched && !order && (
         <p role="alert" className="mb-5 border border-danger bg-raised p-4 text-body leading-relaxed text-ink">
           {copy.notFound}
@@ -93,6 +103,7 @@ function OrderDetail({
 }) {
   const locale = useLocale();
   const words = ORDERS[locale];
+  const recovery=COMMERCE_RECOVERY[locale];
   return (
     <div className="px-5 lg:px-0">
       <div className="border border-ink bg-raised p-5">
@@ -106,6 +117,7 @@ function OrderDetail({
         </div>
       </div>
 
+      <div className="mt-5 border border-line p-4"><Link href={{pathname:localeHref(locale,'/support'),query:{order:order.reference,subject:recovery.orderHelp}}} className="inline-flex min-h-touch items-center text-body text-accent underline">{recovery.orderHelp}</Link><p className="mt-2 text-small text-ink2">{recovery.cancellationHelp}</p></div>
       {/*
         One timeline PER HOUSE, not one for the order.
 

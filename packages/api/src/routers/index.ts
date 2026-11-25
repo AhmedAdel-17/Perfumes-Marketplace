@@ -1,3 +1,4 @@
+import {customerAccountRouter} from './customer-account';
 import { inventoryRouter } from './inventory';
 import { sellerCustomersRouter } from './seller-customers';
 import { router } from '../trpc';
@@ -23,6 +24,7 @@ import { siteRouter } from './site';
 import { supportRouter } from './support';
 
 export const appRouter = router({
+  customerAccount:customerAccountRouter,
   inventory: inventoryRouter,
   sellerCustomers: sellerCustomersRouter,
   analytics: analyticsRouter,

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { COMMERCE_RECOVERY } from '@diyar/i18n';
 import type { ReturnReason } from '@diyar/domain';
 import {
   CURRENCY_LABEL, langAttrs, languageOf, RETURN_REASON, RETURN_REASON_DETAIL, RETURN_STATE, RETURNS,
@@ -36,23 +37,26 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
   const locale = useLocale();
   const copy = RETURNS[locale];
 
-  const load = async () => {
-    const result = await returnableItems(reference, phone);
-    setItems(result.items);
-    setExisting(result.existing);
+  const recovery=COMMERCE_RECOVERY[locale];
+  const [loadFailed,setLoadFailed]=useState(false);
+  const [submitted,setSubmitted]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const load=async()=>{
+    setLoadFailed(false);setLoading(true);
+    try {const result=await returnableItems(reference,phone);
+      if(result.ok){setItems(result.items);setExisting(result.existing);}else setLoadFailed(true);
+    } catch {setLoadFailed(true);} finally {setLoading(false);}
   };
-
-  useEffect(() => {
-    let live = true;
-    void returnableItems(reference, phone).then((result) => {
-      if (!live) return;
-      setItems(result.items);
-      setExisting(result.existing);
-    });
-    return () => { live = false; };
-  }, [reference, phone]);
-
-  if (items === null) return null;
+  useEffect(()=>{
+    let live=true;setLoading(true);setLoadFailed(false);setItems(null);setExisting([]);setSubmitted(false);
+    void returnableItems(reference,phone).then(result=>{
+      if(!live)return;
+      if(result.ok){setItems(result.items);setExisting(result.existing);}else setLoadFailed(true);
+    }).catch(()=>{if(live)setLoadFailed(true);}).finally(()=>{if(live)setLoading(false);});
+    return()=>{live=false;};
+  },[reference,phone]);
+  if(loadFailed)return <section className="mt-8 border-t border-line pt-6"><h2 className="font-display text-h4">{copy.heading}</h2>{submitted&&<p role="status" className="mt-3 text-body">{recovery.savedReturn}</p>}<p role="alert" className="mt-3 text-body">{recovery.returnsUnavailable}</p><button type="button" disabled={loading} onClick={()=>void load()} className="mt-3 min-h-touch border border-line px-5">{recovery.retry}</button></section>;
+  if(items===null)return <p role="status" className="mt-8 text-body text-ink2">{recovery.loadingReturns}</p>;
 
   // Only what has arrived and has something left to ask for. A parcel still on
   // a van is shown by the timeline above; repeating it here as "you cannot
@@ -63,6 +67,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
   return (
     <section className="mt-8 border-t border-ink pt-6">
       <h2 className="font-display text-h4 lg:text-h3">{copy.heading}</h2>
+      {submitted&&<p role="status" className="mt-3 text-body text-accent">{recovery.savedReturn}</p>}
 
       {existing.length > 0 && (
         <ul className="mt-4">
@@ -79,7 +84,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
               </p>
               {row.refundPiastres !== null && (
                 <p className="mt-2 text-small text-ink2">
-                  {copy.refunded}{' '}
+                  {recovery.refundRecorded}{' '}
                   <span className="tnum">{formatPrice(row.refundPiastres)}</span>
                   <span className="latin ms-1.5 text-micro tracking-label">{CURRENCY_LABEL}</span>
                 </p>
@@ -124,7 +129,7 @@ export function ReturnPanel({ reference, phone }: { reference: string; phone: st
                     reference={reference}
                     phone={phone}
                     item={item}
-                    onDone={async () => { setOpen(null); await load(); }}
+                    onDone={async () => { setOpen(null); setSubmitted(true); await load(); }}
                   />
                 )}
               </li>
@@ -150,18 +155,21 @@ function ReturnForm({
   const [error, setError] = useState<string | null>(null);
   const locale = useLocale();
   const copy = RETURNS[locale];
+  const recovery=COMMERCE_RECOVERY[locale];
+  const inFlight=useRef(false);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (saving || reason === null || note.trim().length === 0) return;
+    if (inFlight.current || reason === null || note.trim().length === 0) return;
+    inFlight.current=true;
 
     setSaving(true);
     setError(null);
-    const result = await requestReturn({ reference, phone, lineItemId: item.lineItemId, reason, note });
-    setSaving(false);
-
-    if (result.ok) await onDone();
-    else setError(result.message);
+    try {
+      const result=await requestReturn({reference,phone,lineItemId:item.lineItemId,reason,note});
+      if(result.ok)await onDone();else setError(result.message);
+    } catch {setError(recovery.unavailable);}
+    finally {inFlight.current=false;setSaving(false);}
   };
 
   return (

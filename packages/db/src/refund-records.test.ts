@@ -82,7 +82,7 @@ describe('immutable refund recording',()=>{
   // Copy only SQL into an isolated fixture directory: this never migrates a
   // project or staging database, and preserves the historical observation.
   const dir=mkdtempSync(join(tmpdir(),'diyar-refund-baseline-'));
-  for(const file of readdirSync(MIGRATIONS_DIR).filter(file=>file.endsWith('.sql')&&!file.startsWith('0044_')))copyFileSync(join(MIGRATIONS_DIR,file),join(dir,file));
+  for(const file of readdirSync(MIGRATIONS_DIR).filter(file=>file.endsWith('.sql')&&file<'0044_'))copyFileSync(join(MIGRATIONS_DIR,file),join(dir,file));
   const original=pg; const priorSeller=seller,priorBrand=brand,priorCustomer=customer;
   const legacy=new PGlite();
   try{

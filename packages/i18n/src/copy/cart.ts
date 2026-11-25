@@ -4,6 +4,9 @@ import { defineMessages } from '../messages';
 export const CART = defineMessages(
   {
     title: 'الحقيبة',
+    closeBag: 'إغلاق الحقيبة',
+    fullBag: 'عرض الحقيبة كاملة',
+    removeItem: 'إزالة',
     // Latin labels in both languages: Arabic is never set in the label face.
     kicker: 'Your selection',
     summary: 'Summary',
@@ -33,6 +36,9 @@ export const CART = defineMessages(
   },
   {
     title: 'Bag',
+    closeBag: 'Close bag',
+    fullBag: 'View full bag',
+    removeItem: 'Remove',
     kicker: 'Your selection',
     summary: 'Summary',
     pricing: 'Working out your bag…',

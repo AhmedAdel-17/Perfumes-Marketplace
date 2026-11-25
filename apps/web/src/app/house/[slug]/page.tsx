@@ -1,3 +1,4 @@
+import { ArtProductCard } from '@/features/art-direction/ArtProductCard';
 /**
  * A house, and everything it sells.
  *
@@ -21,6 +22,8 @@
  * came to read.)
  */
 import type { Metadata } from 'next';
+import { ArtHouseOpening } from '@/features/art-direction/ArtDirection';
+import { isArtDirectionPreview } from '@/features/art-direction/preview';
 import { notFound } from 'next/navigation';
 import {
   data as num, editorialIn, GOVERNORATE, HOUSES, langAttrs, languageOf, pick, SHELL,
@@ -58,6 +61,8 @@ export async function generateMetadata(
   };
 }
 
+const CollectionCard = (props: React.ComponentProps<typeof SpecimenCard>) => isArtDirectionPreview() ? <ArtProductCard product={props.product} locale={props.locale} rating={props.rating} /> : <SpecimenCard {...props} />;
+
 export default async function HousePage(
   { params }: { params: Promise<{ slug: string }> },
 ) {
@@ -92,7 +97,8 @@ export default async function HousePage(
           Keyed by slug — see the note on the product page. */}
       <Track key={house.slug} event="storefront_view" sellerId={house.id} />
 
-      <main className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
+      <main data-art-house={isArtDirectionPreview() ? 'true' : undefined} className="mx-auto max-w-contentMax px-5 pb-9 lg:px-8 lg:pb-[104px]">
+        {isArtDirectionPreview() && <ArtHouseOpening locale={locale} />}
         {/* ------------------------------------------------ the name and label */}
         <div className="grid gap-8 border-b border-ink pb-8 pt-8 lg:grid-cols-12 lg:gap-8 lg:pb-12 lg:pt-12">
           <div className="lg:col-span-7">
@@ -198,7 +204,7 @@ export default async function HousePage(
             <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
               {house.products.map((product, index) => (
                 <Reveal as="li" key={product.id} delay={Math.min(index, 6) * 60}>
-                  <SpecimenCard product={product} locale={locale} rating={ratings[product.id]} />
+                  <CollectionCard product={product} locale={locale} rating={ratings[product.id]} />
                 </Reveal>
               ))}
             </ul>

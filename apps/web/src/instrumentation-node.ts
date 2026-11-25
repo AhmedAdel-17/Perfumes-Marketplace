@@ -45,7 +45,7 @@ export function checkStartup(): void {
    * watching.
    */
   if (process.env.NODE_ENV === 'production') {
-    const missing = (['SELLER_SESSION_SECRET', 'OPS_SESSION_SECRET', 'DATABASE_URL'] as const)
+    const missing = (['SELLER_SESSION_SECRET', 'OPS_SESSION_SECRET', 'CUSTOMER_SESSION_SECRET', 'DATABASE_URL'] as const)
       .filter((name) => !process.env[name]);
 
     if (missing.length > 0) {

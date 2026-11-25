@@ -45,17 +45,16 @@ export interface ExistingReturn {
 export async function returnableItems(
   reference: string,
   phone: string,
-): Promise<{ items: ReturnableItem[]; existing: ExistingReturn[] }> {
+): Promise<{ ok: true; items: ReturnableItem[]; existing: ExistingReturn[] } | { ok: false }> {
   try {
     const [items, existing] = await Promise.all([
       api().returns.returnable({ reference, phone }),
       api().returns.mine({ reference, phone }),
     ]);
-    return { items: items as ReturnableItem[], existing };
+    return { ok: true, items: items as ReturnableItem[], existing };
   } catch {
-    // A malformed phone is refused by Zod before anything runs, and to the
-    // person at the keyboard that is the same answer as "nothing here".
-    return { items: [], existing: [] };
+    // Keep outages distinct from an empty return history so the UI can recover.
+    return { ok: false };
   }
 }
 
